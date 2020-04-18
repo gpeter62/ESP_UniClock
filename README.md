@@ -1,7 +1,7 @@
 # ESP_UniClock
 Universal WifiClock with Nixie, VFD, Numitron tubes or LED display
 
-Number of tubes: 4, 6 or 8
+Number of digits: 4, 6 or 8
 
 Adjustable day and night brightness
 
