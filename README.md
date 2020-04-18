@@ -9,7 +9,7 @@ Hardver:
 
 Wemos D1 Mini (or any other ESP8266 modul) 160MHz
 
-Tube drivers: MM5450, MAX6921, MAX7219, SN74141 (multiplex or latch)
+Drivers: SN74141 (multiplex or latch), MAX6921, MAX7219, MM5450
 
 Optional: DS18B20 temperature sensor
 
