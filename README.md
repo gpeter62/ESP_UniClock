@@ -1,5 +1,5 @@
 # ESP_UniClock
-Universal WifiClock with Nixie, VFD or Numitron tubes 
+Universal WifiClock with Nixie, VFD, Numitron tubes or LED display
 
 Number of tubes: 4, 6 or 8
 
