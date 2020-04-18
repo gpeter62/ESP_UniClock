@@ -22,4 +22,4 @@ Web page for setup. See: Screenshot.png
 More info:
 
 Peter Gautier
-gautier.p62@gmail.com
+ Email: gautier.p62@gmail.com
