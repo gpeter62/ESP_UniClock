@@ -2,9 +2,11 @@
 Universal WifiClock with Nixie, VFD or Numitron tubes 
 
 Number of tubes: 4, 6 or 8
+
 Adjustable day and night brightness
 
 Hardver:
+
 Wemos D1 Mini (or any other ESP8266 modul) 160MHz
 
 Tube drivers: MM5450, MAX6921, MAX7219, SN74141 (multiplex or latch)
