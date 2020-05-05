@@ -18,7 +18,8 @@
 #define DEBUG
 #define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
-#define MAXBRIGHTNESS 10  //10...15    (if to high value is used, the multiplex may be too slow...)
+#define MAXBRIGHTNESS 10  //10...15    (if too high value is used, the multiplex may be too slow...)
+#define ANIMATE           //if used, animation, when a digit changes
 
 //Use only 1 from the following options!
 //#define MULTIPLEX74141    //4..8 Nixie tubes
@@ -61,6 +62,7 @@ extern int maxDigits;
 WiFiServer server(80);
 String header;
 byte digit[9] = {0,0,0,0,0,0,0,0,0};
+byte oldDigit[9] = {0,0,0,0,0,0,0,0,0};
 boolean digitDP[9];   //actual value to put to display
 boolean digitsOnly = true;  //only 0..9 digits are possibly?
 
@@ -372,6 +374,7 @@ void displayTime4(){
         digit[0] = minute() % 10;
         if (prm.enableBlink && (second()%2 == 0)) digitDP[2] = false;  
        }
+   changeDigit();    
 }
 
 void displayTime6(){
@@ -399,6 +402,27 @@ void displayTime6(){
         digit[1] = second() / 10;
         digit[0] = second() % 10;
       }
+  changeDigit();    
+}
+
+void changeDigit() {
+#ifdef ANIMATE  
+  int j=0;
+  byte save;
+  if (maxDigits>3) j=1;   //if 6 or 8 tube clock, dont play with seconds
+  for (int tube=j;tube<maxDigits;tube++) {
+    if ((digit[tube] != oldDigit[tube]) && (digit[tube]<=9)) { 
+      save = digit[tube];
+      for (int i=oldDigit[tube];i<=int(save+10);i++) {
+      digit[tube] = i % 10;
+      delay(70);
+    } //end for i
+    delay(100);
+    oldDigit[tube] = save;
+    digit[tube] = save;
+    } //endif
+  }  //end for tube
+#endif  
 }
 
 void displayTime8(){
@@ -431,6 +455,7 @@ void displayTime8(){
       if (prm.enableBlink && (second()%2 == 0)) digit[2] = 10;  //BLANK
       digit[1] = second() / 10;
       digit[0] = second() % 10;
+      changeDigit();
     }
   }
 }
