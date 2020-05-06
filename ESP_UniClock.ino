@@ -19,7 +19,6 @@
 #define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
 #define MAXBRIGHTNESS 10  //10...15    (if too high value is used, the multiplex may be too slow...)
-#define ANIMATE           //if used, animation, when a digit changes
 
 //Use only 1 from the following options!
 //#define MULTIPLEX74141    //4..8 Nixie tubes
@@ -37,8 +36,9 @@
 #define TEMP_END    40
 #define DATE_START  45
 #define DATE_END    50
+#define ANIMSPEED   50  //Animation speed in millisec 
 
-char webName[] = "UniClock GP 1.0";
+char webName[] = "Nixie UniClock 1.1";
 //--------------------------------------------------------------------------------------------------
 
 #include <ESP8266WiFi.h>
@@ -61,9 +61,12 @@ extern int maxDigits;
 
 WiFiServer server(80);
 String header;
-byte digit[9] = {0,0,0,0,0,0,0,0,0};
-byte oldDigit[9] = {0,0,0,0,0,0,0,0,0};
-boolean digitDP[9];   //actual value to put to display
+
+#define BUFSIZE 9
+byte digit[BUFSIZE];
+byte newDigit[BUFSIZE];
+byte oldDigit[BUFSIZE];
+boolean digitDP[BUFSIZE];   //actual value to put to display
 boolean digitsOnly = true;  //only 0..9 digits are possibly?
 
 // 8266 internal pin registers
@@ -118,6 +121,7 @@ struct {
   byte nightMin = 0;
   byte dayBright = MAXBRIGHTNESS;  // display daytime brightness
   byte nightBright = 5;            // display night brightness
+  byte animMode = 2;               //0=no anim,  if 1 or 2 is used, animation, when a digit changes
   byte magic = 133;                //magic value, to check EEPROM at first start
 } prm;
 
@@ -281,6 +285,7 @@ void factoryReset() {
   prm.nightMin = 0;
   prm.dayBright = MAXBRIGHTNESS;
   prm.nightBright = 3;
+  prm.animMode = 2;        
   prm.magic = 133;              //magic value to check to first start
   saveEEPROM();
   calcTime();
@@ -337,22 +342,24 @@ void cathodeProtect() {
     incMod10(ds1); incMod10(ds2);
     delay(100);
   }
+  memcpy(oldDigit,digit,sizeof(oldDigit));
 }
 
 inline void incMod10(byte &x) { x = (x + 1 == 10 ? 0: x + 1); };
 
+
 void displayTemp(){
   for (int i=0;i<maxDigits;i++) {
     digitDP[i] = false; 
-    digit[i] = 10; }
-  digit[3] = int(dallasTemp) / 10; 
-  if (digit[4]==0) digit[4] = 10;  //BLANK!!!
-  digit[2] = int(dallasTemp) % 10;
+    newDigit[i] = 10; }
+  newDigit[3] = int(dallasTemp) / 10; 
+  if (newDigit[4]==0) newDigit[4] = 10;  //BLANK!!!
+  newDigit[2] = int(dallasTemp) % 10;
   digitDP[2] = true;
-  digit[1] = int(dallasTemp*10) % 10; 
-  digit[0] = 15;
+  newDigit[1] = int(dallasTemp*10) % 10; 
+  newDigit[0] = 15;
+  if (prm.animMode == 1)  memcpy(oldDigit,newDigit,sizeof(digit));  //don't do animation
 }  
-
 
 void displayTime4(){
   for (int i=0;i<maxDigits;i++) digitDP[i] = false;
@@ -360,18 +367,18 @@ void displayTime4(){
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
   if (useDallasTemp && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp();
   else if ((second()>=DATE_START)&& (second()<DATE_END)) {    
-        digit[3] = month() / 10;
-        digit[2] = month() % 10;   
+        newDigit[3] = month() / 10;
+        newDigit[2] = month() % 10;   
         digitDP[2] = true; 
-        digit[1] = day() / 10;
-        digit[0] = day() % 10;
+        newDigit[1] = day() / 10;
+        newDigit[0] = day() % 10;
         }
       else {
-        digit[3] = hour12_24 / 10;
-        if ((!prm.showZero)  && (digit[3] == 0)) digit[3] = 10;
-        digit[2] = hour12_24 % 10;
-        digit[1] = minute() / 10;
-        digit[0] = minute() % 10;
+        newDigit[3] = hour12_24 / 10;
+        if ((!prm.showZero)  && (newDigit[3] == 0)) newDigit[3] = 10;
+        newDigit[2] = hour12_24 % 10;
+        newDigit[1] = minute() / 10;
+        newDigit[0] = minute() % 10;
         if (prm.enableBlink && (second()%2 == 0)) digitDP[2] = false;  
        }
    changeDigit();    
@@ -383,82 +390,105 @@ void displayTime6(){
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
   if (useDallasTemp && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp();
   else if ((second()>=DATE_START)&& (second()<DATE_END)) {    
-        digit[5] = (year()%100) / 10;
-        digit[4] = year() % 10;
+        newDigit[5] = (year()%100) / 10;
+        newDigit[4] = year() % 10;
         digitDP[4] = true;
-        digit[3] = month() / 10;
-        digit[2] = month() % 10;   
+        newDigit[3] = month() / 10;
+        newDigit[2] = month() % 10;   
         digitDP[2] = true; 
-        digit[1] = day() / 10;
-        digit[0] = day() % 10;
+        newDigit[1] = day() / 10;
+        newDigit[0] = day() % 10;
         }
       else {
-        digit[5] = hour12_24 / 10;
-        if ((!prm.showZero)  && (digit[5] == 0)) digit[5] = 10;
-        digit[4] = hour12_24 % 10;
-        digit[3] = minute() / 10;
-        digit[2] = minute() % 10;
+        newDigit[5] = hour12_24 / 10;
+        if ((!prm.showZero)  && (newDigit[5] == 0)) newDigit[5] = 10;
+        newDigit[4] = hour12_24 % 10;
+        newDigit[3] = minute() / 10;
+        newDigit[2] = minute() % 10;
         if (prm.enableBlink && (second()%2 == 0)) digitDP[2] = false;  
-        digit[1] = second() / 10;
-        digit[0] = second() % 10;
+        newDigit[1] = second() / 10;
+        newDigit[0] = second() % 10;
       }
   changeDigit();    
 }
 
-void changeDigit() {
-#ifdef ANIMATE  
-  int j=0;
-  byte save;
-  if (maxDigits>3) j=1;   //if 6 or 8 tube clock, dont play with seconds
-  for (int tube=j;tube<maxDigits;tube++) {
-    if ((digit[tube] != oldDigit[tube]) && (digit[tube]<=9)) { 
-      save = digit[tube];
-      for (int i=oldDigit[tube];i<=int(save+10);i++) {
-      digit[tube] = i % 10;
-      delay(70);
-    } //end for i
-    delay(100);
-    oldDigit[tube] = save;
-    digit[tube] = save;
-    } //endif
-  }  //end for tube
-#endif  
-}
-
 void displayTime8(){
-  for (int i=0;i<maxDigits;i++) {digitDP[i] = false; digit[i] = 10;}
+  for (int i=0;i<maxDigits;i++) {digitDP[i] = false; newDigit[i] = 10;}
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
 
   if (useDallasTemp && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp();
   else {
     if ((second()>=DATE_START) && (second()<DATE_END)) {    
-      digit[7] = year() / 1000;
-      digit[6] = (year()%1000) / 100;    
-      digit[5] = (year()%100) / 10;
-      digit[4] = year() % 10;
+      newDigit[7] = year() / 1000;
+      newDigit[6] = (year()%1000) / 100;    
+      newDigit[5] = (year()%100) / 10;
+      newDigit[4] = year() % 10;
       digitDP[4] = true;
-      digit[3] = month() / 10;
-      digit[2] = month() % 10;   
+      newDigit[3] = month() / 10;
+      newDigit[2] = month() % 10;   
       digitDP[2] = true; 
-      digit[1] = day() / 10;
-      digit[0] = day() % 10;
+      newDigit[1] = day() / 10;
+      newDigit[0] = day() % 10;
+      if (prm.animMode == 1)  memcpy(oldDigit,newDigit,sizeof(oldDigit));  //don't do animation
     }
     else {
-      digit[8] = 10;  //sign digit = BLANK
-      digit[7] = hour12_24 / 10;
-      if ((!prm.showZero)  && (digit[7] == 0)) digit[7] = 10;
-      digit[6] = hour12_24 % 10;
-      digit[5] = 11;  //- sign
-      digit[4] = minute() / 10;
-      digit[3] = minute() % 10;
-      digit[2] = 11;  //- sign
-      if (prm.enableBlink && (second()%2 == 0)) digit[2] = 10;  //BLANK
-      digit[1] = second() / 10;
-      digit[0] = second() % 10;
-      changeDigit();
+      newDigit[8] = 10;  //sign digit = BLANK
+      newDigit[7] = hour12_24 / 10;
+      if ((!prm.showZero)  && (newDigit[7] == 0)) newDigit[7] = 10;
+      newDigit[6] = hour12_24 % 10;
+      newDigit[5] = 11;  //- sign
+      newDigit[4] = minute() / 10;
+      newDigit[3] = minute() % 10;
+      newDigit[2] = 11;  //- sign
+      if (prm.enableBlink && (second()%2 == 0)) newDigit[2] = 10;  //BLANK
+      newDigit[1] = second() / 10;
+      newDigit[0] = second() % 10;
     }
   }
+  changeDigit();
 }
+
+
+void changeDigit() {
+  int j=0;
+
+  for (int i=0;i<maxDigits;i++)   
+    if ((newDigit[i]>9) || ((oldDigit[i]>9) && (newDigit[i]<=9) )) {
+      digit[i] = newDigit[i];    //show special characters ASAP or if special char changes to numbers
+      oldDigit[i] = newDigit[i];
+    }
+  if ((maxDigits>4) && (newDigit[0]!=0)) j=1;   //if 6 or 8 tube clock, dont play with seconds
+  if (memcmp(newDigit,oldDigit,sizeof(newDigit))!=0) {
+    if (prm.animMode == 1) {
+      for (int tube=j;tube<maxDigits;tube++) {
+        if ((newDigit[tube] != oldDigit[tube]) && (newDigit[tube]<=9)) { 
+          for (int i=oldDigit[tube];i<=int(newDigit[tube]+10);i++) {
+            digit[tube] = i % 10;
+            writeDisplaySingle();
+            delay(ANIMSPEED);
+          } //end for i
+          writeDisplaySingle();
+        } //endif
+      }  //end for tube
+    } //endif animMode  
+    else if (prm.animMode==2) {
+      for (int i=0;i<=9;i++) {
+        for (int tube=j;tube<maxDigits;tube++) {
+          if ((newDigit[tube] != oldDigit[tube]) && (newDigit[tube]<=9)) 
+            digit[tube] = (oldDigit[tube]+i) % 10;
+        } //end for tube
+        writeDisplaySingle();
+        delay(ANIMSPEED);
+      }  //end for i
+    }  //endelse animMode
+  } //endif memcmp  
+
+  memcpy(digit,newDigit,sizeof(digit));
+  memcpy(oldDigit,newDigit,sizeof(oldDigit));
+
+}
+
+
 
 
 void evalShutoffTime() {  // Determine whether  tubes should be turned to NIGHT mode
@@ -614,6 +644,15 @@ int tmp = 0;
                 calcTime();
               }
             }
+            else if (strncmp(pch, "anim=", 5) == 0) {
+              tmp = atoi(pch + 5); 
+              if (tmp < 0) tmp = 0;
+              if (tmp > 2) tmp = 2;
+              if (tmp != prm.animMode) {
+                prm.animMode = tmp;
+                mod = true;              
+              }
+            }
             else if (strncmp(pch, "interval=", 9) == 0) {
               tmp = atoi(pch + 9); 
               if (tmp < 0) tmp = 0;
@@ -706,7 +745,8 @@ int tmp = 0;
           client.print("</H1><form method=GET>");
           client.println(txt);  
           client.print("<br>UTC offset (-12..12):<input type=text  maxlength=3 size=3 name=utc_offset value=");  client.print(prm.utc_offset);
-          client.print("><br>SHOW interval (0..240min): <input type=text maxlength=3 size=3 name=interval value=");    client.print(prm.interval);
+          client.print("><br>ANIM (0..2): <input type=text maxlength=1 size=3 name=anim value=");    client.print(prm.animMode);
+          client.print(">  SHOW in (0..240min): <input type=text maxlength=3 size=3 name=interval value=");    client.print(prm.interval);
           client.print("><br>DAY &#160;&#160;&#160;&#160;Brightness (1.."); client.print(MAXBRIGHTNESS);
           client.print("): <input type=text maxlength=2 size=1 name=dayBright value=");    client.print(prm.dayBright);
           client.print("><br>NIGHT Brightness (0.."); client.print(MAXBRIGHTNESS);
