@@ -4,6 +4,7 @@ Universal WifiClock with Nixie, VFD, Numitron tubes or LED display
 Number of digits: 4, 6 or 8
 
 Adjustable day and night brightness
+
 ANIMATE: 4 animation modes, 5 means random animation
 
 Hardver:
