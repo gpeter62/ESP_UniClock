@@ -2,7 +2,7 @@
  *    Universal Clock  Nixie, VFD, LED, Numitron
  *    with optional Dallas Thermometer and DS3231 RTC
  *    v1.0  04/16/2020
- *	  Copyright (C) 2020  Peter Gautier 
+ *    Copyright (C) 2020  Peter Gautier 
  *    
  *    This program is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  */
 //---------------------------- PROGRAM PARAMETERS -------------------------------------------------
 #define DEBUG
-#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
+//#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
 #define MAXBRIGHTNESS 10  //10...15    (if too high value is used, the multiplex may be too slow...)
 
@@ -38,7 +38,7 @@
 #define DATE_END    50
 #define ANIMSPEED   50  //Animation speed in millisec 
 
-char webName[] = "Nixie UniClock 1.1";
+char webName[] = "VFD UniClock 1.1";
 //--------------------------------------------------------------------------------------------------
 
 #include <ESP8266WiFi.h>
@@ -451,15 +451,21 @@ void displayTime8(){
 
 void changeDigit() {
   int j=0;
-
+  byte tmp[30];
+  byte space = 4;
+  byte anim;
+  
+  anim = prm.animMode; if (anim == 5) anim = 1 + rand()%4;
+  
   for (int i=0;i<maxDigits;i++)   
     if ((newDigit[i]>9) || ((oldDigit[i]>9) && (newDigit[i]<=9) )) {
       digit[i] = newDigit[i];    //show special characters ASAP or if special char changes to numbers
       oldDigit[i] = newDigit[i];
     }
   if ((maxDigits>4) && (newDigit[0]!=0)) j=1;   //if 6 or 8 tube clock, dont play with seconds
-  if (memcmp(newDigit,oldDigit,sizeof(newDigit))!=0) {
-    if (prm.animMode == 1) {
+  if (memcmp(newDigit+j,oldDigit+j,maxDigits-j)!=0) {
+    switch (anim) {
+    case 1: 
       for (int tube=j;tube<maxDigits;tube++) {
         if ((newDigit[tube] != oldDigit[tube]) && (newDigit[tube]<=9)) { 
           for (int i=oldDigit[tube];i<=int(newDigit[tube]+10);i++) {
@@ -470,8 +476,8 @@ void changeDigit() {
           writeDisplaySingle();
         } //endif
       }  //end for tube
-    } //endif animMode  
-    else if (prm.animMode==2) {
+      break;  
+    case 2:
       for (int i=0;i<=9;i++) {
         for (int tube=j;tube<maxDigits;tube++) {
           if ((newDigit[tube] != oldDigit[tube]) && (newDigit[tube]<=9)) 
@@ -480,7 +486,32 @@ void changeDigit() {
         writeDisplaySingle();
         delay(ANIMSPEED);
       }  //end for i
-    }  //endelse animMode
+      break;
+    case 3:
+      memcpy(tmp,oldDigit,maxDigits);    
+      memcpy(tmp+maxDigits+space,newDigit,maxDigits);
+      memset(tmp+maxDigits,11,space);  //----
+      for (int i=0;i<maxDigits+space;i++) {
+        for (int tube=0;tube<maxDigits;tube++) {
+          digit[tube%maxDigits] = tmp[i+tube];
+        } //end for tube
+        writeDisplaySingle();
+        delay(ANIMSPEED);
+      } //end for i
+      break;
+    case 4:
+      memcpy(tmp,newDigit,maxDigits);    
+      memcpy(tmp+maxDigits+space,oldDigit,maxDigits);
+      memset(tmp+maxDigits,11,space);  //----
+      for (int i=maxDigits-1+space;i>=0;i--) {
+        for (int tube=0;tube<maxDigits;tube++) {
+          digit[tube%maxDigits] = tmp[i+tube];
+        } //end for tube
+        writeDisplaySingle();
+        delay(ANIMSPEED);
+      } //end for i
+      break;
+  }  
   } //endif memcmp  
 
   memcpy(digit,newDigit,sizeof(digit));
@@ -647,7 +678,7 @@ int tmp = 0;
             else if (strncmp(pch, "anim=", 5) == 0) {
               tmp = atoi(pch + 5); 
               if (tmp < 0) tmp = 0;
-              if (tmp > 2) tmp = 2;
+              if (tmp > 5) tmp = 5;
               if (tmp != prm.animMode) {
                 prm.animMode = tmp;
                 mod = true;              
@@ -745,8 +776,8 @@ int tmp = 0;
           client.print("</H1><form method=GET>");
           client.println(txt);  
           client.print("<br>UTC offset (-12..12):<input type=text  maxlength=3 size=3 name=utc_offset value=");  client.print(prm.utc_offset);
-          client.print("><br>ANIM (0..2): <input type=text maxlength=1 size=3 name=anim value=");    client.print(prm.animMode);
-          client.print(">  SHOW in (0..240min): <input type=text maxlength=3 size=3 name=interval value=");    client.print(prm.interval);
+          client.print("><br>ANIMATE (0..5): <input type=text maxlength=1 size=3 name=anim value=");    client.print(prm.animMode);
+          client.print(">  SHOW (0..240min): <input type=text maxlength=3 size=3 name=interval value=");    client.print(prm.interval);
           client.print("><br>DAY &#160;&#160;&#160;&#160;Brightness (1.."); client.print(MAXBRIGHTNESS);
           client.print("): <input type=text maxlength=2 size=1 name=dayBright value=");    client.print(prm.dayBright);
           client.print("><br>NIGHT Brightness (0.."); client.print(MAXBRIGHTNESS);
