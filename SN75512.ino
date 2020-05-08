@@ -13,7 +13,7 @@ byte digitEnablePins[] = {0,1,2,3,4,5,6,7,8};           //digit enable bits   (Y
 #define PIN_LE      13  // D7 Shift Register Latch Enable
 #define PIN_CLK     12  // D6 Shift Register Clock
 #define PIN_DATA    14  // D5 Shift Register Data
-#define PIN_STROBE  15  // D8 Shift Register Strobe (1=display off     0=display on)
+#define PIN_STROBE  5   // D1 Shift Register Strobe (1=display off     0=display on)
 
 #define PIN_HEAT_A -1   //VFD heater signalA  (if not used, set to -1)
 #define PIN_HEAT_B -1   //VFD heater signalB  (if not used, set to -1)
