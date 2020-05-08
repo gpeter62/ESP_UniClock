@@ -3,8 +3,8 @@
 
 #ifdef NO_MULTIPLEX74141
 
- //change it, if needed for the good tube sequence
-byte tubes[] = {0,1,2,3};         //4 tubes,   old OLED clock...
+ //change it, if needed for the correct tube sequence
+byte tubes[] = {0,1,2,3};         //4 tubes,   old OLED clock...     
 //byte tubes[] = {5,4,3,2,1,0};   //6 tubes, reverse order
 
 int maxDigits = sizeof(tubes);

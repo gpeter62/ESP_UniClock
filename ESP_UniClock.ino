@@ -1,7 +1,7 @@
 /* 
  *    Universal Clock  Nixie, VFD, LED, Numitron
  *    with optional Dallas Thermometer and DS3231 RTC
- *    v1.0  04/16/2020
+ *    v1.1  05/08/2020
  *    Copyright (C) 2020  Peter Gautier 
  *    
  *    This program is free software: you can redistribute it and/or modify
@@ -23,12 +23,13 @@
 //Use only 1 from the following options!
 //#define MULTIPLEX74141    //4..8 Nixie tubes
 //#define NO_MULTIPLEX74141 //4..6 Nixie tubes
-#define MAX6921           //4..8 VFD tubes   (IV18)
+//#define MAX6921           //4..8 VFD tubes   (IV18)
 //#define MM5450            //6..8 LEDS
 //#define MAX7219CNG        //4..8 LED 
 //#define Numitron_4511N
+#define SN75512           //4..8 VFD tubes   
 
-#define colonPin -1        //Blinking Colon pin.  If not used, SET TO -1
+#define colonPin 2        //Blinking Colon pin.  If not used, SET TO -1
 #define TEMP_SENSOR_PIN 4  //Dallas temp sensor pin
 
 //Display temperature and date in every minute between START..END seconds
@@ -38,7 +39,7 @@
 #define DATE_END    50
 #define ANIMSPEED   50  //Animation speed in millisec 
 
-char webName[] = "VFD UniClock 1.1";
+char webName[] = "UniClock 1.1";
 //--------------------------------------------------------------------------------------------------
 
 #include <ESP8266WiFi.h>
@@ -62,12 +63,12 @@ extern int maxDigits;
 WiFiServer server(80);
 String header;
 
-#define BUFSIZE 9
+#define BUFSIZE 10
 byte digit[BUFSIZE];
 byte newDigit[BUFSIZE];
 byte oldDigit[BUFSIZE];
 boolean digitDP[BUFSIZE];   //actual value to put to display
-boolean digitsOnly = true;  //only 0..9 digits are possibly?
+boolean digitsOnly = true;  //only 0..9 numbers are possible to display?
 
 // 8266 internal pin registers
 // https://github.com/esp8266/esp8266-wiki/wiki/gpio-registers
@@ -285,7 +286,7 @@ void factoryReset() {
   prm.nightMin = 0;
   prm.dayBright = MAXBRIGHTNESS;
   prm.nightBright = 3;
-  prm.animMode = 2;        
+  prm.animMode = 5;        
   prm.magic = 133;              //magic value to check to first start
   saveEEPROM();
   calcTime();

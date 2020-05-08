@@ -1,7 +1,7 @@
 #ifdef MAX7219CNG
 
 int maxDigits = 6;
-byte tubes[] = {0,1,2,3,4,5}; 
+byte tubes[] = {0,1,2,3,4,5};    //change it, if needed for the correct tube sequence
 
 //MAX7219CNG control pins
 #define PIN_LOAD 15  // D8 LOAD/CS_
@@ -39,8 +39,8 @@ byte charDefinition[] = {
                    B10011100    // C  adef (15)
 };
 
-//Fill this table with the pin numbers of MAX7219 chip!   I use only No-Decode mode for flexible hardware
-byte segmentEnablePins[] =  {6,5,4,3,2,1,0,7};   //segment enable pins of MAX7219 (a,b,c,d,e,f,g,DP)
+//Fill this table with the OUT bits numbers of MAX7219 chip!   I use only No-Decode mode for flexible hardware
+byte segmentEnablePins[] =  {6,5,4,3,2,1,0,7};   //segment enable bits of MAX7219 (a,b,c,d,e,f,g,DP)   (You MUST define always 8 bits!!!)
 
 #define MAXCHARS sizeof(charDefinition)
 #define MAXSEGMENTS 8
