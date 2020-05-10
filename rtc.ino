@@ -1,8 +1,16 @@
 #ifdef USE_RTC
 
-#define PIN_MODE_SWITCH 12   //D6
-#define PIN_FLD_BUTTON 16    //D0
-#define PIN_SET_BUTTON  2    //D4
+//------ Mode Switch and Push Buttons ---------------------
+#define PIN_MODE_SWITCH 2   //D4
+#define PIN_FLD_BUTTON 0    //D3
+#define PIN_SET_BUTTON  16  //D0
+
+//------- I2C bus definition   Any pins are usable --------
+//#define PIN_SDA 4           //D2   original general setup
+//#define PIN_SCL 5           //D1
+
+#define PIN_SDA 5           //D1   SDA/SCL changed
+#define PIN_SCL 4           //D2
 
 #define MENU_UNSELECT_TIMEOUT 30000
 
@@ -43,7 +51,7 @@ void setupRTC() {
   pinMode(PIN_SET_BUTTON,INPUT_PULLUP);
   
   I2C_ClearBus();
-  
+  Wire.begin(PIN_SDA,PIN_SCL); 
   Wire.begin();   
   delay(100);
   Wire.beginTransmission(0x68);

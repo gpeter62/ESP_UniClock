@@ -13,21 +13,24 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *    GNU General Public License <http://www.gnu.org/licenses/> for more details.
+ *    
+ *    Always check the usable pins of 8266:
+ *    https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/
  */
 //---------------------------- PROGRAM PARAMETERS -------------------------------------------------
 #define DEBUG
-//#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
-//#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
+#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
+#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
 #define MAXBRIGHTNESS 10  //10...15    (if too high value is used, the multiplex may be too slow...)
 
 //Use only 1 from the following options!
-//#define MULTIPLEX74141    //4..8 Nixie tubes
+#define MULTIPLEX74141    //4..8 Nixie tubes
 //#define NO_MULTIPLEX74141 //4..6 Nixie tubes
 //#define MAX6921           //4..8 VFD tubes   (IV18)
 //#define MM5450            //6..8 LEDS
 //#define MAX7219CNG        //4..8 LED 
 //#define Numitron_4511N
-#define SN75512           //4..8 VFD tubes   
+//#define SN75512           //4..8 VFD tubes   
 
 #define colonPin 2        //Blinking Colon pin.  If not used, SET TO -1
 #define TEMP_SENSOR_PIN 4  //Dallas temp sensor pin

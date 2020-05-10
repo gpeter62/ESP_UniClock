@@ -14,6 +14,7 @@ const long DS_delay = 1000;         // Reading the temperature from the DS18x20 
 
 void setupTemp() {
   DPRINTLN("Setup Dallas thermometer...");
+  pinMode(TEMP_SENSOR_PIN,OUTPUT);
   oneWire.reset();
   delay(200 );  //200ms
 

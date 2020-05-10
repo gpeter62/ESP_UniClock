@@ -1,5 +1,6 @@
 #ifdef MAX6921
-// IV18 VFD CLock
+// for example usable with IV18 VFD CLock
+// Pulse Filament Drive (High Frequency RMS) is supported, if PIN_HEAT_A and PIN_HEAT_B are set!!!
 
 #define VFDrefresh 1200    //msec, Multiplex time period. Greater value => slower multiplex frequency
 
