@@ -60,11 +60,11 @@ Program parameters:
 
 #define ANIMSPEED   50  //Animation speed in millisec 
 
-char webName[] = "Numitron Clock 1.1";
+char webName[] = "UniClock 1.1";
 
 --------------------------------------------------------------------------------------------------------
 
-Special parameters (for example) for MAX6921:
+Special hardware-depended parameters (for example) for MAX6921:
 
 #define VFDrefresh 1200    //msec, Multiplex time period. Greater value => slower multiplex frequency
 
