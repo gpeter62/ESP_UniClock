@@ -24,16 +24,16 @@
 #define MAXBRIGHTNESS 10  //10...15    (if too high value is used, the multiplex may be too slow...)
 
 //Use only 1 from the following options!
-#define MULTIPLEX74141    //4..8 Nixie tubes
+//#define MULTIPLEX74141    //4..8 Nixie tubes
 //#define NO_MULTIPLEX74141 //4..6 Nixie tubes
-//#define MAX6921           //4..8 VFD tubes   (IV18)
+#define MAX6921           //4..8 VFD tubes   (IV18)
 //#define MM5450            //6..8 LEDS
 //#define MAX7219CNG        //4..8 LED 
 //#define Numitron_4511N
 //#define SN75512           //4..8 VFD tubes   
 
-#define colonPin 2        //Blinking Colon pin.  If not used, SET TO -1
-#define TEMP_SENSOR_PIN 4  //Dallas temp sensor pin
+#define colonPin -1        //Blinking Colon pin.  If not used, SET TO -1
+#define TEMP_SENSOR_PIN 3//4  //Dallas temp sensor pin
 
 //Display temperature and date in every minute between START..END seconds
 #define TEMP_START  35

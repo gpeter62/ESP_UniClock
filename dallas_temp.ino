@@ -13,7 +13,7 @@ const long intervalTemp = 30000;      // Do a temperature measurement every 30se
 const long DS_delay = 1000;         // Reading the temperature from the DS18x20 can take up to 750ms
 
 void setupTemp() {
-  DPRINTLN("Setup Dallas thermometer...");
+  DPRINT("Starting Dallas thermometer on GPIO");  DPRINTLN(TEMP_SENSOR_PIN);
   pinMode(TEMP_SENSOR_PIN,OUTPUT);
   oneWire.reset();
   delay(200 );  //200ms
@@ -25,7 +25,7 @@ void setupTemp() {
   
   int counter = 0;
   while ((tempSensors.getDeviceCount() == 0) && (counter<10)) {
-    DPRINT("No DS18x20 temperature sensor found on pin "); DPRINTLN(TEMP_SENSOR_PIN); 
+    DPRINT("No DS18x20 temperature sensor found on GPIO"); DPRINTLN(TEMP_SENSOR_PIN); 
     resetSensors();
     counter++;
   }  //end while
@@ -60,7 +60,7 @@ float tmp_temp;
           dallasTemp = 0; 
           DallasOK = false;
           resetSensors();
-          DPRINTLN("Bad TEMP sensor!");
+          DPRINTLN("Missing TEMP sensor!");
           lastRequest -= intervalTemp;  //retry ASAP!
           }
     else {    

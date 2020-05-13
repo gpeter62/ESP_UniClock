@@ -4,15 +4,30 @@
 
 #define VFDrefresh 1200    //msec, Multiplex time period. Greater value => slower multiplex frequency
 
+
+//#define IV18
+#ifdef IV18
 //Fill this table with the OUT positions of the MAX6921 chip!   
 byte segmentEnablePins[] =  {0,2,5,6,4,1,3,7};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
-byte digitEnablePins[] = {18,11,17,12,16,13,14,15}; //19};  //segment enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  (You may define any number of digits between 1 and 10 )
-
+byte digitEnablePins[] = {18,11,17,12,16,13,14,15}; //19};  //segment enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  (You may define any numb
 //MAX6921 pins
 #define PIN_LE    12  // D6 Shift Register Latch Enable
 #define PIN_CLK   13  // D7 Shift Register Clock
 #define PIN_DATA  14  // D5 Shift Register Data
 #define PIN_BL    15  // D8 Shift Register Blank (1=display off     0=display on)
+#endif
+
+#define IVL2
+#ifdef IVL2
+//Fill this table with the OUT positions of the MAX6921 chip!   
+byte segmentEnablePins[] =  {11,13,5,8,3,12,2,1};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
+byte digitEnablePins[] = {10,9,4,0};  //segment enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  
+//MAX6921 pins
+#define PIN_LE    13  // D6 Shift Register Latch Enable
+#define PIN_CLK   12  // D7 Shift Register Clock
+#define PIN_DATA  14  // D5 Shift Register Data
+#define PIN_BL    15  // D8 Shift Register Blank (1=display off     0=display on)
+#endif
 
 #define PIN_HEAT_A -1   //VFD heater signalA  (if not used, set to -1)
 #define PIN_HEAT_B -1   //VFD heater signalB  (if not used, set to -1)
@@ -55,15 +70,19 @@ uint32_t digitEnableBits[10];
 boolean useHeater = false;                 //Is heater driver signal used?
 //-----------------------------------------------------------------------------------------
 
+//https://sub.nanona.fi/esp8266/timing-and-ticks.html
+//One tick is 1us / 80 = 0.0125us = 12.5ns on 80MHz
+//One tick is 1us / 80 = 0.0125us = 6.25ns on 160MHz
+// 1 NOP is 1 tick
+
 void ICACHE_RAM_ATTR writeDisplay(){        // Writes to the MAX6921 driver for IV-18
 static volatile uint32_t val = 0;
 static volatile byte pos = 0;
 static volatile int brightCounter[] = {0,9,2,8,4,7,6,5,3,1};
 static volatile boolean heatState = false;
-//https://sub.nanona.fi/esp8266/timing-and-ticks.html
-//One tick is 1us / 80 = 0.0125us = 12.5ns on 80MHz
-//One tick is 1us / 80 = 0.0125us = 6.25ns on 160MHz
-// 1 NOP is 1 tick
+const byte tubeTime[] = {2,1,1,4,1,1,1,1,1};      //ticks to stay on the same digit to compensate different digit brightness
+                                                  // if all digits are equal, 1,1,1,1,1,1,1,1,1 should be!
+static byte timer[]   = {0,0,0,0,0,0,0,0,0};
 
   //noInterrupts();
   
@@ -125,9 +144,12 @@ static volatile boolean heatState = false;
   asm volatile ("nop");
   asm volatile ("nop");
   WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_LE_BIT );
-
-  pos++; if (pos >= maxDigits) pos = 0; 
-
+  
+  timer[pos]++;
+  if (timer[pos]>=tubeTime[pos]) {
+    timer[pos] = 0;
+    pos++; if (pos >= maxDigits) pos = 0; 
+  }
   timer1_write(VFDrefresh);
   //interrupts();
 }
@@ -166,19 +188,24 @@ DPRINTLN("---- Generated Character / Pins table -----");
 
 
 void setup_pins() {
-  DPRINTLN("Setup pins...");
   pinMode(PIN_LE,  OUTPUT);
-  pinMode(PIN_BL,  OUTPUT); // a priori inutile avec le PWM
+  pinMode(PIN_BL,  OUTPUT);   digitalWrite(PIN_BL,LOW);  //brightness
   pinMode(PIN_DATA,OUTPUT);
   pinMode(PIN_CLK, OUTPUT);
-  digitalWrite(PIN_BL,LOW);  //brightness
+  
   if ((PIN_HEAT_A >=0) && (PIN_HEAT_B>=0)) {
     useHeater = true;
-    pinMode(PIN_HEAT_A, OUTPUT);
-    digitalWrite(PIN_HEAT_A,HIGH);
-    pinMode(PIN_HEAT_B, OUTPUT);
-    digitalWrite(PIN_HEAT_B,LOW);
+    pinMode(PIN_HEAT_A, OUTPUT);  digitalWrite(PIN_HEAT_A,HIGH);
+    pinMode(PIN_HEAT_B, OUTPUT);  digitalWrite(PIN_HEAT_B,LOW);
+    DPRINT("Filament Driver: GPIO"); DPRINT(PIN_HEAT_A);
+    DPRINT(" / GPIO");      DPRINTLN(PIN_HEAT_B);
   }
+  
+  DPRINTLN("Setup MAX6921 pins...");
+  DPRINT("- CLK   : GPIO"); DPRINTLN(PIN_CLK);
+  DPRINT("- DATAIN: GPIO"); DPRINTLN(PIN_DATA);
+  DPRINT("- LE    : GPIO"); DPRINTLN(PIN_LE);
+  DPRINT("- BLANK : GPIO"); DPRINTLN(PIN_BL);
   
   generateBitTable();
   digitsOnly = false;
