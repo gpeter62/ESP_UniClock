@@ -1,9 +1,9 @@
 #ifdef USE_RTC
 
 //------ Mode Switch and Push Buttons ---------------------
-#define PIN_MODE_SWITCH  0 //2   //D4
-#define PIN_FLD_BUTTON   2 //0   //D3
-#define PIN_SET_BUTTON   16 //16  //D0
+#define PIN_MODE_SWITCH  A0    //D4
+#define PIN_FLD_BUTTON   0     //D3
+#define PIN_SET_BUTTON   16    //D0
 
 //------- I2C bus definition   Any pins are usable --------
 //#define PIN_SDA 4           //D2   original general setup
@@ -44,7 +44,7 @@ int fld = 0;
 unsigned long LastModify = 0;
 
 void setupRTC() {
-  pinMode(PIN_MODE_SWITCH,INPUT_PULLUP);   DPRINT("- MODE Switch : GPIO"); DPRINTLN(PIN_MODE_SWITCH);
+  pinMode(PIN_MODE_SWITCH,INPUT);          DPRINT("- MODE Switch : GPIO"); DPRINTLN(PIN_MODE_SWITCH);
   pinMode(PIN_FLD_BUTTON,INPUT_PULLUP);    DPRINT("- FIELD Button: GPIO"); DPRINTLN(PIN_FLD_BUTTON);
   pinMode(PIN_SET_BUTTON,INPUT_PULLUP);    DPRINT("- SET   Button: GPIO"); DPRINTLN(PIN_SET_BUTTON);
 
@@ -62,7 +62,7 @@ void setupRTC() {
     DPRINTLN("RTC found on 0x68.");
     DS3231_init(DS3231_CONTROL_INTCN);
     DS3231_get(&tim);
-    clockWifiMode = digitalRead(PIN_MODE_SWITCH);
+    checkWifiMode();
   }
   else { 
     DPRINTLN("!!!No RTC found on 0x68!!!");
@@ -143,7 +143,11 @@ void saveRTC() {
 
 //-------------------------- check buttons and switch  ------------------------------------------------
 void checkWifiMode() {
-  clockWifiMode = digitalRead(PIN_MODE_SWITCH);
+  if (PIN_MODE_SWITCH==A0) {
+    clockWifiMode = analogRead(PIN_MODE_SWITCH)>100;
+  }
+  else 
+    clockWifiMode = digitalRead(PIN_MODE_SWITCH);
   //clockWifiMode = false;  //TEST ONLY!!!!
 }  
 
