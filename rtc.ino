@@ -1,9 +1,9 @@
 #ifdef USE_RTC
 
 //------ Mode Switch and Push Buttons ---------------------
-#define PIN_MODE_SWITCH  A0    //D4
-#define PIN_FLD_BUTTON   0     //D3
-#define PIN_SET_BUTTON   16    //D0
+#define PIN_MODE_SWITCH  A0    
+#define PIN_FLD_BUTTON   16     
+#define PIN_SET_BUTTON   0    
 
 //------- I2C bus definition   Any pins are usable --------
 //#define PIN_SDA 4           //D2   original general setup
@@ -45,8 +45,16 @@ unsigned long LastModify = 0;
 
 void setupRTC() {
   pinMode(PIN_MODE_SWITCH,INPUT);          DPRINT("- MODE Switch : GPIO"); DPRINTLN(PIN_MODE_SWITCH);
-  pinMode(PIN_FLD_BUTTON,INPUT_PULLUP);    DPRINT("- FIELD Button: GPIO"); DPRINTLN(PIN_FLD_BUTTON);
-  pinMode(PIN_SET_BUTTON,INPUT_PULLUP);    DPRINT("- SET   Button: GPIO"); DPRINTLN(PIN_SET_BUTTON);
+  pinMode(PIN_FLD_BUTTON,INPUT);    DPRINT("- FIELD Button: GPIO"); DPRINT(PIN_FLD_BUTTON); 
+  pinMode(PIN_SET_BUTTON,INPUT);    DPRINT("- SET   Button: GPIO"); DPRINTLN(PIN_SET_BUTTON);
+/*  
+while (true) {
+  DPRINT(digitalRead(PIN_MODE_SWITCH)); DPRINT(" / "); 
+  DPRINT(digitalRead(PIN_FLD_BUTTON));  DPRINT(" / ");
+  DPRINTLN(digitalRead(PIN_SET_BUTTON));
+  delay(1000);
+  }
+*/  
 
   DPRINTLN("Starting RTC Clock...");    
   DPRINT("- SDA: GPIO"); DPRINTLN(PIN_SDA);
