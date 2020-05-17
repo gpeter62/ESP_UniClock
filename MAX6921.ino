@@ -4,12 +4,13 @@
 
 #define VFDrefresh 1200    //msec, Multiplex time period. Greater value => slower multiplex frequency
 
-
-//#define IV18
+#define IV18
 #ifdef IV18
 //Fill this table with the OUT positions of the MAX6921 chip!   
 byte segmentEnablePins[] =  {0,2,5,6,4,1,3,7};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
 byte digitEnablePins[] = {18,11,17,12,16,13,14,15}; //19};  //segment enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  (You may define any numb
+const byte tubeTime[] = {1,1,1,1,1,1,1,1,1};      //ticks to stay on the same digit to compensate different digit brightness
+                                                  // if all digits are equal, 1,1,1,1,1,1,1,1,1 should be!
 //MAX6921 pins
 #define PIN_LE    12  // D6 Shift Register Latch Enable
 #define PIN_CLK   13  // D7 Shift Register Clock
@@ -17,11 +18,13 @@ byte digitEnablePins[] = {18,11,17,12,16,13,14,15}; //19};  //segment enable OUT
 #define PIN_BL    15  // D8 Shift Register Blank (1=display off     0=display on)
 #endif
 
-#define IVL2
+//#define IVL2
 #ifdef IVL2
 //Fill this table with the OUT positions of the MAX6921 chip!   
 byte segmentEnablePins[] =  {11,13,5,8,3,12,2,1};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
 byte digitEnablePins[] = {10,9,4,0};  //segment enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  
+const byte tubeTime[] = {1,1,1,4,1,1,1,1,1};      //ticks to stay on the same digit to compensate different digit brightness
+                                                  // if all digits are equal, 1,1,1,1,1,1,1,1,1 should be!
 //MAX6921 pins
 #define PIN_LE    13  // D6 Shift Register Latch Enable
 #define PIN_CLK   12  // D7 Shift Register Clock
@@ -59,6 +62,7 @@ byte charDefinition[] = {
                    B10011100    // C  adef (15)
 };
 
+uint32_t animationMaskBits[5];
 
 #define MAXCHARS sizeof(charDefinition)
 #define MAXSEGMENTS sizeof(segmentEnablePins)
@@ -80,8 +84,7 @@ static volatile uint32_t val = 0;
 static volatile byte pos = 0;
 static volatile int brightCounter[] = {0,9,2,8,4,7,6,5,3,1};
 static volatile boolean heatState = false;
-const byte tubeTime[] = {2,1,1,4,1,1,1,1,1};      //ticks to stay on the same digit to compensate different digit brightness
-                                                  // if all digits are equal, 1,1,1,1,1,1,1,1,1 should be!
+
 static byte timer[]   = {0,0,0,0,0,0,0,0,0};
 
   //noInterrupts();
@@ -109,6 +112,8 @@ static byte timer[]   = {0,0,0,0,0,0,0,0,0};
   
   val = (digitEnableBits[pos] | charTable[digit[pos]]);  //the full bitmap to send to MAX chip
   if (digitDP[pos]) val = val | charTable[12];    //Decimal Point
+  if (animMask[pos]>0) val &= animationMaskBits[animMask[pos]-1];  //animationMode 6, mask characters from up to down and back
+  
   for (int i=0; i<20; i++)  {
     if ((val & uint32_t(1 << (19 - i))) ) {
       WRITE_PERI_REG( PIN_OUT_SET, PIN_DATA_BIT );
@@ -162,7 +167,15 @@ uint32_t out;
     segmentEnableBits[i] = uint32_t(1<<segmentEnablePins[i]);
     //DPRINT(i); DPRINT(": "); DPRINTLN(segmentEnableBits[i],BIN);
   }
-  
+  animationMaskBits[0] = uint32_t(1<<segmentEnablePins[0]);  //a
+  animationMaskBits[1] = animationMaskBits[0] | uint32_t(1<<segmentEnablePins[1]) | uint32_t(1<<segmentEnablePins[5]);  //bf
+  animationMaskBits[2] = animationMaskBits[1] | uint32_t(1<<segmentEnablePins[6]);  //g
+  animationMaskBits[3] = animationMaskBits[2] | uint32_t(1<<segmentEnablePins[4]) | uint32_t(1<<segmentEnablePins[2]);  //ec
+  animationMaskBits[4] = animationMaskBits[3] | uint32_t(1<<segmentEnablePins[3]);  //d
+  for (int i=0;i<5;i++) {
+    animationMaskBits[i] = ~animationMaskBits[i]; //invert bits
+    //DPRINTLN(animationMaskBits[i],HEX);
+  }
   DPRINTLN("--- Generating digit pins bitmap ---");
   for (int i=0;i<maxDigits;i++) {
     digitEnableBits[i] = uint32_t(1 << digitEnablePins[i]);

@@ -1,7 +1,7 @@
 /* 
  *    Universal Clock  Nixie, VFD, LED, Numitron
  *    with optional Dallas Thermometer and DS3231 RTC
- *    v1.1  05/08/2020
+ *    v1.1  05/17/2020
  *    Copyright (C) 2020  Peter Gautier 
  *    
  *    This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@
  */
 //---------------------------- PROGRAM PARAMETERS -------------------------------------------------
 #define DEBUG
-#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
-#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
+//#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
+//#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
 #define MAXBRIGHTNESS 10  //10...15    (if too high value is used, the multiplex may be too slow...)
 
 //Use only 1 from the following options!
@@ -42,7 +42,7 @@
 #define DATE_END    50
 #define ANIMSPEED   50  //Animation speed in millisec 
 
-char webName[] = "UniClock 1.1";
+char webName[] = "UniClock 1.2";
 //--------------------------------------------------------------------------------------------------
 
 #include <ESP8266WiFi.h>
@@ -72,6 +72,7 @@ byte newDigit[BUFSIZE];
 byte oldDigit[BUFSIZE];
 boolean digitDP[BUFSIZE];   //actual value to put to display
 boolean digitsOnly = true;  //only 0..9 numbers are possible to display?
+byte animMask[BUFSIZE];     //0 = no animation mask is used
 
 // 8266 internal pin registers
 // https://github.com/esp8266/esp8266-wiki/wiki/gpio-registers
@@ -148,7 +149,7 @@ void configModeCallback (WiFiManager *myWiFiManager) {
 void setup() {
   DPRINTBEGIN(115200); DPRINTLN(" ");
   delay(100);
-
+  memset(animMask,0,sizeof(animMask));
   if (colonPin>=0)  pinMode(colonPin, OUTPUT);
 
   setupTemp();
@@ -459,7 +460,7 @@ void changeDigit() {
   byte space = 4;
   byte anim;
   
-  anim = prm.animMode; if (anim == 5) anim = 1 + rand()%4;
+  anim = prm.animMode; if (anim == 6) anim = 1 + rand()%5;
   
   for (int i=0;i<maxDigits;i++)   
     if ((newDigit[i]>9) || ((oldDigit[i]>9) && (newDigit[i]<=9) )) {
@@ -514,6 +515,25 @@ void changeDigit() {
         writeDisplaySingle();
         delay(ANIMSPEED);
       } //end for i
+      break;
+    case 5:
+    memset(animMask,0,sizeof(animMask));
+      for (int i=1;i<=5;i++) {
+        for (int tube=j;tube<maxDigits;tube++) {
+          if (oldDigit[tube] !=newDigit[tube]) animMask[tube]=i; 
+        }  //end for tube
+        writeDisplaySingle();
+        delay(ANIMSPEED);
+      }  //end for i
+      memcpy(digit,newDigit,sizeof(digit));
+      for (int i=1;i<=5;i++) {
+        for (int tube=j;tube<maxDigits;tube++) {
+          if (oldDigit[tube] !=newDigit[tube]) animMask[tube]=6-i;
+        }  //end for tube
+         writeDisplaySingle();        
+        delay(ANIMSPEED);
+      }  //end for i     
+      memset(animMask,0,sizeof(animMask)); 
       break;
   }  
   } //endif memcmp  
@@ -682,7 +702,7 @@ int tmp = 0;
             else if (strncmp(pch, "anim=", 5) == 0) {
               tmp = atoi(pch + 5); 
               if (tmp < 0) tmp = 0;
-              if (tmp > 5) tmp = 5;
+              if (tmp > 6) tmp = 6;
               if (tmp != prm.animMode) {
                 prm.animMode = tmp;
                 mod = true;              
@@ -780,7 +800,7 @@ int tmp = 0;
           client.print("</H1><form method=GET>");
           client.println(txt);  
           client.print("<br>UTC offset (-12..12):<input type=text  maxlength=3 size=3 name=utc_offset value=");  client.print(prm.utc_offset);
-          client.print("><br>ANIMATE (0..5): <input type=text maxlength=1 size=3 name=anim value=");    client.print(prm.animMode);
+          client.print("><br>ANIMATE (0..6): <input type=text maxlength=1 size=3 name=anim value=");    client.print(prm.animMode);
           client.print(">  SHOW (0..240min): <input type=text maxlength=3 size=3 name=interval value=");    client.print(prm.interval);
           client.print("><br>DAY &#160;&#160;&#160;&#160;Brightness (1.."); client.print(MAXBRIGHTNESS);
           client.print("): <input type=text maxlength=2 size=1 name=dayBright value=");    client.print(prm.dayBright);
