@@ -19,7 +19,7 @@
  */
 //---------------------------- PROGRAM PARAMETERS -------------------------------------------------
 #define DEBUG
-//#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
+#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
 #define MAXBRIGHTNESS 10  //10...15    (if too high value is used, the multiplex may be too slow...)
 
@@ -33,7 +33,7 @@
 //#define SN75512           //4..8 VFD tubes   
 
 #define colonPin -1        //Blinking Colon pin.  If not used, SET TO -1
-#define TEMP_SENSOR_PIN 3//4  //Dallas temp sensor pin
+#define TEMP_SENSOR_PIN 4  //3 or 4??  Dallas temp sensor pin
 
 //Display temperature and date in every minute between START..END seconds
 #define TEMP_START  35
@@ -461,13 +461,16 @@ void changeDigit() {
   byte anim;
   
   anim = prm.animMode; if (anim == 6) anim = 1 + rand()%5;
-  
-  for (int i=0;i<maxDigits;i++)   
-    if ((newDigit[i]>9) || ((oldDigit[i]>9) && (newDigit[i]<=9) )) {
-      digit[i] = newDigit[i];    //show special characters ASAP or if special char changes to numbers
-      oldDigit[i] = newDigit[i];
-    }
-  if ((maxDigits>4) && (newDigit[0]!=0)) j=1;   //if 6 or 8 tube clock, dont play with seconds
+
+  if (anim != 5) {
+    for (int i=0;i<maxDigits;i++)   
+      if ((newDigit[i]>9) || ((oldDigit[i]>9) && (newDigit[i]<=9) )) {
+        digit[i] = newDigit[i];    //show special characters ASAP or if special char changes to numbers
+        oldDigit[i] = newDigit[i];
+      }
+      if ((maxDigits>4) && (newDigit[0]!=0)) j=1;   //if 6 or 8 tube clock, dont play with seconds  
+  }    
+
   if (memcmp(newDigit+j,oldDigit+j,maxDigits-j)!=0) {
     switch (anim) {
     case 1: 
@@ -520,7 +523,7 @@ void changeDigit() {
     memset(animMask,0,sizeof(animMask));
       for (int i=1;i<=5;i++) {
         for (int tube=j;tube<maxDigits;tube++) {
-          if (oldDigit[tube] !=newDigit[tube]) animMask[tube]=i; 
+          if (oldDigit[tube] != newDigit[tube]) animMask[tube]=i; 
         }  //end for tube
         writeDisplaySingle();
         delay(ANIMSPEED);
@@ -528,7 +531,7 @@ void changeDigit() {
       memcpy(digit,newDigit,sizeof(digit));
       for (int i=1;i<=5;i++) {
         for (int tube=j;tube<maxDigits;tube++) {
-          if (oldDigit[tube] !=newDigit[tube]) animMask[tube]=6-i;
+          if (oldDigit[tube] != newDigit[tube]) animMask[tube]=6-i;
         }  //end for tube
          writeDisplaySingle();        
         delay(ANIMSPEED);
