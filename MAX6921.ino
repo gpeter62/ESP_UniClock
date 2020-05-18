@@ -2,15 +2,15 @@
 // for example usable with IV18 VFD CLock
 // Pulse Filament Drive (High Frequency RMS) is supported, if PIN_HEAT_A and PIN_HEAT_B are set!!!
 
-#define VFDrefresh 1200    //msec, Multiplex time period. Greater value => slower multiplex frequency
+//#define VFDrefresh 1200    //msec, Multiplex time period. Greater value => slower multiplex frequency
 
 #define IV18
 #ifdef IV18
 //Fill this table with the OUT positions of the MAX6921 chip!   
 byte segmentEnablePins[] =  {0,2,5,6,4,1,3,7};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
 byte digitEnablePins[] = {18,11,17,12,16,13,14,15}; //19};  //segment enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  (You may define any numb
-const byte tubeTime[] = {1,1,1,1,1,1,1,1,1};      //ticks to stay on the same digit to compensate different digit brightness
-                                                  // if all digits are equal, 1,1,1,1,1,1,1,1,1 should be!
+const int tubeTime[] = {1200,1200,1200,1200,1200,1200,1200,1200,1200};      //ticks to stay on the same digit to compensate different digit brightness
+                                                  
 //MAX6921 pins
 #define PIN_LE    12  // D6 Shift Register Latch Enable
 #define PIN_CLK   13  // D7 Shift Register Clock
@@ -23,8 +23,8 @@ const byte tubeTime[] = {1,1,1,1,1,1,1,1,1};      //ticks to stay on the same di
 //Fill this table with the OUT positions of the MAX6921 chip!   
 byte segmentEnablePins[] =  {11,13,5,8,3,12,2,1};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
 byte digitEnablePins[] = {10,9,4,0};  //segment enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  
-const byte tubeTime[] = {1,1,1,4,1,1,1,1,1};      //ticks to stay on the same digit to compensate different digit brightness
-                                                  // if all digits are equal, 1,1,1,1,1,1,1,1,1 should be!
+const int tubeTime[] = {1200,1200,1200,3000,1200,1200,1200,1200,1200};      //ticks to stay on the same digit to compensate different digit brightness
+                                               
 //MAX6921 pins
 #define PIN_LE    13  // D6 Shift Register Latch Enable
 #define PIN_CLK   12  // D7 Shift Register Clock
@@ -84,8 +84,6 @@ static volatile uint32_t val = 0;
 static volatile byte pos = 0;
 static volatile int brightCounter[] = {0,9,2,8,4,7,6,5,3,1};
 static volatile boolean heatState = false;
-
-static byte timer[]   = {0,0,0,0,0,0,0,0,0};
 
   //noInterrupts();
   
@@ -149,13 +147,8 @@ static byte timer[]   = {0,0,0,0,0,0,0,0,0};
   asm volatile ("nop");
   asm volatile ("nop");
   WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_LE_BIT );
-  
-  timer[pos]++;
-  if (timer[pos]>=tubeTime[pos]) {
-    timer[pos] = 0;
-    pos++; if (pos >= maxDigits) pos = 0; 
-  }
-  timer1_write(VFDrefresh);
+  timer1_write(tubeTime[pos]);
+  pos++; if (pos >= maxDigits) pos = 0; 
   //interrupts();
 }
 
@@ -225,7 +218,7 @@ void setup_pins() {
     
   timer1_attachInterrupt(writeDisplay);
   timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
-  timer1_write(VFDrefresh); 
+  timer1_write(tubeTime[0]); 
 }  
 
 void writeDisplaySingle() {}

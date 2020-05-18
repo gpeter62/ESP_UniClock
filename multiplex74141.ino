@@ -3,7 +3,8 @@
 byte digitEnablePins[] = {13,12,14,15};    //define here the digit enable pins from 4 to 8
 byte ABCDPins[4] = {16,5,4,0};
 int maxDigits = sizeof(digitEnablePins);
-int PWMrefresh=2000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+//int PWMrefresh=2000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+const int tubeTime[] = {1200,1200,1200,1200,1200,1200,1200,1200,1200};      //ticks to stay on the same digit to compensate different digit brightness
 
 void setup_pins() {
   DPRINTLN("Setup pins...");
@@ -11,7 +12,7 @@ void setup_pins() {
   for (int i=0;i<4;i++) pinMode(ABCDPins[i], OUTPUT);
   timer1_attachInterrupt(writeDisplay);
   timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
-  timer1_write(PWMrefresh); 
+  timer1_write(tubeTime[0]); 
 }
 
 void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
@@ -37,7 +38,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
     brightCounter++; 
     if (brightCounter>MAXBRIGHTNESS) brightCounter = 1;
   }  
-  timer1_write(PWMrefresh);
+  timer1_write(tubeTime[oldPos]);
 }
 
 void writeDisplaySingle() {}
