@@ -66,7 +66,7 @@ char webName[] = "Numitron Clock 1.1";
 
 Special parameters (for example) for MAX6921:
 
-#define VFDrefresh 1200    //msec, Multiplex time period. Greater value => slower multiplex frequency
+const int tubeTime[] = {1200,1200,1200,1200,1200,1200,1200,1200,1200};      //ticks to bright the the same digit to compensate different tube brightness
 
 //Fill this table with the pin numbers of MAX6921 chip!   
 
