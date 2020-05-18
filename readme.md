@@ -1,4 +1,4 @@
-# ESP_UniClock
+# ESP_UniClock v1.2
 
 Universal WifiClock with Nixie, VFD, Numitron tubes or LED display
 Number of digits: 4, 6 or 8
@@ -27,7 +27,7 @@ Program parameters:
 
 //#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
 
-//#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
+//#define USE_RTC           //any 2 pins can be used as I2C pins!  
 
 #define MAXBRIGHTNESS 10  //10...15    (if too high value is used, the multiplex may be too slow...)
 
@@ -37,12 +37,13 @@ Program parameters:
 
 //#define NO_MULTIPLEX74141 //4..6 Nixie tubes
 
-//#define MAX6921           //4..8 VFD tubes   (IV18)
+#define MAX6921           //4..8 VFD tubes   (IV18)
 
 //#define MM5450            //6..8 LEDS
 
 //#define MAX7219CNG        //4..8 LED 
-#define Numitron_4511N
+
+//#define Numitron_4511N
 
 #define colonPin 2        //Blinking Colon pin.  If not used, SET TO -1
 
