@@ -13,7 +13,7 @@ Wemos D1 Mini (or any other ESP8266 modul) 160MHz
 
 Drivers: SN74141 (multiplex or latch), MAX6921, MAX7219, MM5450
 
-Optional: DS18B20 temperature sensor
+Optional: DS18B20 temperature sensor, GPS modul
 
 Optional: DS3231 RTC Clock with Wifi/Manual mode switch and pushbuttons to set the date/time
 
