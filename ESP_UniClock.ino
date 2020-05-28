@@ -19,8 +19,9 @@
  */
 //---------------------------- PROGRAM PARAMETERS -------------------------------------------------
 #define DEBUG
-#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
+//#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
+#define USE_GPS           
 #define MAXBRIGHTNESS 10  //10...15    (if too high value is used, the multiplex may be too slow...)
 
 //Use only 1 from the following options!
@@ -33,7 +34,7 @@
 //#define SN75512           //4..8 VFD tubes   
 
 #define colonPin -1        //Blinking Colon pin.  If not used, SET TO -1
-#define TEMP_SENSOR_PIN 4  //3 or 4??  Dallas temp sensor pin
+#define TEMP_SENSOR_PIN 3  //3 or 4??  Dallas temp sensor pin
 
 //Display temperature and date in every minute between START..END seconds
 #define TEMP_START  35
@@ -43,6 +44,8 @@
 #define ANIMSPEED   50  //Animation speed in millisec 
 
 char webName[] = "UniClock 1.2";
+#define AP_NAME "UNICLOCK"
+#define AP_PASSWORD ""
 //--------------------------------------------------------------------------------------------------
 
 #include <ESP8266WiFi.h>
@@ -60,9 +63,8 @@ extern void writeDisplaySingle();
 extern void setup_pins();
 extern int maxDigits;
 
-#define AP_NAME "UNICLOCK"
-#define AP_PASSWORD ""
-
+const char* ssid = AP_NAME;  // Enter SSID here
+const char* password = AP_PASSWORD;  //Enter Password here
 WiFiServer server(80);
 String header;
 
@@ -154,7 +156,7 @@ void setup() {
 
   setupTemp();
   setupRTC();
-
+  setupGPS();
   setup_pins();
   DPRINT("Number of digits:"); DPRINTLN(maxDigits);
   delay(500);
@@ -177,7 +179,22 @@ void setup() {
     showMyIp();
   }
   else {
-        DPRINTLN("Starting Clock in Manual Mode!");
+        DPRINTLN("Starting Clock in Standalone Mode!");
+        DPRINT("Clock's wifi SSID:"); DPRINTLN(ssid);
+        DPRINTLN("IP: 192.168.4.1");
+
+/* Put IP Address details */
+    IPAddress local_ip(192,168,4,1);
+    IPAddress gateway(192,168,1,1);
+    IPAddress subnet(255,255,255,0);
+    server.begin();
+    WiFi.softAP(ssid, password);
+    WiFi.softAPConfig(local_ip, gateway, subnet);
+    delay(100);
+    WiFi.mode(WIFI_AP);
+    WiFi.reconnect();
+    ip = local_ip;
+    showMyIp();
   }
   
   EEPROM.begin(sizeof(prm));
@@ -201,24 +218,27 @@ void calcTime() {
         updateRTC();    //update RTC, if needed
       else 
         getRTC();  
+        getGPS();
     }
   }  //endif (clockWifiMode)
   else {
     getRTC();
+    getGPS();
   }
 }
 
 
 void timeProgram() {
 static unsigned long lastRun = millis();
+
   if ((millis()-lastRun)<300) return;
+  lastRun = millis(); 
   calcTime();
   if (useDallasTemp) {
     requestTemp(false);
     getTemp();
   }
-
-  lastRun = millis();  
+ 
   if (prm.interval > 0) {  // protection is enabled
       // At the first top of the hour, initialize protection logic timer
       if (!initProtectionTimer && (minute() == 0)) {  
@@ -263,6 +283,7 @@ void loop() {
     else resetWiFi();
   }
   else {   //Manual Clock Mode
+    wifiCode();
     editor();
   }
 }

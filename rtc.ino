@@ -340,6 +340,6 @@ int I2C_ClearBus() {
 void updateRTC() {}
 void setupRTC() {}
 void getRTC() {}
-void checkWifiMode() {clockWifiMode = true;}
+void checkWifiMode() {}
 void editor() {}
 #endif
