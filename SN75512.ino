@@ -84,7 +84,8 @@ static volatile boolean heatState = false;
     WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_STROBE_BIT );   //ON
   else 
     WRITE_PERI_REG( PIN_OUT_SET, PIN_STROBE_BIT );    //OFF
-
+    
+  for (int t=0; t<4;t++) asm volatile ("nop");
   
   brightCounter[pos]++;  
   if (brightCounter[pos]>MAXBRIGHTNESS) brightCounter[pos] = 1;
@@ -94,37 +95,20 @@ static volatile boolean heatState = false;
   for (int i=0; i<DATABITS; i++)  {
     if ((val & uint32_t(1 << (DATABITS -1 - i))) ) {
       WRITE_PERI_REG( PIN_OUT_SET, PIN_DATA_BIT );
-      asm volatile ("nop");
+          for (int t=0; t<4;t++) asm volatile ("nop");   
     }
     else {
       WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_DATA_BIT );
-      asm volatile ("nop");
+          for (int t=0; t<4;t++) asm volatile ("nop");   
     }
     WRITE_PERI_REG( PIN_OUT_SET, PIN_CLK_BIT );
-    asm volatile ("nop");
-    asm volatile ("nop");
-    asm volatile ("nop");
-    asm volatile ("nop");
-    asm volatile ("nop");
+    for (int t=0; t<12;t++) asm volatile ("nop");  
     WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_CLK_BIT );
-    asm volatile ("nop");
-    asm volatile ("nop");
-    asm volatile ("nop");
-    asm volatile ("nop");
-    asm volatile ("nop");
+    for (int t=0; t<12;t++) asm volatile ("nop");   
     } //end for      
  
   WRITE_PERI_REG( PIN_OUT_SET, PIN_LE_BIT );
-  asm volatile ("nop");
-  asm volatile ("nop");
-  asm volatile ("nop");
-  asm volatile ("nop");
-  asm volatile ("nop");
-  asm volatile ("nop");
-  asm volatile ("nop");
-  asm volatile ("nop");
-  asm volatile ("nop");
-  asm volatile ("nop");
+  for (int t=0; t<12;t++) asm volatile ("nop");   
   WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_LE_BIT );
 
   pos++; if (pos >= maxDigits) pos = 0; 
