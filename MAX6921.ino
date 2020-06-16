@@ -4,7 +4,12 @@
 
 //#define VFDrefresh 1200    //msec, Multiplex time period. Greater value => slower multiplex frequency
 
+
+//Choose only 1 option from the following:
 #define IV18
+//#define IVL2
+
+
 #ifdef IV18
 //Fill this table with the OUT positions of the MAX6921 chip!   
 byte segmentEnablePins[] =  {0,2,5,6,4,1,3,7};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
@@ -18,12 +23,12 @@ const int tubeTime[] = {1200,1200,1200,1200,1200,1200,1200,1200,1200};      //ti
 #define PIN_BL    15  // D8 Shift Register Blank (1=display off     0=display on)
 #endif
 
-//#define IVL2
+
 #ifdef IVL2
 //Fill this table with the OUT positions of the MAX6921 chip!   
 byte segmentEnablePins[] =  {11,13,5,8,3,12,2,1};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
 byte digitEnablePins[] = {10,9,4,0};  //segment enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  
-const int tubeTime[] = {1200,1200,1200,3000,1200,1200,1200,1200,1200};      //ticks to stay on the same digit to compensate different digit brightness
+const int tubeTime[] = {1200,1200,1200,1200,1200,1200,1200,1200,1200};      //ticks to stay on the same digit to compensate different digit brightness
                                                
 //MAX6921 pins
 #define PIN_LE    13  // D6 Shift Register Latch Enable
@@ -42,7 +47,7 @@ const int tubeTime[] = {1200,1200,1200,3000,1200,1200,1200,1200,1200};      //ti
 #define PIN_HEAT_A_BIT 1<<PIN_HEAT_A
 #define PIN_HEAT_B_BIT 1<<PIN_HEAT_B
 
-//------------------abcdefghDP----------------   definition os different characters
+//------------------abcdefgDP----------------   definition of different characters
 byte charDefinition[] = {
                    B11111100,   //0: abcdef
                    B01100000,   //1: bc 
@@ -59,7 +64,8 @@ byte charDefinition[] = {
                    B00000001,   // decimal point (12)
                    B11101110,   // A  abcefg  (13)
                    B11001110,   // P  abefg (14)
-                   B10011100    // C  adef (15)
+                   B10011100,   // C  adef (15)
+                   B11000110    //grad  abfg  (16)
 };
 
 uint32_t animationMaskBits[5];

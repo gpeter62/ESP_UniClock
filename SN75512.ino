@@ -25,7 +25,7 @@ byte digitEnablePins[] = {0,1,2,3,4,5,6,7,8};           //digit enable bits   (Y
 #define PIN_HEAT_A_BIT 1<<PIN_HEAT_A
 #define PIN_HEAT_B_BIT 1<<PIN_HEAT_B
 
-//------------------abcdefghDP----------------   definition os different characters
+//------------------abcdefgDP----------------   definition of different characters
 byte charDefinition[] = {
                    B11111100,   //0: abcdef
                    B01100000,   //1: bc 
@@ -42,7 +42,8 @@ byte charDefinition[] = {
                    B00000001,   // decimal point (12)
                    B11101110,   // A  abcefg  (13)
                    B11001110,   // P  abefg (14)
-                   B10011100    // C  adef (15)
+                   B10011100,   // C  adef (15)
+                   B11000110    //grad  abfg  (16)
 };
 
 
@@ -99,16 +100,16 @@ static volatile boolean heatState = false;
     }
     else {
       WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_DATA_BIT );
-          for (int t=0; t<4;t++) asm volatile ("nop");   
+          for (int t=0; t<8;t++) asm volatile ("nop");   
     }
     WRITE_PERI_REG( PIN_OUT_SET, PIN_CLK_BIT );
-    for (int t=0; t<12;t++) asm volatile ("nop");  
+    for (int t=0; t<8;t++) asm volatile ("nop");  
     WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_CLK_BIT );
-    for (int t=0; t<12;t++) asm volatile ("nop");   
+    for (int t=0; t<4;t++) asm volatile ("nop");   
     } //end for      
  
   WRITE_PERI_REG( PIN_OUT_SET, PIN_LE_BIT );
-  for (int t=0; t<12;t++) asm volatile ("nop");   
+  for (int t=0; t<4;t++) asm volatile ("nop");   
   WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_LE_BIT );
 
   pos++; if (pos >= maxDigits) pos = 0; 

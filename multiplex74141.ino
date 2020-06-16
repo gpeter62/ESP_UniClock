@@ -4,7 +4,7 @@ byte digitEnablePins[] = {13,12,14,15};    //define here the digit enable pins f
 byte ABCDPins[4] = {16,5,4,0};
 int maxDigits = sizeof(digitEnablePins);
 //int PWMrefresh=2000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-const int tubeTime[] = {1200,1200,1200,1200,1200,1200,1200,1200,1200};      //ticks to stay on the same digit to compensate different digit brightness
+const int tubeTime[] = {2000,2000,2000,2000,2000,2000,2000,2000,2000};      //ticks to stay on the same digit to compensate different digit brightness
 
 void setup_pins() {
   DPRINTLN("Setup pins...");

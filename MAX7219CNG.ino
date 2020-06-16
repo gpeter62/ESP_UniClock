@@ -19,7 +19,7 @@ byte tubes[] = {0,1,2,3,4,5};    //change it, if needed for the correct tube seq
 #define REG_INTENSITY  0x0A 
 #define REG_TEST       0x0F 
 
-//------------------abcdefghDP----------------   definition os different characters
+//------------------abcdefgDP----------------   definition of different characters
 byte charDefinition[] = {
                    B11111100,   //0: abcdef
                    B01100000,   //1: bc 
@@ -36,7 +36,8 @@ byte charDefinition[] = {
                    B00000001,   // decimal point (12)
                    B11101110,   // A  abcefg  (13)
                    B11001110,   // P  abefg (14)
-                   B10011100    // C  adef (15)
+                   B10011100,   // C  adef (15)
+                   B11000110    //grad  abfg  (16)                   
 };
 
 //Fill this table with the OUT bits numbers of MAX7219 chip!   I use only No-Decode mode for flexible hardware

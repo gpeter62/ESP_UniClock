@@ -22,7 +22,7 @@ byte sideEnablePins[] = {34,33};  //segment enable pins of 2x4 LEDS
 #define PIN_DATA_BIT 1<<13  // D5 Shift Register Data
 #define PIN_BR_BIT   1<<15  // D8 Shift Register Brightness 
 
-//------------------abcdefghDP----------------   definition os different characters
+//------------------abcdefgDP----------------   definition of different characters
 byte charDefinition[] = {
                    B11111100,   //0: abcdef
                    B01100000,   //1: bc 
@@ -39,7 +39,8 @@ byte charDefinition[] = {
                    B00000001,   // decimal point (12)
                    B11101110,   // A  abcefg  (13)
                    B11001110,   // P  abefg (14)
-                   B10011100    // C  adef (15)
+                   B10011100,   // C  adef (15)
+                   B11000110    //grad  abfg  (16)                   
 };
 
 #define MAXCHARS sizeof(charDefinition)

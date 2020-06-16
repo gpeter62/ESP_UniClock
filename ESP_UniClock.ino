@@ -1,7 +1,7 @@
 /* 
  *    Universal Clock  Nixie, VFD, LED, Numitron
  *    with optional Dallas Thermometer and DS3231 RTC
- *    v1.1  05/17/2020
+ *    v1.1  06/14/2020
  *    Copyright (C) 2020  Peter Gautier 
  *    
  *    This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,9 @@
  */
 //---------------------------- PROGRAM PARAMETERS -------------------------------------------------
 #define DEBUG
-//#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
+#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
-#define USE_GPS           
+//#define USE_GPS           
 #define MAXBRIGHTNESS 10  //10...15    (if too high value is used, the multiplex may be too slow...)
 
 //Use only 1 from the following options!
@@ -34,7 +34,7 @@
 //#define SN75512           //4..8 VFD tubes   
 
 #define colonPin -1        //Blinking Colon pin.  If not used, SET TO -1
-#define TEMP_SENSOR_PIN 3  //3 or 4??  Dallas temp sensor pin
+#define TEMP_SENSOR_PIN 4  //3 or 4??  Dallas temp sensor pin
 
 //Display temperature and date in every minute between START..END seconds
 #define TEMP_START  35
@@ -43,7 +43,7 @@
 #define DATE_END    50
 #define ANIMSPEED   50  //Animation speed in millisec 
 
-char webName[] = "UniClock 1.2";
+char webName[] = "UniClock 1.3";
 #define AP_NAME "UNICLOCK"
 #define AP_PASSWORD ""
 //--------------------------------------------------------------------------------------------------
@@ -108,8 +108,8 @@ Timezone myTZ(myDST, mySTD);
 boolean clockWifiMode = true;
 boolean wifiStarted = false;
 
-boolean useDallasTemp = false;
-float dallasTemp = 0;
+byte useDallasTemp = 0;   //number of temp sensors: 0,1,2
+float dallasTemp[2] = {0,0};
 
 //----------------- EEPROM addresses -------------------------------------------------------------------
 const int EEPROM_addr = 0;
@@ -160,7 +160,7 @@ void setup() {
   setup_pins();
   DPRINT("Number of digits:"); DPRINTLN(maxDigits);
   delay(500);
-  testTubes(200);
+  testTubes(300);
   checkWifiMode();
   
   if (clockWifiMode) {
@@ -234,7 +234,7 @@ static unsigned long lastRun = millis();
   if ((millis()-lastRun)<300) return;
   lastRun = millis(); 
   calcTime();
-  if (useDallasTemp) {
+  if (useDallasTemp==0) {
     requestTemp(false);
     getTemp();
   }
@@ -374,16 +374,21 @@ void cathodeProtect() {
 inline void incMod10(byte &x) { x = (x + 1 == 10 ? 0: x + 1); };
 
 
-void displayTemp(){
+void displayTemp(byte ptr){
+int digPtr = 0;
   for (int i=0;i<maxDigits;i++) {
     digitDP[i] = false; 
     newDigit[i] = 10; }
-  newDigit[3] = int(dallasTemp) / 10; 
-  if (newDigit[4]==0) newDigit[4] = 10;  //BLANK!!!
-  newDigit[2] = int(dallasTemp) % 10;
-  digitDP[2] = true;
-  newDigit[1] = int(dallasTemp*10) % 10; 
-  newDigit[0] = 15;
+
+  newDigit[digPtr++] = 15;  //  "C"
+  if (maxDigits>4) newDigit[digPtr++] = 16;   //grad
+  
+  newDigit[digPtr++] = int(dallasTemp[ptr]*10) % 10; 
+  digitDP[digPtr] = true;
+  newDigit[digPtr++] = int(dallasTemp[ptr]) % 10;
+  
+  newDigit[digPtr] = int(dallasTemp[ptr]) / 10; 
+  if (newDigit[digPtr]==0) newDigit[digPtr] = 10;  //BLANK!!!
   if (prm.animMode == 1)  memcpy(oldDigit,newDigit,sizeof(digit));  //don't do animation
 }  
 
@@ -391,7 +396,8 @@ void displayTime4(){
   for (int i=0;i<maxDigits;i++) digitDP[i] = false;
   digitDP[4] = true;   digitDP[2] = true;    
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
-  if (useDallasTemp && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp();
+  if ((useDallasTemp==2) && (second()>=TEMP_START+(TEMP_END-TEMP_START)/2) && (second()<TEMP_END)) displayTemp(1);
+  else if ((useDallasTemp>0) && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp(0);
   else if ((second()>=DATE_START)&& (second()<DATE_END)) {    
         newDigit[3] = month() / 10;
         newDigit[2] = month() % 10;   
@@ -414,7 +420,8 @@ void displayTime6(){
   for (int i=0;i<maxDigits;i++) digitDP[i] = false;
   digitDP[4] = true;   digitDP[2] = true;    
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
-  if (useDallasTemp && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp();
+  if ((useDallasTemp==2) && (second()>=TEMP_START+(TEMP_END-TEMP_START)/2) && (second()<TEMP_END)) displayTemp(1);
+  else if ((useDallasTemp>0) && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp(0);
   else if ((second()>=DATE_START)&& (second()<DATE_END)) {    
         newDigit[5] = (year()%100) / 10;
         newDigit[4] = year() % 10;
@@ -441,8 +448,8 @@ void displayTime6(){
 void displayTime8(){
   for (int i=0;i<maxDigits;i++) {digitDP[i] = false; newDigit[i] = 10;}
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
-
-  if (useDallasTemp && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp();
+  if ((useDallasTemp==2) && (second()>=TEMP_START+(TEMP_END-TEMP_START)/2) && (second()<TEMP_END)) displayTemp(1);
+  else if ((useDallasTemp>0) && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp(0);
   else {
     if ((second()>=DATE_START) && (second()<DATE_END)) {    
       newDigit[7] = year() / 1000;
@@ -661,11 +668,15 @@ inline int mod(int a, int b) {
 void testTubes(int dely) {
    delay(dely);
    for (int i=0; i<10;i++) { 
-     for (int j=0;j<maxDigits;j++) digit[j] = i;
+     for (int j=0;j<maxDigits;j++) {
+      digit[j] = i;
+      digitDP[j] = i%2;
+     }
      writeDisplaySingle();
      delay(dely); 
    }
    delay(1000);
+   memset(digitDP,0,sizeof(digitDP));
 }
 
 void printDigits(unsigned long timeout) {
@@ -816,8 +827,8 @@ int tmp = 0;
             DPRINTLN("Saved to EEPROM!");
             saveEEPROM();    
             }
-           if (useDallasTemp)   
-              sprintf(txt,"<H1>%02d/%02d/%4d %02d:%02d      T:%2.1fC</H1>",month(),day(),year(),hour(),minute(),dallasTemp);
+           if (useDallasTemp>0)   
+              sprintf(txt,"<H1>%02d/%02d/%4d %02d:%02d      T:%2.1fC</H1>",month(),day(),year(),hour(),minute(),dallasTemp[0]);
           else 
               sprintf(txt,"<H1>%02d/%02d/%4d %02d:%02d </H1>",month(),day(),year(),hour(),minute());
           client.print("HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body><H1>"); client.print(webName);
