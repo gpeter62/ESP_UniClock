@@ -1,7 +1,7 @@
 /* 
  *    Universal Clock  Nixie, VFD, LED, Numitron
  *    with optional Dallas Thermometer and DS3231 RTC
- *    v1.1  06/14/2020
+ *    v1.4  07/18/2020
  *    Copyright (C) 2020  Peter Gautier 
  *    
  *    This program is free software: you can redistribute it and/or modify
@@ -50,7 +50,7 @@
 #define GRAD_CHARCODE 16
 #define PERCENT_CHARCODE 8
 
-char webName[] = "UniClock 1.3";
+char webName[] = "UniClock 1.4";
 #define AP_NAME "UNICLOCK"
 #define AP_PASSWORD ""
 //--------------------------------------------------------------------------------------------------
