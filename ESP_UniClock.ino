@@ -401,6 +401,7 @@ int digPtr = 0;
   newDigit[digPtr] = int(temperature[ptr]) / 10; 
   if (newDigit[digPtr]==0) newDigit[digPtr] = 10;  //BLANK!!!
   if (prm.animMode == 1)  memcpy(oldDigit,newDigit,sizeof(digit));  //don't do animation
+  colonBlinkState = false;
 }  
 
 void displayHumid(){
@@ -419,6 +420,7 @@ int digPtr = 0;
   newDigit[digPtr] = int(humid) / 10; 
   if (newDigit[digPtr]==0) newDigit[digPtr] = 10;  //BLANK!!!
   if (prm.animMode == 1)  memcpy(oldDigit,newDigit,sizeof(digit));  //don't do animation
+  colonBlinkState = false;
 } 
 
 void displayTime4(){
@@ -434,6 +436,7 @@ void displayTime4(){
         digitDP[2] = true; 
         newDigit[1] = day() / 10;
         newDigit[0] = day() % 10;
+        colonBlinkState = false;
         }
       else {
         newDigit[3] = hour12_24 / 10;
@@ -461,6 +464,7 @@ void displayTime6(){
         digitDP[2] = true; 
         newDigit[1] = day() / 10;
         newDigit[0] = day() % 10;
+        colonBlinkState = false;
         }
       else {
         newDigit[5] = hour12_24 / 10;
@@ -492,6 +496,7 @@ void displayTime8(){
       digitDP[2] = true; 
       newDigit[1] = day() / 10;
       newDigit[0] = day() % 10;
+      colonBlinkState = false;
       if (prm.animMode == 1)  memcpy(oldDigit,newDigit,sizeof(oldDigit));  //don't do animation
     }
     else {
