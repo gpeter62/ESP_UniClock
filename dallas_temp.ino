@@ -1,12 +1,17 @@
 #ifdef USE_DALLAS_TEMP
 
+// Change HERE   0<>1, to swap sensors!!!
+#define SENSOR1 0
+#define SENSOR2 1
+#define TEMPERATURE_PRECISION 12
+
 #include <DallasTemperature.h>
 OneWire oneWire(TEMP_SENSOR_PIN);        // Set up a OneWire instance to communicate with OneWire devices
 DallasTemperature tempSensors(&oneWire); // Create an instance of the temperature sensor class
+DeviceAddress thermometer1, thermometer2;
 boolean requested = false;
 unsigned long lastRequest = millis();
 boolean DallasOK = true;   //is any measure from Dallas thermometer?
-int resolution = 11;
 float lastTemperature = 0;
 char lastTemperatureStr[5] = "----";
 const long intervalTemp = 30000;      // Do a temperature measurement every 30sec
@@ -17,10 +22,9 @@ void setupTemp() {
   pinMode(TEMP_SENSOR_PIN,OUTPUT);
   oneWire.reset();
   delay(200 );  //200ms
-
-  tempSensors.setResolution(resolution);
-  tempSensors.setWaitForConversion(false); // Don't block the program while the temperature sensor is reading
   tempSensors.begin();                     // Start the temperature sensor  
+  tempSensors.setResolution(TEMPERATURE_PRECISION);
+  tempSensors.setWaitForConversion(false); // Don't block the program while the temperature sensor is reading
   delay(100);  //200ms
   
   int counter = 0;
@@ -30,9 +34,11 @@ void setupTemp() {
     counter++;
   }  //end while
   
-  useDallasTemp = (tempSensors.getDeviceCount() > 0) ;
-  if (useDallasTemp) {  //exist valid temp sensor
-  DPRINT("DS18B20 sensors found:"); DPRINTLN(tempSensors.getDeviceCount());
+  useTemp = tempSensors.getDeviceCount();
+  if (useTemp>0) {
+  DPRINT("DS18B20 sensors found:"); DPRINTLN(useTemp);
+  if (!tempSensors.getAddress(thermometer1, 0)) DPRINTLN("Unable to find address for Device 0");
+  if ((useTemp>1) && !tempSensors.getAddress(thermometer2, 1)) DPRINTLN("Unable to find address for Device 1");
   requestTemp(true);
   delay(1000);
   getTemp();
@@ -57,7 +63,7 @@ float tmp_temp;
     
     requested = false;
     if (tempSensors.getDeviceCount() == 0) {
-          dallasTemp = 0; 
+          temperature[0] = 0; temperature[1] = 0;
           DallasOK = false;
           resetSensors();
           DPRINTLN("Missing TEMP sensor!");
@@ -66,14 +72,17 @@ float tmp_temp;
     else {    
           delay(10);
           tmp_temp = tempSensors.getTempCByIndex(0); // Get the temperature from the sensor
-          if (tmp_temp != -127.00) tmp_temp = tempSensors.getTempCByIndex(0); // Get the temperature from the sensor
-          tmp_temp = round(tmp_temp * 10.0) / 10.0; // round temperature to 1 digits
-          if (tmp_temp != -127.00) {
+          if (tmp_temp > -127) {
+            tmp_temp = round(tmp_temp * 10.0) / 10.0; // round temperature to 1 digits
             DallasOK = true;
-            dallasTemp = tmp_temp+0.5f;
-            DPRINT("Dallas temp:"); DPRINTLN(dallasTemp);
-            dtostrf(dallasTemp, 4, 1, lastTemperatureStr);
+            temperature[0] = tmp_temp;     
+            DPRINT("Dallas#1 temp:"); DPRINTLN(temperature[0]);
+            dtostrf(temperature[0], 4, 1, lastTemperatureStr);
             errors = 0;
+            if (useTemp>1) {
+              temperature[1] = round(tempSensors.getTempCByIndex(1) * 10.0) / 10.0; // round temperature to 1 digits
+              DPRINT("Dallas#2 temp:"); DPRINTLN(temperature[1]);
+            }
             }
           else {
             DPRINT("Temp sensor error!!!");  
@@ -84,7 +93,7 @@ float tmp_temp;
             }
     }
   if (errors>20) 
-      useDallasTemp = false; //forget BAD sensor!!! 
+      useTemp = 0; //forget BAD sensor!!! 
 }
 
 void resetSensors() {
@@ -100,7 +109,7 @@ void resetSensors() {
 }
 //-----------------------------------------------------------------------------------------------------
 #else
-void setupTemp() {  useDallasTemp = false;}
+void setupTemp() {  useTemp = 0;}
 void requestTemp(boolean force) {}
 void getTemp() {}
 void resetSensors() {}

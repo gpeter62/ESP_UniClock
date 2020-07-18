@@ -19,29 +19,36 @@
  */
 //---------------------------- PROGRAM PARAMETERS -------------------------------------------------
 #define DEBUG
-#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
+//#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
+//#define USE_DHT_TEMP        //TEMP_SENSOR_PIN is used to connect the sensor
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
 //#define USE_GPS           
 #define MAXBRIGHTNESS 10  //10...15    (if too high value is used, the multiplex may be too slow...)
 
 //Use only 1 from the following options!
-//#define MULTIPLEX74141    //4..8 Nixie tubes
+#define MULTIPLEX74141    //4..8 Nixie tubes
 //#define NO_MULTIPLEX74141 //4..6 Nixie tubes
-#define MAX6921           //4..8 VFD tubes   (IV18)
+//#define MAX6921           //4..8 VFD tubes   (IV18)
 //#define MM5450            //6..8 LEDS
 //#define MAX7219CNG        //4..8 LED 
 //#define Numitron_4511N
 //#define SN75512           //4..8 VFD tubes   
+//#define samsung
 
 #define colonPin -1        //Blinking Colon pin.  If not used, SET TO -1
-#define TEMP_SENSOR_PIN 4  //3 or 4??  Dallas temp sensor pin
+#define TEMP_SENSOR_PIN RX  //3 or 4??  DHT or Dallas temp sensor pin
 
 //Display temperature and date in every minute between START..END seconds
 #define TEMP_START  35
 #define TEMP_END    40
+#define HUMID_START  50
+#define HUMID_END    55
 #define DATE_START  45
 #define DATE_END    50
 #define ANIMSPEED   50  //Animation speed in millisec 
+#define TEMP_CHARCODE 15    
+#define GRAD_CHARCODE 16
+#define PERCENT_CHARCODE 8
 
 char webName[] = "UniClock 1.3";
 #define AP_NAME "UNICLOCK"
@@ -108,8 +115,10 @@ Timezone myTZ(myDST, mySTD);
 boolean clockWifiMode = true;
 boolean wifiStarted = false;
 
-byte useDallasTemp = 0;   //number of temp sensors: 0,1,2
-float dallasTemp[2] = {0,0};
+byte useTemp = 0;   //number of temp sensors: 0,1,2
+float temperature[2] = {0,0};
+byte useHumid = 0;
+float humid = 0;
 
 //----------------- EEPROM addresses -------------------------------------------------------------------
 const int EEPROM_addr = 0;
@@ -155,6 +164,7 @@ void setup() {
   if (colonPin>=0)  pinMode(colonPin, OUTPUT);
 
   setupTemp();
+  setupDHTemp();
   setupRTC();
   setupGPS();
   setup_pins();
@@ -234,9 +244,9 @@ static unsigned long lastRun = millis();
   if ((millis()-lastRun)<300) return;
   lastRun = millis(); 
   calcTime();
-  if (useDallasTemp==0) {
+  if (useTemp==0) {
     requestTemp(false);
-    getTemp();
+    getTemp(); getDHTemp();
   }
  
   if (prm.interval > 0) {  // protection is enabled
@@ -378,26 +388,46 @@ void displayTemp(byte ptr){
 int digPtr = 0;
   for (int i=0;i<maxDigits;i++) {
     digitDP[i] = false; 
-    newDigit[i] = 10; }
+    newDigit[i] = 10; 
+  }
 
-  newDigit[digPtr++] = 15;  //  "C"
-  if (maxDigits>4) newDigit[digPtr++] = 16;   //grad
+  newDigit[digPtr++] = TEMP_CHARCODE;  //  "C"
+  if (maxDigits>4) newDigit[digPtr++] = GRAD_CHARCODE;   //grad
   
-  newDigit[digPtr++] = int(dallasTemp[ptr]*10) % 10; 
+  newDigit[digPtr++] = int(temperature[ptr]*10) % 10; 
   digitDP[digPtr] = true;
-  newDigit[digPtr++] = int(dallasTemp[ptr]) % 10;
+  newDigit[digPtr++] = int(temperature[ptr]) % 10;
   
-  newDigit[digPtr] = int(dallasTemp[ptr]) / 10; 
+  newDigit[digPtr] = int(temperature[ptr]) / 10; 
   if (newDigit[digPtr]==0) newDigit[digPtr] = 10;  //BLANK!!!
   if (prm.animMode == 1)  memcpy(oldDigit,newDigit,sizeof(digit));  //don't do animation
 }  
+
+void displayHumid(){
+int digPtr = 0;
+  for (int i=0;i<maxDigits;i++) {
+    digitDP[i] = false; 
+    newDigit[i] = 10; 
+  }
+
+  newDigit[digPtr++] = PERCENT_CHARCODE;  //  "%"
+  
+  newDigit[digPtr++] = int(humid*10) % 10; 
+  digitDP[digPtr] = true;
+  newDigit[digPtr++] = int(humid) % 10;
+  
+  newDigit[digPtr] = int(humid) / 10; 
+  if (newDigit[digPtr]==0) newDigit[digPtr] = 10;  //BLANK!!!
+  if (prm.animMode == 1)  memcpy(oldDigit,newDigit,sizeof(digit));  //don't do animation
+} 
 
 void displayTime4(){
   for (int i=0;i<maxDigits;i++) digitDP[i] = false;
   digitDP[4] = true;   digitDP[2] = true;    
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
-  if ((useDallasTemp==2) && (second()>=TEMP_START+(TEMP_END-TEMP_START)/2) && (second()<TEMP_END)) displayTemp(1);
-  else if ((useDallasTemp>0) && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp(0);
+  if ((useTemp==2) && (second()>=TEMP_START+(TEMP_END-TEMP_START)/2) && (second()<TEMP_END)) displayTemp(1);
+  else if ((useTemp>0) && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp(0);
+  else if ((useHumid>0) && (second()>=HUMID_START) && (second()<HUMID_END)) displayHumid();
   else if ((second()>=DATE_START)&& (second()<DATE_END)) {    
         newDigit[3] = month() / 10;
         newDigit[2] = month() % 10;   
@@ -420,8 +450,8 @@ void displayTime6(){
   for (int i=0;i<maxDigits;i++) digitDP[i] = false;
   digitDP[4] = true;   digitDP[2] = true;    
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
-  if ((useDallasTemp==2) && (second()>=TEMP_START+(TEMP_END-TEMP_START)/2) && (second()<TEMP_END)) displayTemp(1);
-  else if ((useDallasTemp>0) && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp(0);
+  if ((useTemp==2) && (second()>=TEMP_START+(TEMP_END-TEMP_START)/2) && (second()<TEMP_END)) displayTemp(1);
+  else if ((useTemp>0) && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp(0);
   else if ((second()>=DATE_START)&& (second()<DATE_END)) {    
         newDigit[5] = (year()%100) / 10;
         newDigit[4] = year() % 10;
@@ -448,8 +478,8 @@ void displayTime6(){
 void displayTime8(){
   for (int i=0;i<maxDigits;i++) {digitDP[i] = false; newDigit[i] = 10;}
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
-  if ((useDallasTemp==2) && (second()>=TEMP_START+(TEMP_END-TEMP_START)/2) && (second()<TEMP_END)) displayTemp(1);
-  else if ((useDallasTemp>0) && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp(0);
+  if ((useTemp==2) && (second()>=TEMP_START+(TEMP_END-TEMP_START)/2) && (second()<TEMP_END)) displayTemp(1);
+  else if ((useTemp>0) && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp(0);
   else {
     if ((second()>=DATE_START) && (second()<DATE_END)) {    
       newDigit[7] = year() / 1000;
@@ -827,8 +857,8 @@ int tmp = 0;
             DPRINTLN("Saved to EEPROM!");
             saveEEPROM();    
             }
-           if (useDallasTemp>0)   
-              sprintf(txt,"<H1>%02d/%02d/%4d %02d:%02d      T:%2.1fC</H1>",month(),day(),year(),hour(),minute(),dallasTemp[0]);
+           if (useTemp>0)   
+              sprintf(txt,"<H1>%02d/%02d/%4d %02d:%02d      T:%2.1fC</H1>",month(),day(),year(),hour(),minute(),temperature[0]);
           else 
               sprintf(txt,"<H1>%02d/%02d/%4d %02d:%02d </H1>",month(),day(),year(),hour(),minute());
           client.print("HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body><H1>"); client.print(webName);
