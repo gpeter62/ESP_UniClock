@@ -29,6 +29,7 @@ DHT dht(TEMP_SENSOR_PIN, DHTTYPE);
 void setupDHTemp() {
   DPRINT("DHTxx setup: Sensor pin = "); DPRINTLN(TEMP_SENSOR_PIN);
   dht.begin();
+  useTemp = 1;
 }
 
 void getDHTemp() {
