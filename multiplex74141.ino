@@ -9,9 +9,9 @@ byte ABCDPins[4] =  {2,4,5,0};
 
 int maxDigits = sizeof(digitEnablePins);
 
-const byte convert[] = {0,1,9,8,7,6,5,4,3,2};   //tube digit conversion, is needed
-//int PWMrefresh=2000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-const int tubeTime[] = {2000,2000,2000,2000,2000,2000,2000,2000,2000};      //ticks to stay on the same digit to compensate different digit brightness
+//const byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
+int PWMrefresh=2000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+const int tubeTime[] = {2000,2000,2000,2000,2000,2000,2000,2000,2000};  //ticks to stay on the same digit to compensate different digit brightness
 
 void setup_pins() {
   DPRINTLN("Setup pins...");
@@ -31,12 +31,12 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   num = digit[pos]; 
   
-  if ((pos>0) && (num<=9)) num = convert[num];   //tube character conversion, if needed... (maybe bad pin numbering)
+  //if ((pos>0) && (num<=9)) num = convert[num];   //tube character conversion, if needed... (maybe bad pin numbering)
   
   if (brightness<brightCounter)  num = 10;
   digitalWrite(digitEnablePins[oldPos],LOW);   //switch off old digit
 
-  for (int i=0;i<1500;i++) {asm volatile ("nop"); }   //long delay to switch off the old digits
+  for (int i=0;i<1500;i++) {asm volatile ("nop"); }   //long delay to switch off the old digit before switch on the new, depends on hardware
   for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],num  & 1<<i); }
 
   digitalWrite(digitEnablePins[pos],HIGH);    //switch on the new digit
@@ -47,7 +47,8 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
     brightCounter++; 
     if (brightCounter>MAXBRIGHTNESS) brightCounter = 1;
   }  
-  timer1_write(tubeTime[oldPos]);
+  timer1_write(PWMrefresh);   //constand timing
+  //timer1_write(tubeTime[oldPos]);   //tube dependent timing
 }
 
 void writeDisplaySingle() {}

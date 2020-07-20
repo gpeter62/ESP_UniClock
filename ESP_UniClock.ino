@@ -20,7 +20,7 @@
 //---------------------------- PROGRAM PARAMETERS -------------------------------------------------
 #define DEBUG
 //#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
-//#define USE_DHT_TEMP        //TEMP_SENSOR_PIN is used to connect the sensor
+#define USE_DHT_TEMP        //TEMP_SENSOR_PIN is used to connect the sensor
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
 //#define USE_GPS           
 #define MAXBRIGHTNESS 10  //10...15    (if too high value is used, the multiplex may be too slow...)
@@ -455,6 +455,7 @@ void displayTime6(){
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
   if ((useTemp==2) && (second()>=TEMP_START+(TEMP_END-TEMP_START)/2) && (second()<TEMP_END)) displayTemp(1);
   else if ((useTemp>0) && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp(0);
+  else if ((useHumid>0) && (second()>=HUMID_START) && (second()<HUMID_END)) displayHumid();
   else if ((second()>=DATE_START)&& (second()<DATE_END)) {    
         newDigit[5] = (year()%100) / 10;
         newDigit[4] = year() % 10;
@@ -484,6 +485,7 @@ void displayTime8(){
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
   if ((useTemp==2) && (second()>=TEMP_START+(TEMP_END-TEMP_START)/2) && (second()<TEMP_END)) displayTemp(1);
   else if ((useTemp>0) && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp(0);
+  else if ((useHumid>0) && (second()>=HUMID_START) && (second()<HUMID_END)) displayHumid();
   else {
     if ((second()>=DATE_START) && (second()<DATE_END)) {    
       newDigit[7] = year() / 1000;
