@@ -244,7 +244,7 @@ static unsigned long lastRun = millis();
   if ((millis()-lastRun)<300) return;
   lastRun = millis(); 
   calcTime();
-  if (useTemp==0) {
+  if (useTemp>0) {
     requestTemp(false);
     getTemp(); getDHTemp();
   }
