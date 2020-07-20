@@ -38,24 +38,16 @@ static unsigned long lastRun = 0;
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
   humid = dht.readHumidity();
-  // Read temperature as Celsius (the default)
-  temperature[0] = dht.readTemperature();
-  // Read temperature as Fahrenheit (isFahrenheit = true)
-  //float f = dht.readTemperature(true);
+  temperature[0] = dht.readTemperature();      // Read temperature as Celsius (the default)
 
-  // Check if any reads failed and exit early (to try again).
-  if (isnan(humid) || isnan(temperature[0])) {
-    DPRINTLN("Failed to read from DHT sensor!");
-    useTemp = 0; 
-    useHumid = 0;
-  }
-  else {
-  // Compute heat index in Fahrenheit (the default)
+  // Read temperature as Fahrenheit (isFahrenheit = true)
+  //float f = dht.readTemperature(true);   Compute heat index in Fahrenheit (the default)
   //float hif = dht.computeHeatIndex(f, h);
-  // Compute heat index in Celsius (isFahreheit = false)
-  //float hic = dht.computeHeatIndex(t, h, false);
-  useTemp = 1;
-  useHumid = 1;
+  
+  //float hic = dht.computeHeatIndex(t, h, false);  // Compute heat index in Celsius (isFahreheit = false)
+  
+  if (isnan(humid) || isnan(temperature[0])) {  // Check if any reads failed and exit early (to try again).
+    DPRINTLN("Failed to read from DHT sensor!");
   }
 }
 
