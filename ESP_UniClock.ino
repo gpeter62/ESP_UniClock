@@ -33,7 +33,7 @@
 //#define MAX7219CNG        //4..8 LED 
 //#define Numitron_4511N
 //#define SN75512           //4..8 VFD tubes   
-//#define samsung
+//#define samsung           //samsung serial display
 
 #define colonPin -1        //Blinking Colon pin.  If not used, SET TO -1
 #define TEMP_SENSOR_PIN RX  //3 or 4??  DHT or Dallas temp sensor pin
@@ -246,9 +246,9 @@ static unsigned long lastRun = millis();
   calcTime();
   if (useTemp>0) {
     requestTemp(false);
-    getTemp(); getDHTemp();
+    getTemp(); 
   }
- 
+  getDHTemp();
   if (prm.interval > 0) {  // protection is enabled
       // At the first top of the hour, initialize protection logic timer
       if (!initProtectionTimer && (minute() == 0)) {  
@@ -701,6 +701,15 @@ inline int mod(int a, int b) {
     return r < 0 ? r + b : r;
 }
 
+void testTubesNew(int dely) {
+  while (true) {
+    digit[0] = 10;
+    digit [1] = 10;
+    digit [2] = 8;
+    digit [3] = 10;
+    delay(1000);
+  }
+}
 
 void testTubes(int dely) {
    delay(dely);

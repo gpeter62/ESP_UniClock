@@ -29,18 +29,21 @@ DHT dht(TEMP_SENSOR_PIN, DHTTYPE);
 void setupDHTemp() {
   DPRINT("DHTxx setup: Sensor pin = "); DPRINTLN(TEMP_SENSOR_PIN);
   dht.begin();
-  useTemp = 1;
-  useHumid = 1;
+  getDHTemp();
 }
 
 void getDHTemp() {
 static unsigned long lastRun = 0;
-  if ((millis()-lastRun)<2500) return;
+
+  if (((millis()-lastRun)<2500) || (second()!=0)) return;
   lastRun = millis();  
+
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
   humid = dht.readHumidity();
   temperature[0] = dht.readTemperature();      // Read temperature as Celsius (the default)
+  useTemp = 1;
+  useHumid = 1;
   //DPRINT(temperature[0]); DPRINT("C  "); DPRINT(humid); DPRINTLN("%");
   // Read temperature as Fahrenheit (isFahrenheit = true)
   //float f = dht.readTemperature(true);   Compute heat index in Fahrenheit (the default)
@@ -49,7 +52,11 @@ static unsigned long lastRun = 0;
   //float hic = dht.computeHeatIndex(t, h, false);  // Compute heat index in Celsius (isFahreheit = false)
   
   if (isnan(humid) || isnan(temperature[0])) {  // Check if any reads failed and exit early (to try again).
-    DPRINTLN("Failed to read from DHT sensor!");
+    DPRINTLN("No sensor!");
+    useTemp = 1;
+    temperature[0] = 99.9f;
+    humid = 0;
+    useHumid = 0;
   }
 }
 
