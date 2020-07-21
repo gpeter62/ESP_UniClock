@@ -20,7 +20,7 @@
 //---------------------------- PROGRAM PARAMETERS -------------------------------------------------
 #define DEBUG
 //#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
-#define USE_DHT_TEMP        //TEMP_SENSOR_PIN is used to connect the sensor
+//#define USE_DHT_TEMP        //TEMP_SENSOR_PIN is used to connect the sensor
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
 //#define USE_GPS           
 #define MAXBRIGHTNESS 10  //10...15    (if too high value is used, the multiplex may be too slow...)
@@ -35,8 +35,9 @@
 //#define SN75512           //4..8 VFD tubes   
 //#define samsung           //samsung serial display
 
-#define colonPin -1        //Blinking Colon pin.  If not used, SET TO -1
-#define TEMP_SENSOR_PIN RX  //3 or 4??  DHT or Dallas temp sensor pin
+#define colonPin 16        //Blinking Colon pin.  If not used, SET TO -1
+#define TEMP_SENSOR_PIN -1  //3 or 4??  DHT or Dallas temp sensor pin.  If not used, SET TO -1
+#define LED_SWITCH_PIN -1   //external led lightning.  If not used, SET TO -1
 
 //Display temperature and date in every minute between START..END seconds
 #define TEMP_START  35
@@ -82,6 +83,7 @@ byte oldDigit[BUFSIZE];
 boolean digitDP[BUFSIZE];   //actual value to put to display
 boolean digitsOnly = true;  //only 0..9 numbers are possible to display?
 byte animMask[BUFSIZE];     //0 = no animation mask is used
+byte animCounter[BUFSIZE];
 
 // 8266 internal pin registers
 // https://github.com/esp8266/esp8266-wiki/wiki/gpio-registers
@@ -156,13 +158,20 @@ void configModeCallback (WiFiManager *myWiFiManager) {
   DPRINTLN("open 192.168.4.1 in web browser");
   }
 
+void clearDigits() {
+  memset(oldDigit,10,sizeof(oldDigit));
+  memset(digit,10,sizeof(digit));
+  memset(newDigit,10,sizeof(newDigit));
+  memset(animCounter,1,sizeof(animCounter));
+}
 
 void setup() {
   DPRINTBEGIN(115200); DPRINTLN(" ");
   delay(100);
-  memset(animMask,0,sizeof(animMask));
+  clearDigits(); 
+  memset(newDigit,10,sizeof(newDigit));
   if (colonPin>=0)  pinMode(colonPin, OUTPUT);
-
+  if (LED_SWITCH_PIN>=0)  pinMode(LED_SWITCH_PIN, OUTPUT);
   setupTemp();
   setupDHTemp();
   setupRTC();
@@ -275,6 +284,10 @@ static unsigned long lastRun = millis();
     else displayTime4();
     
     if (colonPin>=0) digitalWrite(colonPin,colonBlinkState);  // Blink colon pin
+    if ((LED_SWITCH_PIN>=0) && displayON) //Switch on underlightning LED only daytime
+      digitalWrite(LED_SWITCH_PIN,HIGH);   
+    else 
+      digitalWrite(LED_SWITCH_PIN,LOW);
     printDigits(0);
     writeDisplaySingle();
 
@@ -586,9 +599,18 @@ void changeDigit() {
       break;
     case 5:
     memset(animMask,0,sizeof(animMask));
+#ifdef MULTIPLEX74141
+    memset(animCounter,1,sizeof(animCounter));
+    for (int i=1;i<=10;i++) {
+        for (int tube=j;tube<maxDigits;tube++) {
+          if (oldDigit[tube] != newDigit[tube]) animMask[tube]=i;    //digit is changed
+        }  //end for tube
+        delay(ANIMSPEED);
+      }  //end for i
+#else
       for (int i=1;i<=5;i++) {
         for (int tube=j;tube<maxDigits;tube++) {
-          if (oldDigit[tube] != newDigit[tube]) animMask[tube]=i; 
+          if (oldDigit[tube] != newDigit[tube]) animMask[tube]=i;   //digit is changed
         }  //end for tube
         writeDisplaySingle();
         delay(ANIMSPEED);
@@ -596,12 +618,13 @@ void changeDigit() {
       memcpy(digit,newDigit,sizeof(digit));
       for (int i=1;i<=5;i++) {
         for (int tube=j;tube<maxDigits;tube++) {
-          if (oldDigit[tube] != newDigit[tube]) animMask[tube]=6-i;
+          if (oldDigit[tube] != newDigit[tube]) animMask[tube]=6-i;  //digit is changed
         }  //end for tube
          writeDisplaySingle();        
         delay(ANIMSPEED);
       }  //end for i     
-      memset(animMask,0,sizeof(animMask)); 
+#endif   
+      memset(animMask,0,sizeof(animMask));   
       break;
   }  
   } //endif memcmp  
@@ -646,18 +669,20 @@ void evalShutoffTime() {  // Determine whether  tubes should be turned to NIGHT 
 
 
 void writeIpTag(byte iptag) {
-  for (int i=0;i<maxDigits;i++) digit[i] = 10;
+  memset(newDigit,10,sizeof(newDigit));
   if (!digitsOnly && (maxDigits>=6)) {
-    digit[4] = 1;
-    digit[3] = 14;
+    newDigit[4] = 1;
+    newDigit[3] = 14;
   }
-  if (iptag>=100) digit[2] = iptag / 100;
-  digit[1] = (iptag % 100) / 10;
-  digit[0] = iptag % 10;
+  if (iptag>=100) newDigit[2] = iptag / 100;
+  newDigit[1] = (iptag % 100) / 10;
+  newDigit[0] = iptag % 10;
   writeDisplaySingle();
+  changeDigit();
 }
 
 void showMyIp() {   //at startup, show the web page internet address
+  //clearDigits();
   writeIpTag(ip[0]);
   printDigits(0);
   delay(2000);
@@ -713,11 +738,13 @@ void testTubesNew(int dely) {
 
 void testTubes(int dely) {
    delay(dely);
+   prm.animMode = 5;
    for (int i=0; i<10;i++) { 
      for (int j=0;j<maxDigits;j++) {
-      digit[j] = i;
+      newDigit[j] = i;
       digitDP[j] = i%2;
      }
+     changeDigit();
      writeDisplaySingle();
      delay(dely); 
    }
