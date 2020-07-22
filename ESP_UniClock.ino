@@ -1,7 +1,7 @@
 /* 
  *    Universal Clock  Nixie, VFD, LED, Numitron
  *    with optional Dallas Thermometer and DS3231 RTC
- *    v1.4  07/18/2020
+ *    v1.4a  07/22/2020
  *    Copyright (C) 2020  Peter Gautier 
  *    
  *    This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@
 //#define USE_DHT_TEMP        //TEMP_SENSOR_PIN is used to connect the sensor
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
 //#define USE_GPS           
-#define MAXBRIGHTNESS 10  //10...15    (if too high value is used, the multiplex may be too slow...)
+#define MAXBRIGHTNESS 10  // (if MM5450, use 15 instead of 10)
 
 //Use only 1 from the following options!
 #define MULTIPLEX74141    //4..8 Nixie tubes
@@ -51,7 +51,7 @@
 #define GRAD_CHARCODE 16
 #define PERCENT_CHARCODE 8
 
-char webName[] = "UniClock 1.4";
+char webName[] = "UniClock 1.4a";
 #define AP_NAME "UNICLOCK"
 #define AP_PASSWORD ""
 //--------------------------------------------------------------------------------------------------
@@ -83,7 +83,6 @@ byte oldDigit[BUFSIZE];
 boolean digitDP[BUFSIZE];   //actual value to put to display
 boolean digitsOnly = true;  //only 0..9 numbers are possible to display?
 byte animMask[BUFSIZE];     //0 = no animation mask is used
-byte animCounter[BUFSIZE];
 
 // 8266 internal pin registers
 // https://github.com/esp8266/esp8266-wiki/wiki/gpio-registers
@@ -162,7 +161,6 @@ void clearDigits() {
   memset(oldDigit,10,sizeof(oldDigit));
   memset(digit,10,sizeof(digit));
   memset(newDigit,10,sizeof(newDigit));
-  memset(animCounter,1,sizeof(animCounter));
 }
 
 void setup() {
@@ -179,6 +177,10 @@ void setup() {
   setup_pins();
   DPRINT("Number of digits:"); DPRINTLN(maxDigits);
   delay(500);
+  EEPROM.begin(sizeof(prm));
+  delay(100);  
+  loadEEPROM();
+  if (prm.magic !=133) factoryReset();
   testTubes(300);
   checkWifiMode();
   
@@ -216,10 +218,6 @@ void setup() {
     showMyIp();
   }
   
-  EEPROM.begin(sizeof(prm));
-  delay(100);  
-  loadEEPROM();
-  if (prm.magic !=133) factoryReset();  
   calcTime();
 }
 
@@ -600,8 +598,7 @@ void changeDigit() {
     case 5:
     memset(animMask,0,sizeof(animMask));
 #ifdef MULTIPLEX74141
-    memset(animCounter,1,sizeof(animCounter));
-    for (int i=1;i<=10;i++) {
+    for (int i=1;i<10;i++) {
         for (int tube=j;tube<maxDigits;tube++) {
           if (oldDigit[tube] != newDigit[tube]) animMask[tube]=i;    //digit is changed
         }  //end for tube
@@ -738,7 +735,6 @@ void testTubesNew(int dely) {
 
 void testTubes(int dely) {
    delay(dely);
-   prm.animMode = 5;
    for (int i=0; i<10;i++) { 
      for (int j=0;j<maxDigits;j++) {
       newDigit[j] = i;
