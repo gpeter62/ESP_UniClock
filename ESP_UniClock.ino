@@ -35,7 +35,7 @@
 //#define SN75512           //4..8 VFD tubes   
 //#define samsung           //samsung serial display
 
-#define colonPin 16        //Blinking Colon pin.  If not used, SET TO -1
+#define COLON_PIN 2        //Blinking Colon pin.  If not used, SET TO -1
 #define TEMP_SENSOR_PIN -1  //3 or 4??  DHT or Dallas temp sensor pin.  If not used, SET TO -1
 #define LED_SWITCH_PIN -1   //external led lightning.  If not used, SET TO -1
 
@@ -168,7 +168,7 @@ void setup() {
   delay(100);
   clearDigits(); 
   memset(newDigit,10,sizeof(newDigit));
-  if (colonPin>=0)  pinMode(colonPin, OUTPUT);
+  if (COLON_PIN>=0)  pinMode(COLON_PIN, OUTPUT);
   if (LED_SWITCH_PIN>=0)  pinMode(LED_SWITCH_PIN, OUTPUT);
   setupTemp();
   setupDHTemp();
@@ -281,7 +281,7 @@ static unsigned long lastRun = millis();
     else if (maxDigits==6)   displayTime6(); 
     else displayTime4();
     
-    if (colonPin>=0) digitalWrite(colonPin,colonBlinkState);  // Blink colon pin
+    if (COLON_PIN>=0) digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
     if ((LED_SWITCH_PIN>=0) && displayON) //Switch on underlightning LED only daytime
       digitalWrite(LED_SWITCH_PIN,HIGH);   
     else 

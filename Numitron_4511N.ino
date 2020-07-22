@@ -40,7 +40,7 @@ byte num;
   brightCounter++; 
   if (brightCounter>MAXBRIGHTNESS) brightCounter = 1;
   
-  if (colonPin>=0) digitalWrite(colonPin,!colonBlinkState);  // Blink colon pin
+  if (COLON_PIN>=0) digitalWrite(COLON_PIN,!colonBlinkState);  // Blink colon pin
   timer1_write(PWMrefresh);
 }
 
