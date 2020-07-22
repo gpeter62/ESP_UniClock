@@ -11,7 +11,7 @@ int maxDigits = sizeof(digitEnablePins);
 
 //const byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
 const int PWMrefresh=2000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-const int PWMtiming[] = {2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000};
+const int PWMtiming[] = {1000,2000,3500,5000,6000,7000,8000,9000,10000,11000,12000};
 #define MAXBRIGHT 10
 
 void setup_pins() {
@@ -65,7 +65,8 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
 
   //if ((pos>0) && (num<=9)) num = convert[num];   //tube character conversion, if needed... (maybe bad pin numbering)
   
-  if (timer<200) timer = 200;
+  if (timer<200) timer = 200;  //safety only...
+  if (brightness == 0) {num = 10; timer = PWMtiming[10]; state = 0;}
   for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],num  & 1<<i); }
   timer1_write(timer); 
 }
