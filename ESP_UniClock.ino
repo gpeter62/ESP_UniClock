@@ -35,11 +35,13 @@
 //#define SN75512           //4..8 VFD tubes   
 //#define samsung           //samsung serial display
 
-#define COLON_PIN 2        //Blinking Colon pin.  If not used, SET TO -1
-#define TEMP_SENSOR_PIN -1  //3 or 4??  DHT or Dallas temp sensor pin.  If not used, SET TO -1
+#define COLON_PIN 2         //Blinking Colon pin.  If not used, SET TO -1
+#define TEMP_SENSOR_PIN -1  //DHT or Dallas temp sensor pin.  If not used, SET TO -1
 #define LED_SWITCH_PIN -1   //external led lightning.  If not used, SET TO -1
+#define DECIMALPOINT_PIN -1 //Nixie decimal point. If not used, SET TO -1
 
 //Display temperature and date in every minute between START..END seconds
+#define ENABLE_CLOCK_DISPLAY true   //false, if no clock display is needed (for example: thermometer + hygrometer only)
 #define TEMP_START  35
 #define TEMP_END    40
 #define HUMID_START  50
@@ -51,7 +53,7 @@
 #define GRAD_CHARCODE 16
 #define PERCENT_CHARCODE 8
 
-char webName[] = "UniClock 1.4a";
+char webName[] = "UniClock 1.4b";
 #define AP_NAME "UNICLOCK"
 #define AP_PASSWORD ""
 //--------------------------------------------------------------------------------------------------
@@ -170,6 +172,7 @@ void setup() {
   memset(newDigit,10,sizeof(newDigit));
   if (COLON_PIN>=0)  pinMode(COLON_PIN, OUTPUT);
   if (LED_SWITCH_PIN>=0)  pinMode(LED_SWITCH_PIN, OUTPUT);
+  if (DECIMALPOINT_PIN>=0)  pinMode(DECIMALPOINT_PIN, OUTPUT);
   setupTemp();
   setupDHTemp();
   setupRTC();
@@ -441,7 +444,7 @@ void displayTime4(){
   if ((useTemp==2) && (second()>=TEMP_START+(TEMP_END-TEMP_START)/2) && (second()<TEMP_END)) displayTemp(1);
   else if ((useTemp>0) && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp(0);
   else if ((useHumid>0) && (second()>=HUMID_START) && (second()<HUMID_END)) displayHumid();
-  else if ((second()>=DATE_START)&& (second()<DATE_END)) {    
+  else if ((ENABLE_CLOCK_DISPLAY) && (second()>=DATE_START)&& (second()<DATE_END)) {    
         newDigit[3] = month() / 10;
         newDigit[2] = month() % 10;   
         digitDP[2] = true; 
@@ -449,7 +452,7 @@ void displayTime4(){
         newDigit[0] = day() % 10;
         colonBlinkState = false;
         }
-      else {
+      else if (ENABLE_CLOCK_DISPLAY){
         newDigit[3] = hour12_24 / 10;
         if ((!prm.showZero)  && (newDigit[3] == 0)) newDigit[3] = 10;
         newDigit[2] = hour12_24 % 10;
@@ -467,7 +470,7 @@ void displayTime6(){
   if ((useTemp==2) && (second()>=TEMP_START+(TEMP_END-TEMP_START)/2) && (second()<TEMP_END)) displayTemp(1);
   else if ((useTemp>0) && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp(0);
   else if ((useHumid>0) && (second()>=HUMID_START) && (second()<HUMID_END)) displayHumid();
-  else if ((second()>=DATE_START)&& (second()<DATE_END)) {    
+  else if (ENABLE_CLOCK_DISPLAY && (second()>=DATE_START)&& (second()<DATE_END)) {    
         newDigit[5] = (year()%100) / 10;
         newDigit[4] = year() % 10;
         digitDP[4] = true;
@@ -478,7 +481,7 @@ void displayTime6(){
         newDigit[0] = day() % 10;
         colonBlinkState = false;
         }
-      else {
+      else if (ENABLE_CLOCK_DISPLAY){
         newDigit[5] = hour12_24 / 10;
         if ((!prm.showZero)  && (newDigit[5] == 0)) newDigit[5] = 10;
         newDigit[4] = hour12_24 % 10;
@@ -498,7 +501,7 @@ void displayTime8(){
   else if ((useTemp>0) && (second()>=TEMP_START) && (second()<TEMP_END)) displayTemp(0);
   else if ((useHumid>0) && (second()>=HUMID_START) && (second()<HUMID_END)) displayHumid();
   else {
-    if ((second()>=DATE_START) && (second()<DATE_END)) {    
+    if (ENABLE_CLOCK_DISPLAY && (second()>=DATE_START) && (second()<DATE_END)) {    
       newDigit[7] = year() / 1000;
       newDigit[6] = (year()%1000) / 100;    
       newDigit[5] = (year()%100) / 10;
@@ -512,7 +515,7 @@ void displayTime8(){
       colonBlinkState = false;
       if (prm.animMode == 1)  memcpy(oldDigit,newDigit,sizeof(oldDigit));  //don't do animation
     }
-    else {
+    else if (ENABLE_CLOCK_DISPLAY){
       newDigit[8] = 10;  //sign digit = BLANK
       newDigit[7] = hour12_24 / 10;
       if ((!prm.showZero)  && (newDigit[7] == 0)) newDigit[7] = 10;

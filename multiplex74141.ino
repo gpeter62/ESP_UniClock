@@ -35,9 +35,11 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   switch (state) {   //state machine...
     case 0:
       digitalWrite(digitEnablePins[pos],LOW);     //switch off old digit
+      if (DECIMALPOINT_PIN>=0) digitalWrite(DECIMALPOINT_PIN,LOW);
       pos++;  if (pos>maxDigits-1) {  pos = 0; }  //go to the first tube
       for (int i=0;i<1000;i++) {asm volatile ("nop"); }   //long delay to switch off the old digit before switch on the new, depends on hardware
       digitalWrite(digitEnablePins[pos],HIGH);    //switch on the new digit
+      if (DECIMALPOINT_PIN>=0) digitalWrite(DECIMALPOINT_PIN,HIGH);
       state = 2;  //default next state is: BLANK display
       if (animMask[pos] > 0) { //Animation?
         num =   oldDigit[pos];  //show old character
