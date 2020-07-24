@@ -414,7 +414,7 @@ int digPtr = 0;
   
   newDigit[digPtr] = int(temperature[ptr]) / 10; 
   if (newDigit[digPtr]==0) newDigit[digPtr] = 10;  //BLANK!!!
-  if (prm.animMode == 1)  memcpy(oldDigit,newDigit,sizeof(digit));  //don't do animation
+  if (prm.animMode == 0)  memcpy(oldDigit,newDigit,sizeof(oldDigit));  //don't do animation
   colonBlinkState = true;
 }  
 
@@ -433,7 +433,7 @@ int digPtr = 0;
   
   newDigit[digPtr] = int(humid) / 10; 
   if (newDigit[digPtr]==0) newDigit[digPtr] = 10;  //BLANK!!!
-  if (prm.animMode == 1)  memcpy(oldDigit,newDigit,sizeof(digit));  //don't do animation
+  if (prm.animMode == 0)  memcpy(oldDigit,newDigit,sizeof(oldDigit));  //don't do animation
   colonBlinkState = true;
 } 
 
@@ -539,7 +539,8 @@ void changeDigit() {
   byte space = 4;
   byte anim;
   
-  anim = prm.animMode; if (anim == 6) anim = 1 + rand()%5;
+  anim = prm.animMode; 
+  if (anim == 6) anim = 1 + rand()%5;
 
   if (anim != 5) {
     for (int i=0;i<maxDigits;i++)   
