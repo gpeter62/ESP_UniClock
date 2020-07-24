@@ -151,6 +151,7 @@ time_t protectTimer = 0;
 bool displayON = true;
 bool manualOverride = false;
 bool initProtectionTimer = false;  // Set true at the top of the hour to synchronize protection timer with clock
+bool decimalpointON = false;
 
 void configModeCallback (WiFiManager *myWiFiManager) {
   DPRINTLN("Switch to AP config mode...");
@@ -173,6 +174,7 @@ void setup() {
   if (COLON_PIN>=0)  pinMode(COLON_PIN, OUTPUT);
   if (LED_SWITCH_PIN>=0)  pinMode(LED_SWITCH_PIN, OUTPUT);
   if (DECIMALPOINT_PIN>=0)  pinMode(DECIMALPOINT_PIN, OUTPUT);
+  decimalpointON = false;
   setupTemp();
   setupDHTemp();
   setupRTC();
@@ -416,6 +418,7 @@ int digPtr = 0;
   if (newDigit[digPtr]==0) newDigit[digPtr] = 10;  //BLANK!!!
   if (prm.animMode == 0)  memcpy(oldDigit,newDigit,sizeof(oldDigit));  //don't do animation
   colonBlinkState = true;
+  decimalpointON = true;
 }  
 
 void displayHumid(){
@@ -435,6 +438,7 @@ int digPtr = 0;
   if (newDigit[digPtr]==0) newDigit[digPtr] = 10;  //BLANK!!!
   if (prm.animMode == 0)  memcpy(oldDigit,newDigit,sizeof(oldDigit));  //don't do animation
   colonBlinkState = true;
+  decimalpointON = true;
 } 
 
 void displayTime4(){

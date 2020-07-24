@@ -81,7 +81,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
           digitalWrite(DECIMALPOINT_PIN,LOW);
         }
         else {
-          digitalWrite(DECIMALPOINT_PIN,HIGH);
+          if (decimalpointON) digitalWrite(DECIMALPOINT_PIN,HIGH);
         }
   }
   timer1_write(timer); 

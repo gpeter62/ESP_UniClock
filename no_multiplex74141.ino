@@ -75,7 +75,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   
   switch (state) {   //state machine...
     case 0:
-      if (DECIMALPOINT_PIN>=0) digitalWrite(DECIMALPOINT_PIN,HIGH);
+      if ((DECIMALPOINT_PIN>=0) && decimalpointON) digitalWrite(DECIMALPOINT_PIN,HIGH);
       if (COLON_PIN>=0) digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
       if (animM > 0) { //Animation?
         timer =  (PWMtiming[brightness] * (10-animM))/10;
