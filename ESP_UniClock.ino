@@ -35,10 +35,10 @@
 //#define SN75512           //4..8 VFD tubes   
 //#define samsung           //samsung serial display
 
-#define COLON_PIN 2         //Blinking Colon pin.  If not used, SET TO -1
+#define COLON_PIN 2         //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2)
 #define TEMP_SENSOR_PIN -1  //DHT or Dallas temp sensor pin.  If not used, SET TO -1
 #define LED_SWITCH_PIN -1   //external led lightning.  If not used, SET TO -1
-#define DECIMALPOINT_PIN -1 //Nixie decimal point. If not used, SET TO -1
+#define DECIMALPOINT_PIN 2 //Nixie decimal point. If not used, SET TO -1
 
 //Display temperature and date in every minute between START..END seconds
 #define ENABLE_CLOCK_DISPLAY true   //false, if no clock display is needed (for example: thermometer + hygrometer only)
@@ -600,7 +600,7 @@ void changeDigit() {
       break;
     case 5:
     memset(animMask,0,sizeof(animMask));
-#ifdef MULTIPLEX74141
+#if defined(MULTIPLEX74141) || defined(NO_MULTIPLEX74141)
     for (int i=1;i<10;i++) {
         for (int tube=j;tube<maxDigits;tube++) {
           if (oldDigit[tube] != newDigit[tube]) animMask[tube]=i;    //digit is changed

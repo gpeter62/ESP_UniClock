@@ -3,19 +3,112 @@
 
 #ifdef NO_MULTIPLEX74141
 
+#define MAXBRIGHT 10
+
  //change it, if needed for the correct tube sequence
-byte tubes[] = {0,1,2,3};         //4 tubes,   old OLED clock...     
+byte tubes[] = {3,2,1,0};         //4 tubes,   old OLED clock...     
 //byte tubes[] = {5,4,3,2,1,0};   //6 tubes, reverse order
 
 int maxDigits = sizeof(tubes);
-int PWMrefresh=5000;   // 1000Hz interrupt frequency
+const int PWMrefresh=20000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+const int PWMtiming[] = {2000,3000,5000,8000,12000,13000,14000,15000,16000,18000,20000};
 
-#define dataPin  14 
-#define latchPin 12 
-#define clkPin 13 
+#define dataPin  14  //D5
+#define latchPin 12  //D6
+#define clkPin 13    //D7
 
-void ICACHE_RAM_ATTR writeBits(byte num) {
+void writeDisplaySingle() {  
+}   
+
+void setup_pins(){
+  DPRINTLN("Setup pins...");
+  pinMode(dataPin, OUTPUT);
+  pinMode(latchPin,OUTPUT);
+  pinMode(clkPin,OUTPUT);
+  timer1_attachInterrupt(writeDisplay);
+  timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
+  timer1_write(PWMrefresh); 
+}
+
+void ICACHE_RAM_ATTR writeBits(byte num) {   //shift out 4 bits
+  for (int i=3;i>=0;i--) {
+    digitalWrite(dataPin,num  & (1<<i)); 
+    for (int t=0; t<10;t++) asm volatile ("nop");   //100nsec
+    digitalWrite(clkPin,HIGH);
+    for (int t=0; t<10;t++) asm volatile ("nop");   //100nsec
+    digitalWrite(clkPin,LOW);
+    for (int t=0; t<10;t++) asm volatile ("nop");   //100nsec
+    }
+}
+
+void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
+  static volatile byte state=0;
+  static int timer = PWMrefresh;
+  static byte brightness;
+  byte animM;
+
+  animM = 0;
+  for (int i=0;i<maxDigits;i++) {
+    if (animMask[i] > 0) animM = animMask[i];    //find, if any animation is wanted?
+  }
+
+  brightness = displayON ?  prm.dayBright : prm.nightBright;
+  if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
   
+  digitalWrite(latchPin, LOW);
+
+  if (brightness ==0) {
+    for (int i=0;i<maxDigits;i+=2) writeBits(0xF);  //black display
+    if (DECIMALPOINT_PIN>=0) digitalWrite(DECIMALPOINT_PIN,LOW);
+  }
+  else {
+    for (int i=0;i<maxDigits;i++) {
+      if (state==0) {
+        if (animMask[i]==0) writeBits(digit[tubes[i]]);
+        else writeBits(oldDigit[tubes[i]]);
+      }  
+      else if (state==1) writeBits(newDigit[tubes[i]]);
+      else writeBits(0xF);
+    } //end for
+   
+  //for (int i=0;i<maxDigits;i++) writeBits(digit[tubes[i]]);   //simple test, without animation
+  
+  switch (state) {   //state machine...
+    case 0:
+      if (DECIMALPOINT_PIN>=0) digitalWrite(DECIMALPOINT_PIN,HIGH);
+      if (animM > 0) { //Animation?
+        timer =  (PWMtiming[brightness] * (10-animM))/10;
+        state = 1;  //next state is: show newDigits
+      }
+      else {
+        timer = PWMtiming[brightness];  
+        if (brightness>=MAXBRIGHT) state = 0;
+        else state = 2;  //default next state is: BLANK display
+      }
+      break;
+    case 1:  //show new character, if animation
+      timer = (PWMtiming[brightness] * animM)/10;      
+      if (brightness>=MAXBRIGHT) state = 0;
+      else state = 2;  //default next state is: BLANK display
+      break;
+    case 2:  //blank display
+      if (DECIMALPOINT_PIN>=0) digitalWrite(DECIMALPOINT_PIN,LOW);
+      state = 0;
+      timer = PWMrefresh-PWMtiming[brightness];
+      break;
+  }  //end switch
+  } //end else
+    
+  digitalWrite(latchPin, HIGH);    
+
+  if (brightness == 0) {timer = PWMtiming[10]; state = 0;}  //no time sharing is needed
+  if (timer<2000) timer = 2000;  //safety only...
+  timer1_write(timer); 
+}
+
+/* //-----  OLD program version ------
+   
+void ICACHE_RAM_ATTR writeBits(byte num) {
   for (int i=7;i>=0;i--) {
     digitalWrite(dataPin,num  & (1<<i)); 
     for (int t=0; t<2;t++) asm volatile ("nop");   //100nsec
@@ -45,18 +138,5 @@ byte brightness;
   if (brightCounter>MAXBRIGHTNESS) brightCounter = 1; 
   timer1_write(PWMrefresh);  
 }   
-
-void writeDisplaySingle() {   //if hour or min == 255, BLANK display
-}   
-
-void setup_pins(){
-  DPRINTLN("Setup pins...");
-  pinMode(dataPin, OUTPUT);
-  pinMode(latchPin,OUTPUT);
-  pinMode(clkPin,OUTPUT);
-  timer1_attachInterrupt(writeDisplay);
-  timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
-  timer1_write(PWMrefresh); 
-}
-
+*/
 #endif
