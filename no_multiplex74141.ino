@@ -76,6 +76,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   switch (state) {   //state machine...
     case 0:
       if (DECIMALPOINT_PIN>=0) digitalWrite(DECIMALPOINT_PIN,HIGH);
+      if (COLON_PIN>=0) digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
       if (animM > 0) { //Animation?
         timer =  (PWMtiming[brightness] * (10-animM))/10;
         state = 1;  //next state is: show newDigits
@@ -93,6 +94,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
       break;
     case 2:  //blank display
       if (DECIMALPOINT_PIN>=0) digitalWrite(DECIMALPOINT_PIN,LOW);
+      if (COLON_PIN>=0) digitalWrite(COLON_PIN,LOW);  // Blink colon pin
       state = 0;
       timer = PWMrefresh-PWMtiming[brightness];
       break;
@@ -100,7 +102,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   } //end else
     
   digitalWrite(latchPin, HIGH);    
-
+  
   if (brightness == 0) {timer = PWMtiming[10]; state = 0;}  //no time sharing is needed
   if (timer<2000) timer = 2000;  //safety only...
   timer1_write(timer); 

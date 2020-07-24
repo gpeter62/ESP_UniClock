@@ -70,9 +70,19 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   if (timer<200) timer = 200;  //safety only...
   if (brightness == 0) {num = 10; timer = PWMtiming[10]; state = 0;}
   for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],num  & 1<<i); }
+  
+  if (COLON_PIN>=0) {
+    if (num==10) digitalWrite(COLON_PIN,LOW);      // Colon pin OFF
+    else digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
+  }
+  
   if (DECIMALPOINT_PIN>=0) {
-        if (num==10) digitalWrite(DECIMALPOINT_PIN,LOW);
-        else digitalWrite(DECIMALPOINT_PIN,HIGH);
+        if (num==10) {
+          digitalWrite(DECIMALPOINT_PIN,LOW);
+        }
+        else {
+          digitalWrite(DECIMALPOINT_PIN,HIGH);
+        }
   }
   timer1_write(timer); 
 }

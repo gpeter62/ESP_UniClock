@@ -38,7 +38,7 @@
 #define COLON_PIN 2         //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2)
 #define TEMP_SENSOR_PIN -1  //DHT or Dallas temp sensor pin.  If not used, SET TO -1
 #define LED_SWITCH_PIN -1   //external led lightning.  If not used, SET TO -1
-#define DECIMALPOINT_PIN 2 //Nixie decimal point. If not used, SET TO -1
+#define DECIMALPOINT_PIN -1 //Nixie decimal point. If not used, SET TO -1
 
 //Display temperature and date in every minute between START..END seconds
 #define ENABLE_CLOCK_DISPLAY true   //false, if no clock display is needed (for example: thermometer + hygrometer only)
@@ -284,7 +284,7 @@ static unsigned long lastRun = millis();
     else if (maxDigits==6)   displayTime6(); 
     else displayTime4();
     
-    if (COLON_PIN>=0) digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
+ //   if (COLON_PIN>=0) digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
     if ((LED_SWITCH_PIN>=0) && displayON) //Switch on underlightning LED only daytime
       digitalWrite(LED_SWITCH_PIN,HIGH);   
     else 
@@ -415,7 +415,7 @@ int digPtr = 0;
   newDigit[digPtr] = int(temperature[ptr]) / 10; 
   if (newDigit[digPtr]==0) newDigit[digPtr] = 10;  //BLANK!!!
   if (prm.animMode == 1)  memcpy(oldDigit,newDigit,sizeof(digit));  //don't do animation
-  colonBlinkState = false;
+  colonBlinkState = true;
 }  
 
 void displayHumid(){
@@ -434,7 +434,7 @@ int digPtr = 0;
   newDigit[digPtr] = int(humid) / 10; 
   if (newDigit[digPtr]==0) newDigit[digPtr] = 10;  //BLANK!!!
   if (prm.animMode == 1)  memcpy(oldDigit,newDigit,sizeof(digit));  //don't do animation
-  colonBlinkState = false;
+  colonBlinkState = true;
 } 
 
 void displayTime4(){
@@ -450,7 +450,7 @@ void displayTime4(){
         digitDP[2] = true; 
         newDigit[1] = day() / 10;
         newDigit[0] = day() % 10;
-        colonBlinkState = false;
+        colonBlinkState = true;
         }
       else if (ENABLE_CLOCK_DISPLAY){
         newDigit[3] = hour12_24 / 10;
@@ -479,7 +479,7 @@ void displayTime6(){
         digitDP[2] = true; 
         newDigit[1] = day() / 10;
         newDigit[0] = day() % 10;
-        colonBlinkState = false;
+        colonBlinkState = true;
         }
       else if (ENABLE_CLOCK_DISPLAY){
         newDigit[5] = hour12_24 / 10;
@@ -512,7 +512,7 @@ void displayTime8(){
       digitDP[2] = true; 
       newDigit[1] = day() / 10;
       newDigit[0] = day() % 10;
-      colonBlinkState = false;
+      colonBlinkState = true;
       if (prm.animMode == 1)  memcpy(oldDigit,newDigit,sizeof(oldDigit));  //don't do animation
     }
     else if (ENABLE_CLOCK_DISPLAY){
