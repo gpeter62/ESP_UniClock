@@ -26,7 +26,7 @@
 #define MAXBRIGHTNESS 10  // (if MM5450, use 15 instead of 10)
 
 //Use only 1 from the following options!
-//#define MULTIPLEX74141    //4..8 Nixie tubes
+#define MULTIPLEX74141    //4..8 Nixie tubes
 //#define NO_MULTIPLEX74141 //4..6 Nixie tubes
 //#define MAX6921           //4..8 VFD tubes   (IV18)
 //#define MM5450            //6..8 LEDS
@@ -34,7 +34,7 @@
 //#define Numitron_4511N
 //#define SN75512           //4..8 VFD tubes   
 //#define samsung           //samsung serial display
-#define PCF_MULTIPLEX74141  //8 Nixie tubes driven by PCF8574 port expander and 74141
+//#define PCF_MULTIPLEX74141  //8 Nixie tubes driven by PCF8574 port expander and 74141
 
 #define COLON_PIN 2         //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2)
 #define TEMP_SENSOR_PIN -1  //DHT or Dallas temp sensor pin.  If not used, SET TO -1
@@ -168,6 +168,7 @@ void clearDigits() {
 }
 
 void setup() {
+  int count = 0;
   DPRINTBEGIN(115200); DPRINTLN(" ");
   delay(100);
   clearDigits(); 
@@ -196,14 +197,20 @@ void setup() {
     MyWifiManager.setAPCallback(configModeCallback);
     MyWifiManager.autoConnect(AP_NAME,AP_PASSWORD); // Default password is PASSWORD, change as needed
     ip = WiFi.localIP();
-
-    timeClient.begin();
-    while (!timeClient.update()) { delay(500); }
+    showMyIp();
+    DPRINTLN("Connecting to Time Server...");
+    while (true) { 
+      timeClient.begin();
+      delay(100);
+      if (timeClient.update()) break;
+      count ++; if (count>999) count = 1;
+      writeIpTag(count);
+      delay(500); 
+    }
     wifiStarted = true;
     server.begin();
     delay(100);
     DPRINTLN("---------------------");
-    showMyIp();
   }
   else {
         DPRINTLN("Starting Clock in Standalone Mode!");
