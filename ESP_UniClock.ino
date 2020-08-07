@@ -26,7 +26,7 @@
 #define MAXBRIGHTNESS 10  // (if MM5450, use 15 instead of 10)
 
 //Use only 1 from the following options!
-#define MULTIPLEX74141    //4..8 Nixie tubes
+//#define MULTIPLEX74141    //4..8 Nixie tubes
 //#define NO_MULTIPLEX74141 //4..6 Nixie tubes
 //#define MAX6921           //4..8 VFD tubes   (IV18)
 //#define MM5450            //6..8 LEDS
@@ -34,7 +34,7 @@
 //#define Numitron_4511N
 //#define SN75512           //4..8 VFD tubes   
 //#define samsung           //samsung serial display
-//#define PCF_MULTIPLEX74141  //8 Nixie tubes driven by PCF8574 port expander and 74141
+#define PCF_MULTIPLEX74141  //8 Nixie tubes driven by PCF8574 port expander and 74141
 
 #define COLON_PIN 2         //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2)
 #define TEMP_SENSOR_PIN -1  //DHT or Dallas temp sensor pin.  If not used, SET TO -1
@@ -169,8 +169,9 @@ void clearDigits() {
 
 void setup() {
   int count = 0;
+  delay(200);
   DPRINTBEGIN(115200); DPRINTLN(" ");
-  delay(100);
+  delay(200);
   clearDigits(); 
   memset(newDigit,10,sizeof(newDigit));
   if (COLON_PIN>=0)  pinMode(COLON_PIN, OUTPUT);

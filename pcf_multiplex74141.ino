@@ -4,9 +4,54 @@
 
 //if a digitEnablePort is on PCF chip, add 100 to the port number!   (for example  2-->102)
 
-#include "PCF8574.h"  // https://github.com/xreef/PCF8574_library
+#define I2C_ADDR 0x20
 
-PCF8574 pcf8574(0x20);  // Set i2c address
+void ICACHE_RAM_ATTR startCondition() {
+  digitalWrite(SDA,HIGH);
+  digitalWrite(SCL,HIGH);
+  delayMicroseconds(1); 
+  digitalWrite(SDA,LOW);
+  delayMicroseconds(1); 
+  digitalWrite(SCL,LOW);
+  delayMicroseconds(1); 
+}
+
+void ICACHE_RAM_ATTR shiftout(byte in) {    //MSBFIRST
+  for (int i=0;i<8;i++) {
+    digitalWrite(SCL,HIGH);
+    digitalWrite(SDA,in  & (1<<(7-i)));
+    delayMicroseconds(4);
+    digitalWrite(SCL,LOW);
+    delayMicroseconds(4);
+  }  
+}
+
+void ICACHE_RAM_ATTR stopCondition() {
+  digitalWrite(SDA,LOW);
+  digitalWrite(SCL,HIGH);
+  delayMicroseconds(4); 
+  digitalWrite(SDA,HIGH);
+  delayMicroseconds(4); 
+  digitalWrite(SCL,LOW);
+  delayMicroseconds(4); 
+}
+
+void ICACHE_RAM_ATTR sendBits(byte address,byte val){ 
+  startCondition();
+  delayMicroseconds(4); 
+
+  shiftout(address<<1);   //shift address one bit left, because 0bit is READ/WRITE mode. 0=WRITE
+  
+  digitalWrite(SCL,HIGH);
+  delayMicroseconds(4);  //wait ack
+  digitalWrite(SCL,LOW);
+  delayMicroseconds(4); 
+
+  shiftout(val);
+  stopCondition();
+  //DPRINT(address,HEX); DPRINT(","); DPRINTLN(val,HEX);
+}
+
 
 //If a digitEnablePin is on pcf8574, add 100 to the pin number.
 const byte digitEnablePins[] = {100,101,102,103,104,105,106,107};    //8 tube nixie driven by PCF 
@@ -21,11 +66,13 @@ const int PWMtiming[] = {1000,2000,3500,5000,6000,7000,8000,9000,10000,11000,120
 #define MAXBRIGHT 10
 
 void setup_pins() {
-  DPRINTLN("PCF8574 MULTIPLEX driver: setup pins...");
-  for(int i=0;i<8;i++) pcf8574.pinMode(i, OUTPUT);  //set all PCF pins to output mode
-  pcf8574.begin();
+  DPRINTLN("PCF8574 MULTIPLEX driver: Setup pins...");
+  DPRINT("I2C SDA: GPIO"); DPRINTLN(SDA);
+  DPRINT("I2C SCL: GPIO"); DPRINTLN(SCL);
   for (int i=0;i<maxDigits;i++)  if (digitEnablePins[i]<100) pinMode(digitEnablePins[i], OUTPUT);   //8266 pins setup, if needed
   for (int i=0;i<4;i++)  pinMode(ABCDPins[i], OUTPUT);
+  pinMode(SCL,OUTPUT);
+  pinMode(SDA,OUTPUT);
   pinMode(DpPin,OUTPUT);  
   timer1_attachInterrupt(writeDisplay);
   timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
@@ -45,14 +92,14 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   switch (state) {   //state machine...
     case 0:
       if (p<100) digitalWrite(p,LOW);         //switch OFF old digit on 8266
-      else pcf8574.digitalWrite(p-100, LOW);  //or on PCF
-      digitalWrite(DpPin,LOW);                //Switch OFF old decimal point
+      //else pcf8574.digitalWrite(p-100, LOW);  //or on PCF
+      else shiftout(0);  //Switch OFF old decimal point
 
       pos++;  if (pos>maxDigits-1) pos = 0;   //go to the first tube
       for (int i=0;i<1500;i++) {asm volatile ("nop"); }   //long delay to switch off the old digit before switch on the new, depends on hardware
       p = digitEnablePins[pos];
-      if (p<100) digitalWrite(p,HIGH);         //switch ON new digit on 8266
-      else pcf8574.digitalWrite(p-100, HIGH);  //or on PCF
+      if (p<100) digitalWrite(p,HIGH);  //switch ON new digit on 8266
+      shiftout(1<<(p-100)) ;       //or on PCF
       if (digitDP[pos]) digitalWrite(DpPin,HIGH); //switch ON decimal point, if needed
       state = 2;  //default next state is: BLANK display
       if (animMask[pos] > 0) { //Animation?
