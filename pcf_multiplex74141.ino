@@ -8,22 +8,13 @@
 
 void ICACHE_RAM_ATTR startCondition() {
   digitalWrite(SDA,HIGH);
-  digitalWrite(SCL,HIGH);
+  delayMicroseconds(1); 
+  digitalWrite(SDA,HIGH);
   delayMicroseconds(1); 
   digitalWrite(SDA,LOW);
-  delayMicroseconds(1); 
+  delayMicroseconds(10); 
   digitalWrite(SCL,LOW);
-  delayMicroseconds(1); 
-}
-
-void ICACHE_RAM_ATTR shiftout(byte in) {    //MSBFIRST
-  for (int i=0;i<8;i++) {
-    digitalWrite(SCL,HIGH);
-    digitalWrite(SDA,in  & (1<<(7-i)));
-    delayMicroseconds(4);
-    digitalWrite(SCL,LOW);
-    delayMicroseconds(4);
-  }  
+  delayMicroseconds(4); 
 }
 
 void ICACHE_RAM_ATTR stopCondition() {
@@ -31,25 +22,34 @@ void ICACHE_RAM_ATTR stopCondition() {
   digitalWrite(SCL,HIGH);
   delayMicroseconds(4); 
   digitalWrite(SDA,HIGH);
+  delayMicroseconds(2); 
+}
+
+
+void ICACHE_RAM_ATTR shiftout(byte in) {
+  for (int i=0;i<8;i++) {
+    delayMicroseconds(1);
+    digitalWrite(SDA,in  & (1<<(7-i)));
+    delayMicroseconds(1);
+    digitalWrite(SCL,HIGH);
+    delayMicroseconds(4);
+    digitalWrite(SCL,LOW);
+    delayMicroseconds(1);
+  }  
+
+  //ACK is coming
+  digitalWrite(SDA,HIGH); 
+  digitalWrite(SCL,HIGH);  //clock pulse
   delayMicroseconds(4); 
   digitalWrite(SCL,LOW);
-  delayMicroseconds(4); 
+  delayMicroseconds(2); 
 }
 
 void ICACHE_RAM_ATTR sendBits(byte address,byte val){ 
   startCondition();
-  delayMicroseconds(4); 
-
   shiftout(address<<1);   //shift address one bit left, because 0bit is READ/WRITE mode. 0=WRITE
-  
-  digitalWrite(SCL,HIGH);
-  delayMicroseconds(4);  //wait ack
-  digitalWrite(SCL,LOW);
-  delayMicroseconds(4); 
-
   shiftout(val);
   stopCondition();
-  //DPRINT(address,HEX); DPRINT(","); DPRINTLN(val,HEX);
 }
 
 
@@ -74,6 +74,9 @@ void setup_pins() {
   pinMode(SCL,OUTPUT);
   pinMode(SDA,OUTPUT);
   pinMode(DpPin,OUTPUT);  
+  digitalWrite(SDA,HIGH);
+  digitalWrite(SCL,HIGH);
+  delay(100); 
   timer1_attachInterrupt(writeDisplay);
   timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
   timer1_write(PWMrefresh); 
@@ -92,14 +95,13 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   switch (state) {   //state machine...
     case 0:
       if (p<100) digitalWrite(p,LOW);         //switch OFF old digit on 8266
-      //else pcf8574.digitalWrite(p-100, LOW);  //or on PCF
-      else shiftout(0);  //Switch OFF old decimal point
+      else sendBits(I2C_ADDR,0);  //Switch OFF old decimal point
 
       pos++;  if (pos>maxDigits-1) pos = 0;   //go to the first tube
       for (int i=0;i<1500;i++) {asm volatile ("nop"); }   //long delay to switch off the old digit before switch on the new, depends on hardware
       p = digitEnablePins[pos];
       if (p<100) digitalWrite(p,HIGH);  //switch ON new digit on 8266
-      shiftout(1<<(p-100)) ;       //or on PCF
+      else sendBits(I2C_ADDR,1<<(p-100)) ;       //or on PCF
       if (digitDP[pos]) digitalWrite(DpPin,HIGH); //switch ON decimal point, if needed
       state = 2;  //default next state is: BLANK display
       if (animMask[pos] > 0) { //Animation?
