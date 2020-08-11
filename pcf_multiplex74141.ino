@@ -1,5 +1,5 @@
 #ifdef PCF_MULTIPLEX74141
-//PCF8574 I/O expander version, 8 tube Nixie Clock, driven by 74141
+//PCF8574 I/O expander version, 4..8 tube Nixie Clock, driven by 74141
 //define here the digit enable pins from 4 to 8 tubes
 
 //if a digitEnablePort is on PCF chip, add 100 to the port number!   (for example  2-->102)
@@ -53,8 +53,8 @@ void ICACHE_RAM_ATTR sendBits(byte address,byte val){
 }
 
 
-//If a digitEnablePin is on pcf8574, add 100 to the pin number.
-const byte digitEnablePins[] = {100,101,102,103,104,105,106,107};    //8 tube nixie driven by PCF 
+//If a digitEnablePin is on pcf8574, add 100 to the pin number.   (P0 = 100,... P7 = 107)
+const byte digitEnablePins[] = {100,101,102,103,104,105};    //6 tube nixie driven by PCF 
 const byte ABCDPins[4] = {14,12,13,15};  //D5,D6,D7,D8 on 8266
 const byte DpPin = 16; // decimalPoint on 8266's D0
 
@@ -94,14 +94,16 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   p = digitEnablePins[pos];
   switch (state) {   //state machine...
     case 0:
-      if (p<100) digitalWrite(p,LOW);         //switch OFF old digit on 8266
-      else sendBits(I2C_ADDR,0);  //Switch OFF old decimal point
-
+      if (p<100) digitalWrite(p,LOW); //switch OFF old digit on 8266
+      else sendBits(I2C_ADDR,0);      // or on PCF port 
+      digitalWrite(DpPin,LOW);        //Switch OFF old decimal point
+      
       pos++;  if (pos>maxDigits-1) pos = 0;   //go to the first tube
       for (int i=0;i<1500;i++) {asm volatile ("nop"); }   //long delay to switch off the old digit before switch on the new, depends on hardware
+      
       p = digitEnablePins[pos];
-      if (p<100) digitalWrite(p,HIGH);  //switch ON new digit on 8266
-      else sendBits(I2C_ADDR,1<<(p-100)) ;       //or on PCF
+      if (p<100) digitalWrite(p,HIGH);      //switch ON new digit on 8266
+      else sendBits(I2C_ADDR,1<<(p-100)) ;  // or on PCF port
       if (digitDP[pos]) digitalWrite(DpPin,HIGH); //switch ON decimal point, if needed
       state = 2;  //default next state is: BLANK display
       if (animMask[pos] > 0) { //Animation?
