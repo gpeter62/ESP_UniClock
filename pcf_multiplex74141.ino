@@ -9,7 +9,7 @@
 void ICACHE_RAM_ATTR startCondition() {
   digitalWrite(SDA,HIGH);
   delayMicroseconds(1); 
-  digitalWrite(SDA,HIGH);
+  digitalWrite(SCL,HIGH);
   delayMicroseconds(1); 
   digitalWrite(SDA,LOW);
   delayMicroseconds(10); 
@@ -62,7 +62,7 @@ int maxDigits = sizeof(digitEnablePins);
 
 //const byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
 const int PWMrefresh=12000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-const int PWMtiming[] = {1000,2000,3500,5000,6000,7000,8000,9000,10000,11000,12000};
+const int PWMtiming[] = {1000,2000,2500,3000,3500,4000,4500,5000,5500,6000,6500};
 #define MAXBRIGHT 10
 
 void setup_pins() {
