@@ -10,8 +10,8 @@ const byte ABCDPins[4] = {16,5,4,0};
 int maxDigits = sizeof(digitEnablePins);
 
 //const byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
-const int PWMrefresh=12000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-const int PWMtiming[] = {1000,2000,3500,5000,6000,7000,8000,9000,10000,11000,12000};
+const int PWMrefresh=10000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+const int PWMtiming[] = {1000,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000};
 #define MAXBRIGHT 10
 
 void setup_pins() {
