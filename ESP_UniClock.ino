@@ -243,14 +243,15 @@ void calcTime() {
 
   if (clockWifiMode) {
     if (WiFi.status() == WL_CONNECTED) {
-      timeClient.update();
-      setTime(myTZ.toLocal(timeClient.getEpochTime()));
-      if (year()>2019) 
-        updateRTC();    //update RTC, if needed
-      else 
-        getRTC();  
-        getGPS();
-    }
+      if (timeClient.update()) {
+        setTime(myTZ.toLocal(timeClient.getEpochTime()));
+        if (year()>2019) 
+          updateRTC();    //update RTC, if needed
+        else 
+          getRTC();  
+          getGPS();
+      } //endif update?
+    }  //endif Connected?
   }  //endif (clockWifiMode)
   else {
     getRTC();
