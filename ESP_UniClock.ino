@@ -26,7 +26,7 @@
 #define MAXBRIGHTNESS 10  // (if MM5450, use 15 instead of 10)
 
 //Use only 1 from the following options!
-#define MULTIPLEX74141    //4..8 Nixie tubes
+//#define MULTIPLEX74141    //4..8 Nixie tubes
 //#define NO_MULTIPLEX74141 //4..6 Nixie tubes
 //#define MAX6921           //4..8 VFD tubes   (IV18)
 //#define MM5450            //6..8 LEDS
@@ -34,9 +34,9 @@
 //#define Numitron_4511N
 //#define SN75512           //4..8 VFD tubes   
 //#define samsung           //samsung serial display
-//#define PCF_MULTIPLEX74141  //8 Nixie tubes driven by PCF8574 port expander and 74141
+#define PCF_MULTIPLEX74141  //8 Nixie tubes driven by PCF8574 port expander and 74141
 
-#define COLON_PIN 2         //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2)
+#define COLON_PIN -1         //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2)
 #define TEMP_SENSOR_PIN -1  //DHT or Dallas temp sensor pin.  If not used, SET TO -1
 #define LED_SWITCH_PIN -1   //external led lightning.  If not used, SET TO -1
 #define DECIMALPOINT_PIN -1 //Nixie decimal point between digits (thermometer, hygrometer). If not used, SET TO -1
@@ -87,6 +87,8 @@ boolean digitDP[BUFSIZE];   //actual value to put to display
 boolean digitsOnly = true;  //only 0..9 numbers are possible to display?
 byte animMask[BUFSIZE];     //0 = no animation mask is used
 
+boolean EEPROMsaving = false; //saving in progress - stop display refresh
+ 
 // 8266 internal pin registers
 // https://github.com/esp8266/esp8266-wiki/wiki/gpio-registers
 // example: https://github.com/mgo-tec/OLED_1351/blob/master/src/OLED_SSD1351.cpp
@@ -182,13 +184,14 @@ void setup() {
   setupDHTemp();
   setupRTC();
   setupGPS();
-  setup_pins();
+
   DPRINT("Number of digits:"); DPRINTLN(maxDigits);
   delay(500);
   EEPROM.begin(sizeof(prm));
   delay(100);  
   loadEEPROM();
   if (prm.magic !=133) factoryReset();
+  setup_pins();
   testTubes(300);
   checkWifiMode();
   
@@ -329,8 +332,10 @@ void loadEEPROM() {
 }
 
 void saveEEPROM() {
+      EEPROMsaving = true;
       EEPROM.put(EEPROM_addr,prm);     //(mod(mySTD.offset/60,24))); 
       EEPROM.commit();
+      EEPROMsaving = false;
 }
 
 void factoryReset() {
@@ -347,7 +352,7 @@ void factoryReset() {
   prm.nightMin = 0;
   prm.dayBright = MAXBRIGHTNESS;
   prm.nightBright = 3;
-  prm.animMode = 5;        
+  prm.animMode = 6;        
   prm.magic = 133;              //magic value to check to first start
   saveEEPROM();
   calcTime();

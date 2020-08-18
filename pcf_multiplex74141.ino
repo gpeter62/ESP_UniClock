@@ -6,46 +6,51 @@
 
 #define I2C_ADDR 0x20
 
+void ICACHE_RAM_ATTR delayMS(int d) {
+  for (int i=0;i<d*20;i++) {asm volatile ("nop"); }
+}
 void ICACHE_RAM_ATTR startCondition() {
   digitalWrite(SDA,HIGH);
-  delayMicroseconds(1); 
+  delayMS(2); 
   digitalWrite(SCL,HIGH);
-  delayMicroseconds(1); 
+  delayMS(2); 
   digitalWrite(SDA,LOW);
-  delayMicroseconds(10); 
+  delayMS(10); 
   digitalWrite(SCL,LOW);
-  delayMicroseconds(4); 
+  delayMS(4); 
 }
 
 void ICACHE_RAM_ATTR stopCondition() {
+  delayMS(4); 
   digitalWrite(SDA,LOW);
   digitalWrite(SCL,HIGH);
-  delayMicroseconds(4); 
+  delayMS(4); 
   digitalWrite(SDA,HIGH);
-  delayMicroseconds(2); 
+  delayMS(4); 
 }
 
 
 void ICACHE_RAM_ATTR shiftout(byte in) {
   for (int i=0;i<8;i++) {
-    delayMicroseconds(1);
     digitalWrite(SDA,in  & (1<<(7-i)));
-    delayMicroseconds(1);
+    delayMS(1);
     digitalWrite(SCL,HIGH);
-    delayMicroseconds(4);
+    if (i==0) delayMS(4);
+    delayMS(4);
     digitalWrite(SCL,LOW);
-    delayMicroseconds(1);
   }  
 
   //ACK is coming
-  digitalWrite(SDA,HIGH); 
+  pinMode(SDA,INPUT_PULLUP); 
+  delayMS(4);
   digitalWrite(SCL,HIGH);  //clock pulse
-  delayMicroseconds(4); 
+  delayMS(4); 
   digitalWrite(SCL,LOW);
-  delayMicroseconds(2); 
-}
+  pinMode(SDA,OUTPUT);
+ }
 
 void ICACHE_RAM_ATTR sendBits(byte address,byte val){ 
+  //Serial.print(address,HEX); Serial.print("/"); Serial.println(val);
   startCondition();
   shiftout(address<<1);   //shift address one bit left, because 0bit is READ/WRITE mode. 0=WRITE
   shiftout(val);
@@ -55,14 +60,14 @@ void ICACHE_RAM_ATTR sendBits(byte address,byte val){
 
 //If a digitEnablePin is on pcf8574, add 100 to the pin number.   (P0 = 100,... P7 = 107)
 const byte digitEnablePins[] = {100,101,102,103,104,105};    //6 tube nixie driven by PCF 
-const byte ABCDPins[4] = {14,12,13,15};  //D5,D6,D7,D8 on 8266
+const byte ABCDPins[4] = {14,12,13,2};  //D5,D6,D7,D4 on 8266
 const byte DpPin = 16; // decimalPoint on 8266's D0
 
 int maxDigits = sizeof(digitEnablePins);
 
 //const byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
-const int PWMrefresh=12000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-const int PWMtiming[] = {1000,2000,2500,3000,3500,4000,4500,5000,5500,6000,6500};
+const int PWMrefresh=10000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+const int PWMtiming[] = {1000,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000};
 #define MAXBRIGHT 10
 
 void setup_pins() {
@@ -77,6 +82,7 @@ void setup_pins() {
   digitalWrite(SDA,HIGH);
   digitalWrite(SCL,HIGH);
   delay(100); 
+  sendBits(I2C_ADDR,0);
   timer1_attachInterrupt(writeDisplay);
   timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
   timer1_write(PWMrefresh); 
@@ -88,7 +94,12 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   static int timer = PWMrefresh;
   static byte num,brightness;
   byte p;
-
+  
+  if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
+    timer1_write(PWMrefresh);
+    return;  
+  }
+  
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
   p = digitEnablePins[pos];
@@ -127,6 +138,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
       num = 10;  //blank character
       state = 0;
       timer = PWMrefresh-PWMtiming[brightness];
+      digitalWrite(DpPin,LOW);
       break;
   }
 
