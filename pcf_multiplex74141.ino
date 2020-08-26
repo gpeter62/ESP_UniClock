@@ -9,26 +9,6 @@
 void ICACHE_RAM_ATTR delayMS(int d) {
   for (int i=0;i<d*20;i++) {asm volatile ("nop"); }
 }
-void ICACHE_RAM_ATTR startCondition() {
-  digitalWrite(SDA,HIGH);
-  delayMS(2); 
-  digitalWrite(SCL,HIGH);
-  delayMS(2); 
-  digitalWrite(SDA,LOW);
-  delayMS(10); 
-  digitalWrite(SCL,LOW);
-  delayMS(4); 
-}
-
-void ICACHE_RAM_ATTR stopCondition() {
-  delayMS(4); 
-  digitalWrite(SDA,LOW);
-  digitalWrite(SCL,HIGH);
-  delayMS(4); 
-  digitalWrite(SDA,HIGH);
-  delayMS(4); 
-}
-
 
 void ICACHE_RAM_ATTR shiftout(byte in) {
   for (int i=0;i<8;i++) {
@@ -51,10 +31,27 @@ void ICACHE_RAM_ATTR shiftout(byte in) {
 
 void ICACHE_RAM_ATTR sendBits(byte address,byte val){ 
   //Serial.print(address,HEX); Serial.print("/"); Serial.println(val);
-  startCondition();
+  
+  //void ICACHE_RAM_ATTR startCondition() {
+  digitalWrite(SDA,HIGH);
+  delayMS(2); 
+  digitalWrite(SCL,HIGH);
+  delayMS(2); 
+  digitalWrite(SDA,LOW);
+  delayMS(10); 
+  digitalWrite(SCL,LOW);
+  delayMS(4); 
+  
   shiftout(address<<1);   //shift address one bit left, because 0bit is READ/WRITE mode. 0=WRITE
   shiftout(val);
-  stopCondition();
+  
+  //void ICACHE_RAM_ATTR stopCondition() {
+  delayMS(4); 
+  digitalWrite(SDA,LOW);
+  digitalWrite(SCL,HIGH);
+  delayMS(4); 
+  digitalWrite(SDA,HIGH);
+  delayMS(4); 
 }
 
 

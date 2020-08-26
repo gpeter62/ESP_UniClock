@@ -194,13 +194,17 @@ void setup() {
   setup_pins();
   testTubes(300);
   checkWifiMode();
-  
+  clearDigits();
+  delay(1000);
   if (clockWifiMode) {
     DPRINTLN("Starting Clock in WiFi Mode!");
+    EEPROMsaving = true;
     WiFiManager MyWifiManager;
     MyWifiManager.setAPCallback(configModeCallback);
     MyWifiManager.autoConnect(AP_NAME,AP_PASSWORD); // Default password is PASSWORD, change as needed
+    delay(2000);
     ip = WiFi.localIP();
+    EEPROMsaving = false;
     showMyIp();
     DPRINTLN("Connecting to Time Server...");
     while (true) { 
@@ -759,6 +763,7 @@ void testTubesNew(int dely) {
 void testTubes(int dely) {
    delay(dely);
    for (int i=0; i<10;i++) { 
+     DPRINT(i); DPRINT(" ");
      for (int j=0;j<maxDigits;j++) {
       newDigit[j] = i;
       digitDP[j] = i%2;
@@ -767,6 +772,7 @@ void testTubes(int dely) {
      writeDisplaySingle();
      delay(dely); 
    }
+   DPRINTLN(" ");
    delay(1000);
    memset(digitDP,0,sizeof(digitDP));
 }
