@@ -5,6 +5,17 @@
 //if a digitEnablePort is on PCF chip, add 100 to the port number!   (for example  2-->102)
 
 #define I2C_ADDR 0x20
+//If a digitEnablePin is on pcf8574, add 100 to the pin number.   (P0 = 100,... P7 = 107)
+const byte digitEnablePins[] = {100,101,102,103,104,105};    //6 tube nixie driven by PCF 
+const byte ABCDPins[4] = {14,12,13,2};  //D5,D6,D7,D4 on 8266
+const byte DpPin = 16; // decimalPoint on 8266's D0
+
+int maxDigits = sizeof(digitEnablePins);
+
+//const byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
+const int PWMrefresh=10000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+const int PWMtiming[] = {1000,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000};
+#define MAXBRIGHT 10
 
 void ICACHE_RAM_ATTR delayMS(int d) {
   for (int i=0;i<d*20;i++) {asm volatile ("nop"); }
@@ -55,18 +66,6 @@ void ICACHE_RAM_ATTR sendBits(byte address,byte val){
 }
 
 
-//If a digitEnablePin is on pcf8574, add 100 to the pin number.   (P0 = 100,... P7 = 107)
-const byte digitEnablePins[] = {100,101,102,103,104,105};    //6 tube nixie driven by PCF 
-const byte ABCDPins[4] = {14,12,13,2};  //D5,D6,D7,D4 on 8266
-const byte DpPin = 16; // decimalPoint on 8266's D0
-
-int maxDigits = sizeof(digitEnablePins);
-
-//const byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
-const int PWMrefresh=10000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-const int PWMtiming[] = {1000,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000};
-#define MAXBRIGHT 10
-
 void setup_pins() {
   DPRINTLN("PCF8574 MULTIPLEX driver: Setup pins...");
   DPRINT("I2C SDA: GPIO"); DPRINTLN(SDA);
@@ -112,7 +111,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
       p = digitEnablePins[pos];
       if (p<100) digitalWrite(p,HIGH);      //switch ON new digit on 8266
       else sendBits(I2C_ADDR,1<<(p-100)) ;  // or on PCF port
-      if (digitDP[pos]) digitalWrite(DpPin,HIGH); //switch ON decimal point, if needed
+      if (digitDP[pos] && (brightness>0)) digitalWrite(DpPin,HIGH); //switch ON decimal point, if needed
       state = 2;  //default next state is: BLANK display
       if (animMask[pos] > 0) { //Animation?
         num =   oldDigit[pos];  //show old character
