@@ -10,8 +10,8 @@ byte tubes[] = {3,2,1,0};         //4 tubes,   old OLED clock...
 //byte tubes[] = {5,4,3,2,1,0};   //6 tubes, reverse order
 
 int maxDigits = sizeof(tubes);
-const int PWMrefresh=20000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-const int PWMtiming[] = {2000,3000,5000,8000,12000,13000,14000,15000,16000,18000,20000};
+const int PWMrefresh=10000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+const int PWMtiming[] = {2000,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000};
 
 #define dataPin  14  //D5
 #define latchPin 12  //D6
@@ -46,7 +46,12 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   static int timer = PWMrefresh;
   static byte brightness;
   byte animM;
-
+  
+  if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
+    timer1_write(PWMrefresh);
+    return;  
+  }
+  
   animM = 0;
   for (int i=0;i<maxDigits;i++) {
     if (animMask[i] > 0) animM = animMask[i];    //find, if any animation is wanted?

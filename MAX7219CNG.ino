@@ -82,7 +82,11 @@ int bitBuffer;
 //One tick is 1us / 80 = 0.0125us = 6.25ns on 160MHz
 // 1 NOP is 1 tick
 
-
+  if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
+    timer1_write(PWMrefresh);
+    return;  
+  }
+  
   newBright = displayON ?  prm.dayBright : prm.nightBright;
   if (newBright != oldBright) {
     sendBits(REG_INTENSITY, newBright);    //Set Brightness

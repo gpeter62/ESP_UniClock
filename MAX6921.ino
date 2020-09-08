@@ -104,7 +104,12 @@ static volatile boolean heatState = false;
       WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_HEAT_B_BIT );
     }
   }
-
+  
+  if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
+    timer1_write(PWMrefresh);
+    return;  
+  }
+  
   if (brightCounter[pos] % MAXBRIGHTNESS < (displayON ?  prm.dayBright : prm.nightBright))
     WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_BL_BIT );   //ON
   else 

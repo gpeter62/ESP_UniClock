@@ -5,6 +5,8 @@
 //if a digitEnablePort is on PCF chip, add 100 to the port number!   (for example  2-->102)
 
 #define I2C_ADDR 0x20
+#define LEFTDECIMAL true   //set true, if decimal point is on the left side on the tube. Else set false!
+
 //If a digitEnablePin is on pcf8574, add 100 to the pin number.   (P0 = 100,... P7 = 107)
 const byte digitEnablePins[] = {100,101,102,103,104,105};    //6 tube nixie driven by PCF 
 const byte ABCDPins[4] = {14,12,13,2};  //D5,D6,D7,D4 on 8266
@@ -27,15 +29,15 @@ void ICACHE_RAM_ATTR shiftout(byte in) {
     delayMS(1);
     digitalWrite(SCL,HIGH);
     if (i==0) delayMS(4);
-    delayMS(4);
+    delayMS(1);
     digitalWrite(SCL,LOW);
   }  
 
   //ACK is coming
   pinMode(SDA,INPUT_PULLUP); 
-  delayMS(4);
+  delayMS(1);
   digitalWrite(SCL,HIGH);  //clock pulse
-  delayMS(4); 
+  delayMS(1); 
   digitalWrite(SCL,LOW);
   pinMode(SDA,OUTPUT);
  }
@@ -45,24 +47,24 @@ void ICACHE_RAM_ATTR sendBits(byte address,byte val){
   
   //void ICACHE_RAM_ATTR startCondition() {
   digitalWrite(SDA,HIGH);
-  delayMS(2); 
+  delayMS(1); 
   digitalWrite(SCL,HIGH);
-  delayMS(2); 
+  delayMS(1); 
   digitalWrite(SDA,LOW);
-  delayMS(10); 
+  delayMS(3); 
   digitalWrite(SCL,LOW);
-  delayMS(4); 
+  delayMS(2); 
   
   shiftout(address<<1);   //shift address one bit left, because 0bit is READ/WRITE mode. 0=WRITE
   shiftout(val);
   
   //void ICACHE_RAM_ATTR stopCondition() {
-  delayMS(4); 
+  delayMS(2); 
   digitalWrite(SDA,LOW);
   digitalWrite(SCL,HIGH);
-  delayMS(4); 
+  delayMS(2); 
   digitalWrite(SDA,HIGH);
-  delayMS(4); 
+  //delayMS(4); 
 }
 
 
@@ -89,9 +91,10 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   static volatile byte state=0;
   static int timer = PWMrefresh;
   static byte num,brightness;
-  byte p;
+  byte p,DPpos;
   
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
+    for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],10  & 1<<i); }
     timer1_write(PWMrefresh);
     return;  
   }
@@ -101,6 +104,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   p = digitEnablePins[pos];
   switch (state) {   //state machine...
     case 0:
+      for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],10  & 1<<i); }
       if (p<100) digitalWrite(p,LOW); //switch OFF old digit on 8266
       else sendBits(I2C_ADDR,0);      // or on PCF port 
       digitalWrite(DpPin,LOW);        //Switch OFF old decimal point
@@ -111,7 +115,10 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
       p = digitEnablePins[pos];
       if (p<100) digitalWrite(p,HIGH);      //switch ON new digit on 8266
       else sendBits(I2C_ADDR,1<<(p-100)) ;  // or on PCF port
-      if (digitDP[pos] && (brightness>0)) digitalWrite(DpPin,HIGH); //switch ON decimal point, if needed
+      
+      if (LEFTDECIMAL) DPpos = min(maxDigits-1,pos+1); else DPpos = pos;
+      if (digitDP[DPpos] && (brightness>0)) digitalWrite(DpPin,HIGH); //switch ON decimal point, if needed
+      
       state = 2;  //default next state is: BLANK display
       if (animMask[pos] > 0) { //Animation?
         num =   oldDigit[pos];  //show old character
@@ -131,10 +138,12 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
       else state = 2;  //default next state is: BLANK display
       break;
     case 2:  //blank display
+      if (p<100) digitalWrite(p,LOW); //switch OFF old digit on 8266
+      else sendBits(I2C_ADDR,0);      // or on PCF port 
+      digitalWrite(DpPin,LOW);
       num = 10;  //blank character
       state = 0;
       timer = PWMrefresh-PWMtiming[brightness];
-      digitalWrite(DpPin,LOW);
       break;
   }
 

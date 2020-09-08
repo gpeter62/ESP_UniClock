@@ -30,13 +30,18 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   static int timer = PWMrefresh;
   static byte num,brightness;
 
+  if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
+    timer1_write(PWMrefresh);
+    return;  
+  }
+
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
 
   switch (state) {   //state machine...
     case 0:
-      digitalWrite(digitEnablePins[pos],LOW);     //switch off old digit
-
+      for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],10  & 1<<i); }   
+      digitalWrite(digitEnablePins[pos],LOW);     //switch off old digit 
       pos++;  if (pos>maxDigits-1) {  pos = 0; }  //go to the first tube
       for (int i=0;i<1000;i++) {asm volatile ("nop"); }   //long delay to switch off the old digit before switch on the new, depends on hardware
       digitalWrite(digitEnablePins[pos],HIGH);    //switch on the new digit
@@ -59,16 +64,17 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
       else state = 2;  //default next state is: BLANK display
       break;
     case 2:  //blank display
+      digitalWrite(digitEnablePins[pos],LOW);
       num = 10;  //blank character
       state = 0;
       timer = PWMrefresh-PWMtiming[brightness];
       break;
   }
 
-  //if ((pos>0) && (num<=9)) num = convert[num];   //tube character conversion, if needed... (maybe bad pin numbering)
+ //  if ((pos>0) && (num<=9)) num = convert[num];   //tube character conversion, if needed... (maybe bad pin numbering)
   
   if (timer<200) timer = 200;  //safety only...
-  if (brightness == 0) {num = 10; timer = PWMtiming[10]; state = 0;}
+  if (brightness == 0) {num = 10; timer = PWMtiming[10]; state = 0; digitalWrite(digitEnablePins[pos],LOW);}
   for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],num  & 1<<i); }
   
   if (COLON_PIN>=0) {

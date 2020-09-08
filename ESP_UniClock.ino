@@ -1,7 +1,7 @@
 /* 
  *    Universal Clock  Nixie, VFD, LED, Numitron
  *    with optional Dallas Thermometer and DS3231 RTC
- *    v1.4a  07/22/2020
+ *    v1.4a  09/08/2020
  *    Copyright (C) 2020  Peter Gautier 
  *    
  *    This program is free software: you can redistribute it and/or modify
@@ -23,6 +23,7 @@
 //#define USE_DHT_TEMP        //TEMP_SENSOR_PIN is used to connect the sensor
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
 //#define USE_GPS           
+//#define USE_NEOPIXEL      //WS2812B led stripe, below tubes
 #define MAXBRIGHTNESS 10  // (if MM5450, use 15 instead of 10)
 
 //Use only 1 from the following options!
@@ -34,7 +35,7 @@
 //#define Numitron_4511N
 //#define SN75512           //4..8 VFD tubes   
 //#define samsung           //samsung serial display
-#define PCF_MULTIPLEX74141  //8 Nixie tubes driven by PCF8574 port expander and 74141
+#define PCF_MULTIPLEX74141
 
 #define COLON_PIN -1         //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2)
 #define TEMP_SENSOR_PIN -1  //DHT or Dallas temp sensor pin.  If not used, SET TO -1
@@ -54,7 +55,7 @@
 #define GRAD_CHARCODE 16
 #define PERCENT_CHARCODE 8
 
-char webName[] = "UniClock 1.4c";
+char webName[] = "UniClock 1.4d";
 #define AP_NAME "UNICLOCK"
 #define AP_PASSWORD ""
 //--------------------------------------------------------------------------------------------------
@@ -68,6 +69,10 @@ char webName[] = "UniClock 1.4c";
 #include <WiFiManager.h>
 #include <EEPROM.h>
 #include <ESP8266mDNS.h>
+
+#ifdef USE_NEOPIXEL
+#include <NeoPixelBrightnessBus.h>  //<NeoPixelBus.h>
+#endif
 
 extern void ICACHE_RAM_ATTR writeDisplay();
 extern void writeDisplaySingle();
@@ -170,12 +175,12 @@ void clearDigits() {
 }
 
 void setup() {
+  ESP.wdtDisable();
   int count = 0;
   delay(200);
   DPRINTBEGIN(115200); DPRINTLN(" ");
   delay(200);
   clearDigits(); 
-  memset(newDigit,10,sizeof(newDigit));
   if (COLON_PIN>=0)  pinMode(COLON_PIN, OUTPUT);
   if (LED_SWITCH_PIN>=0)  pinMode(LED_SWITCH_PIN, OUTPUT);
   if (DECIMALPOINT_PIN>=0)  pinMode(DECIMALPOINT_PIN, OUTPUT);
@@ -184,6 +189,7 @@ void setup() {
   setupDHTemp();
   setupRTC();
   setupGPS();
+  setupNeopixel();
 
   DPRINT("Number of digits:"); DPRINTLN(maxDigits);
   delay(500);
@@ -269,8 +275,9 @@ void calcTime() {
 
 void timeProgram() {
 static unsigned long lastRun = millis();
-
+  doAnimation();
   if ((millis()-lastRun)<300) return;
+
   lastRun = millis(); 
   calcTime();
   if (useTemp>0) {
@@ -364,7 +371,6 @@ void factoryReset() {
 }
 
 void cathodeProtect() {
-
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
   byte hourShow = (byte)hour12_24;
   byte minShow  = (byte)minute();
@@ -448,7 +454,6 @@ int digPtr = 0;
   }
 
   newDigit[digPtr++] = PERCENT_CHARCODE;  //  "%"
-  
   newDigit[digPtr++] = int(humid*10) % 10; 
   digitDP[digPtr] = true;
   newDigit[digPtr++] = int(humid) % 10;
@@ -655,10 +660,7 @@ void changeDigit() {
 
   memcpy(digit,newDigit,sizeof(digit));
   memcpy(oldDigit,newDigit,sizeof(oldDigit));
-
 }
-
-
 
 
 void evalShutoffTime() {  // Determine whether  tubes should be turned to NIGHT mode
@@ -670,8 +672,8 @@ void evalShutoffTime() {  // Determine whether  tubes should be turned to NIGHT 
   int mn_off = prm.nightHour*60 + prm.nightMin;
   
   static bool prevShutoffState = true;  
-  if ( ((mn_off < mn_on) &&  (mn >= mn_off) && (mn < mn_on)) ||  // Nighttime
-        (mn_off > mn_on) && ((mn >= mn_off) || (mn < mn_on))) { 
+  if ( (((mn_off < mn_on) &&  (mn >= mn_off) && (mn < mn_on))) ||  // Nighttime
+        ((mn_off > mn_on) && ((mn >= mn_off) || (mn < mn_on)))) { 
      if (!manualOverride) displayON = false;
      if (prevShutoffState == true) manualOverride = false; 
      prevShutoffState = false;
@@ -744,24 +746,15 @@ static unsigned int counter =0;
   ESP.restart();
 }
 
-
 inline int mod(int a, int b) {
     int r = a % b;
     return r < 0 ? r + b : r;
 }
 
-void testTubesNew(int dely) {
-  while (true) {
-    digit[0] = 10;
-    digit [1] = 10;
-    digit [2] = 8;
-    digit [3] = 10;
-    delay(1000);
-  }
-}
 
 void testTubes(int dely) {
    delay(dely);
+   DPRINT("Testing tubes: ");
    for (int i=0; i<10;i++) { 
      DPRINT(i); DPRINT(" ");
      for (int j=0;j<maxDigits;j++) {
@@ -788,14 +781,11 @@ static unsigned long lastRun = millis();
   else DPRINTLN(" ");
 }
 
-
-
 void wifiCode() {
 static char txt[50];
 static WiFiClient client;
 bool mod = false;  
 int tmp = 0;
-
 
   client = server.available();
   //char clientline[BUFSIZ];
