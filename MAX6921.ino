@@ -85,6 +85,40 @@ boolean useHeater = false;                 //Is heater driver signal used?
 //One tick is 1us / 80 = 0.0125us = 6.25ns on 160MHz
 // 1 NOP is 1 tick
 
+void setup_pins() {
+#if defined(ESP8266) 
+#else
+  #error "Board is not supported!"  
+#endif
+  
+  pinMode(PIN_LE,  OUTPUT);
+  pinMode(PIN_BL,  OUTPUT);   digitalWrite(PIN_BL,LOW);  //brightness
+  pinMode(PIN_DATA,OUTPUT);
+  pinMode(PIN_CLK, OUTPUT);
+  
+  if ((PIN_HEAT_A >=0) && (PIN_HEAT_B>=0)) {
+    useHeater = true;
+    pinMode(PIN_HEAT_A, OUTPUT);  digitalWrite(PIN_HEAT_A,HIGH);
+    pinMode(PIN_HEAT_B, OUTPUT);  digitalWrite(PIN_HEAT_B,LOW);
+    DPRINT("Filament Driver: GPIO"); DPRINT(PIN_HEAT_A);
+    DPRINT(" / GPIO");      DPRINTLN(PIN_HEAT_B);
+  }
+  
+  DPRINTLN("Setup MAX6921 pins...");
+  DPRINT("- CLK   : GPIO"); DPRINTLN(PIN_CLK);
+  DPRINT("- DATAIN: GPIO"); DPRINTLN(PIN_DATA);
+  DPRINT("- LE    : GPIO"); DPRINTLN(PIN_LE);
+  DPRINT("- BLANK : GPIO"); DPRINTLN(PIN_BL);
+  
+  generateBitTable();
+  digitsOnly = false;
+    
+  timer1_attachInterrupt(writeDisplay);
+  timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
+  timer1_write(tubeTime[0]); 
+}  
+
+
 void ICACHE_RAM_ATTR writeDisplay(){        // Writes to the MAX6921 driver for IV-18
 static volatile uint32_t val = 0;
 static volatile byte pos = 0;
@@ -106,7 +140,7 @@ static volatile boolean heatState = false;
   }
   
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
-    timer1_write(PWMrefresh);
+    timer1_write(tubeTime[0]);
     return;  
   }
   
@@ -204,33 +238,6 @@ DPRINTLN("---- Generated Character / Pins table -----");
 }
 
 
-void setup_pins() {
-  pinMode(PIN_LE,  OUTPUT);
-  pinMode(PIN_BL,  OUTPUT);   digitalWrite(PIN_BL,LOW);  //brightness
-  pinMode(PIN_DATA,OUTPUT);
-  pinMode(PIN_CLK, OUTPUT);
-  
-  if ((PIN_HEAT_A >=0) && (PIN_HEAT_B>=0)) {
-    useHeater = true;
-    pinMode(PIN_HEAT_A, OUTPUT);  digitalWrite(PIN_HEAT_A,HIGH);
-    pinMode(PIN_HEAT_B, OUTPUT);  digitalWrite(PIN_HEAT_B,LOW);
-    DPRINT("Filament Driver: GPIO"); DPRINT(PIN_HEAT_A);
-    DPRINT(" / GPIO");      DPRINTLN(PIN_HEAT_B);
-  }
-  
-  DPRINTLN("Setup MAX6921 pins...");
-  DPRINT("- CLK   : GPIO"); DPRINTLN(PIN_CLK);
-  DPRINT("- DATAIN: GPIO"); DPRINTLN(PIN_DATA);
-  DPRINT("- LE    : GPIO"); DPRINTLN(PIN_LE);
-  DPRINT("- BLANK : GPIO"); DPRINTLN(PIN_BL);
-  
-  generateBitTable();
-  digitsOnly = false;
-    
-  timer1_attachInterrupt(writeDisplay);
-  timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
-  timer1_write(tubeTime[0]); 
-}  
 
 void writeDisplaySingle() {}
 #endif

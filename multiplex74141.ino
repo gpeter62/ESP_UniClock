@@ -14,13 +14,27 @@ const int PWMrefresh=10000;   ////msec, Multiplex time period. Greater value => 
 const int PWMtiming[] = {1000,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000};
 #define MAXBRIGHT 10
 
+#if defined(ESP32) 
+  hw_timer_t * timer = NULL;
+  portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+#endif  
+
 void setup_pins() {
   DPRINTLN("Setup pins...");
   for (int i=0;i<maxDigits;i++) pinMode(digitEnablePins[i], OUTPUT);
   for (int i=0;i<4;i++) pinMode(ABCDPins[i], OUTPUT);
+#if defined(ESP8266)  
   timer1_attachInterrupt(writeDisplay);
   timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
   timer1_write(PWMrefresh); 
+#elif defined(ESP32)
+  timer = timerBegin(0, 80, true);
+  timerAttachInterrupt(timer, &writeDisplay, true);
+  timerAlarmWrite(timer, 10000, true);   //microsec
+  timerAlarmEnable(timer);
+#else
+  #error "Unknown controller board!"    
+#endif  
 }
 
 
@@ -31,9 +45,15 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   static byte num,brightness;
 
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
+    #if defined(ESP8266)    
     timer1_write(PWMrefresh);
+    #endif    
     return;  
   }
+
+#if defined(ESP32)
+  portENTER_CRITICAL_ISR(&timerMux);
+#endif
 
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
@@ -90,7 +110,12 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
           if (decimalpointON) digitalWrite(DECIMALPOINT_PIN,HIGH);
         }
   }
-  timer1_write(timer); 
+
+#if defined(ESP8266)    
+  timer1_write(timer);
+#elif defined(ESP32)     
+  portEXIT_CRITICAL_ISR(&timerMux);
+#endif    
 }
 
 void writeDisplaySingle() {}

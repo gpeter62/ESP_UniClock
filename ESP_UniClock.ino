@@ -54,13 +54,24 @@
 #define TEMP_CHARCODE 15    
 #define GRAD_CHARCODE 16
 #define PERCENT_CHARCODE 8
-
-char webName[] = "UniClock 1.4d";
-#define AP_NAME "UNICLOCK"
-#define AP_PASSWORD ""
 //--------------------------------------------------------------------------------------------------
 
-#include <ESP8266WiFi.h>
+#if defined(ESP8266)  
+  char webName[] = "UniClock 1.4e";
+  #define AP_NAME "UNICLOCK"
+  #define AP_PASSWORD ""
+  #include <ESP8266WiFi.h>
+  #include <ESP8266mDNS.h>
+#elif defined(ESP32)
+  char webName[] = "ESP32UniClock 1.4e";
+  #define AP_NAME "UNICLOCK32"
+  #define AP_PASSWORD ""
+  #include <WiFi.h>
+  #include <ESPmDNS.h>
+#else
+  #error "Board is not supported!"  
+#endif
+
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <TimeLib.h>
@@ -68,7 +79,6 @@ char webName[] = "UniClock 1.4d";
 #include <Wire.h>
 #include <WiFiManager.h>
 #include <EEPROM.h>
-#include <ESP8266mDNS.h>
 
 #ifdef USE_NEOPIXEL
 #include <NeoPixelBrightnessBus.h>  //<NeoPixelBus.h>
@@ -175,7 +185,7 @@ void clearDigits() {
 }
 
 void setup() {
-  ESP.wdtDisable();
+  //WiFi.mode(WIFI_OFF);
   int count = 0;
   delay(200);
   DPRINTBEGIN(115200); DPRINTLN(" ");
@@ -201,14 +211,28 @@ void setup() {
   testTubes(300);
   checkWifiMode();
   clearDigits();
-  delay(1000);
+  EEPROMsaving = true;
   if (clockWifiMode) {
     DPRINTLN("Starting Clock in WiFi Mode!");
-    EEPROMsaving = true;
-    WiFiManager MyWifiManager;
-    MyWifiManager.setAPCallback(configModeCallback);
-    MyWifiManager.autoConnect(AP_NAME,AP_PASSWORD); // Default password is PASSWORD, change as needed
     delay(2000);
+    WiFiManager MyWifiManager;
+    MyWifiManager.setCleanConnect(true);
+    MyWifiManager.setAPCallback(configModeCallback);
+    MyWifiManager.setEnableConfigPortal(false);
+    for (int i=0;i<5;i++) {
+      if(!MyWifiManager.autoConnect(AP_NAME,AP_PASSWORD)) {
+        DPRINT("Retry to Connect:"); DPRINTLN(i);
+        WiFi.disconnect();
+        WiFi.mode(WIFI_OFF);
+        delay(2000);
+        if (i==4) {
+          MyWifiManager.setEnableConfigPortal(true);
+          MyWifiManager.autoConnect(AP_NAME,AP_PASSWORD); // Default password is PASSWORD, change as needed
+        }
+      }
+      else 
+        break;
+    }  //end for
     ip = WiFi.localIP();
     EEPROMsaving = false;
     showMyIp();

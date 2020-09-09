@@ -19,6 +19,11 @@ const int PWMrefresh=10000;   ////msec, Multiplex time period. Greater value => 
 const int PWMtiming[] = {1000,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000};
 #define MAXBRIGHT 10
 
+#if defined(ESP8266) 
+#else
+  #error "Board is not supported!"  
+#endif
+
 void ICACHE_RAM_ATTR delayMS(int d) {
   for (int i=0;i<d*20;i++) {asm volatile ("nop"); }
 }

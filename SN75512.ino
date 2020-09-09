@@ -46,7 +46,6 @@ byte charDefinition[] = {
                    B11000110    //grad  abfg  (16)
 };
 
-
 #define MAXCHARS sizeof(charDefinition)
 #define MAXSEGMENTS sizeof(segmentEnablePins)
 int maxDigits =  sizeof(digitEnablePins);
@@ -82,7 +81,7 @@ static volatile boolean heatState = false;
   }
   
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
-    timer1_write(PWMrefresh);
+    timer1_write(VFDrefresh);
     return;  
   }
 
@@ -157,6 +156,11 @@ DPRINTLN("---- Generated Character / Pins table -----");
 
 
 void setup_pins() {
+#if defined(ESP8266) 
+#else
+  #error "Board is not supported!"  
+#endif
+  
   DPRINTLN("Setup pins...");
   pinMode(PIN_LE,  OUTPUT);
   pinMode(PIN_STROBE,  OUTPUT); // a priori inutile avec le PWM

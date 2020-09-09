@@ -11,6 +11,10 @@ int maxDigits = sizeof(digitEnablePins);
 int PWMrefresh=5000;   ////kb.1000Hz, Multiplex time period. Greater value => slower multiplex frequency
 
 void setup_pins() {
+#if defined(ESP8266) 
+#else
+  #error "Board is not supported!"  
+#endif
   DPRINTLN("Setup pins...");
   pinMode(LTBIpin, OUTPUT);
   digitalWrite(LTBIpin,HIGH);

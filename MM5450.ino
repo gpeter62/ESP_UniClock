@@ -51,6 +51,11 @@ byte charDefinition[] = {
 byte bitBuffer[36];
 
 void setup_pins() {
+#if defined(ESP8266) 
+#else
+  #error "Board is not supported!"  
+#endif
+  
   DPRINTLN("Setup pins...");
   pinMode(PIN_LE,  OUTPUT);
   pinMode(PIN_BR,  OUTPUT); 
@@ -100,7 +105,7 @@ static byte side = 0;
 byte num = 0;
 
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
-    timer1_write(PWMrefresh);
+    timer1_write(VFDrefresh);
     return;  
   }
 
