@@ -28,14 +28,14 @@
 
 //Use only 1 from the following options!
 //#define MULTIPLEX74141    //4..8 Nixie tubes
-//#define NO_MULTIPLEX74141 //4..6 Nixie tubes
+#define NO_MULTIPLEX74141 //4..6 Nixie tubes
 //#define MAX6921           //4..8 VFD tubes   (IV18)
 //#define MM5450            //6..8 LEDS
 //#define MAX7219CNG        //4..8 LED 
 //#define Numitron_4511N
 //#define SN75512           //4..8 VFD tubes   
 //#define samsung           //samsung serial display
-#define PCF_MULTIPLEX74141
+//#define PCF_MULTIPLEX74141
 
 #define COLON_PIN -1         //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2)
 #define TEMP_SENSOR_PIN -1  //DHT or Dallas temp sensor pin.  If not used, SET TO -1
@@ -182,6 +182,7 @@ void clearDigits() {
   memset(oldDigit,10,sizeof(oldDigit));
   memset(digit,10,sizeof(digit));
   memset(newDigit,10,sizeof(newDigit));
+  memset(digitDP,0,sizeof(digitDP));
 }
 
 void setup() {
@@ -234,6 +235,7 @@ void setup() {
         break;
     }  //end for
     ip = WiFi.localIP();
+    WiFi.mode(WIFI_STA);
     EEPROMsaving = false;
     showMyIp();
     DPRINTLN("Connecting to Time Server...");

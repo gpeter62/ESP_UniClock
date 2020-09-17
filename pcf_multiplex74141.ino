@@ -25,7 +25,7 @@ const int PWMtiming[] = {1000,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000
 #endif
 
 void ICACHE_RAM_ATTR delayMS(int d) {
-  for (int i=0;i<d*20;i++) {asm volatile ("nop"); }
+  for (int i=0;i<d*10;i++) {asm volatile ("nop"); }
 }
 
 void ICACHE_RAM_ATTR shiftout(byte in) {
@@ -100,6 +100,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
     for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],10  & 1<<i); }
+    digitalWrite(DpPin,LOW);
     timer1_write(PWMrefresh);
     return;  
   }
@@ -111,11 +112,11 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
     case 0:
       for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],10  & 1<<i); }
       if (p<100) digitalWrite(p,LOW); //switch OFF old digit on 8266
-      else sendBits(I2C_ADDR,0);      // or on PCF port 
+      //else sendBits(I2C_ADDR,0);      // or on PCF port 
       digitalWrite(DpPin,LOW);        //Switch OFF old decimal point
       
       pos++;  if (pos>maxDigits-1) pos = 0;   //go to the first tube
-      for (int i=0;i<1500;i++) {asm volatile ("nop"); }   //long delay to switch off the old digit before switch on the new, depends on hardware
+      //for (int i=0;i<1500;i++) {asm volatile ("nop"); }   //long delay to switch off the old digit before switch on the new, depends on hardware
       
       p = digitEnablePins[pos];
       if (p<100) digitalWrite(p,HIGH);      //switch ON new digit on 8266

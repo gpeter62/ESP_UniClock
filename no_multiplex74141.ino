@@ -10,15 +10,14 @@ byte tubes[] = {3,2,1,0};         //4 tubes,   old OLED clock...
 //byte tubes[] = {5,4,3,2,1,0};   //6 tubes, reverse order
 
 int maxDigits = sizeof(tubes);
-const int PWMrefresh=10000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-const int PWMtiming[] = {2000,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000};
+const int PWMrefresh=12000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+const int PWMtiming[] = {2000,1000,2000,3000,4000,5000,6000,7000,8000,10000,12000};
 
 #define dataPin  14  //D5
 #define latchPin 12  //D6
 #define clkPin 13    //D7
 
-void writeDisplaySingle() {  
-}   
+void writeDisplaySingle() { }   
 
 void setup_pins(){
  #if defined(ESP8266) 
@@ -118,37 +117,4 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   timer1_write(timer); 
 }
 
-/* //-----  OLD program version ------
-   
-void ICACHE_RAM_ATTR writeBits(byte num) {
-  for (int i=7;i>=0;i--) {
-    digitalWrite(dataPin,num  & (1<<i)); 
-    for (int t=0; t<2;t++) asm volatile ("nop");   //100nsec
-    digitalWrite(clkPin,HIGH);
-    for (int t=0; t<2;t++) asm volatile ("nop");   //100nsec
-    digitalWrite(clkPin,LOW);
-    for (int t=0; t<2;t++) asm volatile ("nop");   //100nsec
-    }
-}
-
-void ICACHE_RAM_ATTR writeDisplay() {
-static volatile int brightCounter = 1;
-static volatile boolean oldState = true;
-byte brightness;
-
-  digitalWrite(latchPin, LOW);
-  for (int i=0;i<maxDigits;i+=2) {
-    if ((displayON ?  prm.dayBright : prm.nightBright) < brightCounter)
-      writeBits(0xFF);  //BLANK display
-    else  
-      writeBits((digit[tubes[i+1]]<<4) + digit[tubes[i]]);
-
-   digitalWrite(latchPin, HIGH);     
-  }
-  
-  brightCounter++; 
-  if (brightCounter>MAXBRIGHTNESS) brightCounter = 1; 
-  timer1_write(PWMrefresh);  
-}   
-*/
 #endif
