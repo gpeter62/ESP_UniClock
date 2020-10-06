@@ -25,7 +25,7 @@ void setupTemp() {
   tempSensors.begin();                     // Start the temperature sensor  
   tempSensors.setResolution(TEMPERATURE_PRECISION);
   tempSensors.setWaitForConversion(false); // Don't block the program while the temperature sensor is reading
-  delay(100);  //200ms
+  delay(100);  //100ms
   
   int counter = 0;
   while ((tempSensors.getDeviceCount() == 0) && (counter<10)) {

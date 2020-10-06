@@ -67,8 +67,12 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   digitalWrite(latchPin, LOW);
 
   if (brightness ==0) {
-    for (int i=0;i<maxDigits;i+=2) writeBits(0xF);  //black display
+    for (int i=0;i<maxDigits;i++) writeBits(0xA);  //black display
     if (DECIMALPOINT_PIN>=0) digitalWrite(DECIMALPOINT_PIN,LOW);
+	if (COLON_PIN>=0) digitalWrite(COLON_PIN,LOW);  // colon pin OFF
+  digitalWrite(latchPin, HIGH);
+  timer1_write(100*timer);
+  return;
   }
   else {
     for (int i=0;i<maxDigits;i++) {
@@ -103,7 +107,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
       break;
     case 2:  //blank display
       if (DECIMALPOINT_PIN>=0) digitalWrite(DECIMALPOINT_PIN,LOW);
-      if (COLON_PIN>=0) digitalWrite(COLON_PIN,LOW);  // Blink colon pin
+      if (COLON_PIN>=0) digitalWrite(COLON_PIN,LOW);  // colon pin OFF
       state = 0;
       timer = PWMrefresh-PWMtiming[brightness];
       break;

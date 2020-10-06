@@ -1,7 +1,7 @@
 /* 
  *    Universal Clock  Nixie, VFD, LED, Numitron
  *    with optional Dallas Thermometer and DS3231 RTC
- *    v1.4a  09/08/2020
+ *    v1.4f  22/09/2020
  *    Copyright (C) 2020  Peter Gautier 
  *    
  *    This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,9 @@
 //#define USE_DHT_TEMP        //TEMP_SENSOR_PIN is used to connect the sensor
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
 //#define USE_GPS           
-//#define USE_NEOPIXEL      //WS2812B led stripe, below tubes
+//#define USE_NEOPIXEL_MAKUNA      //WS2812B led stripe, below tubes
+#define USE_NEOPIXEL_ADAFRUIT    //WS2812B led stripe, below tubes
+
 #define MAXBRIGHTNESS 10  // (if MM5450, use 15 instead of 10)
 
 //Use only 1 from the following options!
@@ -38,7 +40,7 @@
 //#define PCF_MULTIPLEX74141
 
 #define COLON_PIN -1         //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2)
-#define TEMP_SENSOR_PIN -1  //DHT or Dallas temp sensor pin.  If not used, SET TO -1
+#define TEMP_SENSOR_PIN -1  //DHT or Dallas temp sensor pin.  If not used, SET TO -1   (RX or any other free pin)
 #define LED_SWITCH_PIN -1   //external led lightning.  If not used, SET TO -1
 #define DECIMALPOINT_PIN -1 //Nixie decimal point between digits (thermometer, hygrometer). If not used, SET TO -1
 
@@ -80,8 +82,11 @@
 #include <WiFiManager.h>
 #include <EEPROM.h>
 
-#ifdef USE_NEOPIXEL
+#ifdef USE_NEOPIXEL_MAKUNA
 #include <NeoPixelBrightnessBus.h>  //<NeoPixelBus.h>
+#endif
+
+#ifdef USE_NEOPIXEL_ADAFRUIT
 #endif
 
 extern void ICACHE_RAM_ATTR writeDisplay();
@@ -134,7 +139,6 @@ TimeChangeRule mySTD = {"STD", First, Sun, Nov, 2, 0};
 Timezone myTZ(myDST, mySTD);
 
 boolean clockWifiMode = true;
-boolean wifiStarted = false;
 
 byte useTemp = 0;   //number of temp sensors: 0,1,2
 float temperature[2] = {0,0};
@@ -174,8 +178,8 @@ bool decimalpointON = false;
 void configModeCallback (WiFiManager *myWiFiManager) {
   DPRINTLN("Switch to AP config mode...");
   DPRINTLN("To configure Wifi,  ");
-  DPRINTLN("connect to Wifi network ESPCLOCK and");
-  DPRINTLN("open 192.168.4.1 in web browser");
+  DPRINT("connect to Wifi network "); DPRINTLN(ssid);
+  DPRINTLN("and open 192.168.4.1 in web browser");
   }
 
 void clearDigits() {
@@ -185,37 +189,12 @@ void clearDigits() {
   memset(digitDP,0,sizeof(digitDP));
 }
 
-void setup() {
-  //WiFi.mode(WIFI_OFF);
-  int count = 0;
-  delay(200);
-  DPRINTBEGIN(115200); DPRINTLN(" ");
-  delay(200);
-  clearDigits(); 
-  if (COLON_PIN>=0)  pinMode(COLON_PIN, OUTPUT);
-  if (LED_SWITCH_PIN>=0)  pinMode(LED_SWITCH_PIN, OUTPUT);
-  if (DECIMALPOINT_PIN>=0)  pinMode(DECIMALPOINT_PIN, OUTPUT);
-  decimalpointON = false;
-  setupTemp();
-  setupDHTemp();
-  setupRTC();
-  setupGPS();
-  setupNeopixel();
 
-  DPRINT("Number of digits:"); DPRINTLN(maxDigits);
-  delay(500);
-  EEPROM.begin(sizeof(prm));
-  delay(100);  
-  loadEEPROM();
-  if (prm.magic !=133) factoryReset();
-  setup_pins();
-  testTubes(300);
-  checkWifiMode();
-  clearDigits();
-  EEPROMsaving = true;
-  if (clockWifiMode) {
+void startWifiMode() {
+    int count = 0;
+    
+    EEPROMsaving = true;
     DPRINTLN("Starting Clock in WiFi Mode!");
-    delay(2000);
     WiFiManager MyWifiManager;
     MyWifiManager.setCleanConnect(true);
     MyWifiManager.setAPCallback(configModeCallback);
@@ -235,43 +214,82 @@ void setup() {
         break;
     }  //end for
     ip = WiFi.localIP();
+    WiFi.setAutoReconnect(true);
     WiFi.mode(WIFI_STA);
     EEPROMsaving = false;
-    showMyIp();
+
     DPRINTLN("Connecting to Time Server...");
+    timeClient.begin();
+    timeClient.forceUpdate();
     while (true) { 
-      timeClient.begin();
       delay(100);
       if (timeClient.update()) break;
       count ++; if (count>999) count = 1;
       writeIpTag(count);
       delay(500); 
     }
-    wifiStarted = true;
     server.begin();
-    delay(100);
-    DPRINTLN("---------------------");
-  }
-  else {
-        DPRINTLN("Starting Clock in Standalone Mode!");
-        DPRINT("Clock's wifi SSID:"); DPRINTLN(ssid);
-        DPRINTLN("IP: 192.168.4.1");
+    clearDigits();
+    showMyIp();  
+    calcTime();    
+}
 
-/* Put IP Address details */
-    IPAddress local_ip(192,168,4,1);
-    IPAddress gateway(192,168,1,1);
-    IPAddress subnet(255,255,255,0);
-    server.begin();
-    WiFi.softAP(ssid, password);
-    WiFi.softAPConfig(local_ip, gateway, subnet);
-    delay(100);
+
+void startStandaloneMode() {
+    DPRINTLN("Starting Clock in Standalone Mode!");
+    DPRINT("Clock's wifi SSID:"); DPRINTLN(ssid);
+    DPRINTLN("IP: 192.168.4.1");
+    EEPROMsaving = true;
     WiFi.mode(WIFI_AP);
-    WiFi.reconnect();
-    ip = local_ip;
-    showMyIp();
-  }
+    delay(100);
+    IPAddress local_ip(192,168,4,1);
+    IPAddress gateway(192,168,4,1);
+    IPAddress subnet(255,255,255,0);
+    WiFi.softAPConfig(local_ip, gateway, subnet);
+    DPRINT("AP status:"); DPRINTLN(WiFi.softAP(ssid, password,12) ? "Ready" : "Failed!");  //channel
+    DPRINT("Mac address:"); DPRINTLN(WiFi.softAPmacAddress());
+    ip = WiFi.softAPIP();
+    EEPROMsaving = false;
+    delay(1000);
+    server.begin();
+    clearDigits();
+    showMyIp();  
+    calcTime();
+}
+
+
+void setup() {
+  //WiFi.mode(WIFI_OFF);
+  delay(200);
+  DPRINTBEGIN(115200); DPRINTLN(" ");
+  clearDigits(); 
+  delay(100);
+  if (COLON_PIN>=0)  pinMode(COLON_PIN, OUTPUT);
+  if (LED_SWITCH_PIN>=0)  pinMode(LED_SWITCH_PIN, OUTPUT);
+  if (DECIMALPOINT_PIN>=0)  pinMode(DECIMALPOINT_PIN, OUTPUT);
+  decimalpointON = false;
+  if (TEMP_SENSOR_PIN>0) {
+    setupTemp();
+    setupDHTemp();
+  }  
+  setupRTC();
+  setupGPS();
+
+  DPRINT("Number of digits:"); DPRINTLN(maxDigits);
+  loadEEPROM();
+  if (prm.magic !=133) factoryReset();
   
-  calcTime();
+  setupNeopixelMakuna();  
+    setupNeopixelAdafruit();  
+  setup_pins();
+  testTubes(300);
+  clearDigits();
+  delay(100);
+  checkWifiMode();
+  if (clockWifiMode) 
+    startWifiMode();
+  else 
+    startStandaloneMode();
 }
 
 void calcTime() {
@@ -286,13 +304,18 @@ void calcTime() {
         setTime(myTZ.toLocal(timeClient.getEpochTime()));
         if (year()>2019) 
           updateRTC();    //update RTC, if needed
-        else 
+        else {
           getRTC();  
           getGPS();
+        }
       } //endif update?
     }  //endif Connected?
+    else {
+        getRTC();  
+        getGPS();
+    }
   }  //endif (clockWifiMode)
-  else {
+  else {  //standalone mode!
     getRTC();
     getGPS();
   }
@@ -301,7 +324,8 @@ void calcTime() {
 
 void timeProgram() {
 static unsigned long lastRun = millis();
-  doAnimation();
+  doAnimationMakuna();
+  doAnimationAdafruit();
   if ((millis()-lastRun)<300) return;
 
   lastRun = millis(); 
@@ -343,36 +367,45 @@ static unsigned long lastRun = millis();
       digitalWrite(LED_SWITCH_PIN,LOW);
     printDigits(0);
     writeDisplaySingle();
-
-  // Note that UTC offset and DST setting changes can change now() by one hour
-  // (3600 seconds), so modulus operator is needed
   }
 }
 
-void loop() {  
-  timeProgram();
 
-  checkWifiMode();
+void loop() {  
   
+  timeProgram();
+  checkWifiMode();
   if (clockWifiMode) { //Wifi Clock Mode
     if (WiFi.status() == WL_CONNECTED) wifiCode();
-    else resetWiFi();
+    else {
+      WiFi.reconnect();
+      wifiCode();
+      resetWiFi();
+    }  
   }
   else {   //Manual Clock Mode
-    wifiCode();
-    editor();
-  }
+     wifiCode();
+     editor();
+  } //endelse
+  yield();
 }
 
 void loadEEPROM() {
+  DPRINTLN("Loading setting from EEPROM.");
+  EEPROMsaving = true;  
+  EEPROM.begin(sizeof(prm));
   EEPROM.get(EEPROM_addr,prm);
+  EEPROM.end();
+  EEPROMsaving = false;
 }
 
 void saveEEPROM() {
-      EEPROMsaving = true;
-      EEPROM.put(EEPROM_addr,prm);     //(mod(mySTD.offset/60,24))); 
-      EEPROM.commit();
-      EEPROMsaving = false;
+  EEPROMsaving = true;
+  EEPROM.begin(sizeof(prm));
+  EEPROM.put(EEPROM_addr,prm);     //(mod(mySTD.offset/60,24))); 
+  EEPROM.commit();
+  EEPROM.end();
+  EEPROMsaving = false;
 }
 
 void factoryReset() {
@@ -594,6 +627,7 @@ void changeDigit() {
   byte anim;
   
   anim = prm.animMode; 
+  //anim = 0;
   if (anim == 6) anim = 1 + rand()%5;
 
   if (anim != 5) {
@@ -735,18 +769,20 @@ void writeIpTag(byte iptag) {
 
 void showMyIp() {   //at startup, show the web page internet address
   //clearDigits();
+#define SPEED 1500  
+
   writeIpTag(ip[0]);
   printDigits(0);
-  delay(2000);
+  delay(SPEED);
   writeIpTag(ip[1]);
   printDigits(0);
-  delay(2000);
+  delay(SPEED);
   writeIpTag(ip[2]);
   printDigits(0);
-  delay(2000);
+  delay(SPEED);
   writeIpTag(ip[3]);
   printDigits(0);
-  delay(2000);
+  delay(SPEED);
 }
 
 
@@ -798,18 +834,21 @@ void testTubes(int dely) {
 
 void printDigits(unsigned long timeout) {
 static unsigned long lastRun = millis();
+
   if ((millis()-lastRun)<timeout) return;
   lastRun = millis();
   for (int i=maxDigits-1;i>=0;i--)  
     if (digit[i]<10) DPRINT(digit[i]);  
     else DPRINT("-");
-  if (colonBlinkState) DPRINTLN(" B");
-  else DPRINTLN(" ");
+  if (colonBlinkState) DPRINT(" B ");
+  else DPRINT("   ");
+  //DPRINT(ESP.getFreeHeap());   //show free memory for debugging memory leak
+  DPRINTLN(" ");
 }
 
 void wifiCode() {
-static char txt[50];
-static WiFiClient client;
+static char txt[200];
+WiFiClient client;   //static ???
 bool mod = false;  
 int tmp = 0;
 
@@ -993,7 +1032,8 @@ int tmp = 0;
         else if (c == '\n') {currentLineIsBlank = true;  currentLineIsGet = false;  }
         else if (c != '\r') { currentLineIsBlank = false;  }
       } //endwhile client available
-    timeProgram();  
+    timeProgram();
+    if (checkWifiMode()) return;   //clock mode changed!
     } //endwhile client connected
   } //endif (client)
 }  

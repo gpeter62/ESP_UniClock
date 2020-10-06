@@ -15,8 +15,8 @@ const byte DpPin = 16; // decimalPoint on 8266's D0
 int maxDigits = sizeof(digitEnablePins);
 
 //const byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
-const int PWMrefresh=10000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-const int PWMtiming[] = {1000,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000};
+const int PWMrefresh=15000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+const int PWMtiming[] = {1000,1000,2000,3000,4000,5000,6000,8000,10000,12000,15000};
 #define MAXBRIGHT 10
 
 #if defined(ESP8266) 
@@ -25,7 +25,7 @@ const int PWMtiming[] = {1000,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000
 #endif
 
 void ICACHE_RAM_ATTR delayMS(int d) {
-  for (int i=0;i<d*10;i++) {asm volatile ("nop"); }
+  for (int i=0;i<d*7;i++) {asm volatile ("nop"); }
 }
 
 void ICACHE_RAM_ATTR shiftout(byte in) {
@@ -39,12 +39,13 @@ void ICACHE_RAM_ATTR shiftout(byte in) {
   }  
 
   //ACK is coming
-  pinMode(SDA,INPUT_PULLUP); 
+  //pinMode(SDA,INPUT_PULLUP); 
+  digitalWrite(SDA,LOW);
   delayMS(1);
   digitalWrite(SCL,HIGH);  //clock pulse
   delayMS(1); 
   digitalWrite(SCL,LOW);
-  pinMode(SDA,OUTPUT);
+  //pinMode(SDA,OUTPUT);
  }
 
 void ICACHE_RAM_ATTR sendBits(byte address,byte val){ 
@@ -155,7 +156,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
 
   //if ((pos>0) && (num<=9)) num = convert[num];   //tube character conversion, if needed... (maybe bad pin numbering)
   
-  if (timer<200) timer = 200;  //safety only...
+  if (timer<500) timer = 500;  //safety only...
   if (brightness == 0) {num = 10; timer = PWMtiming[10]; state = 0;}
   for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],num  & 1<<i); }
   

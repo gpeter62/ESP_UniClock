@@ -1,7 +1,7 @@
 #ifdef USE_RTC
 
 //------ Mode Switch and Push Buttons ---------------------
-#define PIN_MODE_SWITCH  A0    
+#define PIN_MODE_SWITCH  17   //Analog A0 port!!!    
 #define PIN_FLD_BUTTON   16     
 #define PIN_SET_BUTTON   0    
 
@@ -44,9 +44,9 @@ int fld = 0;
 unsigned long LastModify = 0;
 
 void setupRTC() {
-  pinMode(PIN_MODE_SWITCH,INPUT);          DPRINT("- MODE Switch : GPIO"); DPRINTLN(PIN_MODE_SWITCH);
-  pinMode(PIN_FLD_BUTTON,INPUT);    DPRINT("- FIELD Button: GPIO"); DPRINT(PIN_FLD_BUTTON); 
-  pinMode(PIN_SET_BUTTON,INPUT);    DPRINT("- SET   Button: GPIO"); DPRINTLN(PIN_SET_BUTTON);
+  pinMode(PIN_MODE_SWITCH,INPUT_PULLUP);   DPRINT("- MODE Switch : GPIO"); DPRINTLN(PIN_MODE_SWITCH);
+  pinMode(PIN_FLD_BUTTON,INPUT_PULLUP);    DPRINT("- FIELD Button: GPIO"); DPRINTLN(PIN_FLD_BUTTON); 
+  pinMode(PIN_SET_BUTTON,INPUT_PULLUP);    DPRINT("- SET   Button: GPIO"); DPRINTLN(PIN_SET_BUTTON);
 /*  
 while (true) {
   DPRINT(digitalRead(PIN_MODE_SWITCH)); DPRINT(" / "); 
@@ -57,8 +57,9 @@ while (true) {
 */  
 
   DPRINTLN("Starting RTC Clock...");    
-  DPRINT("- SDA: GPIO"); DPRINTLN(PIN_SDA);
-  DPRINT("- SCL: GPIO"); DPRINTLN(PIN_SCL);
+  delay(1000);
+  pinMode(PIN_SDA,OUTPUT); DPRINT("- SDA: GPIO"); DPRINTLN(PIN_SDA);
+  pinMode(PIN_SCL,OUTPUT); DPRINT("- SCL: GPIO"); DPRINTLN(PIN_SCL);
 
   I2C_ClearBus();
   Wire.begin(PIN_SDA,PIN_SCL); 
@@ -150,13 +151,39 @@ void saveRTC() {
 }
 
 //-------------------------- check buttons and switch  ------------------------------------------------
-void checkWifiMode() {
+boolean checkWifiMode() {     //output TRUE, if mode changed
+static unsigned long lastRun = millis(); 
+static byte oldMode = 2;  
+
+  if ((millis()-lastRun)<500) return false;
+  lastRun = millis();
+  //DPRINT(digitalRead(PIN_FLD_BUTTON)); DPRINT(" / "); DPRINTLN(digitalRead(PIN_SET_BUTTON));
+
   if (PIN_MODE_SWITCH==A0) {
-    clockWifiMode = analogRead(PIN_MODE_SWITCH)>100;
+    clockWifiMode = (analogRead(PIN_MODE_SWITCH)>100);
   }
-  else 
+  else {
     clockWifiMode = digitalRead(PIN_MODE_SWITCH);
-  //clockWifiMode = false;  //TEST ONLY!!!!
+  }
+  
+  if (oldMode != clockWifiMode) {
+    if (oldMode!=2) {
+      DPRINT("Clock switched to ");
+      if (clockWifiMode) { 
+        DPRINTLN("WIFI mode!");
+        startWifiMode();
+      }
+      else 
+        {
+        DPRINTLN("MANUAL-RTC mode");          
+        startStandaloneMode();
+        }
+    }  
+    oldMode = (byte)clockWifiMode;
+    return true;  
+  }
+  else
+    return false;
 }  
 
 void scanButFLD(unsigned long mill) {
@@ -340,6 +367,6 @@ int I2C_ClearBus() {
 void updateRTC() {}
 void setupRTC() {}
 void getRTC() {}
-void checkWifiMode() {}
+boolean checkWifiMode() {}
 void editor() {}
 #endif

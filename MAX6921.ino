@@ -6,8 +6,8 @@
 
 
 //Choose only 1 option from the following:
-#define IV18
-//#define IVL2
+//#define IV18
+#define IVL2
 
 
 #ifdef IV18
@@ -35,6 +35,8 @@ const int tubeTime[] = {1200,1200,1200,1200,1200,1200,1200,1200,1200};      //ti
 #define PIN_CLK   12  // D7 Shift Register Clock
 #define PIN_DATA  14  // D5 Shift Register Data
 #define PIN_BL    15  // D8 Shift Register Blank (1=display off     0=display on)
+
+#define TEMP_SENSOR_PIN RX
 #endif
 
 #define PIN_HEAT_A -1   //VFD heater signalA  (if not used, set to -1)
