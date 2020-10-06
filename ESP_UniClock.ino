@@ -59,13 +59,13 @@
 //--------------------------------------------------------------------------------------------------
 
 #if defined(ESP8266)  
-  char webName[] = "UniClock 1.4e";
+  char webName[] = "UniClock 1.4f";
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #include <ESP8266WiFi.h>
   #include <ESP8266mDNS.h>
 #elif defined(ESP32)
-  char webName[] = "ESP32UniClock 1.4e";
+  char webName[] = "ESP32UniClock 1.4f";
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD ""
   #include <WiFi.h>
