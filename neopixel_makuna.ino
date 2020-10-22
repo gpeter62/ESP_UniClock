@@ -40,97 +40,33 @@ void setupNeopixelMakuna() {
     neoBrightness = prm.dayBright * ((c_MaxBrightness - c_MinBrightness)/MAXBRIGHTNESS);
     strip.Begin();
     strip.Show();
-    doAnimation();
-    doAnimation();
+    doAnimationMakuna();
+    doAnimationMakuna();
 }
 
-RgbColor Bow(int n) {
-byte red,blue,green;
-
-  cno = int(n/64);       // find LED colour (0-6)
-  rno = n - (cno*64);    // indexx from LED colour to next colour (0-63)
-
-  switch (cno) {          // update LED colours
-      case 0:   // red
-      red = 255;
-      blue = 0;
-      green = rno>>1;     // use shift for div 2
-      break;
-      
-      case 1:   // orange
-      red = 255;
-      blue = 0;
-      green = 32 + ((rno*3)>>1);
-      break;
-      
-      case 2:     // yellow
-      red = 255;
-      blue = 0;
-      green = 128 + (rno*6);
-
-      if(green>255) {
-        red -= (green-255);
-        green = 255;
-      }      
-      break;
-      
-      case 3:     // green
-      red = 0;
-      green = 255;
-      blue = rno*8;
-      
-      if(blue>255) {
-        green -= (blue-255);
-        blue = 255;
-      }
-      break;
-      
-      case 4:     // blue
-      green = 0;
-      blue = 255;
-      red = rno;
-      break;
-      
-      case 5:     // indigo
-      green = 0;
-      blue = 255;
-      red = 64 + ((11*rno)>>1);
-
-      if(red>255) {
-        blue -= (red-255);
-        red = 255;
-      } 
-      break;
-      case 6:     // violet
-      red = 255;
-      green = 0;
-      blue = 96 - ((rno*3)>>1);
-      break;
-      
-      default:                  // should not get here
-      red = 0;
-      green = 0;
-      blue = 0;
-    }
-
-  return RgbColor(red,green,blue);
+RgbColor Wheel(uint8_t WheelPos) {
+  WheelPos = 255 - WheelPos;
+  if(WheelPos < 85)  {
+    return RgbColor(255 - WheelPos * 3, 0, WheelPos * 3);
+  } else if(WheelPos < 170) {
+    WheelPos -= 85;
+    return RgbColor(0, WheelPos * 3, 255 - WheelPos * 3);
+  } else  {
+    WheelPos -= 170;
+    return RgbColor(WheelPos * 3, 255 - WheelPos * 3, 0);
+  }
 }
 
 
 void rainbow() {
-RgbColor c;  
 
-  indexx = cnt;    // set indexx for 1st LED
-  //for(int i=0;i<PixelCount;i++){
-  for(int i=PixelCount-1;i>=0;i--){
-    c = Bow(indexx);
-    strip.SetPixelColor(i, colorGamma.Correct(c)); // set colour
-    indexx += 4;           // gives 7 steps between LEDS - so 7 colours over 49 LEDs range on string.
-    if(indexx>=(7*64)) {indexx =0; }
+  static uint16_t j=0;
+  uint16_t i;    
+  
+  for(i=0; i<PixelCount; i++) {
+    strip.SetPixelColor(i, Wheel((i+j) & 255));
   }
-
-  cnt ++;   // next step
-  if(cnt>=(7*64)) {cnt =0; }
+  j++; if (j>=256) j=0;
 }
 
 void doAnimationMakuna() {
