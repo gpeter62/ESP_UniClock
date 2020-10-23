@@ -166,9 +166,10 @@ struct {
   byte dayBright = MAXBRIGHTNESS;  // display daytime brightness
   byte nightBright = 5;            // display night brightness
   byte animMode = 2;               //0=no anim,  if 1 or 2 is used, animation, when a digit changes
-  byte rgbEffect = 1;
+  byte rgbEffect = 1;              //0=OFF, 1=FixColor
   byte rgbBrightness = 100;
-  byte rgbSpeed = 50;
+  int rgbFixColor = 150;           //0..255, 256 = white
+  byte rgbSpeed = 50;              //0..255msec / step
   byte magic = 133;                //magic value, to check EEPROM at first start
 } prm;
 
@@ -286,7 +287,7 @@ void setup() {
   if (prm.magic !=133) factoryReset();
   
   setupNeopixelMakuna();  
-    setupNeopixelAdafruit();  
+  setupNeopixelAdafruit();  
   setup_pins();
   testTubes(300);
   clearDigits();
@@ -431,6 +432,7 @@ void factoryReset() {
   prm.animMode = 6;  
   prm.rgbEffect = 1;
   prm.rgbBrightness = 100;
+  prm.rgbFixColor = 150;
   prm.rgbSpeed = 50;      
   prm.magic = 133;              //magic value to check to first start
   saveEEPROM();
@@ -971,12 +973,21 @@ int tmp = 0;
             else if (strncmp(pch, "rgbEffect=", 10) == 0) {
               tmp = atoi(pch + 10); 
               if (tmp <0) tmp = 0;
-              if (tmp>9) tmp = 9;
+              if (tmp>3) tmp = 3;
               if (tmp != prm.rgbEffect) {
                 prm.rgbEffect = tmp;
                 mod = true;              
               }              
             }
+            else if (strncmp(pch, "rgbFixColor=", 12) == 0) {
+              tmp = atoi(pch + 12); 
+              if (tmp <0) tmp = 0;
+              if (tmp>256) tmp = 256;
+              if (tmp != prm.rgbFixColor) {
+                prm.rgbFixColor = tmp;
+                mod = true;              
+              }              
+            }            
             else if (strncmp(pch, "rgbBrightness=", 14) == 0) {
               tmp = atoi(pch + 14); 
               if (tmp <0) tmp = c_MinBrightness;
@@ -989,7 +1000,7 @@ int tmp = 0;
             else if (strncmp(pch, "rgbSpeed=", 9) == 0) {
               tmp = atoi(pch + 9); 
               if (tmp <0) tmp = 20;
-              if (tmp>200) tmp = 200;
+              if (tmp>255) tmp = 255;
               if (tmp != prm.rgbSpeed) {
                 prm.rgbSpeed = tmp;
                 mod = true;              
@@ -1038,9 +1049,10 @@ int tmp = 0;
           }
 //#if defined(USE_NEOPIXEL_MAKUNA) && defined(USE_NEOPIXEL_ADAFRUIT)
 #ifdef USE_NEOPIXEL_MAKUNA
-            client.print("><br>RGB effect:(0-9): <input type=text maxlength=1 size=1 name=rgbEffect value=");  client.print(prm.rgbEffect);  
-            client.print("> bright: <input type=text maxlength=3 size=3 name=rgbBrightness value=");           client.print(prm.rgbBrightness); 
-            client.print("> speed: <input type=text maxlength=3 size=3 name=rgbSpeed value=");                 client.print(prm.rgbSpeed);  
+            client.print("><br>RGB effect:(0-3): <input type=text maxlength=1 size=1 name=rgbEffect value=");         client.print(prm.rgbEffect);  
+            client.print("> fixColor: <input type=text maxlength=3 size=3 name=rgbFixColor value=");                  client.print(prm.rgbFixColor); 
+            client.print("><br>Max bright(0-256): <input type=text maxlength=3 size=3 name=rgbBrightness value=");    client.print(prm.rgbBrightness); 
+            client.print("> speed: <input type=text maxlength=3 size=3 name=rgbSpeed value=");                        client.print(prm.rgbSpeed);  
 #endif
           client.print("><br><input type=submit value=Submit></form>");
           
