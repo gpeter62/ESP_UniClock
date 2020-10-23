@@ -13,7 +13,7 @@ RgbColor green(0, COLORSATURATION, 0);
 RgbColor blue(0, 0, COLORSATURATION);
 RgbColor purple(COLORSATURATION, 0, COLORSATURATION);
 RgbColor white(COLORSATURATION);
-RgbColor black(0);
+RgbColor black(0,0,0);
 
 int cnt = 0;        // counter for pixel to set to new colour
 
@@ -26,7 +26,7 @@ int8_t direction; // current direction of dimming
 const uint16_t PixelCount = maxDigits; // make sure to set this to the number of pixels in your strip
 const uint8_t PixelPin = 3;  // for Esp8266 it MUST be GPIO3 (RX pin)
 
-NeoPixelBrightnessBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount);   //NeoGrbFeature give me BRGW (g and b swapped)
+NeoPixelBrightnessBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount+2);   //NeoGrbFeature give me BRGW (g and b swapped)
                                                                             //NeoRgbFeature give me RBGW (g and b swapped)
                                                                             //NeoBrgFeature give me BGRW (g and r swapped)
 NeoGamma<NeoGammaTableMethod> colorGamma;
@@ -40,6 +40,8 @@ void setupNeopixelMakuna() {
     strip.Show();
     doAnimationMakuna();
     doAnimationMakuna();
+    fixColor(prm.rgbFixColor);
+    strip.Show();
 }
 
 RgbColor Wheel(uint8_t WheelPos) {
@@ -71,7 +73,7 @@ void rainbow2() {
   static uint16_t i=0;   
   static unsigned long lastRun = 0;
 
-   if ((millis()-lastRun)<10*prm.rgbSpeed) return;
+   if ((millis()-lastRun)<10*(255-prm.rgbSpeed)) return;
    lastRun = millis();
    
    if (i>=PixelCount) {
@@ -88,25 +90,28 @@ void rainbow2() {
 }
 
 
-void fixColor() {
-const RgbColor c[] = {red,blue,green,purple,white};  
+void fixColor(int col) {
 
   for (int i=0;i<PixelCount;i++) {
-      strip.SetPixelColor(i,c[prm.rgbEffect-1]);
+      if (col==-1) strip.SetPixelColor(i,black);
+      else if (col==256) strip.SetPixelColor(i,white);
+      else strip.SetPixelColor(i,Wheel(col));
     } 
 }
 
 void doAnimationMakuna() {
 static unsigned long lastRun = 0;
-  if (prm.rgbEffect==0) return;
-  if ((millis()-lastRun)<prm.rgbSpeed) return;
+
+  if ((prm.rgbEffect <=1) && ((millis()-lastRun)<1000)) return;  //fix color
+  if ((millis()-lastRun)<(255-prm.rgbSpeed)) return;
   lastRun = millis();
   
   neoBrightness = (displayON ?  prm.dayBright : 0) * ((prm.rgbBrightness - c_MinBrightness)/MAXBRIGHTNESS);
   strip.SetBrightness(neoBrightness);
-  if (prm.rgbEffect<=5) fixColor();
-  else if (prm.rgbEffect==6) rainbow(); 
-  else if (prm.rgbEffect==7)  rainbow2();
+  if (prm.rgbEffect==0) fixColor(-1);
+  else if (prm.rgbEffect==1) fixColor(prm.rgbFixColor);
+  else if (prm.rgbEffect==2) rainbow(); 
+  else if (prm.rgbEffect==3) rainbow2();
   
   strip.Show();    // This sends the updated pixel colors to the string.
 }
