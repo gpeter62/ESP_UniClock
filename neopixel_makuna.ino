@@ -3,17 +3,15 @@
 
 #ifdef USE_NEOPIXEL_MAKUNA
 
-uint8_t c_MinBrightness = 8; 
-uint8_t c_MaxBrightness = 80;
+
 byte neoBrightness;
 
 #define COLORSATURATION 255
-#define DO_ANIMATION true   //true or false
-#define LED_ANIM_SPEED 100
 
 RgbColor red(COLORSATURATION, 0, 0);
 RgbColor green(0, COLORSATURATION, 0);
 RgbColor blue(0, 0, COLORSATURATION);
+RgbColor purple(COLORSATURATION, 0, COLORSATURATION);
 RgbColor white(COLORSATURATION);
 RgbColor black(0);
 
@@ -37,7 +35,7 @@ void setupNeopixelMakuna() {
     DPRINTLN("Setup NeoPixel LEDS (Makuna lib):");
     DPRINT("Pixel count: "); DPRINTLN(PixelCount);
     DPRINT("Brightness:"); DPRINT(c_MinBrightness); DPRINT(" - "); DPRINTLN(c_MaxBrightness);
-    neoBrightness = prm.dayBright * ((c_MaxBrightness - c_MinBrightness)/MAXBRIGHTNESS);
+    neoBrightness = prm.dayBright * ((prm.rgbBrightness - c_MinBrightness)/MAXBRIGHTNESS);
     strip.Begin();
     strip.Show();
     doAnimationMakuna();
@@ -59,7 +57,6 @@ RgbColor Wheel(uint8_t WheelPos) {
 
 
 void rainbow() {
-
   static uint16_t j=0;
   uint16_t i;    
   
@@ -69,23 +66,48 @@ void rainbow() {
   j++; if (j>=256) j=0;
 }
 
+void rainbow2() {
+  static uint16_t j=0;
+  static uint16_t i=0;   
+  static unsigned long lastRun = 0;
+
+   if ((millis()-lastRun)<10*prm.rgbSpeed) return;
+   lastRun = millis();
+   
+   if (i>=PixelCount) {
+      if (j>256) j=0; 
+      i=0;
+      j+=10; 
+    } //endif   
+    if (j<256) 
+      strip.SetPixelColor(i, Wheel(j));
+    else 
+      strip.SetPixelColor(i,white);
+     i++; 
+   //DPRINT(i); DPRINT("/"); DPRINTLN(j);
+}
+
+
+void fixColor() {
+const RgbColor c[] = {red,blue,green,purple,white};  
+
+  for (int i=0;i<PixelCount;i++) {
+      strip.SetPixelColor(i,c[prm.rgbEffect-1]);
+    } 
+}
+
 void doAnimationMakuna() {
 static unsigned long lastRun = 0;
-
-  if ((millis()-lastRun)<LED_ANIM_SPEED) return;
+  if (prm.rgbEffect==0) return;
+  if ((millis()-lastRun)<prm.rgbSpeed) return;
   lastRun = millis();
   
-  neoBrightness = (displayON ?  prm.dayBright : 0) * ((c_MaxBrightness - c_MinBrightness)/MAXBRIGHTNESS);
+  neoBrightness = (displayON ?  prm.dayBright : 0) * ((prm.rgbBrightness - c_MinBrightness)/MAXBRIGHTNESS);
   strip.SetBrightness(neoBrightness);
-
-  if (DO_ANIMATION) {    
-    rainbow();
-  }
-  else {   
-    for (int i=0;i<PixelCount;i++) {
-      strip.SetPixelColor(i,colorGamma.Correct(red));
-    } 
-  }
+  if (prm.rgbEffect<=5) fixColor();
+  else if (prm.rgbEffect==6) rainbow(); 
+  else if (prm.rgbEffect==7)  rainbow2();
+  
   strip.Show();    // This sends the updated pixel colors to the string.
 }
 

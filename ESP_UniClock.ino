@@ -1,7 +1,7 @@
 /* 
  *    Universal Clock  Nixie, VFD, LED, Numitron
  *    with optional Dallas Thermometer and DS3231 RTC
- *    v1.4f  22/09/2020
+ *    v1.4g  22/09/2020
  *    Copyright (C) 2020  Peter Gautier 
  *    
  *    This program is free software: you can redistribute it and/or modify
@@ -23,14 +23,14 @@
 //#define USE_DHT_TEMP        //TEMP_SENSOR_PIN is used to connect the sensor
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
 //#define USE_GPS           
-//#define USE_NEOPIXEL_MAKUNA      //WS2812B led stripe, below tubes
-#define USE_NEOPIXEL_ADAFRUIT    //WS2812B led stripe, below tubes
+#define USE_NEOPIXEL_MAKUNA      //WS2812B led stripe, below tubes
+//#define USE_NEOPIXEL_ADAFRUIT    //WS2812B led stripe, below tubes
 
 #define MAXBRIGHTNESS 10  // (if MM5450, use 15 instead of 10)
 
 //Use only 1 from the following options!
-//#define MULTIPLEX74141    //4..8 Nixie tubes
-#define NO_MULTIPLEX74141 //4..6 Nixie tubes
+#define MULTIPLEX74141    //4..8 Nixie tubes
+//#define NO_MULTIPLEX74141 //4..6 Nixie tubes
 //#define MAX6921           //4..8 VFD tubes   (IV18)
 //#define MM5450            //6..8 LEDS
 //#define MAX7219CNG        //4..8 LED 
@@ -39,7 +39,7 @@
 //#define samsung           //samsung serial display
 //#define PCF_MULTIPLEX74141
 
-#define COLON_PIN -1         //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2)
+#define COLON_PIN   16       //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2, IV16:16)
 #define TEMP_SENSOR_PIN -1  //DHT or Dallas temp sensor pin.  If not used, SET TO -1   (RX or any other free pin)
 #define LED_SWITCH_PIN -1   //external led lightning.  If not used, SET TO -1
 #define DECIMALPOINT_PIN -1 //Nixie decimal point between digits (thermometer, hygrometer). If not used, SET TO -1
@@ -56,16 +56,19 @@
 #define TEMP_CHARCODE 15    
 #define GRAD_CHARCODE 16
 #define PERCENT_CHARCODE 8
+
+uint8_t c_MinBrightness = 8; 
+uint8_t c_MaxBrightness = 255;
 //--------------------------------------------------------------------------------------------------
 
 #if defined(ESP8266)  
-  char webName[] = "UniClock 1.4f";
+  char webName[] = "UniClock 1.4g";
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #include <ESP8266WiFi.h>
   #include <ESP8266mDNS.h>
 #elif defined(ESP32)
-  char webName[] = "ESP32UniClock 1.4f";
+  char webName[] = "ESP32UniClock 1.4g";
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD ""
   #include <WiFi.h>
@@ -163,6 +166,9 @@ struct {
   byte dayBright = MAXBRIGHTNESS;  // display daytime brightness
   byte nightBright = 5;            // display night brightness
   byte animMode = 2;               //0=no anim,  if 1 or 2 is used, animation, when a digit changes
+  byte rgbEffect = 1;
+  byte rgbBrightness = 100;
+  byte rgbSpeed = 50;
   byte magic = 133;                //magic value, to check EEPROM at first start
 } prm;
 
@@ -422,7 +428,10 @@ void factoryReset() {
   prm.nightMin = 0;
   prm.dayBright = MAXBRIGHTNESS;
   prm.nightBright = 3;
-  prm.animMode = 6;        
+  prm.animMode = 6;  
+  prm.rgbEffect = 1;
+  prm.rgbBrightness = 100;
+  prm.rgbSpeed = 50;      
   prm.magic = 133;              //magic value to check to first start
   saveEEPROM();
   calcTime();
@@ -959,6 +968,33 @@ int tmp = 0;
                 mod = true;              
               }              
             }
+            else if (strncmp(pch, "rgbEffect=", 10) == 0) {
+              tmp = atoi(pch + 10); 
+              if (tmp <0) tmp = 0;
+              if (tmp>9) tmp = 9;
+              if (tmp != prm.rgbEffect) {
+                prm.rgbEffect = tmp;
+                mod = true;              
+              }              
+            }
+            else if (strncmp(pch, "rgbBrightness=", 14) == 0) {
+              tmp = atoi(pch + 14); 
+              if (tmp <0) tmp = c_MinBrightness;
+              if (tmp>c_MaxBrightness) tmp = c_MaxBrightness;
+              if (tmp != prm.rgbBrightness) {
+                prm.rgbBrightness = tmp;
+                mod = true;              
+              }              
+            }
+            else if (strncmp(pch, "rgbSpeed=", 9) == 0) {
+              tmp = atoi(pch + 9); 
+              if (tmp <0) tmp = 20;
+              if (tmp>200) tmp = 200;
+              if (tmp != prm.rgbSpeed) {
+                prm.rgbSpeed = tmp;
+                mod = true;              
+              }              
+            }
            pch = strtok(NULL, "& ");
           }  //end while pch...
           
@@ -998,8 +1034,14 @@ int tmp = 0;
             client.print("><br>DAY &#160;&#160;&#160;&#160;hour (0..23): <input type=text maxlength=2 size=2 name=dayHour value=");  client.print(prm.dayHour);
             client.print("> min (0..59): <input type=text maxlength=2 size=2 name=dayMin value=");             client.print(prm.dayMin);
             client.print("><br>NIGHT hour (0..23): <input type=text maxlength=2 size=2 name=nightHour value=");  client.print(prm.nightHour);
-            client.print("> min (0..59): <input type=text maxlength=2 size=2 name=nightMin value=");           client.print(prm.nightMin);          
+            client.print("> min (0..59): <input type=text maxlength=2 size=2 name=nightMin value=");           client.print(prm.nightMin);  
           }
+//#if defined(USE_NEOPIXEL_MAKUNA) && defined(USE_NEOPIXEL_ADAFRUIT)
+#ifdef USE_NEOPIXEL_MAKUNA
+            client.print("><br>RGB effect:(0-9): <input type=text maxlength=1 size=1 name=rgbEffect value=");  client.print(prm.rgbEffect);  
+            client.print("> bright: <input type=text maxlength=3 size=3 name=rgbBrightness value=");           client.print(prm.rgbBrightness); 
+            client.print("> speed: <input type=text maxlength=3 size=3 name=rgbSpeed value=");                 client.print(prm.rgbSpeed);  
+#endif
           client.print("><br><input type=submit value=Submit></form>");
           
           client.println("<!DOCTYPE html><html>");
