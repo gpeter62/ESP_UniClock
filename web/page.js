@@ -110,8 +110,8 @@ function getCurrentTime(){
     var dd = formatToTwoDigit(today.getDate());
     var mm = formatToTwoDigit(today.getMonth()+1); 
     var yyyy = today.getFullYear();
-    var hour = today.getHours();
-    var minute = today.getMinutes();
+    var hour = formatToTwoDigit(today.getHours());
+    var minute = formatToTwoDigit(today.getMinutes());
     return yyyy+"-"+mm+"-"+dd+" "+hour+":"+minute;
 }
 
