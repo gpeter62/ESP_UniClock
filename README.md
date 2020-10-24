@@ -1,3 +1,5 @@
+v2.0 under heavy development. Please download and use the old version from ESP_UniClock_1_4_final.zip!!!
+
 # ESP_UniClock v1.4
 
 Universal WifiClock with Nixie, VFD, Numitron tubes or LED display
