@@ -295,9 +295,10 @@ void startServer() {
 
   server.on("/getConfiguration", HTTP_GET, [](AsyncWebServerRequest *request){
     StaticJsonDocument<512> doc;
-    Serial.println("Sending configuration...");
-    char buf[20];
+    DPRINTLN("Sending configuration to web client...");
+    char buf[20];  //conversion buffer
     
+    //Global data
     doc["version"] = webName;
     doc["maxDigits"] = maxDigits;   //number of digits (tubes)
     doc["maxBrightness"] = MAXBRIGHTNESS; //Maximum tube brightness usually 10, sometimes 12
@@ -312,11 +313,11 @@ void startServer() {
     
     //Clock calculation and display parameters
     doc["utc_offset"] = prm.utc_offset;
-    doc["enableDST"] = prm.enableDST;          // Flag to enable DST (summer time...)
+    doc["enableDST"] = prm.enableDST;         // Flag to enable DST (summer time...)
     doc["set12_24"] = prm.set12_24;           // Flag indicating 12 vs 24 hour time (false = 12, true = 24);
     doc["showZero"] = prm.showZero;           // Flag to indicate whether to show zero in the hour ten's place
-    doc["enableBlink"] = prm.enableBlink;        // Flag to indicate whether center colon should blink
-    doc["interval"] = prm.interval;             // doc["interval in minutes, with 0 = off
+    doc["enableBlink"] = prm.enableBlink;     // Flag to indicate whether center colon should blink
+    doc["interval"] = prm.interval;           // doc["interval in minutes, with 0 = off
     
     //Day/Night dimmer parameters    
     doc["enableAutoShutoff"] = prm.enableAutoShutoff;  // Flag to enable/disable nighttime shut off
