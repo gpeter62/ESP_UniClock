@@ -1,14 +1,30 @@
 //Example config that UI recieves
 var configuration = {
-    version : '2.1.3',
-    temperature : "21",
-    humidity : "34",
-
-    day : '8:00',
-    night : '22:00',
-    cb_auto_day_night : '1',
-    
-
+    "version": "UniClock 2.0",
+    "maxDigits": 4,
+    "maxBrightness": 10,
+    "currentDate": "2020.10.24",
+    "currentTime": "15:01",
+    "temperature": 0,
+    "humidity": -1,
+    "utc_offset": 1,
+    "enableDST": true,
+    "set12_24": true,
+    "showZero": true,
+    "blinkEnabled": true,
+    "interval": 15,
+    "enableAutoShutoff": true,
+    "dayTime": "7:00",
+    "nightTime": "22:00",
+    "dayBright": 10,
+    "nightBright": 3,
+    "animMode": 6,
+    "alarmEnabled": 0,
+    "alarmTime": "6:30",
+    "rgbEffect": 1,
+    "rgbBrightness": 100,
+    "rgbFixColor": 150,
+    "rgbSpeed": 50
 };
 
 //Runs, when HTML document is fully loaded
@@ -25,26 +41,14 @@ function getConfiguration(){
 }
 
 function sendMsgToArduino(key,value) {
-    $.get('/saveSetting/' + key + "=" + value + '/',
-        function(){
-            console.log("Message sent");
-        }
-    );
-    return false;
+    $.post('/saveSetting/', {"key" : key ,"value" : value }).done(function(data){
+        console.log(data);
+    });
 }
 
 //Contains the most important initializes
 function Init(){
-    getConfiguration();
-    
-    setTimeout(function(){
-        sendMsgToArduino("cb_auto_day_night","1");
-    },1000);
-
-    setTimeout(function(){
-        sendMsgToArduino("day","09_45");
-        
-    },2000);    
+    getConfiguration(); 
     
     //binds custom switch functionality
     $('.switcher').on('click',function(){
@@ -89,15 +93,35 @@ function Init(){
     //fills the inputs with configuration values
     for(var index in configuration){
         let value = configuration[index];
-        if(index == 'day' || index == 'night'){
+        if(index == 'dayTime' || index == 'nightTime' || index == 'alarmTime'){
             value = value.split(':');
             $('#'+index+'Hours').val(formatToTwoDigit(value[0]));
             $('#'+index+'Minutes').val(formatToTwoDigit(value[1]));
         }
-        else if(index.startsWith('cb_') && value*1 === 1){
+        else if(index == 'version' || index == 'temperature'){
+            $('#'+index).html(value);
+        }
+        else if(index == 'utc_offset' || index == 'maxBrightness' || 
+                index == 'dayBright' || index == 'nightBright' || 
+                index == 'animMode' || index == 'rgbBrightness' ||
+                index == 'rgbFixColor' || index == 'rgbSpeed' ||
+                index == 'rgbEffect' || index == 'interval'
+            ){
+            $('#'+index).val(value);
+        }
+        else if((index == 'enableDST' || index == 'set12_24' ||
+                index == 'showZero' || index == 'enableBlink' ||
+                index == 'enableAutoShutoff' || index == 'alarmEnable' ||
+                index == 'rgbDir'
+                ) && !!value === 1
+            ){
             $('#'+index).trigger('click');
         }
+        else if(index == "maxDigits"){
+            //TODO
+        }
     }
+    $('#currentTime').html(configuration["currentDate"] + " " + configuration["currentTime"])
 
     //sets a possible good timezone, if not already set
     if(!configuration['utc_offset']){

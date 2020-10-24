@@ -293,8 +293,41 @@ void startServer() {
     request->send(SPIFFS, "/site.css", "text/css");
   });
 
-  server.on("/getConfiguration", HTTP_GET, [](AsyncWebServerRequest *request){
-    StaticJsonDocument<512> doc;
+  server.on("/getConfiguration", HTTP_GET, handleSendConfig);
+
+  server.on("/saveSetting", HTTP_POST, handleConfigChanged);
+
+  server.begin();
+}
+
+void handleConfigChanged(){
+  bool paramFound = true;
+
+  if(server.arg("key") || server.arg("value")){
+    server.send(400, "text/plain", "400: Invalid Request. Parameters: key and value");
+    return;
+  }
+
+  if(server.arg("key") == "utc_offset"){
+    prm.utc_offset = server.arg("value");
+  }
+  else if(server.arg("key") == "set12_24"){
+    prm.set12_24 = server.arg("value");
+  } //TODO for the rest of the parameters
+  else{
+    paramFound = false;
+  }
+
+  if(paramFound){
+    server.send(200, "text/plain", "Ok");
+  }
+  else{
+    server.send(404, "text/plain", "404: Parameter not found");
+  }
+}
+
+void handleSendConfig(){
+  StaticJsonDocument<512> doc;
     DPRINTLN("Sending configuration to web client...");
     char buf[20];  //conversion buffer
     
@@ -344,16 +377,7 @@ void startServer() {
     
     String json;
     serializeJson(doc, json);
-    request->send(200, "application/json", json);   //sends to client
- 
-  });
-
-  server.on("/saveSetting", HTTP_GET, [](AsyncWebServerRequest *request){
-    Serial.print("Kaptam valamit:"); Serial.println(request->url());
-    request->send(200, "text/plain", "Ok");
-  });
-
-  server.begin();
+    server.send(200, "application/json", json);   //sends to client
 }
 
 void setup() {
