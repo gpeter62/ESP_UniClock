@@ -2,11 +2,13 @@
 #include "ESPAsyncTCP.h"
 #include "FS.h"
 #include "ESPAsyncWebServer.h"
+#include "ArduinoJson.h"
  
 const char* ssid = "farm32";
 const char* password =  "birka12345";
  
 AsyncWebServer server(80);
+//StaticJsonDocument<200> doc;
  
 void setup(){
   Serial.begin(115200);
@@ -44,6 +46,7 @@ void setup(){
 
   server.on("/getConfiguration", HTTP_GET, [](AsyncWebServerRequest *request){
     StaticJsonDocument<200> doc;
+    Serial.println("Sending configuration...");
     doc["version"] = "2.3.2";
     doc["temperature"] = "21";
     doc["humidity"] = "34";
@@ -55,6 +58,7 @@ void setup(){
     String json;
     serializeJson(doc, json);
     request->send(200, "application/json", json);   //sends to client
+ 
   });
 
   server.on("/saveSetting", HTTP_GET, [](AsyncWebServerRequest *request){
