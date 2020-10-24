@@ -29,13 +29,14 @@ var configuration = {
 
 //Runs, when HTML document is fully loaded
 $(document).ready(function(){
-    Init();
+    getConfiguration(); 
 });
 
 function getConfiguration(){
     $.get('/getConfiguration/',
         function(data){
-            console.log(data);
+            configuration = data;
+            Init();
         }
     );
 }
@@ -48,7 +49,6 @@ function sendMsgToArduino(key,value) {
 
 //Contains the most important initializes
 function Init(){
-    getConfiguration(); 
 
     //binds custom switch functionality
     $('.switcher').on('click',function(){
