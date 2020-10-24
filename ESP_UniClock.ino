@@ -174,9 +174,12 @@ struct {
   byte dayBright = MAXBRIGHTNESS;  // display daytime brightness
   byte nightBright = 5;            // display night brightness
   byte animMode = 2;               //0=no anim,  if 1 or 2 is used, animation, when a digit changes
+  boolean alarmEnable = false;
+  byte alarmHour = 7;
+  byte alarmMin = 0;
   byte rgbEffect = 1;              //0=OFF, 1=FixColor
   byte rgbBrightness = 100;
-  int rgbFixColor = 150;           //0..255, 256 = white
+  int  rgbFixColor = 150;           //0..255, 256 = white
   byte rgbSpeed = 50;              //0..255msec / step
   byte rgbDir = 0;                 //0 = right, 1=left
   byte magic = 133;                //magic value, to check EEPROM at first start
@@ -293,44 +296,50 @@ void startServer() {
   server.on("/getConfiguration", HTTP_GET, [](AsyncWebServerRequest *request){
     StaticJsonDocument<512> doc;
     Serial.println("Sending configuration...");
+    char buf[20];
     
     doc["version"] = webName;
     doc["maxDigits"] = maxDigits;   //number of digits (tubes)
     doc["maxBrightness"] = MAXBRIGHTNESS; //Maximum tube brightness usually 10, sometimes 12
 
     //Actual time and environment data
-    doc["currentDate"] = year()+"."+month()+"."+day();
-    doc["currentTime"] = hour()+":"+minute();
+    sprintf(buf,"%4d.%02d.%02d",year(),month(),day());
+    doc["currentDate"] = buf;
+    sprintf(buf,"%02d:%02d",hour(),minute());
+    doc["currentTime"] = buf;
     doc["temperature"] = temperature[0];  
     doc["humidity"] = 0;   
     
     //Clock calculation and display parameters
-    doc["utc_offset"] = 1;
-    doc["enableDST"] = true;          // Flag to enable DST (summer time...)
-    doc["set12_24"] = true;           // Flag indicating 12 vs 24 hour time (false = 12, true = 24);
-    doc["showZero"] = true;           // Flag to indicate whether to show zero in the hour ten's place
-    doc["blinkEnabled"] = true;        // Flag to indicate whether center colon should blink
-    doc["interval"] = 15;             // doc["interval in minutes, with 0 = off
+    doc["utc_offset"] = prm.utc_offset;
+    doc["enableDST"] = prm.enableDST;          // Flag to enable DST (summer time...)
+    doc["set12_24"] = prm.set12_24;           // Flag indicating 12 vs 24 hour time (false = 12, true = 24);
+    doc["showZero"] = prm.showZero;           // Flag to indicate whether to show zero in the hour ten's place
+    doc["enableBlink"] = prm.enableBlink;        // Flag to indicate whether center colon should blink
+    doc["interval"] = prm.interval;             // doc["interval in minutes, with 0 = off
     
     //Day/Night dimmer parameters    
-    doc["enableAutoShutoff"] = true;  // Flag to enable/disable nighttime shut off
-    doc["dayTime"] = "7:00";
-    doc["nightTime"] = "22:00";
-    doc["dayBright"] = MAXBRIGHTNESS;
-    doc["nightBright"] = 3;
-    doc["animMode"] = 6;  //Tube animation
+    doc["enableAutoShutoff"] = prm.enableAutoShutoff;  // Flag to enable/disable nighttime shut off
+    sprintf(buf,"%02d:%02d",prm.dayHour,prm.dayMin);
+    doc["dayTime"] = buf;
+    sprintf(buf,"%02d:%02d",prm.nightHour,prm.nightMin);
+    doc["nightTime"] = buf;
+    doc["dayBright"] = prm.dayBright;
+    doc["nightBright"] = prm.nightBright;
+    doc["animMode"] = prm.animMode;  //Tube animation
 
     //Alarm values
-    doc["alarmEnabled"] = 0;   //1 = ON, 0 = OFF
-    doc["alarmTime"] = "6:30";
+    doc["alarmEnable"] = prm.alarmEnable;   //1 = ON, 0 = OFF
+    sprintf(buf,"%02d:%02d",prm.alarmHour,prm.alarmMin);
+    doc["alarmTime"] = buf;
     
     //RGB LED values    
-    doc["rgbEffect"] = 1;       // if -1, no RGB exist!
-    doc["rgbBrightness"] = 100; // c_MinBrightness..255
-    doc["rgbFixColor"] = 150;   // 0..256
-    doc["rgbSpeed"] = 50;       // 1..255
-    doc["rgbDir"] = 1;          // 0 = right direction, 1 = left direction
-    doc["rgbMinBrightness"] = c_MinBrightness;  //minimum brightness
+    doc["rgbEffect"] = prm.rgbEffect;       // if -1, no RGB exist!
+    doc["rgbBrightness"] = prm.rgbBrightness; // c_MinBrightness..255
+    doc["rgbFixColor"] = prm.rgbFixColor;   // 0..256
+    doc["rgbSpeed"] = prm.rgbSpeed;       // 1..255
+    doc["rgbDir"] = prm.rgbDir;          // 0 = right direction, 1 = left direction
+    doc["rgbMinBrightness"] = c_MinBrightness;  //minimum brightness for range check!!
     
     String json;
     serializeJson(doc, json);
@@ -514,11 +523,15 @@ void factoryReset() {
   prm.nightMin = 0;
   prm.dayBright = MAXBRIGHTNESS;
   prm.nightBright = 3;
-  prm.animMode = 6;  
+  prm.animMode = 6; 
+  prm.alarmEnable = false;
+  prm.alarmHour = 7;
+  prm.alarmMin = 0; 
   prm.rgbEffect = 1;
   prm.rgbBrightness = 100;
   prm.rgbFixColor = 150;
-  prm.rgbSpeed = 50;      
+  prm.rgbSpeed = 50; 
+  prm.rgbDir = 0;     
   prm.magic = 133;              //magic value to check to first start
   saveEEPROM();
   calcTime();
