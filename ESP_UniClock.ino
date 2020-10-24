@@ -298,39 +298,33 @@ void startServer() {
     doc["maxDigits"] = maxDigits;   //number of digits (tubes)
     doc["maxBrightness"] = MAXBRIGHTNESS; //Maximum tube brightness usually 10, sometimes 12
 
-//Actual time and enviroment data
-    doc["year"] = year();
-    doc["month"] = month();
-    doc["day"] = day();
-    doc["hour"] = hour();
-    doc["min"] = minute();
+    //Actual time and environment data
+    doc["currentDate"] = year()+"."+month()+"."+day();
+    doc["currentTime"] = hour()+":"+minute();
     doc["temperature"] = temperature[0];  
     doc["humidity"] = 0;   
     
-//Clock calculation and display parameters
+    //Clock calculation and display parameters
     doc["utc_offset"] = 1;
     doc["enableDST"] = true;          // Flag to enable DST (summer time...)
     doc["set12_24"] = true;           // Flag indicating 12 vs 24 hour time (false = 12, true = 24);
     doc["showZero"] = true;           // Flag to indicate whether to show zero in the hour ten's place
-    doc["enableBlink"] = true;        // Flag to indicate whether center colon should blink
+    doc["blinkEnabled"] = true;        // Flag to indicate whether center colon should blink
     doc["interval"] = 15;             // doc["interval in minutes, with 0 = off
     
-//Day/Night dimmer parameters    
+    //Day/Night dimmer parameters    
     doc["enableAutoShutoff"] = true;  // Flag to enable/disable nighttime shut off
-    doc["dayHour"] = 7;
-    doc["dayMin"] = 0;
-    doc["nightHour"] = 22;
-    doc["nightMin"] = 0;
+    doc["dayTime"] = "7:00";
+    doc["nightTime"] = "22:00";
     doc["dayBright"] = MAXBRIGHTNESS;
     doc["nightBright"] = 3;
     doc["animMode"] = 6;  //Tube animation
 
-//Alarm values
-    doc["alarmEnable"] = 0;   //1 = ON, 0 = OFF
-    doc["alarmHour"] = 6;
-    doc["alarmMinute"] = 30;
+    //Alarm values
+    doc["alarmEnabled"] = 0;   //1 = ON, 0 = OFF
+    doc["alarmTime"] = "6:30";
     
-//RGB LED values    
+    //RGB LED values    
     doc["rgbEffect"] = 1;       // if -1, no RGB exist!
     doc["rgbBrightness"] = 100; // c_MinBrightness..255
     doc["rgbFixColor"] = 150;   // 0..256
