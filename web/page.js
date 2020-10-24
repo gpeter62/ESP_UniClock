@@ -49,7 +49,7 @@ function sendMsgToArduino(key,value) {
 //Contains the most important initializes
 function Init(){
     getConfiguration(); 
-    
+
     //binds custom switch functionality
     $('.switcher').on('click',function(){
         $('#'+$(this).attr('for')).prop('checked',!$('#'+$(this).attr('for')).is(":checked"));
@@ -133,6 +133,26 @@ function Init(){
     //Set current date
     setCurrentTime();
     setInterval(setCurrentTime,1000);   //refreshes time every second
+
+    setTimeout(function(){
+        $('input, select').on('change',function(){
+            var value = '';
+            if($(this).attr('id').indexOf("Hours") == -1 || $(this).attr('id').indexOf("Minutes") == -1){
+                var key = $(this).attr('id').replace('Hours','').replace('Minutes','');
+                value = $('#'+key+'Hours').val() + ":" + $('#'+key+'Minutes').val();
+                sendMsgToArduino(key, value);
+            }
+            else{
+                if($(this).attr('type') == 'checkbox'){
+                    value = $(this).is(':checked');
+                }
+                else{
+                    value = $(this).val();
+                }
+                sendMsgToArduino($(this).attr('id'), value);
+            }
+        });
+    },200);
 }
 
 function setCurrentTime(){
