@@ -16,8 +16,16 @@ $(document).ready(function(){
     Init();
 });
 
+function getConfiguration(){
+    $.get('/getConfiguration/',
+        function(data){
+            console.log(data);
+        }
+    );
+}
+
 function sendMsgToArduino(key,value) {
-    $.get('/arduino/msg/' + key + "=" + value + '/',
+    $.get('/saveSetting/' + key + "=" + value + '/',
         function(){
             console.log("Message sent");
         }
@@ -27,13 +35,16 @@ function sendMsgToArduino(key,value) {
 
 //Contains the most important initializes
 function Init(){
+    getConfiguration();
+    
     setTimeout(function(){
         sendMsgToArduino("cb_auto_day_night","1");
     },1000);
 
     setTimeout(function(){
         sendMsgToArduino("day","09_45");
-    },1000);    
+        
+    },2000);    
     
     //binds custom switch functionality
     $('.switcher').on('click',function(){
