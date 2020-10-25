@@ -34,7 +34,7 @@ $(document).ready(function(){
 
 function getConfiguration(){
     $.get('/getConfiguration/').done(function(data){
-        configuration = data;
+        //configuration = data;
     }).always(function(){
         Init();
     });
@@ -112,9 +112,9 @@ function Init(){
                 index == 'showZero' || index == 'enableBlink' ||
                 index == 'enableAutoShutoff' || index == 'alarmEnable' ||
                 index == 'rgbDir'
-                ) && !!value === 1
+                ) && !!value
             ){
-            $('#'+index).trigger('click');
+            $('#'+index).prop('checked',true);
         }
         else if(index == "maxDigits"){
             //TODO
