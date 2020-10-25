@@ -119,6 +119,7 @@ boolean digitsOnly = true;  //only 0..9 numbers are possible to display?
 byte animMask[BUFSIZE];     //0 = no animation mask is used
 
 boolean EEPROMsaving = false; //saving in progress - stop display refresh
+#define MAGIC_VALUE 200
  
 // 8266 internal pin registers
 // https://github.com/esp8266/esp8266-wiki/wiki/gpio-registers
@@ -182,7 +183,7 @@ struct {
   int  rgbFixColor = 150;           //0..255, 256 = white
   byte rgbSpeed = 50;              //0..255msec / step
   byte rgbDir = 0;                 //0 = right, 1=left
-  byte magic = 133;                //magic value, to check EEPROM at first start
+  byte magic = MAGIC_VALUE;                //magic value, to check EEPROM at first start
 } prm;
 
 
@@ -247,7 +248,6 @@ void startWifiMode() {
       writeIpTag(count);
       delay(500); 
     }
-    startServer();
     clearDigits();
     showMyIp();  
     calcTime();    
@@ -270,7 +270,6 @@ void startStandaloneMode() {
     ip = WiFi.softAPIP();
     EEPROMsaving = false;
     delay(1000);
-    startServer();
     clearDigits();
     showMyIp();  
     calcTime();
@@ -310,20 +309,44 @@ void handleConfigChanged(AsyncWebServerRequest *request){
 
     String key = request->getParam("key", true)->value();
     String value = request->getParam("value", true)->value();
-
-    bool paramFound = true;
+    DPRINT(key); DPRINT("/"); DPRINT(value); DPRINT("/"); DPRINTLN(value == "true");
+    boolean paramFound = true;
     
-    if(key == "utc_offset"){
-      prm.utc_offset = value;
-    }
-    else if(key == "set12_24"){
-      prm.set12_24 = value;
-    } //TODO for the rest of the parameters
-    else{
-      paramFound = false;
-    }
+    if (key == "utc_offset") {prm.utc_offset = value.toInt();}
+    else if (key == "set12_24") {prm.set12_24 = (value == "true");  DPRINT("set12_24:"); DPRINTLN(prm.set12_24);}
+    else if (key == "showZero")  {prm.showZero = (value == "true"); DPRINT("showZero:"); DPRINTLN(prm.showZero);}        
+    else if (key == "enableBlink") {prm.enableBlink = (value == "true"); } 
+    else if (key == "enableDST") {prm.enableDST = (value == "true"); }    
+    else if (key == "interval") {prm.interval = value.toInt(); }         
+    else if (key == "enableAutoShutoff") {prm.enableAutoShutoff = (value == "true");  }
+
+    else if (key == "dayHour") {prm.dayHour = value.toInt();}
+    else if (key == "dayMin") {prm.dayMin = value.toInt();}
+    else if (key == "nightHour") {prm.nightHour = value.toInt();}
+    else if (key == "nightMin") {prm.nightMin = value.toInt();}
+    else if (key == "dayBright") {prm.dayBright = value.toInt();}
+    else if (key == "nightBright") {prm.nightBright = value.toInt();}
+    else if (key == "animMode") {prm.animMode = value.toInt();}  
+    else if (key == "manualOverride") {manualOverride = true; displayON = (value == "false");}
+    else if (key == "alarmEnable") {prm.alarmEnable = (value == "true");  }
+    else if (key == "alarmHour") {prm.alarmHour = value.toInt();}
+    else if (key == "alarmMin") {prm.alarmMin = value.toInt();}
+  
+    //RGB LED values    
+    else if(key == "rgbEffect")  {prm.rgbEffect = value.toInt();}     
+    else if(key == "rgbBrightness") {prm.rgbBrightness = value.toInt();} 
+    else if(key == "rgbFixColor") {prm.rgbFixColor = value.toInt();}  
+    else if(key == "rgbSpeed") {prm.rgbSpeed = value.toInt();}   
+    else if(key == "rgbDir") {
+      prm.rgbDir = value.toInt(); 
+      if ((prm.rgbDir>1) || (prm.rgbDir<0)) prm.rgbDir = 0;
+      }
+    else if(key == "rgbMinBrightness") {c_MinBrightness = value.toInt(); }
+    
+    else  {paramFound = false;}
 
     if(paramFound){
+      saveEEPROM();
       request->send(200, "text/plain", "Ok");
     }
     else{
@@ -331,7 +354,7 @@ void handleConfigChanged(AsyncWebServerRequest *request){
     }
   }
   else{
-    request->.send(400, "text/plain", "400: Invalid Request. Parameters: key and value");
+    request->send(400, "text/plain", "400: Invalid Request. Parameters: key and value");
   }
 }
 
@@ -374,6 +397,7 @@ void handleSendConfig(AsyncWebServerRequest *request){
 
   //Alarm values
   doc["alarmEnable"] = prm.alarmEnable;   //1 = ON, 0 = OFF
+  doc["manualOverride"] = manualOverride;   
   sprintf(buf,"%02d:%02d",prm.alarmHour,prm.alarmMin);
   doc["alarmTime"] = buf;
   
@@ -409,7 +433,7 @@ void setup() {
 
   DPRINT("Number of digits:"); DPRINTLN(maxDigits);
   loadEEPROM();
-  if (prm.magic !=133) factoryReset();
+  if (prm.magic !=MAGIC_VALUE) factoryReset();
   
   setupNeopixelMakuna();  
   setupNeopixelAdafruit();  
@@ -426,6 +450,7 @@ void setup() {
     startWifiMode();
   else 
     startStandaloneMode();
+  startServer();  
 }
 
 void calcTime() {
@@ -527,12 +552,13 @@ void loop() {
 }
 
 void loadEEPROM() {
-  DPRINTLN("Loading setting from EEPROM.");
+  DPRINT("Loading setting from EEPROM. EEPROM ver:");
   EEPROMsaving = true;  
   EEPROM.begin(sizeof(prm));
   EEPROM.get(EEPROM_addr,prm);
   EEPROM.end();
   EEPROMsaving = false;
+  DPRINTLN(prm.magic);
 }
 
 void saveEEPROM() {
@@ -542,6 +568,7 @@ void saveEEPROM() {
   EEPROM.commit();
   EEPROM.end();
   EEPROMsaving = false;
+  DPRINTLN("Settings saved to EEPROM!");
 }
 
 void factoryReset() {
@@ -567,7 +594,7 @@ void factoryReset() {
   prm.rgbFixColor = 150;
   prm.rgbSpeed = 50; 
   prm.rgbDir = 0;     
-  prm.magic = 133;              //magic value to check to first start
+  prm.magic = MAGIC_VALUE;              //magic value to check the EEPROM version
   saveEEPROM();
   calcTime();
   DPRINTLN("Factory Reset!!!");
