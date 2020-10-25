@@ -247,7 +247,6 @@ void startWifiMode() {
       writeIpTag(count);
       delay(500); 
     }
-    startServer();
     clearDigits();
     showMyIp();  
     calcTime();    
@@ -270,7 +269,6 @@ void startStandaloneMode() {
     ip = WiFi.softAPIP();
     EEPROMsaving = false;
     delay(1000);
-    startServer();
     clearDigits();
     showMyIp();  
     calcTime();
@@ -310,27 +308,28 @@ void handleConfigChanged(AsyncWebServerRequest *request){
 
     String key = request->getParam("key", true)->value();
     String value = request->getParam("value", true)->value();
-
+    DPRINT(key); DPRINT("/"); DPRINT(value); DPRINT("/"); DPRINTLN(value == "true");
     bool paramFound = true;
     
-    if(key == "utc_offset") prm.utc_offset = value.toInt();
-    else if(key == "set12_24") prm.set12_24 = (value == "true");
-    else if(key == "showZero")  prm.showZero = (value == "true");           
-    else if(key == "enableBlink") prm.enableBlink = (value == "true");     
-    else if(key == "interval") prm.interval = value.toInt();           
-    else if(key == "enableAutoShutoff") prm.enableAutoShutoff = (value == "true");  
+    if (key == "utc_offset") {prm.utc_offset = value.toInt();}
+    else if (key == "set12_24") {prm.set12_24 = (value == "true");  DPRINT("set12_24:"); DPRINTLN(prm.set12_24);}
+    else if (key == "showZero")  {prm.showZero = (value == "true"); DPRINT("showZero:"); DPRINTLN(prm.showZero);}        
+    else if (key == "enableBlink") {prm.enableBlink = (value == "true"); } 
+    else if (key == "enableDST") {prm.enableDST = (value == "true"); }    
+    else if (key == "interval") {prm.interval = value.toInt(); }         
+    else if (key == "enableAutoShutoff") {prm.enableAutoShutoff = (value == "true");  }
 
-    else if(key == "dayHour") prm.dayHour = value.toInt();
-    else if(key == "dayMin") prm.dayMin = value.toInt();
-    else if(key == "nightHour") prm.nightHour = value.toInt();
-    else if(key == "nightMin") prm.nightMin = value.toInt();
-    else if(key == "dayBright") prm.dayBright = value.toInt();
-    else if(key == "nightBright") prm.nightBright = value.toInt();
-    else if(key == "animMode") prm.animMode = value.toInt();  
-
-    else if(key == "alarmEnable") prm.alarmEnable = (value == "true");  
-    else if(key == "alarmHour") prm.alarmHour = value.toInt();
-    else if(key == "alarmMin") prm.alarmMin = value.toInt();
+    else if (key == "dayHour") prm.dayHour = value.toInt();
+    else if (key == "dayMin") prm.dayMin = value.toInt();
+    else if (key == "nightHour") prm.nightHour = value.toInt();
+    else if (key == "nightMin") prm.nightMin = value.toInt();
+    else if (key == "dayBright") prm.dayBright = value.toInt();
+    else if (key == "nightBright") prm.nightBright = value.toInt();
+    else if (key == "animMode") prm.animMode = value.toInt();  
+    else if (key == "manualOverride") {manualOverride = (value == "true");}
+    else if (key == "alarmEnable") {prm.alarmEnable = (value == "true");  }
+    else if (key == "alarmHour") {prm.alarmHour = value.toInt();}
+    else if (key == "alarmMin") {prm.alarmMin = value.toInt();}
   
     //RGB LED values    
     else if(key == "rgbEffect")  prm.rgbEffect = value.toInt();     
@@ -343,6 +342,7 @@ void handleConfigChanged(AsyncWebServerRequest *request){
     else  paramFound = false;
 
     if(paramFound){
+      saveEEPROM();
       request->send(200, "text/plain", "Ok");
     }
     else{
@@ -393,6 +393,7 @@ void handleSendConfig(AsyncWebServerRequest *request){
 
   //Alarm values
   doc["alarmEnable"] = prm.alarmEnable;   //1 = ON, 0 = OFF
+  doc["manualOverride"] = manualOverride;   
   sprintf(buf,"%02d:%02d",prm.alarmHour,prm.alarmMin);
   doc["alarmTime"] = buf;
   
@@ -445,6 +446,7 @@ void setup() {
     startWifiMode();
   else 
     startStandaloneMode();
+  startServer();  
 }
 
 void calcTime() {

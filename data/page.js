@@ -18,6 +18,7 @@ var configuration = {
     "nightTime": "22:00",
     "dayBright": 10,
     "nightBright": 3,
+	"manualOverride": false,
     "animMode": 6,
     "alarmEnabled": 0,
     "alarmTime": "6:30",
@@ -111,7 +112,7 @@ function Init(){
         else if((index == 'enableDST' || index == 'set12_24' ||
                 index == 'showZero' || index == 'enableBlink' ||
                 index == 'enableAutoShutoff' || index == 'alarmEnable' ||
-                index == 'rgbDir'
+                index == 'rgbDir' || index == 'manualOverride'
                 ) && !!value === 1
             ){
             $('#'+index).trigger('click');
