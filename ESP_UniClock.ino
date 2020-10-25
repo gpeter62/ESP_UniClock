@@ -292,107 +292,102 @@ void startServer() {
   server.on("/site.css", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/site.css", "text/css");
   });
-  
-  handleConfigChanged();
-  handleSendConfig();
+    
+  server.on("/saveSetting", HTTP_POST, handleConfigChanged);
+  server.on("/getConfiguration", HTTP_GET, handleSendConfig);
   
   server.begin();
 }  //end of procedure
 
 
-void handleConfigChanged(){
-  bool paramFound = true;
-  
-  server.on("/saveSetting", HTTP_POST, [](AsyncWebServerRequest *request){
-  int args = request->args();
-  for(int i=0;i<args;i++){
-    Serial.printf("ARG[%s]: %s\n", request->argName(i).c_str(), request->arg(i).c_str());
+void handleConfigChanged(AsyncWebServerRequest *request){
+  if (request->hasParam("key", true) && request->hasParam("value", true)) {
     
+    int args = request->args();
+    for(int i=0;i<args;i++){
+      Serial.printf("ARG[%s]: %s\n", request->argName(i).c_str(), request->arg(i).c_str());
+    }
+
+    String key = request->getParam("key", true)->value();
+    String value = request->getParam("value", true)->value();
+
+    bool paramFound = true;
+    
+    if(key == "utc_offset"){
+      prm.utc_offset = value;
+    }
+    else if(key == "set12_24"){
+      prm.set12_24 = value;
+    } //TODO for the rest of the parameters
+    else{
+      paramFound = false;
+    }
+
+    if(paramFound){
+      request->send(200, "text/plain", "Ok");
+    }
+    else{
+      request->send(404, "text/plain", "404: Parameter not found");
+    }
   }
-    
-  });
-
-
-
-  /*
-  if(server.arg("key") || server.arg("value")){
+  else{
     request->.send(400, "text/plain", "400: Invalid Request. Parameters: key and value");
-    return;
   }
-  if(server.arg("key") == "utc_offset"){
-    prm.utc_offset = server.arg("value");
-  }
-  else if(server.arg("key") == "set12_24"){
-    prm.set12_24 = server.arg("value");
-  } //TODO for the rest of the parameters
-  else{
-    paramFound = false;
-  }
-
-  if(paramFound){
-    request->.send(200, "text/plain", "Ok");
-  }
-  else{
-    request->send(404, "text/plain", "404: Parameter not found");
-  }
-*/  
 }
 
-void handleSendConfig(){
+void handleSendConfig(AsyncWebServerRequest *request){
   
-server.on("/getConfiguration", HTTP_GET, [](AsyncWebServerRequest *request){
-    StaticJsonDocument<512> doc;
-    char buf[20];  //conversion buffer
-    DPRINTLN("Sending configuration to web client...");
-    
-    //Global data
-    doc["version"] = webName;
-    doc["maxDigits"] = maxDigits;   //number of digits (tubes)
-    doc["maxBrightness"] = MAXBRIGHTNESS; //Maximum tube brightness usually 10, sometimes 12
+  StaticJsonDocument<512> doc;
+  char buf[20];  //conversion buffer
+  DPRINTLN("Sending configuration to web client...");
+  
+  //Global data
+  doc["version"] = webName;
+  doc["maxDigits"] = maxDigits;   //number of digits (tubes)
+  doc["maxBrightness"] = MAXBRIGHTNESS; //Maximum tube brightness usually 10, sometimes 12
 
-    //Actual time and environment data
-    sprintf(buf,"%4d.%02d.%02d",year(),month(),day());
-    doc["currentDate"] = buf;
-    sprintf(buf,"%02d:%02d",hour(),minute());
-    doc["currentTime"] = buf;
-    doc["temperature"] = temperature[0];  
-    doc["humidity"] = 0;   
-    
-    //Clock calculation and display parameters
-    doc["utc_offset"] = prm.utc_offset;
-    doc["enableDST"] = prm.enableDST;         // Flag to enable DST (summer time...)
-    doc["set12_24"] = prm.set12_24;           // Flag indicating 12 vs 24 hour time (false = 12, true = 24);
-    doc["showZero"] = prm.showZero;           // Flag to indicate whether to show zero in the hour ten's place
-    doc["enableBlink"] = prm.enableBlink;     // Flag to indicate whether center colon should blink
-    doc["interval"] = prm.interval;           // doc["interval in minutes, with 0 = off
-    
-    //Day/Night dimmer parameters    
-    doc["enableAutoShutoff"] = prm.enableAutoShutoff;  // Flag to enable/disable nighttime shut off
-    sprintf(buf,"%02d:%02d",prm.dayHour,prm.dayMin);
-    doc["dayTime"] = buf;
-    sprintf(buf,"%02d:%02d",prm.nightHour,prm.nightMin);
-    doc["nightTime"] = buf;
-    doc["dayBright"] = prm.dayBright;
-    doc["nightBright"] = prm.nightBright;
-    doc["animMode"] = prm.animMode;  //Tube animation
+  //Actual time and environment data
+  sprintf(buf,"%4d.%02d.%02d",year(),month(),day());
+  doc["currentDate"] = buf;
+  sprintf(buf,"%02d:%02d",hour(),minute());
+  doc["currentTime"] = buf;
+  doc["temperature"] = temperature[0];  
+  doc["humidity"] = 0;   
+  
+  //Clock calculation and display parameters
+  doc["utc_offset"] = prm.utc_offset;
+  doc["enableDST"] = prm.enableDST;         // Flag to enable DST (summer time...)
+  doc["set12_24"] = prm.set12_24;           // Flag indicating 12 vs 24 hour time (false = 12, true = 24);
+  doc["showZero"] = prm.showZero;           // Flag to indicate whether to show zero in the hour ten's place
+  doc["enableBlink"] = prm.enableBlink;     // Flag to indicate whether center colon should blink
+  doc["interval"] = prm.interval;           // doc["interval in minutes, with 0 = off
+  
+  //Day/Night dimmer parameters    
+  doc["enableAutoShutoff"] = prm.enableAutoShutoff;  // Flag to enable/disable nighttime shut off
+  sprintf(buf,"%02d:%02d",prm.dayHour,prm.dayMin);
+  doc["dayTime"] = buf;
+  sprintf(buf,"%02d:%02d",prm.nightHour,prm.nightMin);
+  doc["nightTime"] = buf;
+  doc["dayBright"] = prm.dayBright;
+  doc["nightBright"] = prm.nightBright;
+  doc["animMode"] = prm.animMode;  //Tube animation
 
-    //Alarm values
-    doc["alarmEnable"] = prm.alarmEnable;   //1 = ON, 0 = OFF
-    sprintf(buf,"%02d:%02d",prm.alarmHour,prm.alarmMin);
-    doc["alarmTime"] = buf;
-    
-    //RGB LED values    
-    doc["rgbEffect"] = prm.rgbEffect;       // if -1, no RGB exist!
-    doc["rgbBrightness"] = prm.rgbBrightness; // c_MinBrightness..255
-    doc["rgbFixColor"] = prm.rgbFixColor;   // 0..256
-    doc["rgbSpeed"] = prm.rgbSpeed;       // 1..255
-    doc["rgbDir"] = prm.rgbDir;          // 0 = right direction, 1 = left direction
-    doc["rgbMinBrightness"] = c_MinBrightness;  //minimum brightness for range check!!
-    
-    String json;
-    serializeJson(doc, json);
-    request->send(200, "application/json", json);
-  });  
+  //Alarm values
+  doc["alarmEnable"] = prm.alarmEnable;   //1 = ON, 0 = OFF
+  sprintf(buf,"%02d:%02d",prm.alarmHour,prm.alarmMin);
+  doc["alarmTime"] = buf;
+  
+  //RGB LED values    
+  doc["rgbEffect"] = prm.rgbEffect;       // if -1, no RGB exist!
+  doc["rgbBrightness"] = prm.rgbBrightness; // c_MinBrightness..255
+  doc["rgbFixColor"] = prm.rgbFixColor;   // 0..256
+  doc["rgbSpeed"] = prm.rgbSpeed;       // 1..255
+  doc["rgbDir"] = prm.rgbDir;          // 0 = right direction, 1 = left direction
+  doc["rgbMinBrightness"] = c_MinBrightness;  //minimum brightness for range check!!
+  
+  String json;
+  serializeJson(doc, json);
+  request->send(200, "application/json", json);
 }
 
 void setup() {
