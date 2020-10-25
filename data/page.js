@@ -138,11 +138,6 @@ function Init(){
         $('input, select').on('change',function(){
             var value = '';
             if($(this).attr('id').indexOf("Hours") == -1 || $(this).attr('id').indexOf("Minutes") == -1){
-                var key = $(this).attr('id').replace('Hours','').replace('Minutes','');
-                value = $('#'+key+'Hours').val() + ":" + $('#'+key+'Minutes').val();
-                sendMsgToArduino(key, value);
-            }
-            else{
                 if($(this).attr('type') == 'checkbox'){
                     value = $(this).is(':checked');
                 }
@@ -150,6 +145,11 @@ function Init(){
                     value = $(this).val();
                 }
                 sendMsgToArduino($(this).attr('id'), value);
+            }
+            else{
+                var key = $(this).attr('id').replace('Hours','').replace('Minutes','');
+                value = $('#'+key+'Hours').val() + ":" + $('#'+key+'Minutes').val();
+                sendMsgToArduino(key, value);
             }
         });
     },200);
