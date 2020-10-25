@@ -277,7 +277,7 @@ void startStandaloneMode() {
 }
 
 void startServer() {
-  server.on("/dashboard", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/index.html", "text/html");
   });
  
@@ -292,22 +292,33 @@ void startServer() {
   server.on("/site.css", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/site.css", "text/css");
   });
-
-  server.on("/getConfiguration", HTTP_GET, handleSendConfig);
-
-  server.on("/saveSetting", HTTP_POST, handleConfigChanged);
-
+  
+  handleConfigChanged();
+  handleSendConfig();
+  
   server.begin();
-}
+}  //end of procedure
+
 
 void handleConfigChanged(){
   bool paramFound = true;
+  
+  server.on("/saveSetting", HTTP_POST, [](AsyncWebServerRequest *request){
+  int args = request->args();
+  for(int i=0;i<args;i++){
+    Serial.printf("ARG[%s]: %s\n", request->argName(i).c_str(), request->arg(i).c_str());
+    
+  }
+    
+  });
 
+
+
+  /*
   if(server.arg("key") || server.arg("value")){
     server.send(400, "text/plain", "400: Invalid Request. Parameters: key and value");
     return;
   }
-
   if(server.arg("key") == "utc_offset"){
     prm.utc_offset = server.arg("value");
   }
@@ -324,12 +335,15 @@ void handleConfigChanged(){
   else{
     server.send(404, "text/plain", "404: Parameter not found");
   }
+*/  
 }
 
 void handleSendConfig(){
-  StaticJsonDocument<512> doc;
-    DPRINTLN("Sending configuration to web client...");
+  
+server.on("/getConfiguration", HTTP_GET, [](AsyncWebServerRequest *request){
+    StaticJsonDocument<512> doc;
     char buf[20];  //conversion buffer
+    DPRINTLN("Sending configuration to web client...");
     
     //Global data
     doc["version"] = webName;
@@ -377,7 +391,8 @@ void handleSendConfig(){
     
     String json;
     serializeJson(doc, json);
-    server.send(200, "application/json", json);   //sends to client
+    request->send(200, "application/json", json);
+  });  
 }
 
 void setup() {
@@ -404,7 +419,7 @@ void setup() {
   setupNeopixelMakuna();  
   setupNeopixelAdafruit();  
   setup_pins();
-  testTubes(300);
+  //testTubes(300);
   clearDigits();
   delay(100);
   if(!SPIFFS.begin()){
