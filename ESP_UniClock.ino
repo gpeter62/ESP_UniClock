@@ -119,6 +119,7 @@ boolean digitsOnly = true;  //only 0..9 numbers are possible to display?
 byte animMask[BUFSIZE];     //0 = no animation mask is used
 
 boolean EEPROMsaving = false; //saving in progress - stop display refresh
+#define MAGIC_VALUE 200
  
 // 8266 internal pin registers
 // https://github.com/esp8266/esp8266-wiki/wiki/gpio-registers
@@ -182,7 +183,7 @@ struct {
   int  rgbFixColor = 150;           //0..255, 256 = white
   byte rgbSpeed = 50;              //0..255msec / step
   byte rgbDir = 0;                 //0 = right, 1=left
-  byte magic = 133;                //magic value, to check EEPROM at first start
+  byte magic = MAGIC_VALUE;                //magic value, to check EEPROM at first start
 } prm;
 
 
@@ -429,7 +430,7 @@ void setup() {
 
   DPRINT("Number of digits:"); DPRINTLN(maxDigits);
   loadEEPROM();
-  if (prm.magic !=133) factoryReset();
+  if (prm.magic !=MAGIC_VALUE) factoryReset();
   
   setupNeopixelMakuna();  
   setupNeopixelAdafruit();  
@@ -548,12 +549,13 @@ void loop() {
 }
 
 void loadEEPROM() {
-  DPRINTLN("Loading setting from EEPROM.");
+  DPRINT("Loading setting from EEPROM. EEPROM ver:");
   EEPROMsaving = true;  
   EEPROM.begin(sizeof(prm));
   EEPROM.get(EEPROM_addr,prm);
   EEPROM.end();
   EEPROMsaving = false;
+  DPRINTLN(prm.magic);
 }
 
 void saveEEPROM() {
@@ -588,7 +590,7 @@ void factoryReset() {
   prm.rgbFixColor = 150;
   prm.rgbSpeed = 50; 
   prm.rgbDir = 0;     
-  prm.magic = 133;              //magic value to check to first start
+  prm.magic = MAGIC_VALUE;              //magic value to check the EEPROM version
   saveEEPROM();
   calcTime();
   DPRINTLN("Factory Reset!!!");
