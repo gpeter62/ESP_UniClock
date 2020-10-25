@@ -313,15 +313,34 @@ void handleConfigChanged(AsyncWebServerRequest *request){
 
     bool paramFound = true;
     
-    if(key == "utc_offset"){
-      prm.utc_offset = value;
-    }
-    else if(key == "set12_24"){
-      prm.set12_24 = value;
-    } //TODO for the rest of the parameters
-    else{
-      paramFound = false;
-    }
+    if(key == "utc_offset") prm.utc_offset = value.toInt();
+    else if(key == "set12_24") prm.set12_24 = (value == "true");
+    else if(key == "showZero")  prm.showZero = (value == "true");           
+    else if(key == "enableBlink") prm.enableBlink = (value == "true");     
+    else if(key == "interval") prm.interval = value.toInt();           
+    else if(key == "enableAutoShutoff") prm.enableAutoShutoff = (value == "true");  
+
+    else if(key == "dayHour") prm.dayHour = value.toInt();
+    else if(key == "dayMin") prm.dayMin = value.toInt();
+    else if(key == "nightHour") prm.nightHour = value.toInt();
+    else if(key == "nightMin") prm.nightMin = value.toInt();
+    else if(key == "dayBright") prm.dayBright = value.toInt();
+    else if(key == "nightBright") prm.nightBright = value.toInt();
+    else if(key == "animMode") prm.animMode = value.toInt();  
+
+    else if(key == "alarmEnable") prm.alarmEnable = (value == "true");  
+    else if(key == "alarmHour") prm.alarmHour = value.toInt();
+    else if(key == "alarmMin") prm.alarmMin = value.toInt();
+  
+    //RGB LED values    
+    else if(key == "rgbEffect")  prm.rgbEffect = value.toInt();     
+    else if(key == "rgbBrightness") prm.rgbBrightness = value.toInt(); 
+    else if(key == "rgbFixColor") prm.rgbFixColor = value.toInt();  
+    else if(key == "rgbSpeed") prm.rgbSpeed = value.toInt();   
+    else if(key == "rgbDir") prm.rgbDir = value.toInt(); if ((prm.rgbDir>1) || (prm.rgbDir<0)) prm.rgbDir = 0;
+    else if(key == "rgbMinBrightness") c_MinBrightness = value.toInt(); 
+    
+    else  paramFound = false;
 
     if(paramFound){
       request->send(200, "text/plain", "Ok");
@@ -331,7 +350,7 @@ void handleConfigChanged(AsyncWebServerRequest *request){
     }
   }
   else{
-    request->.send(400, "text/plain", "400: Invalid Request. Parameters: key and value");
+    request->send(400, "text/plain", "400: Invalid Request. Parameters: key and value");
   }
 }
 
