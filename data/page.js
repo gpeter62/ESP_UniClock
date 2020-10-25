@@ -35,7 +35,7 @@ $(document).ready(function(){
 
 function getConfiguration(){
     $.get('/getConfiguration/').done(function(data){
-        //configuration = data;
+        configuration = data;
     }).always(function(){
         Init();
     });
