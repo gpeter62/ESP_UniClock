@@ -27,147 +27,146 @@
                 </div>
             </div>
             <div class="separator"></div>
-            <div class="row">
-                <div class="control-holder">
-                    <label>Display Mode</label>
-                    <input id="set12_24" type="checkbox" class="switch two-side">
-                    <span class="switcher-text left non-selectable" for="set12_24">12h</span>
-                    <span class="switcher non-selectable" for="set12_24"></span>
-                    <span class="switcher-text right non-selectable" for="set12_24">24h</span>
-                </div>
-                <div class="control-holder">
-                    <label>Alarm</label>
-                    <input id="alarmEnable" type="checkbox" class="switch">
-                    <span class="switcher-text left non-selectable" for="alarmEnable">off</span>
-                    <span class="switcher non-selectable" for="alarmEnable"></span>
-                    <span class="switcher-text right non-selectable" for="alarmEnable">on</span>
-                </div>
-                <div class="control-holder">
-                    <label>Alarm Time</label>
-                    <div class="multiple-input">
-                        <select id="alarmTimeHours" class="number-select two-digit" min="0" max="23"></select>
-                        <span>:</span>
-                        <select id="alarmTimeMinutes" class="number-select two-digit" min="0" max="59" step="5"></select>
-                    </div>
+            <div class="control-holder">
+                <label>Display Mode</label>
+                <input id="set12_24" type="checkbox" class="switch two-side">
+                <span class="switcher-text left non-selectable" for="set12_24">12h</span>
+                <span class="switcher non-selectable" for="set12_24"></span>
+                <span class="switcher-text right non-selectable" for="set12_24">24h</span>
+            </div>
+            <div class="control-holder">
+                <label>Zero Handling</label>
+                <input id="showZero" type="checkbox" class="switch">
+                <span class="switcher-text left non-selectable" for="showZero">Hide</span>
+                <span class="switcher non-selectable" for="showZero"></span>
+                <span class="switcher-text right non-selectable" for="showZero">Show</span>
+            </div>
+            
+            <div class="control-holder">
+                <label>Blinking Dots</label>
+                <input id="enableBlink" type="checkbox" class="switch">
+                <span class="switcher-text left non-selectable" for="enableBlink">off</span>
+                <span class="switcher non-selectable" for="enableBlink"></span>
+                <span class="switcher-text right non-selectable" for="enableBlink">on</span>
+            </div>
+            <div class="control-holder">
+                <label>Time Zone</label>
+                <select id="utc_offset" class="number-select" min="-12" max="12" prefix="(UTC " suffix=":00)"></select>
+            </div>
+            <div class="control-holder">
+                <label title="Daylight saving time">DST</label>
+                <input id="enableDST" type="checkbox" class="switch">
+                <span class="switcher-text left non-selectable" for="enableDST">off</span>
+                <span class="switcher non-selectable" for="enableDST"></span>
+                <span class="switcher-text right non-selectable" for="enableDST">on</span>
+            </div>
+
+            <div class="control-holder">
+                <label>Day Brightness</label>
+                <div class="multiple-input">
+                    <select id="dayBright" class="number-select small" min="0" max="10"></select>
                 </div>
             </div>
-            <div class="row">
-                <div class="control-holder">
-                    <label>Day Brightness</label>
-                    <div class="multiple-input">
-                        <select id="dayBright" class="number-select small" min="0" max="10"></select>
-                    </div>
-                </div>
-                <div class="control-holder">
-                    <label>Night Brightness</label>
-                    <div class="multiple-input">
-                        <select id="nightBright" class="number-select small" min="0" max="10"></select>
-                    </div>
-                </div>
-                <div class="control-holder">
-                    <label>Maximum Brightness</label>
-                    <div class="multiple-input">
-                        <select id="rgbBrightness" class="number-select small" min="1" max="255" step="1"></select>
-                    </div>
+            <div class="control-holder">
+                <label>Night Brightness</label>
+                <div class="multiple-input">
+                    <select id="nightBright" class="number-select small" min="0" max="10"></select>
                 </div>
             </div>
-            <div class="row">
-                <div class="control-holder">
-                    <label>Auto Day/Night</label>
-                    <input id="enableAutoShutoff" type="checkbox" class="switch">
-                    <span class="switcher-text left non-selectable" for="enableAutoShutoff">off</span>
-                    <span class="switcher non-selectable" for="enableAutoShutoff"></span>
-                    <span class="switcher-text right non-selectable" for="enableAutoShutoff">on</span>
-                </div>
-                <div class="control-holder">
-                    <label>Day</label>
-                    <div class="multiple-input">
-                        <select id="dayTimeHours" class="number-select two-digit" min="0" max="23"></select>
-                        <span>:</span>
-                        <select id="dayTimeMinutes" class="number-select two-digit" min="0" max="59" step="5"></select>
-                    </div>
-                </div>
-                <div class="control-holder">
-                    <label>Night</label>
-                    <div class="multiple-input">
-                        <select id="nightTimeHours" class="number-select two-digit" min="0" max="23"></select>
-                        <span>:</span>
-                        <select id="nightTimeMinutes" class="number-select two-digit" min="0" max="59" step="5"></select>
-                    </div>
+            <div class="control-holder">
+                <label for="animMode">Animation Mode</label>
+                <select id="animMode" class="number-select" min="0" max="6" step="1" prefix="Animation_" suffix=""></select>
+            </div>
+
+            
+        
+            <div class="control-holder">
+                <label>Auto Day/Night</label>
+                <input id="enableAutoShutoff" type="checkbox" class="switch">
+                <span class="switcher-text left non-selectable" for="enableAutoShutoff">off</span>
+                <span class="switcher non-selectable" for="enableAutoShutoff"></span>
+                <span class="switcher-text right non-selectable" for="enableAutoShutoff">on</span>
+            </div>
+            <div class="control-holder">
+                <label>Day</label>
+                <div class="multiple-input">
+                    <select id="dayTimeHours" class="number-select two-digit" min="0" max="23"></select>
+                    <span>:</span>
+                    <select id="dayTimeMinutes" class="number-select two-digit" min="0" max="59" step="5"></select>
                 </div>
             </div>
-            <div class="row">
-                <div class="control-holder">
-                    <label for="rgbEffect">RGB Effect</label>
-                    <select id="rgbEffect">
-                        <option value="0">OFF</option>
-                        <option value="1">Fix Color</option>
-                        <option value="2">Rainbow 1</option>
-                        <option value="3">Rainbow 2</option>
-                        <option value="4">OFF</option>
-                        <option value="5">OFF</option>
-                        <option value="6">OFF</option>
-                        <option value="7">OFF</option>
-                        <option value="8">OFF</option>
-                        <option value="9">OFF</option>
-                    </select>
-                </div>
-                <div class="control-holder">
-                    <label for="animMode">Animation Mode</label>
-                    <select id="animMode" class="number-select" min="0" max="6" step="1" prefix="Animation_" suffix=""></select>
-                </div>
-                <div class="control-holder">
-                    <label>Fix Color</label>
-                    <div class="multiple-input">
-                        <select id="rgbFixColor" class="number-select" min="1" max="255" step="1" prefix="Color_" suffix=""></select>
-                    </div>
+            <div class="control-holder">
+                <label>Night</label>
+                <div class="multiple-input">
+                    <select id="nightTimeHours" class="number-select two-digit" min="0" max="23"></select>
+                    <span>:</span>
+                    <select id="nightTimeMinutes" class="number-select two-digit" min="0" max="59" step="5"></select>
                 </div>
             </div>
-            <div class="row">
-                <div class="control-holder">
-                    <label>Direction</label>
-                    <input id="rgbDir" type="checkbox" class="switch two-side">
-                    <span class="switcher-text left non-selectable" for="rgbDir">left</span>
-                    <span class="switcher non-selectable" for="rgbDir"></span>
-                    <span class="switcher-text right non-selectable" for="rgbDir">right</span>
-                </div>
-                <div class="control-holder">
-                    <label>Zero Handling</label>
-                    <input id="showZero" type="checkbox" class="switch">
-                    <span class="switcher-text left non-selectable" for="showZero">Hide</span>
-                    <span class="switcher non-selectable" for="showZero"></span>
-                    <span class="switcher-text right non-selectable" for="showZero">Show</span>
-                </div>
-                <div class="control-holder">
-                    <label for="rgbSpeed">Speed</label>
-                    <select class="number-select small" id="rgbSpeed" min="1" max="255" step="1"></select>
+
+            
+        
+            <div class="control-holder">
+                <label>Alarm</label>
+                <input id="alarmEnable" type="checkbox" class="switch">
+                <span class="switcher-text left non-selectable" for="alarmEnable">off</span>
+                <span class="switcher non-selectable" for="alarmEnable"></span>
+                <span class="switcher-text right non-selectable" for="alarmEnable">on</span>
+            </div>
+            <div class="control-holder">
+                <label>Alarm Time</label>
+                <div class="multiple-input">
+                    <select id="alarmTimeHours" class="number-select two-digit" min="0" max="23"></select>
+                    <span>:</span>
+                    <select id="alarmTimeMinutes" class="number-select two-digit" min="0" max="59" step="5"></select>
                 </div>
             </div>
-            <div class="row">
-                <div class="control-holder">
-                    <label>Blinking Dots</label>
-                    <input id="enableBlink" type="checkbox" class="switch">
-                    <span class="switcher-text left non-selectable" for="enableBlink">off</span>
-                    <span class="switcher non-selectable" for="enableBlink"></span>
-                    <span class="switcher-text right non-selectable" for="enableBlink">on</span>
-                </div>
-                <div class="control-holder">
-                    <label>Time Zone</label>
-                    <select id="utc_offset" class="number-select" min="-12" max="12" prefix="(UTC " suffix=":00)"></select>
-                </div>
-                <div class="control-holder">
-                    <label title="Daylight saving time">DST</label>
-                    <input id="enableDST" type="checkbox" class="switch">
-                    <span class="switcher-text left non-selectable" for="enableDST">off</span>
-                    <span class="switcher non-selectable" for="enableDST"></span>
-                    <span class="switcher-text right non-selectable" for="enableDST">on</span>
+            <div class="control-holder">
+                <label for="rgbEffect">RGB Effect</label>
+                <select id="rgbEffect">
+                    <option value="0">OFF</option>
+                    <option value="1">Fix Color</option>
+                    <option value="2">Rainbow 1</option>
+                    <option value="3">Rainbow 2</option>
+                    <option value="4">OFF</option>
+                    <option value="5">OFF</option>
+                    <option value="6">OFF</option>
+                    <option value="7">OFF</option>
+                    <option value="8">OFF</option>
+                    <option value="9">OFF</option>
+                </select>
+            </div>
+            <div class="control-holder">
+                <label>RGB Max Brightness</label>
+                <div class="multiple-input">
+                    <select id="rgbBrightness" class="number-select small" min="1" max="255" step="1"></select>
                 </div>
             </div>
-            <div class="row">
-                <div class="control-holder">
-                    <label for="interval">Animation Interval</label>
-                    <select id="interval" class="number-select" min="0" max="60" step="1" prefix="" suffix=" minutes"></select>
+            <div class="control-holder">
+                <label>Fix Color</label>
+                <div class="multiple-input">
+                    <select id="rgbFixColor" class="number-select" min="1" max="255" step="1" prefix="Color_" suffix=""></select>
                 </div>
+            </div>
+        
+            <div class="control-holder">
+                <label>Direction</label>
+                <input id="rgbDir" type="checkbox" class="switch two-side">
+                <span class="switcher-text left non-selectable" for="rgbDir">left</span>
+                <span class="switcher non-selectable" for="rgbDir"></span>
+                <span class="switcher-text right non-selectable" for="rgbDir">right</span>
+            </div>
+            
+            <div class="control-holder">
+                <label for="rgbSpeed">Speed</label>
+                <select class="number-select small" id="rgbSpeed" min="1" max="255" step="1"></select>
+            </div>
+        
+            
+        
+            <div class="control-holder">
+                <label for="interval">Cathode Protect</label>
+                <select id="interval" class="number-select" min="0" max="60" step="1" prefix="" suffix=" minutes"></select>
             </div>
         </div>
         <div class="separator"></div>

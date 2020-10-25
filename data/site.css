@@ -48,6 +48,8 @@ body {
     display: block;
     float: left;
     padding: 5px;
+    min-height: 80px;
+    overflow: auto;
 }
 .header{
     overflow: auto;
@@ -59,7 +61,7 @@ body {
     padding-top: 0;
     padding-left: 0;
     letter-spacing: 0.025em;
-    font-size: 1.125em;
+    font-size: 20px;
     vertical-align: top;
     line-height: 30px;
     position: relative;
@@ -237,9 +239,32 @@ input:active, select:active{
 ::-webkit-scrollbar-thumb:hover {
     background: #d43d5f;
 }
-@media screen and (max-width: 460px){
-    .row{
-        display: inline-block;
+@media screen and (max-width: 600px){
+    .control-holder{
+        width: 50%;
+    }
+    .form label{
+        font-size: 15px;
+    }
+    .switcher-text{
+        font-size: 14px;
+    }
+    .info{
+        padding: 5px 0;
+    }
+    .info:after{
+        font-size: 16px;
+    }
+    .info.big{
+        font-size: 20px;
+    }
+    .info.medium{
+        font-size: 15px;
+    }
+}
+@media screen and (max-width: 360px){
+    body{
+        text-align: center;
     }
     .control-holder{
         width: 100%;
