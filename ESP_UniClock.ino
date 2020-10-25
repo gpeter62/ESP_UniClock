@@ -316,7 +316,7 @@ void handleConfigChanged(){
 
   /*
   if(server.arg("key") || server.arg("value")){
-    server.send(400, "text/plain", "400: Invalid Request. Parameters: key and value");
+    request->.send(400, "text/plain", "400: Invalid Request. Parameters: key and value");
     return;
   }
   if(server.arg("key") == "utc_offset"){
@@ -330,10 +330,10 @@ void handleConfigChanged(){
   }
 
   if(paramFound){
-    server.send(200, "text/plain", "Ok");
+    request->.send(200, "text/plain", "Ok");
   }
   else{
-    server.send(404, "text/plain", "404: Parameter not found");
+    request->send(404, "text/plain", "404: Parameter not found");
   }
 */  
 }
