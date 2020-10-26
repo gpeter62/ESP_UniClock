@@ -19,7 +19,6 @@
  */
 //---------------------------- PROGRAM PARAMETERS -------------------------------------------------
 #define DEBUG
-
 //#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
 //#define USE_DHT_TEMP        //TEMP_SENSOR_PIN is used to connect the sensor
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
@@ -574,7 +573,7 @@ void saveEEPROM() {
 
 void factoryReset() {
   prm.utc_offset = 1;
-  prm.enableDST = true;          // Flag to enable DST (summer time...)
+  prm.enableDST = false;          // Flag to enable DST (summer time...)
   prm.set12_24 = true;           // Flag indicating 12 vs 24 hour time (false = 12, true = 24);
   prm.showZero = true;           // Flag to indicate whether to show zero in the hour ten's place
   prm.enableBlink = true;        // Flag to indicate whether center colon should blink
