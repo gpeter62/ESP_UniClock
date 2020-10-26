@@ -19,6 +19,7 @@
  */
 //---------------------------- PROGRAM PARAMETERS -------------------------------------------------
 #define DEBUG
+
 //#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
 //#define USE_DHT_TEMP        //TEMP_SENSOR_PIN is used to connect the sensor
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
