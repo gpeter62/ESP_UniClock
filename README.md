@@ -34,7 +34,7 @@ Web page for setup. See: Uniclock_v2.jpg
 Time, Timezone, NtpClient, ESPAsyncWifiManager, ArduinoJson6.0       
 Optional: DS3231, TinyGPSPlus, NeoPixelBus_by_Makuna
 --------------------------------------------------------------------------------------------------------
-Web page files, wich are found in "dat" subfolder must be uploaded to SPIFFS !
+Web page files, wich are found in "dat" subfolder must upload to SPIFFS !
 https://randomnerdtutorials.com/install-esp8266-filesystem-uploader-arduino-ide/
 --------------------------------------------------------------------------------------------------------
 More info:
