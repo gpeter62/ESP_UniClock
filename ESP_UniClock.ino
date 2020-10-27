@@ -24,7 +24,6 @@
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
 //#define USE_GPS           
 #define USE_NEOPIXEL_MAKUNA      //WS2812B led stripe, below tubes
-//#define USE_NEOPIXEL_ADAFRUIT    //WS2812B led stripe, below tubes
 
 #define MAXBRIGHTNESS 10  // (if MM5450, use 15 instead of 10)
 
@@ -93,9 +92,6 @@ uint8_t c_MaxBrightness = 255;
 
 #ifdef USE_NEOPIXEL_MAKUNA
 #include <NeoPixelBrightnessBus.h>  //<NeoPixelBus.h>
-#endif
-
-#ifdef USE_NEOPIXEL_ADAFRUIT
 #endif
 
 extern void ICACHE_RAM_ATTR writeDisplay();
@@ -179,11 +175,11 @@ struct {
   byte alarmHour = 7;
   byte alarmMin = 0;
   byte rgbEffect = 1;              //0=OFF, 1=FixColor
-  byte rgbBrightness = 100;
-  int  rgbFixColor = 150;           //0..255, 256 = white
+  byte rgbBrightness = 100;        // 0..255
+  int  rgbFixColor = 150;          //0..255, 256 = white
   byte rgbSpeed = 50;              //0..255msec / step
-  byte rgbDir = 0;                 //0 = right, 1=left
-  byte magic = MAGIC_VALUE;                //magic value, to check EEPROM at first start
+  boolean rgbDir = false;          //false = right, true = left
+  byte magic = MAGIC_VALUE;        //magic value, to check EEPROM at first start
 } prm;
 
 
@@ -334,10 +330,7 @@ void handleConfigChanged(AsyncWebServerRequest *request){
     else if(key == "rgbBrightness") {prm.rgbBrightness = value.toInt();} 
     else if(key == "rgbFixColor") {prm.rgbFixColor = value.toInt();}  
     else if(key == "rgbSpeed") {prm.rgbSpeed = value.toInt();}   
-    else if(key == "rgbDir") {
-      prm.rgbDir = value.toInt(); 
-      if ((prm.rgbDir>1) || (prm.rgbDir<0)) prm.rgbDir = 0;
-      }
+    else if(key == "rgbDir") {prm.rgbDir = (value == "true");}
     else if(key == "rgbMinBrightness") {c_MinBrightness = value.toInt(); }
     
     else  {paramFound = false;}
@@ -434,7 +427,6 @@ void setup() {
   if (prm.magic !=MAGIC_VALUE) factoryReset();
   
   setupNeopixelMakuna();  
-  setupNeopixelAdafruit();  
   setup_pins();
   //testTubes(300);
   clearDigits();
@@ -452,6 +444,7 @@ void setup() {
   clearDigits();
   showMyIp();  
   calcTime();  
+  timeProgram();
 }
 
 void calcTime() {
@@ -485,9 +478,8 @@ void calcTime() {
 
 
 void timeProgram() {
-static unsigned long lastRun = millis();
-  doAnimationMakuna();
-  doAnimationAdafruit();
+static unsigned long lastRun = 0;
+
   if ((millis()-lastRun)<300) return;
 
   lastRun = millis(); 
@@ -536,6 +528,7 @@ static unsigned long lastRun = millis();
 void loop() {  
   
   timeProgram();
+  doAnimationMakuna();
   checkWifiMode();
   if (clockWifiMode) { //Wifi Clock Mode
     if (WiFi.status() == WL_CONNECTED) wifiCode();

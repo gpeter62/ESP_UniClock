@@ -38,8 +38,6 @@ void setupNeopixelMakuna() {
     neoBrightness = prm.dayBright * ((prm.rgbBrightness - c_MinBrightness)/MAXBRIGHTNESS);
     strip.Begin();
     strip.Show();
-    doAnimationMakuna();
-    doAnimationMakuna();
     fixColor(prm.rgbFixColor);
     strip.Show();
 }
@@ -74,36 +72,33 @@ void rainbow() {
 }
 
 void rainbow2() {
-  static uint16_t j=0;
-  static uint16_t i=0;   
+  static int16_t j=0;
+  static int16_t i=0;   
   static unsigned long lastRun = 0;
 
    if ((millis()-lastRun)<10*(255-prm.rgbSpeed)) return;
    lastRun = millis();
    
-   //if (prm.rgbDir) {
-    if (i>=PixelCount) {
-      if (j>256) j=0; 
-      i=0;
-      j+=10; 
-    } //endif
-/*       
-   }
-   else {
-    if (i<0) {
-      if (j>256) j=0; 
-      i=256;
-      j+=10; 
-    } //endif   
-   }
-*/    
-    if (j<256) 
+  if (i>=PixelCount) {
+    i=0;
+    j+=15; 
+  } //endif
+
+  if (i<0) {
+    i=PixelCount-1;
+    j+=15; 
+  } //endif   
+
+  if (j>256) j=0; 
+
+  //DPRINT(i); DPRINT("/"); DPRINTLN(j);    
+  if (j<256) 
       strip.SetPixelColor(i, Wheel(j));
-    else 
+  else 
       strip.SetPixelColor(i,white);
       
-    i++;
-   DPRINT(i); DPRINT("/"); DPRINTLN(j);
+   if (prm.rgbDir)i++;
+   else i--;
 }
 
 
