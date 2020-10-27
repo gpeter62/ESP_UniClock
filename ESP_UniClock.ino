@@ -18,12 +18,12 @@
  *    https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/
  */
 //---------------------------- PROGRAM PARAMETERS -------------------------------------------------
-#define DEBUG
+//#define DEBUG
 //#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor
 //#define USE_DHT_TEMP        //TEMP_SENSOR_PIN is used to connect the sensor
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
 //#define USE_GPS           
-#define USE_NEOPIXEL_MAKUNA      //WS2812B led stripe, below tubes
+//#define USE_NEOPIXEL_MAKUNA      //WS2812B led stripe, below tubes
 //#define USE_NEOPIXEL_ADAFRUIT    //WS2812B led stripe, below tubes
 
 #define MAXBRIGHTNESS 10  // (if MM5450, use 15 instead of 10)
@@ -39,10 +39,10 @@
 //#define samsung           //samsung serial display
 //#define PCF_MULTIPLEX74141
 
-#define COLON_PIN   16       //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2, IV16:16)
+#define COLON_PIN   TX      //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2, IV16:16)
 #define TEMP_SENSOR_PIN -1  //DHT or Dallas temp sensor pin.  If not used, SET TO -1   (RX or any other free pin)
-#define LED_SWITCH_PIN -1   //external led lightning.  If not used, SET TO -1
-#define DECIMALPOINT_PIN -1 //Nixie decimal point between digits (thermometer, hygrometer). If not used, SET TO -1
+#define LED_SWITCH_PIN 16   //external led lightning.  If not used, SET TO -1
+#define DECIMALPOINT_PIN -1 //Nixie decimal point between digits (thermometer, hygrometer 16). If not used, SET TO -1
 
 //Display temperature and date in every minute between START..END seconds
 #define ENABLE_CLOCK_DISPLAY true   //false, if no clock display is needed (for example: thermometer + hygrometer only)
@@ -327,7 +327,10 @@ void handleConfigChanged(AsyncWebServerRequest *request){
     else if (key == "dayBright") {prm.dayBright = value.toInt();}
     else if (key == "nightBright") {prm.nightBright = value.toInt();}
     else if (key == "animMode") {prm.animMode = value.toInt();}  
-    else if (key == "manualOverride") {manualOverride = true; displayON = (value == "false");}
+    else if (key == "manualOverride") {
+      boolean v = value == "false";
+      if (v != displayON) {manualOverride = true; displayON = v;}
+    }
     else if (key == "alarmEnable") {prm.alarmEnable = (value == "true");  }
     else if (key == "alarmHour") {prm.alarmHour = value.toInt();}
     else if (key == "alarmMin") {prm.alarmMin = value.toInt();}
@@ -395,9 +398,10 @@ void handleSendConfig(AsyncWebServerRequest *request){
   doc["nightBright"] = prm.nightBright;
   doc["animMode"] = prm.animMode;  //Tube animation
 
+  doc["manualOverride"] = !displayON; 
+  
   //Alarm values
   doc["alarmEnable"] = prm.alarmEnable;   //1 = ON, 0 = OFF
-  doc["manualOverride"] = manualOverride;   
   sprintf(buf,"%02d:%02d",prm.alarmHour,prm.alarmMin);
   doc["alarmTime"] = buf;
   

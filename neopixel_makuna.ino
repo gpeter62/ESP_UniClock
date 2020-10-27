@@ -65,7 +65,12 @@ void rainbow() {
   for(i=0; i<PixelCount; i++) {
     strip.SetPixelColor(i, Wheel((i+j) & 255));
   }
-  j++; if (j>=256) j=0;
+  if (prm.rgbDir) {
+    j++; if (j>=256) j=0;
+  }
+ else {
+     j--; if (j<0) j=256;
+ }
 }
 
 void rainbow2() {
@@ -76,11 +81,21 @@ void rainbow2() {
    if ((millis()-lastRun)<10*(255-prm.rgbSpeed)) return;
    lastRun = millis();
    
-   if (i>=PixelCount) {
+   if (prm.rgbDir) {
+    if (i>=PixelCount) {
       if (j>256) j=0; 
       i=0;
       j+=10; 
     } //endif   
+   }
+   else {
+    if (i<0) {
+      if (j>256) j=0; 
+      i=256;
+      j+=10; 
+    } //endif   
+   }
+    
     if (j<256) 
       strip.SetPixelColor(i, Wheel(j));
     else 

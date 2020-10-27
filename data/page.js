@@ -18,7 +18,7 @@ var configuration = {
     "nightTime": "22:00",
     "dayBright": 10,
     "nightBright": 3,
-	"manualOverride": false,
+	"manualOverride": true,
     "animMode": 6,
     "alarmEnabled": 0,
     "alarmTime": "6:30",

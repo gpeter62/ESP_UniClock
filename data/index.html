@@ -82,12 +82,18 @@
                 <span class="switcher non-selectable" for="enableDST"></span>
                 <span class="switcher-text right non-selectable" for="enableDST">on</span>
             </div>
-			<div class="control-holder"></div>
 			
 			<div class="control-holder">
                 <label for="animMode">Animation Mode</label>
                 <select id="animMode" class="number-select" min="0" max="6" step="1" prefix="Animation_" suffix=""></select>
             </div>
+        
+            <div class="control-holder">
+                <label for="interval">Cathode Protect</label>
+                <select id="interval" class="number-select" min="0" max="60" step="1" prefix="" suffix=" minutes"></select>
+            </div>
+			</div>	
+			
             <div class="control-holder">
                 <label>Day Brightness</label>
                 <div class="multiple-input">
@@ -102,8 +108,6 @@
             </div>
             
 
-            
-        
             <div class="control-holder">
                 <label>Auto Day/Night</label>
                 <input id="enableAutoShutoff" type="checkbox" class="switch">
@@ -128,7 +132,7 @@
                 </div>
             </div>
 
-        
+ 			<div class="control-holder"></div>       
        
             <div class="control-holder">
                 <label for="rgbEffect">RGB Effect</label>
@@ -166,12 +170,6 @@
             </div>
         
             
-        
-            <div class="control-holder">
-                <label for="interval">Cathode Protect</label>
-                <select id="interval" class="number-select" min="0" max="60" step="1" prefix="" suffix=" minutes"></select>
-            </div>
-        </div>
         <div class="separator"></div>
         <div class="footer">
             © 2020 Peter Gautier<span>-</span><a href="mailto: gautier.p62@gmail.com">gautier.p62@gmail.com</a><br>
