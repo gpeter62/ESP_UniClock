@@ -1,11 +1,11 @@
 #ifdef MULTIPLEX74141
 //define here the digit enable pins from 4 to 8
 
-//const byte digitEnablePins[] = {14,12,13,15};   //IN16 clock
-//const byte ABCDPins[4] =  {2,4,5,0};   
+const byte digitEnablePins[] = {14,12,13,15};   //IN16 clock
+const byte ABCDPins[4] =  {2,4,5,0};   
 
-const byte digitEnablePins[] = {15,13,12,14};   //Pintér S. thermo
-const byte ABCDPins[4] =  {2,4,5,0}; 
+//const byte digitEnablePins[] = {15,13,12,14};   //Pintér S. thermo
+//const byte ABCDPins[4] =  {2,4,5,0}; 
 
 //const byte digitEnablePins[] = {13,12,14,15};    //red tube nixie clock
 //const byte ABCDPins[4] = {16,5,4,0};

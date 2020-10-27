@@ -100,8 +100,10 @@ void rainbow2() {
       strip.SetPixelColor(i, Wheel(j));
     else 
       strip.SetPixelColor(i,white);
-     i++; 
-   //DPRINT(i); DPRINT("/"); DPRINTLN(j);
+      
+    if (prm.rgbDir==0) i++; 
+    else i--;
+   DPRINT(i); DPRINT("/"); DPRINTLN(j);
 }
 
 
