@@ -9,7 +9,7 @@ Adjustable day and night brightness
 
 Tube animation: 5 different animation modes, mode6 means random animation
 
-Hardver:
+Hardver: (Schematics and board design by Zoltan Unferdorben are in "schematics" subfolder)
 
 Wemos D1 Mini (or any other ESP8266 modul) 160MHz
 
@@ -37,7 +37,7 @@ Optional: DS3231, TinyGPSPlus, NeoPixelBus_by_Makuna
 Web page files, wich are found in "dat" subfolder must upload to SPIFFS !
 https://randomnerdtutorials.com/install-esp8266-filesystem-uploader-arduino-ide/
 --------------------------------------------------------------------------------------------------------
-More info:
+More infoand support:
 
 Peter Gautier
  Email: gautier.p62@gmail.com
