@@ -22,6 +22,7 @@ var configuration = {
     "animMode": 6,
     "alarmEnabled": 0,
     "alarmTime": "6:30",
+	"alarmPeriod": 15,
     "rgbEffect": 1,
     "rgbBrightness": 100,
     "rgbFixColor": 150,
@@ -105,7 +106,8 @@ function Init(){
                 index == 'dayBright' || index == 'nightBright' || 
                 index == 'animMode' || index == 'rgbBrightness' ||
                 index == 'rgbFixColor' || index == 'rgbSpeed' ||
-                index == 'rgbEffect' || index == 'interval'
+                index == 'rgbEffect' || index == 'interval' ||
+				index == 'alarmPeriod'
             ){
             $('#'+index).val(value);
         }

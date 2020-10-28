@@ -38,19 +38,20 @@
 //#define samsung           //samsung serial display
 //#define PCF_MULTIPLEX74141
 
-#define COLON_PIN   -1      //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2, IV16:16 Pinter:TX)
-#define TEMP_SENSOR_PIN -1  //DHT or Dallas temp sensor pin.  If not used, SET TO -1   (RX or any other free pin)
-#define LED_SWITCH_PIN -1   //external led lightning.  If not used, SET TO -1    (Pinter: 16)
-#define DECIMALPOINT_PIN -1 //Nixie decimal point between digits (thermometer, hygrometer 16). If not used, SET TO -1
-#define ALARMSPEAKER_PIN 2 
-#define ALARMBUTTON_PIN -1   //Alarm switch off button pin 
+#define COLON_PIN   -1        //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2, IV16:16 Pinter:TX)
+#define TEMP_SENSOR_PIN -1    //DHT or Dallas temp sensor pin.  If not used, SET TO -1   (RX or any other free pin)
+#define LED_SWITCH_PIN -1     //external led lightning ON/OFF.  If not used, SET TO -1    (Pinter: 16)
+#define DECIMALPOINT_PIN -1   //Nixie decimal point between digits. If not used, SET TO -1 (Pinter:16)
+#define ALARMSPEAKER_PIN -1   //Alarm buzzer pin 
+#define ALARMBUTTON_PIN -1    //Alarm switch off button pin 
+//8266 Neopixel LEDstripe pin is always the RX pin!!!
 
 //Display temperature and date in every minute between START..END seconds
 #define ENABLE_CLOCK_DISPLAY true   //false, if no clock display is needed (for example: thermometer + hygrometer only)
 #define TEMP_START  35
 #define TEMP_END    40
-#define HUMID_START  50
-#define HUMID_END    55
+#define HUMID_START 50
+#define HUMID_END   55
 #define DATE_START  45
 #define DATE_END    50
 #define ANIMSPEED   50  //Animation speed in millisec 
@@ -298,45 +299,47 @@ void handleConfigChanged(AsyncWebServerRequest *request){
   if (request->hasParam("key", true) && request->hasParam("value", true)) {
     
     int args = request->args();
-    for(int i=0;i<args;i++){
-      Serial.printf("ARG[%s]: %s\n", request->argName(i).c_str(), request->arg(i).c_str());
-    }
+    
+    //for(int i=0;i<args;i++){
+    //  Serial.printf("ARG[%s]: %s\n", request->argName(i).c_str(), request->arg(i).c_str());
+    //}
 
     String key = request->getParam("key", true)->value();
     String value = request->getParam("value", true)->value();
-    DPRINT(key); DPRINT("/"); DPRINT(value); DPRINT("/"); DPRINTLN(value == "true");
+    DPRINT(key); DPRINT(" = "); DPRINTLN(value); 
+    
     boolean paramFound = true;
     
-    if (key == "utc_offset") {prm.utc_offset = value.toInt();}
+    if (key == "utc_offset")    {prm.utc_offset = value.toInt();}
     else if (key == "set12_24") {prm.set12_24 = (value == "true");  DPRINT("set12_24:"); DPRINTLN(prm.set12_24);}
-    else if (key == "showZero")  {prm.showZero = (value == "true"); DPRINT("showZero:"); DPRINTLN(prm.showZero);}        
-    else if (key == "enableBlink") {prm.enableBlink = (value == "true"); } 
-    else if (key == "enableDST") {prm.enableDST = (value == "true"); }    
-    else if (key == "interval") {prm.interval = value.toInt(); }         
+    else if (key == "showZero") {prm.showZero = (value == "true"); DPRINT("showZero:"); DPRINTLN(prm.showZero);}        
+    else if (key == "enableBlink"){prm.enableBlink = (value == "true"); } 
+    else if (key == "enableDST")  {prm.enableDST = (value == "true"); }    
+    else if (key == "interval")   {prm.interval = value.toInt(); }         
     else if (key == "enableAutoShutoff") {prm.enableAutoShutoff = (value == "true");  }
 
-    else if (key == "dayHour") {prm.dayHour = value.toInt();}
-    else if (key == "dayMin") {prm.dayMin = value.toInt();}
-    else if (key == "nightHour") {prm.nightHour = value.toInt();}
-    else if (key == "nightMin") {prm.nightMin = value.toInt();}
-    else if (key == "dayBright") {prm.dayBright = value.toInt();}
-    else if (key == "nightBright") {prm.nightBright = value.toInt();}
-    else if (key == "animMode") {prm.animMode = value.toInt();}  
+    else if (key == "dayTimeHours")   {prm.dayHour = value.toInt();}
+    else if (key == "dayTimeMinutes") {prm.dayMin = value.toInt();}
+    else if (key == "nightTimeHours") {prm.nightHour = value.toInt();}
+    else if (key == "nightTimeMinutes") {prm.nightMin = value.toInt();}
+    else if (key == "dayBright")    {prm.dayBright = value.toInt();}
+    else if (key == "nightBright")  {prm.nightBright = value.toInt();}
+    else if (key == "animMode")     {prm.animMode = value.toInt();}  
     else if (key == "manualOverride") {
       boolean v = value == "false";
       if (v != displayON) {manualOverride = true; displayON = v;}
     }
-    else if (key == "alarmEnable") {prm.alarmEnable = (value == "true");  }
-    else if (key == "alarmHour")   {prm.alarmHour = value.toInt();}
-    else if (key == "alarmMin")    {prm.alarmMin = value.toInt();}
-    else if (key == "alarmPeriod") {prm.alarmPeriod = value.toInt();}
+    else if (key == "alarmEnable")      {prm.alarmEnable = (value == "true");  }
+    else if (key == "alarmTimeHours")   {prm.alarmHour = value.toInt();}
+    else if (key == "alarmTimeMinutes") {prm.alarmMin = value.toInt();}
+    else if (key == "alarmPeriod")      {prm.alarmPeriod = value.toInt();}
   
     //RGB LED values    
-    else if(key == "rgbEffect")  {prm.rgbEffect = value.toInt();}     
+    else if(key == "rgbEffect")     {prm.rgbEffect = value.toInt();}     
     else if(key == "rgbBrightness") {prm.rgbBrightness = value.toInt();} 
-    else if(key == "rgbFixColor") {prm.rgbFixColor = value.toInt();}  
-    else if(key == "rgbSpeed") {prm.rgbSpeed = value.toInt();}   
-    else if(key == "rgbDir") {prm.rgbDir = (value == "true");}
+    else if(key == "rgbFixColor")   {prm.rgbFixColor = value.toInt();}  
+    else if(key == "rgbSpeed")      {prm.rgbSpeed = value.toInt();}   
+    else if(key == "rgbDir")        {prm.rgbDir = (value == "true");}
     else if(key == "rgbMinBrightness") {c_MinBrightness = value.toInt(); }
     
     else  {paramFound = false;}
@@ -417,12 +420,12 @@ void setup() {
   delay(200);
   DPRINTBEGIN(115200); DPRINTLN(" ");
   clearDigits(); 
-  delay(100);
-  if (COLON_PIN>=0)  pinMode(COLON_PIN, OUTPUT);
-  if (LED_SWITCH_PIN>=0)  pinMode(LED_SWITCH_PIN, OUTPUT);
+  if (ALARMSPEAKER_PIN>=0) {pinMode(ALARMSPEAKER_PIN, OUTPUT); digitalWrite(ALARMSPEAKER_PIN,LOW);}
+  if (ALARMBUTTON_PIN>=0)   pinMode(ALARMBUTTON_PIN, INPUT_PULLUP);  
+  if (COLON_PIN>=0)         pinMode(COLON_PIN, OUTPUT);
+  if (LED_SWITCH_PIN>=0)    pinMode(LED_SWITCH_PIN, OUTPUT);
   if (DECIMALPOINT_PIN>=0)  pinMode(DECIMALPOINT_PIN, OUTPUT);
-  if (ALARMSPEAKER_PIN>=0)  pinMode(ALARMSPEAKER_PIN, OUTPUT);
-  if (ALARMBUTTON_PIN>=0)  pinMode(ALARMBUTTON_PIN, INPUT_PULLUP);  
+
   decimalpointON = false;
   if (TEMP_SENSOR_PIN>0) {
     setupTemp();
@@ -900,30 +903,37 @@ void alarmSound() {
   static const unsigned int t[] = {0,3000,6000,6200,9000,9200,9400,12000,12200,12400,15000,15200,15400};  
   static unsigned long lastRun = 0;
   static int count = 0;
-  unsigned long nextEvent;
+  static unsigned long nextEvent;
+  const int cMax = sizeof(t) / sizeof(t[0]);  //number of time steps
 
+  if (ALARMSPEAKER_PIN<=0) return;   //no speaker installed
+  
   if (prm.alarmEnable) {
-    if ( (!alarmON && prm.alarmHour == hour()) && (prm.alarmMin == minute()) && (second()==0)) {    //switch ON alarm sound
+    if ( (!alarmON && prm.alarmHour == hour()) && (prm.alarmMin == minute()) && (second()<=1)) {    //switch ON alarm sound
+      DPRINTLN("Alarm started!");
       alarmON = true;
       alarmStarted = millis();
       count = 0;
-      DPRINTLN("Alarm started!");
+      nextEvent = alarmStarted-1;
     }
-    else {
+  }  
+  else {
     alarmON = false;
-    }
   }
-
+  
   if (!alarmON) {
     digitalWrite(ALARMSPEAKER_PIN,LOW);
     return;  //nothing to do
   }
 
-  if ((millis()-alarmStarted)>1000*prm.alarmPeriod)  
+  if ((millis()-alarmStarted) > 1000*(long)prm.alarmPeriod) { 
     alarmON = false;   //alarm period is over
+    DPRINTLN("Alarm ended.");
+  }  
     
   if (ALARMBUTTON_PIN>=0) {   //is button installed?
     if (digitalRead(ALARMBUTTON_PIN)==LOW) {   //stop alarm
+      DPRINTLN("Alarm stopped by button press.");
       alarmON = false;
     }
   }
@@ -933,20 +943,21 @@ void alarmSound() {
       return;
   }
 
-  //generate sound!
-  
-  if (count % 2 ==0) 
-    nextEvent = (count/2<sizeof(t)) ? alarmStarted +  t[count/2] : nextEvent + 150;
-  else 
-    nextEvent += 150;
-  
-  if (millis()>nextEvent)    //go to the next event
-    count++;
-    
-  if (count % 2 == 0) 
+  //-------- Generate sound --------------------------------
+   
+  if (millis()>nextEvent) {   //go to the next event
+    if (count % 2 == 0) {
+      nextEvent += 150;
       digitalWrite(ALARMSPEAKER_PIN,HIGH);
-    else 
+      //DPRINT(" Sound ON");  DPRINT("  Next:"); DPRINTLN(nextEvent); 
+    }
+    else {
       digitalWrite(ALARMSPEAKER_PIN,LOW);
+      nextEvent = (count/2 < cMax) ? alarmStarted +  t[count/2] : nextEvent + 500;
+      //DPRINT("   OFF"); DPRINT("  Next:"); DPRINTLN(nextEvent); 
+    }
+    count++;  
+  }
 }
 
 
