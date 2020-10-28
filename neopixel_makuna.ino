@@ -1,11 +1,8 @@
 // NeoPixel Tube Lightning
 
-
 #ifdef USE_NEOPIXEL_MAKUNA
 
-
 byte neoBrightness;
-
 #define COLORSATURATION 255
 
 RgbColor red(COLORSATURATION, 0, 0);

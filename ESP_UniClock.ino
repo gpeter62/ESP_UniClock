@@ -38,7 +38,7 @@
 //#define samsung           //samsung serial display
 //#define PCF_MULTIPLEX74141
 
-#define COLON_PIN   -1        //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2, IV16:16 Pinter:TX)
+#define COLON_PIN   16        //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2, IV16:16 Pinter:TX)
 #define TEMP_SENSOR_PIN -1    //DHT or Dallas temp sensor pin.  If not used, SET TO -1   (RX or any other free pin)
 #define LED_SWITCH_PIN -1     //external led lightning ON/OFF.  If not used, SET TO -1    (Pinter: 16)
 #define DECIMALPOINT_PIN -1   //Nixie decimal point between digits. If not used, SET TO -1 (Pinter:16)
@@ -94,7 +94,7 @@ uint8_t c_MaxBrightness = 255;
 
 
 #ifdef USE_NEOPIXEL_MAKUNA
-#include <NeoPixelBrightnessBus.h>  //<NeoPixelBus.h>
+#include <NeoPixelBrightnessBus.h>  
 #endif
 
 extern void ICACHE_RAM_ATTR writeDisplay();
@@ -118,7 +118,7 @@ boolean digitsOnly = true;  //only 0..9 numbers are possible to display?
 byte animMask[BUFSIZE];     //0 = no animation mask is used
 
 boolean EEPROMsaving = false; //saving in progress - stop display refresh
-#define MAGIC_VALUE 200
+#define MAGIC_VALUE 201
  
 // 8266 internal pin registers
 // https://github.com/esp8266/esp8266-wiki/wiki/gpio-registers
@@ -906,7 +906,7 @@ void alarmSound() {
   static unsigned long nextEvent;
   const int cMax = sizeof(t) / sizeof(t[0]);  //number of time steps
 
-  if (ALARMSPEAKER_PIN<=0) return;   //no speaker installed
+  if (ALARMSPEAKER_PIN<0) return;   //no speaker installed
   
   if (prm.alarmEnable) {
     if ( (!alarmON && prm.alarmHour == hour()) && (prm.alarmMin == minute()) && (second()<=1)) {    //switch ON alarm sound
