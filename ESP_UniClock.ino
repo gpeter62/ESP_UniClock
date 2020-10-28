@@ -38,10 +38,12 @@
 //#define samsung           //samsung serial display
 //#define PCF_MULTIPLEX74141
 
-#define COLON_PIN   16      //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2, IV16:16 Pinter:TX)
+#define COLON_PIN   -1      //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2, IV16:16 Pinter:TX)
 #define TEMP_SENSOR_PIN -1  //DHT or Dallas temp sensor pin.  If not used, SET TO -1   (RX or any other free pin)
 #define LED_SWITCH_PIN -1   //external led lightning.  If not used, SET TO -1    (Pinter: 16)
 #define DECIMALPOINT_PIN -1 //Nixie decimal point between digits (thermometer, hygrometer 16). If not used, SET TO -1
+#define ALARMSPEAKER_PIN 2 
+#define ALARMBUTTON_PIN -1   //Alarm switch off button pin 
 
 //Display temperature and date in every minute between START..END seconds
 #define ENABLE_CLOCK_DISPLAY true   //false, if no clock display is needed (for example: thermometer + hygrometer only)
@@ -171,15 +173,16 @@ struct {
   byte dayBright = MAXBRIGHTNESS;  // display daytime brightness
   byte nightBright = 5;            // display night brightness
   byte animMode = 2;               //0=no anim,  if 1 or 2 is used, animation, when a digit changes
-  boolean alarmEnable = false;
-  byte alarmHour = 7;
+  boolean alarmEnable = false;     //Yes or No
+  byte alarmHour = 7;              //Alarm time
   byte alarmMin = 0;
+  byte alarmPeriod = 15;           //Alarm length, sec 
   byte rgbEffect = 1;              //0=OFF, 1=FixColor
   byte rgbBrightness = 100;        // 0..255
   int  rgbFixColor = 150;          //0..255, 256 = white
   byte rgbSpeed = 50;              //0..255msec / step
   boolean rgbDir = false;          //false = right, true = left
-  byte magic = MAGIC_VALUE;        //magic value, to check EEPROM at first start
+  byte magic = MAGIC_VALUE;        //magic value, to check EEPROM version when starting the clock
 } prm;
 
 
@@ -190,6 +193,8 @@ bool displayON = true;
 bool manualOverride = false;
 bool initProtectionTimer = false;  // Set true at the top of the hour to synchronize protection timer with clock
 bool decimalpointON = false;
+bool alarmON = false;             //Alarm in progress
+unsigned long alarmStarted = 0;   //Start timestamp millis()
 
 void configModeCallback (AsyncWiFiManager *myWiFiManager) {
   DPRINTLN("Switch to AP config mode...");
@@ -322,8 +327,9 @@ void handleConfigChanged(AsyncWebServerRequest *request){
       if (v != displayON) {manualOverride = true; displayON = v;}
     }
     else if (key == "alarmEnable") {prm.alarmEnable = (value == "true");  }
-    else if (key == "alarmHour") {prm.alarmHour = value.toInt();}
-    else if (key == "alarmMin") {prm.alarmMin = value.toInt();}
+    else if (key == "alarmHour")   {prm.alarmHour = value.toInt();}
+    else if (key == "alarmMin")    {prm.alarmMin = value.toInt();}
+    else if (key == "alarmPeriod") {prm.alarmPeriod = value.toInt();}
   
     //RGB LED values    
     else if(key == "rgbEffect")  {prm.rgbEffect = value.toInt();}     
@@ -391,6 +397,7 @@ void handleSendConfig(AsyncWebServerRequest *request){
   doc["alarmEnable"] = prm.alarmEnable;   //1 = ON, 0 = OFF
   sprintf(buf,"%02d:%02d",prm.alarmHour,prm.alarmMin);
   doc["alarmTime"] = buf;
+  doc["alarmPeriod"] = prm.alarmPeriod;
   
   //RGB LED values    
   doc["rgbEffect"] = prm.rgbEffect;       // if -1, no RGB exist!
@@ -414,6 +421,8 @@ void setup() {
   if (COLON_PIN>=0)  pinMode(COLON_PIN, OUTPUT);
   if (LED_SWITCH_PIN>=0)  pinMode(LED_SWITCH_PIN, OUTPUT);
   if (DECIMALPOINT_PIN>=0)  pinMode(DECIMALPOINT_PIN, OUTPUT);
+  if (ALARMSPEAKER_PIN>=0)  pinMode(ALARMSPEAKER_PIN, OUTPUT);
+  if (ALARMBUTTON_PIN>=0)  pinMode(ALARMBUTTON_PIN, INPUT_PULLUP);  
   decimalpointON = false;
   if (TEMP_SENSOR_PIN>0) {
     setupTemp();
@@ -529,17 +538,15 @@ void loop() {
   
   timeProgram();
   doAnimationMakuna();
+  alarmSound();
   checkWifiMode();
   if (clockWifiMode) { //Wifi Clock Mode
-    if (WiFi.status() == WL_CONNECTED) wifiCode();
-    else {
+    if (WiFi.status() != WL_CONNECTED) {
       WiFi.reconnect();
-      wifiCode();
       resetWiFi();
     }  
   }
   else {   //Manual Clock Mode
-     wifiCode();
      editor();
   } //endelse
   yield();
@@ -583,6 +590,7 @@ void factoryReset() {
   prm.alarmEnable = false;
   prm.alarmHour = 7;
   prm.alarmMin = 0; 
+  prm.alarmPeriod = 15;
   prm.rgbEffect = 1;
   prm.rgbBrightness = 100;
   prm.rgbFixColor = 150;
@@ -888,6 +896,60 @@ void changeDigit() {
 }
 
 
+void alarmSound() {
+  static const unsigned int t[] = {0,3000,6000,6200,9000,9200,9400,12000,12200,12400,15000,15200,15400};  
+  static unsigned long lastRun = 0;
+  static int count = 0;
+  unsigned long nextEvent;
+
+  if (prm.alarmEnable) {
+    if ( (!alarmON && prm.alarmHour == hour()) && (prm.alarmMin == minute()) && (second()==0)) {    //switch ON alarm sound
+      alarmON = true;
+      alarmStarted = millis();
+      count = 0;
+      DPRINTLN("Alarm started!");
+    }
+    else {
+    alarmON = false;
+    }
+  }
+
+  if (!alarmON) {
+    digitalWrite(ALARMSPEAKER_PIN,LOW);
+    return;  //nothing to do
+  }
+
+  if ((millis()-alarmStarted)>1000*prm.alarmPeriod)  
+    alarmON = false;   //alarm period is over
+    
+  if (ALARMBUTTON_PIN>=0) {   //is button installed?
+    if (digitalRead(ALARMBUTTON_PIN)==LOW) {   //stop alarm
+      alarmON = false;
+    }
+  }
+  
+  if (!prm.alarmEnable || !alarmON) {  //no alarm, switch off
+      digitalWrite(ALARMSPEAKER_PIN,LOW);
+      return;
+  }
+
+  //generate sound!
+  
+  if (count % 2 ==0) 
+    nextEvent = (count/2<sizeof(t)) ? alarmStarted +  t[count/2] : nextEvent + 150;
+  else 
+    nextEvent += 150;
+  
+  if (millis()>nextEvent)    //go to the next event
+    count++;
+    
+  if (count % 2 == 0) 
+      digitalWrite(ALARMSPEAKER_PIN,HIGH);
+    else 
+      digitalWrite(ALARMSPEAKER_PIN,LOW);
+}
+
+
 void evalShutoffTime() {  // Determine whether  tubes should be turned to NIGHT mode
   
   if (!prm.enableAutoShutoff) return;
@@ -1010,5 +1072,3 @@ static unsigned long lastRun = millis();
   //DPRINT(ESP.getFreeHeap());   //show free memory for debugging memory leak
   DPRINTLN(" ");
 }
-
-void wifiCode() {}
