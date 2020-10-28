@@ -440,7 +440,7 @@ void setup() {
   
   setupNeopixelMakuna();  
   setup_pins();
-  //testTubes(300);
+  testTubes(300);
   clearDigits();
   delay(100);
   if(!SPIFFS.begin()){
