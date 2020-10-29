@@ -70,8 +70,6 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
    switch (state) {   //state machine...
     case 0:
       pos++;  if (pos>maxDigits-1)  pos = 0;  //go to the first tube
-      for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],HIGH); }   //switch off all cathode numbers
-      //for (int i=0;i<100;i++) {asm volatile ("nop"); }
       
       if (animMask[pos] > 0) { //Animation?
         num = oldDigit[pos];  //show old character
@@ -100,11 +98,9 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
    //  if ((pos>0) && (num<=9)) num = convert[num];   //tube character conversion, if needed... (maybe bad pin numbering)
    
 
-  if ((brightness == 0) || (state == 3) || (num == 10)) {  //blank digit
+  if ((brightness == 0) || (state == 3) || (num >9)) {  //blank digit
     state = 0; 
     digitalWrite(digitEnablePins[pos],LOW);  //switch off anode 
-    //for (int i=0;i<500;i++) {asm volatile ("nop"); }    
-    //for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],HIGH); }   //switch off all cathode numbers
     }
   else {
       for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],num  & 1<<i); }
