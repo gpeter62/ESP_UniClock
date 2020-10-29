@@ -32,7 +32,7 @@ void setupNeopixelMakuna() {
     DPRINTLN("Setup NeoPixel LEDS (Makuna lib):");
     DPRINT("Pixel count: "); DPRINTLN(PixelCount);
     DPRINT("Brightness:"); DPRINT(c_MinBrightness); DPRINT(" - "); DPRINTLN(c_MaxBrightness);
-    neoBrightness = prm.dayBright * ((prm.rgbBrightness - c_MinBrightness)/MAXBRIGHTNESS);
+    neoBrightness = prm.rgbBrightness;
     strip.Begin();
     strip.Show();
     fixColor(prm.rgbFixColor);
@@ -100,6 +100,35 @@ void rainbow2() {
 }
 
 
+
+void effect1() {
+  static uint16 j=0;
+  static byte c = 0;  //actual color
+  static int dir = 1;  //direction
+  static int counter = 0;
+  
+  strip.SetBrightness(max(0,prm.rgbBrightness - counter));
+  
+  for(uint16_t i=0; i<PixelCount; i++) {
+    if (c<256) 
+      strip.SetPixelColor(i, Wheel(c));
+    else 
+      strip.SetPixelColor(i,white);
+  }
+  
+  counter += dir;
+  //DPRINTLN(counter);
+  
+  if (counter <= 0) {
+    dir = 1;
+  }
+  if (counter >= (prm.rgbBrightness - c_MinBrightness)) {
+    c = random(0,256);
+    dir = -1;
+  }
+}
+
+
 void fixColor(int col) {
 
   for (int i=0;i<PixelCount;i++) {
@@ -115,15 +144,22 @@ static unsigned long lastRun = 0;
   if ((prm.rgbEffect <=1) && ((millis()-lastRun)<1000)) return;  //fix color
   if ((millis()-lastRun)<(258-prm.rgbSpeed)) return;
   lastRun = millis();
-  
-  neoBrightness = (displayON ?  prm.dayBright : 0) * ((prm.rgbBrightness - c_MinBrightness)/MAXBRIGHTNESS);
+
+  if ((prm.rgbEffect == 0) || !displayON) {   //Night: no RGB lightning
+    neoBrightness = 0;
+    fixColor(-1);
+    strip.Show();
+    return;
+  }
+
+  neoBrightness = prm.rgbBrightness;
   strip.SetBrightness(neoBrightness);
-  if (prm.rgbEffect==0) fixColor(-1);
-  else if (prm.rgbEffect==1) fixColor(prm.rgbFixColor);
+
+  if (prm.rgbEffect==1) fixColor(prm.rgbFixColor);
   else if (prm.rgbEffect==2) rainbow(); 
   else if (prm.rgbEffect==3) rainbow2();
-  
-  strip.Show();    // This sends the updated pixel colors to the string.
+  else if (prm.rgbEffect==4) effect1();
+  strip.Show();
 }
 
 #else
