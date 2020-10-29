@@ -78,11 +78,13 @@ void rainbow2() {
    lastRun = millis();
    
   if (i>=PixelCount) {
+    if (j>256) j=0; 
     i=0;
     j+=steps; 
   } //endif
 
   if (i<0) {
+    if (j>256) j=0; 
     i=PixelCount-1;
     j+=steps; 
   } //endif   
@@ -92,8 +94,6 @@ void rainbow2() {
       strip.SetPixelColor(i, Wheel(j));
   else 
       strip.SetPixelColor(i,white);
-  
-  if (j>256) j=0;     
   
   if (prm.rgbDir)i++;
   else i--;
