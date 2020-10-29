@@ -9,7 +9,7 @@ RgbColor red(COLORSATURATION, 0, 0);
 RgbColor green(0, COLORSATURATION, 0);
 RgbColor blue(0, 0, COLORSATURATION);
 RgbColor purple(COLORSATURATION, 0, COLORSATURATION);
-RgbColor white(COLORSATURATION);
+RgbColor white(COLORSATURATION/2,COLORSATURATION/2,COLORSATURATION/2);
 RgbColor black(0,0,0);
 
 int cnt = 0;        // counter for pixel to set to new colour

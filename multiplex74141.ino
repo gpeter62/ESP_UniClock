@@ -67,10 +67,11 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
   timer = PWMrefresh;
 
-  if (brightness>0) { 
    switch (state) {   //state machine...
     case 0:
       pos++;  if (pos>maxDigits-1)  pos = 0;  //go to the first tube
+      for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],HIGH); }   //switch off all cathode numbers
+      //for (int i=0;i<100;i++) {asm volatile ("nop"); }
       
       if (animMask[pos] > 0) { //Animation?
         num = oldDigit[pos];  //show old character
@@ -94,7 +95,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
       break;
    }  //end switch
    if (timer<200) timer = 200;  //safety only...
-  } //endif (brightness>0)
+
  
    //  if ((pos>0) && (num<=9)) num = convert[num];   //tube character conversion, if needed... (maybe bad pin numbering)
    
