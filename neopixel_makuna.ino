@@ -72,30 +72,31 @@ void rainbow2() {
   static int16_t j=0;
   static int16_t i=0;   
   static unsigned long lastRun = 0;
-
-   if ((millis()-lastRun)<10*(255-prm.rgbSpeed)) return;
+  const int steps = 15;
+  
+   if ((millis()-lastRun)<steps*(258-prm.rgbSpeed)) return;
    lastRun = millis();
    
   if (i>=PixelCount) {
     i=0;
-    j+=15; 
+    j+=steps; 
   } //endif
 
   if (i<0) {
     i=PixelCount-1;
-    j+=15; 
+    j+=steps; 
   } //endif   
-
-  if (j>256) j=0; 
 
   //DPRINT(i); DPRINT("/"); DPRINTLN(j);    
   if (j<256) 
       strip.SetPixelColor(i, Wheel(j));
   else 
       strip.SetPixelColor(i,white);
-      
-   if (prm.rgbDir)i++;
-   else i--;
+  
+  if (j>256) j=0;     
+  
+  if (prm.rgbDir)i++;
+  else i--;
 }
 
 
@@ -103,7 +104,7 @@ void fixColor(int col) {
 
   for (int i=0;i<PixelCount;i++) {
       if (col==-1) strip.SetPixelColor(i,black);
-      else if (col==256) strip.SetPixelColor(i,white);
+      else if (col>=256) strip.SetPixelColor(i,white);
       else strip.SetPixelColor(i,Wheel(col));
     } 
 }
@@ -112,7 +113,7 @@ void doAnimationMakuna() {
 static unsigned long lastRun = 0;
 
   if ((prm.rgbEffect <=1) && ((millis()-lastRun)<1000)) return;  //fix color
-  if ((millis()-lastRun)<(255-prm.rgbSpeed)) return;
+  if ((millis()-lastRun)<(258-prm.rgbSpeed)) return;
   lastRun = millis();
   
   neoBrightness = (displayON ?  prm.dayBright : 0) * ((prm.rgbBrightness - c_MinBrightness)/MAXBRIGHTNESS);
