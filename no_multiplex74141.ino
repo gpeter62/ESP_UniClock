@@ -55,7 +55,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
     timer1_write(PWMrefresh);
     return;  
   }
-  
+
   animM = 0;
   for (int i=0;i<maxDigits;i++) {
     if (animMask[i] > 0) animM = animMask[i];    //find, if any animation is wanted?

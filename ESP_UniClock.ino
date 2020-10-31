@@ -28,8 +28,8 @@
 #define MAXBRIGHTNESS 10  // (if MM5450, use 15 instead of 10)
 
 //Use only 1 from the following options!
-#define MULTIPLEX74141    //4..8 Nixie tubes
-//#define NO_MULTIPLEX74141 //4..6 Nixie tubes
+//#define MULTIPLEX74141    //4..8 Nixie tubes
+#define NO_MULTIPLEX74141 //4..6 Nixie tubes
 //#define MAX6921           //4..8 VFD tubes   (IV18)
 //#define MM5450            //6..8 LEDS
 //#define MAX7219CNG        //4..8 LED 
@@ -38,7 +38,7 @@
 //#define samsung           //samsung serial display
 //#define PCF_MULTIPLEX74141
 
-#define COLON_PIN   16        //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2, IV16:16 Pinter:TX)
+#define COLON_PIN   2        //Blinking Colon pin.  If not used, SET TO -1  (redtube clock:2, IV16:16 Pinter:TX)
 #define TEMP_SENSOR_PIN -1    //DHT or Dallas temp sensor pin.  If not used, SET TO -1   (RX or any other free pin)
 #define LED_SWITCH_PIN -1     //external led lightning ON/OFF.  If not used, SET TO -1    (Pinter: 16)
 #define DECIMALPOINT_PIN -1   //Nixie decimal point between digits. If not used, SET TO -1 (Pinter:16)
@@ -118,7 +118,7 @@ boolean digitsOnly = true;  //only 0..9 numbers are possible to display?
 byte animMask[BUFSIZE];     //0 = no animation mask is used
 
 boolean EEPROMsaving = false; //saving in progress - stop display refresh
-#define MAGIC_VALUE 201
+#define MAGIC_VALUE 200
  
 // 8266 internal pin registers
 // https://github.com/esp8266/esp8266-wiki/wiki/gpio-registers

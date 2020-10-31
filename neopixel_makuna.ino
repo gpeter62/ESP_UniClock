@@ -35,6 +35,7 @@ void setupNeopixelMakuna() {
     neoBrightness = prm.rgbBrightness;
     strip.Begin();
     strip.Show();
+    strip.SetBrightness(neoBrightness);
     fixColor(prm.rgbFixColor);
     strip.Show();
 }
@@ -73,8 +74,9 @@ void rainbow2() {
   static int16_t i=0;   
   static unsigned long lastRun = 0;
   const int steps = 15;
+  unsigned int spd = max(0,steps* maxDigits / PixelCount * (258-prm.rgbSpeed));
   
-   if ((millis()-lastRun)<steps*(258-prm.rgbSpeed)) return;
+   if ((millis()-lastRun)<spd) return;
    lastRun = millis();
    
   if (i>=PixelCount) {
