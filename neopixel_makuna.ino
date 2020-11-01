@@ -29,7 +29,7 @@ NeoPixelBrightnessBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount+2);   //
 NeoGamma<NeoGammaTableMethod> colorGamma;
 
 void setupNeopixelMakuna() {
-    DPRINTLN("Setup NeoPixel LEDS (Makuna lib):");
+    DPRINTLN("Setup NeoPixel LEDS");
     DPRINT("Pixel count: "); DPRINTLN(PixelCount);
     DPRINT("Brightness:"); DPRINT(c_MinBrightness); DPRINT(" - "); DPRINTLN(c_MaxBrightness);
     neoBrightness = prm.rgbBrightness;
@@ -74,7 +74,7 @@ void rainbow2() {
   static int16_t i=0;   
   static unsigned long lastRun = 0;
   const int steps = 15;
-  unsigned int spd = max(0,steps* maxDigits / PixelCount * (258-prm.rgbSpeed));
+  unsigned long spd = max(0,steps* maxDigits / PixelCount * (258-prm.rgbSpeed));
   
    if ((millis()-lastRun)<spd) return;
    lastRun = millis();
@@ -103,12 +103,13 @@ void rainbow2() {
 
 
 
-void effect1() {
+void effect1() {  //color dimmer
   static uint16 j=0;
-  static byte c = 0;  //actual color
+  static int c = 0;  //actual color
   static int dir = 1;  //direction
   static int counter = 0;
-  
+  static byte cnt = 0;
+ 
   strip.SetBrightness(max(0,prm.rgbBrightness - counter));
   
   for(uint16_t i=0; i<PixelCount; i++) {
@@ -117,19 +118,87 @@ void effect1() {
     else 
       strip.SetPixelColor(i,white);
   }
-  
-  counter += dir;
+
+  if (((prm.rgbBrightness - counter)>20) || (cnt%3 == 0)) {
+    counter += dir;
   //DPRINTLN(counter);
+  }
   
   if (counter <= 0) {
     dir = 1;
   }
-  if (counter >= (prm.rgbBrightness - c_MinBrightness)) {
+  if (counter >= (prm.rgbBrightness-c_MinBrightness)) {
     c = random(0,256);
     dir = -1;
   }
 }
 
+
+void effect2() {   //random color picker
+  static int c = 0;  //actual color
+  static unsigned long lastRun = random(0,256);
+  
+  if ((millis()-lastRun)>100*max(0,(258-prm.rgbSpeed))) {
+    lastRun = millis();
+    c = random(0,256);
+  }
+  
+  for(uint16_t i=0; i<PixelCount; i++) {
+    if (c<256) 
+      strip.SetPixelColor(i, Wheel(c));
+    else 
+      strip.SetPixelColor(i,white);
+  }
+}
+
+void effect3() {
+  static const int c[] = {255,5,12,22,30,40,54,62,78,85,100,110,122,137,177,190,210,227,240,256};
+  static const int cMax = sizeof(c) / sizeof(c[0]);  //size of array
+  static unsigned long lastRun = 0;
+  static int newColor = 100;
+  static int oldColor = 155;
+  static int actColor = 0;
+  static int i = 2;
+  static int step = 0;
+  unsigned long spd = max(0,22* maxDigits / PixelCount * (258-prm.rgbSpeed));
+
+  if ((millis()-lastRun)>spd) {
+    if (prm.rgbDir) i++;  else i--;     //goto next pixel
+
+    if (i>=PixelCount) { 
+      i=0;
+      oldColor = newColor;
+      do {newColor = c[random(0,cMax)];   //get a new random color
+      } while (newColor == oldColor);
+      //DPRINT("***************oldColor:"); DPRINTLN(oldColor);
+      //DPRINT("***************newColor:"); DPRINTLN(newColor);
+    }
+    if (i<0) { 
+      i=PixelCount-1; 
+      oldColor = newColor;
+      do {newColor = c[random(0,cMax)];   //get a new random color
+      } while (newColor == oldColor);
+      //DPRINT("***************oldColor:"); DPRINTLN(oldColor);
+      //DPRINT("***************newColor:"); DPRINTLN(newColor);
+    }
+    actColor = oldColor;  //starting color} 
+    step = max(1,abs(newColor-oldColor)/20);
+    lastRun = millis();
+  }
+
+  //DPRINT(i); DPRINT("/"); DPRINTLN(j);    
+  if (actColor<256) 
+      strip.SetPixelColor(i, Wheel(actColor));
+  else 
+      strip.SetPixelColor(i,white);
+
+  if (newColor != actColor) {   //next rainbow color
+    if (oldColor<newColor) actColor = min(newColor,actColor+step);
+    else actColor = max(newColor,actColor-step);
+    
+   }
+      //DPRINT("Pix:"); DPRINT(i); DPRINT(" ActCol:"); DPRINTLN(actColor); 
+}
 
 void fixColor(int col) {
 
@@ -158,9 +227,11 @@ static unsigned long lastRun = 0;
   strip.SetBrightness(neoBrightness);
 
   if (prm.rgbEffect==1) fixColor(prm.rgbFixColor);
-  else if (prm.rgbEffect==2) rainbow(); 
-  else if (prm.rgbEffect==3) rainbow2();
-  else if (prm.rgbEffect==4) effect1();
+  else if (prm.rgbEffect==2) rainbow(); //flow
+  else if (prm.rgbEffect==3) rainbow2();  //stepper
+  else if (prm.rgbEffect==4) effect1();  //color dimmer
+  else if (prm.rgbEffect==5) effect2();  //color stepper
+  else if (prm.rgbEffect==6) effect3();  //color stepflow
   strip.Show();
 }
 
