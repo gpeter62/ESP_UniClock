@@ -20,12 +20,18 @@ unsigned int indexx;     // used to set colours, range 0-0x1FF
 
 int8_t direction; // current direction of dimming
 
-const uint16_t PixelCount = maxDigits; // make sure to set this to the number of pixels in your strip
+//definition: wich pixels are near wich tube?  Make sure to set all of pixels in your strip
+byte tubePixels[] = {0,1,2,3};        //4 tubes
+//byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes
+//byte tubePixels[] = {0,1,2,3,3,2,1,0};  //4 tubes, double row, 8 leds
+//byte tubePixels[] = {0,0,1,1,2,2,3,3,3,3,2,2,1,1,0,0,0};  //4 tubes, double row, 17 leds
+
+const uint16_t PixelCount = sizeof(tubePixels); 
 const uint8_t PixelPin = 3;  // for Esp8266 it MUST be GPIO3 (RX pin)
 
 NeoPixelBrightnessBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount+2);   //NeoGrbFeature give me BRGW (g and b swapped)
-                                                                            //NeoRgbFeature give me RBGW (g and b swapped)
-                                                                            //NeoBrgFeature give me BGRW (g and r swapped)
+                                                                              //NeoRgbFeature give me RBGW (g and b swapped)
+                                                                              //NeoBrgFeature give me BGRW (g and r swapped)
 NeoGamma<NeoGammaTableMethod> colorGamma;
 
 void setupNeopixelMakuna() {
@@ -69,17 +75,17 @@ void rainbow() {
  }
 }
 
-void rainbow2() {
+void rainbow2() {   //rainbow stepper
   static int16_t j=0;
   static int16_t i=0;   
   static unsigned long lastRun = 0;
   const int steps = 15;
-  unsigned long spd = max(0,steps* maxDigits / PixelCount * (258-prm.rgbSpeed));
+  unsigned long spd = max(0,steps * (258-prm.rgbSpeed));
   
    if ((millis()-lastRun)<spd) return;
    lastRun = millis();
    
-  if (i>=PixelCount) {
+  if (i>=maxDigits) {
     if (j>256) j=0; 
     i=0;
     j+=steps; 
@@ -87,15 +93,15 @@ void rainbow2() {
 
   if (i<0) {
     if (j>256) j=0; 
-    i=PixelCount-1;
+    i=maxDigits-1;
     j+=steps; 
   } //endif   
 
   //DPRINT(i); DPRINT("/"); DPRINTLN(j);    
   if (j<256) 
-      strip.SetPixelColor(i, Wheel(j));
+      setPixels(i, Wheel(j));
   else 
-      strip.SetPixelColor(i,white);
+      setPixels(i,white);
   
   if (prm.rgbDir)i++;
   else i--;
@@ -151,7 +157,7 @@ void effect2() {   //random color picker
   }
 }
 
-void effect3() {
+void effect3(boolean enableRandom) {
   static const int c[] = {255,5,12,22,30,40,54,62,78,85,100,110,122,137,177,190,210,227,240,256};
   static const int cMax = sizeof(c) / sizeof(c[0]);  //size of array
   static unsigned long lastRun = 0;
@@ -160,27 +166,30 @@ void effect3() {
   static int actColor = 0;
   static int i = 2;
   static int step = 0;
-  unsigned long spd = max(0,22* maxDigits / PixelCount * (258-prm.rgbSpeed));
-
+  static int idx = 0;
+  unsigned long spd = max(0,22 * (258-prm.rgbSpeed));
+  boolean changeColor = false;
+  
   if ((millis()-lastRun)>spd) {
     if (prm.rgbDir) i++;  else i--;     //goto next pixel
 
-    if (i>=PixelCount) { 
-      i=0;
+    if (i>=maxDigits) { i=0; changeColor = true;}
+    else if (i<0) {i=maxDigits-1; changeColor = true;}
+    
+    if (changeColor) {
       oldColor = newColor;
-      do {newColor = c[random(0,cMax)];   //get a new random color
-      } while (newColor == oldColor);
-      //DPRINT("***************oldColor:"); DPRINTLN(oldColor);
-      //DPRINT("***************newColor:"); DPRINTLN(newColor);
-    }
-    if (i<0) { 
-      i=PixelCount-1; 
-      oldColor = newColor;
-      do {newColor = c[random(0,cMax)];   //get a new random color
-      } while (newColor == oldColor);
-      //DPRINT("***************oldColor:"); DPRINTLN(oldColor);
-      //DPRINT("***************newColor:"); DPRINTLN(newColor);
-    }
+      changeColor = false;
+      if (enableRandom) {
+        do {
+          newColor = random(0,256);   //get a new random color
+        } while (abs(newColor-oldColor)<50);
+      }
+      else {
+        idx++; if (idx>=cMax) idx = 0;
+        newColor =  c[idx]; 
+      }
+    } //endif changeColor
+    
     actColor = oldColor;  //starting color} 
     step = max(1,abs(newColor-oldColor)/20);
     lastRun = millis();
@@ -188,9 +197,9 @@ void effect3() {
 
   //DPRINT(i); DPRINT("/"); DPRINTLN(j);    
   if (actColor<256) 
-      strip.SetPixelColor(i, Wheel(actColor));
+      setPixels(i, Wheel(actColor));
   else 
-      strip.SetPixelColor(i,white);
+      setPixels(i,white);
 
   if (newColor != actColor) {   //next rainbow color
     if (oldColor<newColor) actColor = min(newColor,actColor+step);
@@ -198,6 +207,13 @@ void effect3() {
     
    }
       //DPRINT("Pix:"); DPRINT(i); DPRINT(" ActCol:"); DPRINTLN(actColor); 
+}
+
+
+void setPixels(byte tubeNo, RgbColor c) {
+  for (int i=0;i<PixelCount;i++) 
+    if (tubeNo == tubePixels[i]) 
+      strip.SetPixelColor(i, c);
 }
 
 void fixColor(int col) {
@@ -231,7 +247,8 @@ static unsigned long lastRun = 0;
   else if (prm.rgbEffect==3) rainbow2();  //stepper
   else if (prm.rgbEffect==4) effect1();  //color dimmer
   else if (prm.rgbEffect==5) effect2();  //color stepper
-  else if (prm.rgbEffect==6) effect3();  //color stepflow
+  else if (prm.rgbEffect==6) effect3(false);  //color stepflow table
+  else if (prm.rgbEffect==7) effect3(true);  //color stepflow random
   strip.Show();
 }
 
