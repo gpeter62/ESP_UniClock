@@ -135,7 +135,7 @@ void effect1() {  //color dimmer
     dir = 1;
   }
   if (counter >= (prm.rgbBrightness-c_MinBrightness)) {
-    c = random(0,256);
+    c = random(0,257);
     dir = -1;
   }
 }
@@ -147,7 +147,7 @@ void effect2() {   //random color picker
   
   if ((millis()-lastRun)>100*max(0,(258-prm.rgbSpeed))) {
     lastRun = millis();
-    c = random(0,256);
+    c = random(0,257);
   }
   
   for(uint16_t i=0; i<PixelCount; i++) {
