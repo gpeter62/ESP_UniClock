@@ -6,6 +6,7 @@ byte neoBrightness;
 #define COLORSATURATION 255
 
 RgbColor red(COLORSATURATION, 0, 0);
+RgbColor red2(COLORSATURATION/2, 0, 0);
 RgbColor green(0, COLORSATURATION, 0);
 RgbColor blue(0, 0, COLORSATURATION);
 RgbColor purple(COLORSATURATION, 0, COLORSATURATION);
@@ -225,6 +226,25 @@ void fixColor(int col) {
     } 
 }
 
+void kitt() {
+  static int dir = 1;  //direction
+  static int counter = 0;
+  static unsigned long lastRun = 0;
+  static int oldPix= 1;
+
+  if ((millis()-lastRun) < (258-prm.rgbSpeed)) return;
+  lastRun = millis();
+  
+  for (int i=0;i<PixelCount;i++) strip.SetPixelColor(i,black);
+  //setPixels(oldPix,red2);
+  oldPix = counter;
+  setPixels(counter,Wheel(prm.rgbFixColor));
+  counter += dir;
+  if (counter >= maxDigits-1) dir = -1;
+  else if (counter <=0 ) dir = 1; 
+}
+
+
 void doAnimationMakuna() {
 static unsigned long lastRun = 0;
 
@@ -249,6 +269,7 @@ static unsigned long lastRun = 0;
   else if (prm.rgbEffect==5) effect2();  //color stepper
   else if (prm.rgbEffect==6) effect3(false);  //color stepflow table
   else if (prm.rgbEffect==7) effect3(true);  //color stepflow random
+  else if (prm.rgbEffect==8) kitt();  //Knight Rider's KITT car
   strip.Show();
 }
 
