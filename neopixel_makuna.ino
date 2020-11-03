@@ -181,7 +181,7 @@ void effect3(boolean enableRandom) {
       changeColor = false;
       if (enableRandom) {
         do {
-          newColor = random(0,256);   //get a new random color
+          newColor = random(0,257);   //get a new random color
         } while (abs(newColor-oldColor)<50);
       }
       else {
