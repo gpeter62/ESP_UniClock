@@ -22,10 +22,11 @@ unsigned int indexx;     // used to set colours, range 0-0x1FF
 int8_t direction; // current direction of dimming
 
 //definition: wich pixels are near wich tube?  Make sure to set all of pixels in your strip
-byte tubePixels[] = {0,1,2,3};        //4 tubes
+//byte tubePixels[] = {0,1,2,3};        //4 tubes
 //byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes
 //byte tubePixels[] = {0,1,2,3,3,2,1,0};  //4 tubes, double row, 8 leds
 //byte tubePixels[] = {0,0,1,1,2,2,3,3,3,3,2,2,1,1,0,0,0};  //4 tubes, double row, 17 leds
+byte tubePixels[] = {0,0,0,1,1,2,2,3,3,3,3,  3,3,2,2,2,1,1,0,0};  //4 tubes, double row, 20 leds (Robi)
 
 const uint16_t PixelCount = sizeof(tubePixels); 
 const uint8_t PixelPin = 3;  // for Esp8266 it MUST be GPIO3 (RX pin)
