@@ -1,28 +1,28 @@
 #ifdef Numitron_4511N
 //used by GP Numitron v3 panel
+//Flash size: 1MB (FS:160k, OTA:422k)
 
-byte panelVersion = 1;   //1,2 or 3
+byte panelVersion = 3;   //1,2 or 3
 
 #define LTBIpin 5
 byte digitEnablePins[] = {13,12,14,16};    //define here the digit enable pins from 4 to 8
 byte ABCDPins[4] = {4,0,2,15};
 
-int maxDigits = sizeof(digitEnablePins);
-int PWMrefresh=5000;   ////kb.1000Hz, Multiplex time period. Greater value => slower multiplex frequency
+const int maxDigits = sizeof(digitEnablePins);
+int PWMrefresh=5000;   //Multiplex time period. Greater value => slower multiplex frequency
 
 void setup_pins() {
-#if defined(ESP8266) 
-#else
-  #error "Board is not supported!"  
-#endif
+  #if defined(ESP8266) 
+  #else
+    #error "Board is not supported!"  
+  #endif
+
   DPRINTLN("Setup pins...");
   pinMode(LTBIpin, OUTPUT);
   digitalWrite(LTBIpin,HIGH);
   for (int i=0;i<maxDigits;i++) pinMode(digitEnablePins[i], OUTPUT);
   for (int i=0;i<4;i++) pinMode(ABCDPins[i], OUTPUT);
-  timer1_attachInterrupt(writeDisplay);
-  timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
-  timer1_write(PWMrefresh); 
+  startTimer();
 }
 
 
@@ -53,6 +53,21 @@ byte num;
   
   if (COLON_PIN>=0) digitalWrite(COLON_PIN,!colonBlinkState);  // Blink colon pin
   timer1_write(PWMrefresh);
+}
+
+void clearTubes() {
+/*  //not necessary to use
+  if (panelVersion==3) {
+    digitalWrite(LTBIpin,LOW);
+  }
+  else {
+  for (int pos=0; pos<=maxDigits; pos++) {
+    digitalWrite(digitEnablePins[pos],LOW);
+    for (int i=0;i<4;i++) digitalWrite(ABCDPins[i],HIGH); 
+    digitalWrite(digitEnablePins[pos],HIGH); 
+  }
+  }
+*/  
 }
 
 void writeDisplaySingle() {}

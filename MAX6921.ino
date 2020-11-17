@@ -1,53 +1,48 @@
-#ifdef MAX6921
-// for example usable with IV18 VFD CLock
-// Pulse Filament Drive (High Frequency RMS) is supported, if PIN_HEAT_A and PIN_HEAT_B are set!!!
-
-//#define VFDrefresh 1200    //msec, Multiplex time period. Greater value => slower multiplex frequency
-
+#ifdef MAX6921   
+//VFD driver driver for ESP8266 os ESP32
 
 //Choose only 1 option from the following:
-//#define IV18
-#define IVL2
-
+#define IV18
+//#define IVL2
+//#define ESP32_VFD
 
 #ifdef IV18
 //Fill this table with the OUT positions of the MAX6921 chip!   
-byte segmentEnablePins[] =  {0,2,5,6,4,1,3,7};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
-byte digitEnablePins[] = {18,11,17,12,16,13,14,15}; //19};  //segment enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  (You may define any numb
-const int tubeTime[] = {1200,1200,1200,1200,1200,1200,1200,1200,1200};      //ticks to stay on the same digit to compensate different digit brightness
+  byte segmentEnablePins[] =  {0,2,5,6,4,1,3,7};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
+  byte digitEnablePins[] = {18,11,17,12,16,13,14,15}; //19};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  (You may define any number)
                                                   
 //MAX6921 pins
-#define PIN_LE    12  // D6 Shift Register Latch Enable
-#define PIN_CLK   13  // D7 Shift Register Clock
-#define PIN_DATA  14  // D5 Shift Register Data
-#define PIN_BL    15  // D8 Shift Register Blank (1=display off     0=display on)
+  #define PIN_LE    12  // D6 Shift Register Latch Enable
+  #define PIN_CLK   13  // D7 Shift Register Clock
+  #define PIN_DATA  14  // D5 Shift Register Data
+  #define PIN_BL    15  // D8 Shift Register Blank (1=display off     0=display on)
 #endif
-
 
 #ifdef IVL2
 //Fill this table with the OUT positions of the MAX6921 chip!   
-byte segmentEnablePins[] =  {11,13,5,8,3,12,2,1};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
-byte digitEnablePins[] = {10,9,4,0};  //segment enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  
-const int tubeTime[] = {1200,1200,1200,1200,1200,1200,1200,1200,1200};      //ticks to stay on the same digit to compensate different digit brightness
+  byte segmentEnablePins[] =  {11,13,5,8,3,12,2,1};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
+  byte digitEnablePins[] = {10,9,4,0};  //segment enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  
                                                
 //MAX6921 pins
-#define PIN_LE    13  // D6 Shift Register Latch Enable
-#define PIN_CLK   12  // D7 Shift Register Clock
-#define PIN_DATA  14  // D5 Shift Register Data
-#define PIN_BL    15  // D8 Shift Register Blank (1=display off     0=display on)
+  #define PIN_LE    13  // D6 Shift Register Latch Enable
+  #define PIN_CLK   12  // D7 Shift Register Clock
+  #define PIN_DATA  14  // D5 Shift Register Data
+  #define PIN_BL    15  // D8 Shift Register Blank (1=display off     0=display on)
 
-#define TEMP_SENSOR_PIN RX
+  #define TEMP_SENSOR_PIN RX
 #endif
 
-#define PIN_HEAT_A -1   //VFD heater signalA  (if not used, set to -1)
-#define PIN_HEAT_B -1   //VFD heater signalB  (if not used, set to -1)
+#ifdef ESP32_VFD
+//Fill this table with the OUT positions of the MAX6921 chip!   
+byte segmentEnablePins[] =  {0,2,5,6,4,1,3,7};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
+byte digitEnablePins[] = {18,11,17,12,16,13,14,15}; //19};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  (You may define any number)
 
-#define PIN_LE_BIT     1<<PIN_LE    
-#define PIN_CLK_BIT    1<<PIN_CLK    
-#define PIN_DATA_BIT   1<<PIN_DATA  
-#define PIN_BL_BIT     1<<PIN_BL    
-#define PIN_HEAT_A_BIT 1<<PIN_HEAT_A
-#define PIN_HEAT_B_BIT 1<<PIN_HEAT_B
+//MAX6921 pins
+  #define PIN_LE    12  // D6 Shift Register Latch Enable
+  #define PIN_CLK   13  // D7 Shift Register Clock
+  #define PIN_DATA  14  // D5 Shift Register Data
+  #define PIN_BL    16  // D8 Shift Register Blank (1=display off     0=display on)
+#endif
 
 //------------------abcdefgDP----------------   definition of different characters
 byte charDefinition[] = {
@@ -74,12 +69,15 @@ uint32_t animationMaskBits[5];
 
 #define MAXCHARS sizeof(charDefinition)
 #define MAXSEGMENTS sizeof(segmentEnablePins)
-int maxDigits =  sizeof(digitEnablePins);
+const int maxDigits =  sizeof(digitEnablePins);
 
 uint32_t charTable[MAXCHARS];              //generated pin table from segmentDefinitions
 uint32_t segmentEnableBits[MAXSEGMENTS];   //bitmaps, generated from EnablePins tables
 uint32_t digitEnableBits[10];
-boolean useHeater = false;                 //Is heater driver signal used?
+
+const int PWMrefresh=5500;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+#define MAXBRIGHT 10
+const int PWMtiming[MAXBRIGHT+1] = {0,250,500,1000,2000,2500,3000,3500,4000,4500,5000};
 //-----------------------------------------------------------------------------------------
 
 //https://sub.nanona.fi/esp8266/timing-and-ticks.html
@@ -87,8 +85,18 @@ boolean useHeater = false;                 //Is heater driver signal used?
 //One tick is 1us / 80 = 0.0125us = 6.25ns on 160MHz
 // 1 NOP is 1 tick
 
+#if defined(ESP8266)   
+  void inline delayMS(int d) {
+    for (int i=0;i<d;i++) {asm volatile ("nop"); }
+  }
+#else
+  void inline delayMS(int d) {
+    for (int i=0;i<d*7;i++) {asm volatile ("nop"); }
+  }
+#endif
+
 void setup_pins() {
-#if defined(ESP8266) 
+#if defined(ESP8266) || defined(ESP32)
 #else
   #error "Board is not supported!"  
 #endif
@@ -98,14 +106,7 @@ void setup_pins() {
   pinMode(PIN_DATA,OUTPUT);
   pinMode(PIN_CLK, OUTPUT);
   
-  if ((PIN_HEAT_A >=0) && (PIN_HEAT_B>=0)) {
-    useHeater = true;
-    pinMode(PIN_HEAT_A, OUTPUT);  digitalWrite(PIN_HEAT_A,HIGH);
-    pinMode(PIN_HEAT_B, OUTPUT);  digitalWrite(PIN_HEAT_B,LOW);
-    DPRINT("Filament Driver: GPIO"); DPRINT(PIN_HEAT_A);
-    DPRINT(" / GPIO");      DPRINTLN(PIN_HEAT_B);
-  }
-  
+    
   DPRINTLN("Setup MAX6921 pins...");
   DPRINT("- CLK   : GPIO"); DPRINTLN(PIN_CLK);
   DPRINT("- DATAIN: GPIO"); DPRINTLN(PIN_DATA);
@@ -114,89 +115,83 @@ void setup_pins() {
   
   generateBitTable();
   digitsOnly = false;
-    
-  timer1_attachInterrupt(writeDisplay);
-  timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
-  timer1_write(tubeTime[0]); 
+  startTimer();
 }  
 
 
-void ICACHE_RAM_ATTR writeDisplay(){        // Writes to the MAX6921 driver for IV-18
-static volatile uint32_t val = 0;
-static volatile byte pos = 0;
-static volatile int brightCounter[] = {0,9,2,8,4,7,6,5,3,1};
-static volatile boolean heatState = false;
+#if defined(ESP32)
+  void IRAM_ATTR  writeDisplay(){
+#else 
+  void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
+#endif
+  
+  static volatile int timer = PWMrefresh;
+  static volatile uint32_t val;
+  static volatile byte pos = 0;
+  static volatile boolean state=true;
+  static volatile byte brightness;
 
-  //noInterrupts();
-  
-  if (useHeater) {
-    heatState = !heatState;
-    if (heatState) {
-      WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_HEAT_A_BIT );
-      WRITE_PERI_REG( PIN_OUT_SET,   PIN_HEAT_B_BIT );
-    }
-    else {
-      WRITE_PERI_REG( PIN_OUT_SET,   PIN_HEAT_A_BIT );
-      WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_HEAT_B_BIT );
-    }
-  }
-  
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
-    timer1_write(tubeTime[0]);
+    digitalWrite(PIN_BL,HIGH);    //OFF
+    #if defined(ESP8266)    
+      timer1_write(PWMrefresh);
+    #elif defined(ESP32)
+      timerAlarmWrite(ESP32timer, PWMrefresh, false);
+    #endif    
     return;  
   }
-  
-  if (brightCounter[pos] % MAXBRIGHTNESS < (displayON ?  prm.dayBright : prm.nightBright))
-    WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_BL_BIT );   //ON
-  else 
-    WRITE_PERI_REG( PIN_OUT_SET, PIN_BL_BIT );    //OFF
 
-  
-  brightCounter[pos]++;  
-  if (brightCounter[pos]>MAXBRIGHTNESS) brightCounter[pos] = 1;
-  
-  val = (digitEnableBits[pos] | charTable[digit[pos]]);  //the full bitmap to send to MAX chip
-  if (digitDP[pos]) val = val | charTable[12];    //Decimal Point
-  if (animMask[pos]>0) val &= animationMaskBits[animMask[pos]-1];  //animationMode 6, mask characters from up to down and back
-  
-  for (int i=0; i<20; i++)  {
-    if ((val & uint32_t(1 << (19 - i))) ) {
-      WRITE_PERI_REG( PIN_OUT_SET, PIN_DATA_BIT );
-      asm volatile ("nop");
+  #if defined(ESP32)
+    portENTER_CRITICAL_ISR(&timerMux);
+  #endif
+
+  brightness = displayON ?  prm.dayBright : prm.nightBright;
+  if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
+  if (brightness==MAXBRIGHT) state = true;
+
+  if (state) {  //ON state
+    pos++;  if (pos>maxDigits-1)  pos = 0;  //go to the first tube
+    timer = PWMtiming[brightness];
+  }
+  else {  //OFF state
+    timer = PWMrefresh-PWMtiming[brightness];
+  }
+
+  if (timer<200) timer = 200;  //safety only...
+
+  if ( (brightness == 0) || (!state) ) {  //OFF state, blank digit
+    digitalWrite(PIN_BL,HIGH);    //OFF
     }
-    else {
-      WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_DATA_BIT );
-      asm volatile ("nop");
-    }
-    WRITE_PERI_REG( PIN_OUT_SET, PIN_CLK_BIT );
-    asm volatile ("nop");
-    asm volatile ("nop");
-    asm volatile ("nop");
-    asm volatile ("nop");
-    asm volatile ("nop");
-    WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_CLK_BIT );
-    asm volatile ("nop");
-    asm volatile ("nop");
-    asm volatile ("nop");
-    asm volatile ("nop");
-    asm volatile ("nop");
-    } //end for      
+  else {  //ON state
+    val = (digitEnableBits[pos] | charTable[digit[pos]]);  //the full bitmap to send to MAX chip
+    if (digitDP[pos]) val = val | charTable[12];    //Decimal Point
+    if (animMask[pos]>0) val &= animationMaskBits[animMask[pos]-1];  //animationMode 6, mask characters from up to down and back
+    for (int i=0; i<20; i++)  {
+      if (val & uint32_t(1 << (19 - i)))
+        {digitalWrite(PIN_DATA, HIGH);   asm volatile ("nop");}
+      else
+        {digitalWrite(PIN_DATA, LOW);    asm volatile ("nop");}
+      
+      digitalWrite(PIN_CLK,HIGH);  delayMS(3);
+      digitalWrite(PIN_CLK,LOW);   delayMS(3);
+      } //end for      
  
-  WRITE_PERI_REG( PIN_OUT_SET, PIN_LE_BIT );
-  asm volatile ("nop");
-  asm volatile ("nop");
-  asm volatile ("nop");
-  asm volatile ("nop");
-  asm volatile ("nop");
-  asm volatile ("nop");
-  asm volatile ("nop");
-  asm volatile ("nop");
-  asm volatile ("nop");
-  asm volatile ("nop");
-  WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_LE_BIT );
-  timer1_write(tubeTime[pos]);
-  pos++; if (pos >= maxDigits) pos = 0; 
-  //interrupts();
+    digitalWrite(PIN_LE,HIGH );  delayMS(8);
+    digitalWrite(PIN_LE,LOW);
+    digitalWrite(PIN_BL,LOW );   //ON
+  }  //end else
+    
+  if (COLON_PIN>=0) {
+    digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
+  }
+  
+  state = !state;  
+  #if defined(ESP8266)    
+    timer1_write(timer);
+  #elif defined(ESP32)     
+    timerAlarmWrite(ESP32timer, timer, false);
+    portEXIT_CRITICAL_ISR(&timerMux);
+  #endif    
 }
 
 void generateBitTable() {
@@ -240,6 +235,6 @@ DPRINTLN("---- Generated Character / Pins table -----");
 }
 
 
-
+void clearTubes() {}
 void writeDisplaySingle() {}
 #endif

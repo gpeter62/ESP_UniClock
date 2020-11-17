@@ -14,7 +14,7 @@
 //#define DHTTYPE DHT21   // DHT 21 (AM2301)
 
 // Connect pin 1 (on the left) of the sensor to +5V
-// NOTE: If using a board with 3.3V logic like an Arduino Due connect pin 1
+// NOTE: If using a board with 3.3V logic like ESP8266 or ESP32 connect pin 1
 // to 3.3V instead of 5V!
 // Connect pin 2 of the sensor to whatever your DHTPIN is
 // Connect pin 4 (on the right) of the sensor to GROUND
@@ -27,7 +27,7 @@
 DHT dht(TEMP_SENSOR_PIN, DHTTYPE);
 
 void setupDHTemp() {
-  DPRINT("DHTxx setup: Sensor pin = "); DPRINTLN(TEMP_SENSOR_PIN);
+  DPRINT("DHTxx sensor setup: pin = "); DPRINTLN(TEMP_SENSOR_PIN);
   dht.begin();
   getDHTemp();
 }
@@ -52,7 +52,7 @@ static unsigned long lastRun = 0;
   //float hic = dht.computeHeatIndex(t, h, false);  // Compute heat index in Celsius (isFahreheit = false)
   
   if (isnan(humid) || isnan(temperature[0])) {  // Check if any reads failed and exit early (to try again).
-    DPRINTLN("No sensor!");
+    DPRINTLN("No DHT sensor!");
     useTemp = 1;
     temperature[0] = 99.9f;
     humid = 0;

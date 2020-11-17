@@ -1,4 +1,4 @@
-// 4digit Nixie Clock (original version with OLED display)
+// 4digit Nixie Clock 
 //  2x 74HC595N shift register + 4x 74141
 
 #ifdef NO_MULTIPLEX74141
@@ -6,32 +6,26 @@
 #define MAXBRIGHT 10
 
  //change it, if needed for the correct tube sequence
-byte tubes[] = {3,2,1,0};         //4 tubes,   old OLED clock...     
+byte tubes[] = {3,2,1,0};         //4 tubes,   old clock...     
 //byte tubes[] = {5,4,3,2,1,0};   //6 tubes, reverse order
 
-int maxDigits = sizeof(tubes);
+const int maxDigits = sizeof(tubes);
 const int PWMrefresh=12000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
 const int PWMtiming[] = {2000,1000,2000,3000,4000,5000,6000,7000,8000,10000,12000};
 
 #define dataPin  14  //D5
 #define latchPin 12  //D6
-#define clkPin 13    //D7
+#define clkPin   13  //D7
 
 void writeDisplaySingle() { }   
 
 void setup_pins(){
- #if defined(ESP8266) 
-#else
-  #error "Board is not supported!"  
-#endif
-
-  DPRINTLN("Setup pins...");
+  DPRINTLN("Setup tube driver pins...");
   pinMode(dataPin, OUTPUT);
   pinMode(latchPin,OUTPUT);
   pinMode(clkPin,OUTPUT);
-  timer1_attachInterrupt(writeDisplay);
-  timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
-  timer1_write(PWMrefresh); 
+
+  startTimer();
 }
 
 void ICACHE_RAM_ATTR writeBits(byte num) {   //shift out 4 bits
@@ -69,7 +63,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   if (brightness ==0) {
     for (int i=0;i<maxDigits;i++) writeBits(0xA);  //black display
     if (DECIMALPOINT_PIN>=0) digitalWrite(DECIMALPOINT_PIN,LOW);
-	if (COLON_PIN>=0) digitalWrite(COLON_PIN,LOW);  // colon pin OFF
+  if (COLON_PIN>=0) digitalWrite(COLON_PIN,LOW);  // colon pin OFF
   digitalWrite(latchPin, HIGH);
   timer1_write(100*timer);
   return;
@@ -121,4 +115,5 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   timer1_write(timer); 
 }
 
+void clearTubes() {}
 #endif

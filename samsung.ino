@@ -1,6 +1,6 @@
 #ifdef samsung
 
-int maxDigits = 8;
+const int maxDigits = 8;
 #include <Samsung_16LF01_VFD.h>
 
 byte  SCLKpin = 7;
@@ -15,7 +15,7 @@ Samsung_16LF01_VFD vfd(SCLKpin, DATApin, RSTpin);
 void setup_pins() {
   vfd.begin(maxDigits, prm.dayBright);
   vfd.print("Hello World");
-  delay(3000);
+  Fdelay(3000);
   vfd.clear();
 }
 
@@ -26,4 +26,5 @@ void writeDisplaySingle() {
   }
 }
 
+void clearTubes() {}
 #endif

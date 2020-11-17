@@ -1,17 +1,33 @@
 #ifdef USE_GPS
 
 #include <TinyGPS++.h>                                  // Tiny GPS Plus Library
-#include <SoftwareSerial.h>                             // Software Serial Library so we can use other Pins for communication with the GPS module
 
-static const int RXPin = 3;     //RX pin  -  remove, when upload program to 8266          
-static const int TXPin = -1;    //not used            
+#if defined(ESP8266)  
+  #include <SoftwareSerial.h>     // Software Serial Library so we can use other Pins for communication with the GPS module
+  static const int RXPin = 3;     //RX pin  -  remove, when upload program to 8266          
+  static const int TXPin = -1;    //not used            
+  SoftwareSerial ss(RXPin, TXPin);                        // The serial connection to the GPS device
+  
+#elif defined(ESP32)
+//The ESP32 has 3 different Serial Ports (UART). You can just use one of them:
+//Serial0: RX0 on GPIO3, TX0 on GPIO1
+//Serial1: RX1 on GPIO9, TX1 on GPIO10 (+CTS1 and RTS1)
+//Serial2: RX2 on GPIO16, TX2 on GPIO17 (+CTS2 and RTS2)
+//https://github.com/espressif/arduino-esp32/blob/master/cores/esp32/HardwareSerial.cpp
+
+  #include <HardwareSerial.h>     // Software Serial Library so we can use other Pins for communication with the GPS module
+  static const int RXPin = 9;     //RX pin  -  remove, when upload program to 8266          
+  static const int TXPin = 10;    //not used            
+  HardwareSerial ss(1);                        // The serial connection to the GPS device Serial1
+#endif
+
 static const uint32_t GPSBaud = 9600;                   // Ublox GPS default Baud Rate is 9600
 
 TinyGPSPlus gps;                                        // Create an Instance of the TinyGPS++ object called gps
-SoftwareSerial ss(RXPin, TXPin);                        // The serial connection to the GPS device
+
 
 void setupGPS() { 
-  delay(1500);     
+  Fdelay(1500);     
   DPRINTLN("Starting GPS...");    
   DPRINT("- RX: GPIO"); DPRINTLN(RXPin);
   DPRINT("- TX: GPIO"); DPRINTLN(TXPin);
@@ -39,19 +55,23 @@ static unsigned long lastRun = 0;
         hours = hours + 24;
       }
     }
-    printGPS();
+    
+    #ifdef DEBUG
+      printGPS();
+    #endif
+      
     setTime(hours,gps.time.minute(),gps.time.second(),gps.date.day(),gps.date.month(),gps.date.year());  //set the time (hr,min,sec,day,mnth,yr)
    } //endif valid date&time
 }
 
 void printGPS() {
-    Serial.print("Latitude  : ");  Serial.println(gps.location.lat(), 5);
-  Serial.print("Longitude : ");  Serial.println(gps.location.lng(), 4);
-  Serial.print("Satellites: ");  Serial.println(gps.satellites.value());
-  Serial.print("Elevation : ");  Serial.print(gps.altitude.feet());  Serial.println("ft"); 
-  Serial.print("Time UTC  : ");  Serial.print(gps.time.hour());                       // GPS time UTC 
-  Serial.print(":");  Serial.print(gps.time.minute());                     // Minutes
-  Serial.print(":");  Serial.println(gps.time.second());                   // Seconds
+  DPRINT("Latitude  : ");  DPRINTLN(gps.location.lat(), 5);
+  DPRINT("Longitude : ");  DPRINTLN(gps.location.lng(), 4);
+  DPRINT("Satellites: ");  DPRINTLN(gps.satellites.value());
+  DPRINT("Elevation : ");  DPRINT(gps.altitude.feet()); DPRINTLN("ft"); 
+  DPRINT("Time UTC  : ");  DPRINT(gps.time.hour());   // GPS time UTC 
+  DPRINT(":");  DPRINT(gps.time.minute());            // Minutes
+  DPRINT(":");  DPRINTLN(gps.time.second());            // Seconds
 }
 
 

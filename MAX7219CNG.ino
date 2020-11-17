@@ -1,6 +1,6 @@
 #ifdef MAX7219CNG
 
-int maxDigits = 6;
+const int maxDigits = 6;
 byte tubes[] = {0,1,2,3,4,5};    //change it, if needed for the correct tube sequence
 
 //MAX7219CNG control pins
@@ -103,4 +103,6 @@ int bitBuffer;
     sendBits(i+1, bitBuffer);
   }  //end for i
 }
+
+void clearTubes() {}
 #endif

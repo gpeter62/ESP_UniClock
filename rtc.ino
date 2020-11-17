@@ -1,4 +1,6 @@
 #ifdef USE_RTC
+//DS3231 realtime clock driver
+//with manual clock setup buttons
 
 //------ Mode Switch and Push Buttons ---------------------
 #define PIN_MODE_SWITCH  17   //Analog A0 port!!!    
@@ -57,7 +59,7 @@ while (true) {
 */  
 
   DPRINTLN("Starting RTC Clock...");    
-  delay(1000);
+  Fdelay(1000);
   pinMode(PIN_SDA,OUTPUT); DPRINT("- SDA: GPIO"); DPRINTLN(PIN_SDA);
   pinMode(PIN_SCL,OUTPUT); DPRINT("- SCL: GPIO"); DPRINTLN(PIN_SCL);
 
@@ -89,7 +91,7 @@ void editor() {
     showValue();
     writeDisplaySingle();
     printDigits(1000);
-    delay(100);
+    Fdelay(100);
   }
   if (LastModify != 0) saveRTC();
 }
@@ -182,8 +184,7 @@ static byte oldMode = 2;
     oldMode = (byte)clockWifiMode;
     return true;  
   }
-  else
-    return false;
+  return false;
 }  
 
 void scanButFLD(unsigned long mill) {
@@ -306,7 +307,7 @@ int I2C_ClearBus() {
   pinMode(SDA, INPUT_PULLUP); // Make SDA (data) and SCL (clock) pins Inputs with pullup.
   pinMode(SCL, INPUT_PULLUP);
 
-  delay(2500);  // Wait 2.5 secs. This is strictly only necessary on the first power
+  Fdelay(2500);  // Wait 2.5 secs. This is strictly only necessary on the first power
   // up of the DS3231 module to allow it to initialize properly,
   // but is also assists in reliable programming of FioV3 boards as it gives the
   // IDE a chance to start uploaded the program
@@ -367,6 +368,15 @@ int I2C_ClearBus() {
 void updateRTC() {}
 void setupRTC() {}
 void getRTC() {}
-boolean checkWifiMode() {}
+
+boolean checkWifiMode() {
+  
+  #ifdef USE_GPS  
+    return false;
+  #else
+    return true;
+  #endif
+}
+    
 void editor() {}
 #endif

@@ -40,7 +40,7 @@ void setupTemp() {
   if (!tempSensors.getAddress(thermometer1, 0)) DPRINTLN("Unable to find address for Device 0");
   if ((useTemp>1) && !tempSensors.getAddress(thermometer2, 1)) DPRINTLN("Unable to find address for Device 1");
   requestTemp(true);
-  delay(1000);
+  Fdelay(1000);
   getTemp();
   }
 }
@@ -99,12 +99,12 @@ float tmp_temp;
 void resetSensors() {
   DPRINTLN("Reset sensors...");
   oneWire.reset();
-  delay(200);  //200ms
+  Fdelay(200);  //200ms
 
   tempSensors.begin(); //try to restart sensor
   tempSensors.setWaitForConversion(false);
   tempSensors.getDeviceCount();
-  delay(200);  //200ms
+  Fdelay(200);  //200ms
 
 }
 //-----------------------------------------------------------------------------------------------------

@@ -15,15 +15,10 @@ byte digitEnablePins[] = {0,1,2,3,4,5,6,7,8};           //digit enable bits   (Y
 #define PIN_DATA    14  // D5 Shift Register Data
 #define PIN_STROBE  5   // D1 Shift Register Strobe (1=display off     0=display on)
 
-#define PIN_HEAT_A -1   //VFD heater signalA  (if not used, set to -1)
-#define PIN_HEAT_B -1   //VFD heater signalB  (if not used, set to -1)
-
 #define PIN_LE_BIT     1<<PIN_LE    
 #define PIN_CLK_BIT    1<<PIN_CLK    
 #define PIN_DATA_BIT   1<<PIN_DATA  
 #define PIN_STROBE_BIT 1<<PIN_STROBE    
-#define PIN_HEAT_A_BIT 1<<PIN_HEAT_A
-#define PIN_HEAT_B_BIT 1<<PIN_HEAT_B
 
 //------------------abcdefgDP----------------   definition of different characters
 byte charDefinition[] = {
@@ -48,19 +43,18 @@ byte charDefinition[] = {
 
 #define MAXCHARS sizeof(charDefinition)
 #define MAXSEGMENTS sizeof(segmentEnablePins)
-int maxDigits =  sizeof(digitEnablePins);
+const int maxDigits =  sizeof(digitEnablePins);
 
 uint32_t charTable[MAXCHARS];              //generated pin table from segmentDefinitions
 uint32_t segmentEnableBits[MAXSEGMENTS];   //bitmaps, generated from EnablePins tables
 uint32_t digitEnableBits[10];
-boolean useHeater = false;                 //Is heater driver signal used?
 //-----------------------------------------------------------------------------------------
 
 void ICACHE_RAM_ATTR writeDisplay(){        
 static volatile uint32_t val = 0;
 static volatile byte pos = 0;
 static volatile int brightCounter[] = {0,9,2,8,4,7,6,5,3,1};
-static volatile boolean heatState = false;
+
 //https://sub.nanona.fi/esp8266/timing-and-ticks.html
 //One tick is 1us / 80 = 0.0125us = 12.5ns on 80MHz
 //One tick is 1us / 80 = 0.0125us = 6.25ns on 160MHz
@@ -68,18 +62,7 @@ static volatile boolean heatState = false;
 
   //noInterrupts();
   
-  if (useHeater) {
-    heatState = !heatState;
-    if (heatState) {
-      WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_HEAT_A_BIT );
-      WRITE_PERI_REG( PIN_OUT_SET,   PIN_HEAT_B_BIT );
-    }
-    else {
-      WRITE_PERI_REG( PIN_OUT_SET,   PIN_HEAT_A_BIT );
-      WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_HEAT_B_BIT );
-    }
-  }
-  
+ 
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
     timer1_write(VFDrefresh);
     return;  
@@ -167,21 +150,13 @@ void setup_pins() {
   pinMode(PIN_DATA,OUTPUT);
   pinMode(PIN_CLK, OUTPUT);
   digitalWrite(PIN_STROBE,LOW);  //brightness
-  if ((PIN_HEAT_A >=0) && (PIN_HEAT_B>=0)) {
-    useHeater = true;
-    pinMode(PIN_HEAT_A, OUTPUT);
-    digitalWrite(PIN_HEAT_A,HIGH);
-    pinMode(PIN_HEAT_B, OUTPUT);
-    digitalWrite(PIN_HEAT_B,LOW);
-  }
   
   generateBitTable();
   digitsOnly = false;
     
-  timer1_attachInterrupt(writeDisplay);
-  timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
-  timer1_write(VFDrefresh); 
+  startTimer();
 }  
 
+void clearTubes() {}
 void writeDisplaySingle() {}
 #endif

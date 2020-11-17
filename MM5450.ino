@@ -1,6 +1,6 @@
 #ifdef MM5450
 
-int maxDigits = 6;
+const int maxDigits = 6;
 
 //Fill this table with the pin numbers of MM5450 chip!
 byte segmentEnablePins[4][8] =  {
@@ -63,9 +63,7 @@ void setup_pins() {
   pinMode(PIN_CLK, OUTPUT);
   digitalWrite(PIN_BR,HIGH);  //brightness
   digitsOnly = false;
-  timer1_attachInterrupt(writeDisplay);
-  timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
-  timer1_write(VFDrefresh); 
+  startTimer();
   
 }
 
@@ -142,6 +140,6 @@ byte num = 0;
   timer1_write(VFDrefresh);
 }
 
-
+void clearTubes() {}
 void writeDisplaySingle() {}
 #endif

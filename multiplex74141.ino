@@ -1,7 +1,10 @@
 #ifdef MULTIPLEX74141
 //define here the digit enable pins from 4 to 8
 
-const byte digitEnablePins[] = {14,12,13,15};   //IN16 clock
+//const byte digitEnablePins[] = {4,16,17,5,18,19};   //ESP32 6x tube Clock
+//const byte ABCDPins[4] =  {12,27,14,13};   
+
+const byte digitEnablePins[] = {14,12,13,15};   //IN16 4x tube clock
 const byte ABCDPins[4] =  {2,4,5,0};   
 
 //const byte digitEnablePins[] = {15,13,12,14};   //PinterS clock
@@ -10,10 +13,10 @@ const byte ABCDPins[4] =  {2,4,5,0};
 //const byte digitEnablePins[] = {15,13,12,14};   //PinterS thermo
 //const byte ABCDPins[4] =  {2,4,5,0};  
 
-//const byte digitEnablePins[] = {13,12,14,15};    //red tube nixie clock
+//const byte digitEnablePins[] = {13,12,14,15};    //red 4x tube nixie clock
 //const byte ABCDPins[4] = {16,5,4,0};
 
-int maxDigits = sizeof(digitEnablePins);
+const int maxDigits = sizeof(digitEnablePins);
 
 //const byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
 const int PWMrefresh=11000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
@@ -21,31 +24,19 @@ const int PWMrefresh=11000;   ////msec, Multiplex time period. Greater value => 
 const int PWMtiming[MAXBRIGHT+1] = {0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000};
 
 
-#if defined(ESP32) 
-  hw_timer_t * timer = NULL;
-  portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
-#endif  
-
 void setup_pins() {
   DPRINTLN("Setup pins...");
   for (int i=0;i<maxDigits;i++) pinMode(digitEnablePins[i], OUTPUT);
   for (int i=0;i<4;i++) pinMode(ABCDPins[i], OUTPUT);
-#if defined(ESP8266)  
-  timer1_attachInterrupt(writeDisplay);
-  timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
-  timer1_write(PWMrefresh); 
-#elif defined(ESP32)
-  timer = timerBegin(0, 80, true);
-  timerAttachInterrupt(timer, &writeDisplay, true);
-  timerAlarmWrite(timer, 10000, true);   //microsec
-  timerAlarmEnable(timer);
-#else
-  #error "Unknown controller board!"    
-#endif  
+  startTimer();
 }
 
-
-void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
+#if defined(ESP32)
+  void IRAM_ATTR  writeDisplay(){
+#else 
+  void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
+#endif
+  
   static byte pos = 0;
   static volatile byte state=0;
   static int timer = PWMrefresh;
@@ -55,6 +46,8 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
     digitalWrite(digitEnablePins[pos],LOW);
     #if defined(ESP8266)    
       timer1_write(PWMrefresh);
+    #elif defined(ESP32)
+      timerAlarmWrite(ESP32timer, PWMrefresh, false);
     #endif    
     return;  
   }
@@ -62,7 +55,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   #if defined(ESP32)
     portENTER_CRITICAL_ISR(&timerMux);
   #endif
-
+  
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
   timer = PWMrefresh;
@@ -121,11 +114,16 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
         }
   }
 
-#if defined(ESP8266)    
-  timer1_write(timer);
-#elif defined(ESP32)     
-  portEXIT_CRITICAL_ISR(&timerMux);
-#endif    
+  #if defined(ESP8266)    
+    timer1_write(timer);
+  #elif defined(ESP32)     
+    timerAlarmWrite(ESP32timer, PWMrefresh, false);
+    portEXIT_CRITICAL_ISR(&timerMux);
+  #endif    
+}
+
+void clearTubes() {
+    for (int i=0;i<maxDigits;i++) digitalWrite(digitEnablePins[i],LOW); 
 }
 
 void writeDisplaySingle() {}

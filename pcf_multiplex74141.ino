@@ -12,11 +12,11 @@ const byte digitEnablePins[] = {100,101,102,103,104,105};    //6 tube nixie driv
 const byte ABCDPins[4] = {14,12,13,2};  //D5,D6,D7,D4 on 8266
 const byte DpPin = 16; // decimalPoint on 8266's D0
 
-int maxDigits = sizeof(digitEnablePins);
+const int maxDigits = sizeof(digitEnablePins);
 
 //const byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
 const int PWMrefresh=15000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-const int PWMtiming[] = {1000,1000,2000,3000,4000,5000,6000,8000,10000,12000,15000};
+const int PWMtiming[] = {0,2000,3000,4000,5000,6000,7000,8000,10000,12000,14000};
 #define MAXBRIGHT 10
 
 #if defined(ESP8266) 
@@ -24,7 +24,7 @@ const int PWMtiming[] = {1000,1000,2000,3000,4000,5000,6000,8000,10000,12000,150
   #error "Board is not supported!"  
 #endif
 
-void ICACHE_RAM_ATTR delayMS(int d) {
+void inline delayMS(int d) {
   for (int i=0;i<d*7;i++) {asm volatile ("nop"); }
 }
 
@@ -87,79 +87,74 @@ void setup_pins() {
   digitalWrite(SCL,HIGH);
   delay(100); 
   sendBits(I2C_ADDR,0);
-  timer1_attachInterrupt(writeDisplay);
-  timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
-  timer1_write(PWMrefresh); 
-}
+  
+  startTimer();
+  ESP.wdtDisable();
+  ESP.wdtEnable(WDTO_8S);
+  }
 
 void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
+  
   static byte pos = 0;
-  static volatile byte state=0;
+  static byte state=0;
   static int timer = PWMrefresh;
-  static byte num,brightness;
+  byte num,brightness;
   byte p,DPpos;
   
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
-    for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],10  & 1<<i); }
-    digitalWrite(DpPin,LOW);
-    timer1_write(PWMrefresh);
-    return;  
+    return;
   }
   
+  timer = PWMrefresh;
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
-  p = digitEnablePins[pos];
-  switch (state) {   //state machine...
+
+   switch (state) {   //state machine...
     case 0:
-      for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],10  & 1<<i); }
-      if (p<100) digitalWrite(p,LOW); //switch OFF old digit on 8266
-      //else sendBits(I2C_ADDR,0);      // or on PCF port 
-      digitalWrite(DpPin,LOW);        //Switch OFF old decimal point
+      pos++;  if (pos>maxDigits-1)  pos = 0;  //go to the first tube
       
-      pos++;  if (pos>maxDigits-1) pos = 0;   //go to the first tube
-      //for (int i=0;i<1500;i++) {asm volatile ("nop"); }   //long delay to switch off the old digit before switch on the new, depends on hardware
-      
-      p = digitEnablePins[pos];
-      if (p<100) digitalWrite(p,HIGH);      //switch ON new digit on 8266
-      else sendBits(I2C_ADDR,1<<(p-100)) ;  // or on PCF port
-      
-      if (LEFTDECIMAL) DPpos = min(maxDigits-1,pos+1); else DPpos = pos;
-      if (digitDP[DPpos] && (brightness>0)) digitalWrite(DpPin,HIGH); //switch ON decimal point, if needed
-      
-      state = 2;  //default next state is: BLANK display
       if (animMask[pos] > 0) { //Animation?
-        num =   oldDigit[pos];  //show old character
-        timer =  (PWMtiming[brightness] * (10-animMask[pos]))/10;
+        num = oldDigit[pos];  //show old character
+        timer = (PWMtiming[brightness] * (10-animMask[pos]))/10;
         state = 1;  //next state is: show newDigit
       }
       else {
-        num = digit[pos];
+        num = digit[pos];  //show active character
         timer = PWMtiming[brightness];  
-        if (brightness==MAXBRIGHT) state = 0;
+        state = 2;  //next state is: BLANK display
       }
       break;
     case 1:  //show new character, if animation
       num =   newDigit[pos];
       timer = (PWMtiming[brightness] * animMask[pos])/10;      
-      if (brightness>=MAXBRIGHT) state = 0;
-      else state = 2;  //default next state is: BLANK display
+      state = 2;  //default next state is: BLANK display
       break;
     case 2:  //blank display
-      if (p<100) digitalWrite(p,LOW); //switch OFF old digit on 8266
-      else sendBits(I2C_ADDR,0);      // or on PCF port 
-      digitalWrite(DpPin,LOW);
-      num = 10;  //blank character
-      state = 0;
       timer = PWMrefresh-PWMtiming[brightness];
+      state = 3;
       break;
-  }
+   }  //end switch
+   if (timer<200) timer = 200;  //safety only...
+ 
+   //  if ((pos>0) && (num<=9)) num = convert[num];   //tube character conversion, if needed... (maybe bad pin numbering)
+   
+  p  = digitEnablePins[pos];
 
-  //if ((pos>0) && (num<=9)) num = convert[num];   //tube character conversion, if needed... (maybe bad pin numbering)
-  
-  if (timer<500) timer = 500;  //safety only...
-  if (brightness == 0) {num = 10; timer = PWMtiming[10]; state = 0;}
-  for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],num  & 1<<i); }
-  
+  if ((brightness == 0) || (state == 3) || (num >9)) {  //blank digit
+    state = 0; 
+    for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],HIGH); }
+      //if (p<100) digitalWrite(p,LOW); //switch OFF old digit on 8266
+      //else sendBits(I2C_ADDR,0);      // or on PCF port  
+      digitalWrite(DpPin,LOW);
+    }
+  else {
+      if (p<100) digitalWrite(p,HIGH);      //switch ON new digit on 8266
+      else sendBits(I2C_ADDR,1<<(p-100)) ;  // or on PCF port
+      if (LEFTDECIMAL) DPpos = min(maxDigits-1,pos+1); else DPpos = pos;
+      if (digitDP[DPpos] && (brightness>0)) digitalWrite(DpPin,HIGH); //switch ON decimal point, if needed
+      for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],num  & 1<<i); }
+  }
+    
   if (COLON_PIN>=0) {
     if (num==10) digitalWrite(COLON_PIN,LOW);      // Colon pin OFF
     else digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
@@ -173,7 +168,15 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
           if (decimalpointON) digitalWrite(DECIMALPOINT_PIN,HIGH);
         }
   }
+  if (timer<200) timer = 200;  //safety only...
+ 
   timer1_write(timer); 
+}
+
+void ICACHE_RAM_ATTR clearTubes() {
+    digitalWrite(DpPin,LOW);
+    sendBits(I2C_ADDR,0);
+    //for (int i=0;i<4;i++) digitalWrite(ABCDPins[i],HIGH); 
 }
 
 void writeDisplaySingle() {}

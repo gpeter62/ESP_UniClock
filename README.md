@@ -35,7 +35,10 @@ Time, Timezone, NtpClient, ESPAsyncWifiManager, ArduinoJson6.0
 Optional: DS3231, TinyGPSPlus, NeoPixelBus_by_Makuna
 --------------------------------------------------------------------------------------------------------
 Web page files, wich are found in "dat" subfolder must upload to SPIFFS !
-https://randomnerdtutorials.com/install-esp8266-filesystem-uploader-arduino-ide/
+
+ESP8266:  https://randomnerdtutorials.com/install-esp8266-filesystem-uploader-arduino-ide/
+
+ESP32: https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide/
 --------------------------------------------------------------------------------------------------------
 More infoand support:
 
