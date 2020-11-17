@@ -1,6 +1,6 @@
 The old version backup is in ESP_UniClock_1_4_final.zip!!!
 --------------------------------------------------------------------------------------------------------
-# ESP_UniClock v2.0
+# ESP_UniClock v2.3
 
 Universal WifiClock with Nixie, VFD, Numitron tubes or LED display
 Number of digits: 4, 6 or 8
@@ -11,7 +11,7 @@ Tube animation: 5 different animation modes, mode6 means random animation
 
 Hardver: (Schematics and board design by Zoltan Unferdorben are in "schematics" subfolder)
 
-Wemos D1 Mini (or any other ESP8266 modul) 160MHz
+Wemos D1 Mini (or any other ESP8266 modul) 160MHz or ESP32 
 
 Drivers: SN74141 (multiplex or latch), MAX6921, MAX7219, MM5450
 
