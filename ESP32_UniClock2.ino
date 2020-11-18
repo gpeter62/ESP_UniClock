@@ -21,36 +21,48 @@
  *    ESP8266:  https://randomnerdtutorials.com/install-esp8266-filesystem-uploader-arduino-ide/
  *    ESP32: https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide/
  */
-//---------------------------- PROGRAM PARAMETERS -------------------------------------------------
 #define DEBUG               //Enable Serial Monitor, 115200baud (only, if TX pin is not used anywhere!!!)
+
+//---------------------------- CLOCK EXTRA OPTIONS -------------------------------------------------
 //#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor, temperature measure
 //#define USE_DHT_TEMP      //TEMP_SENSOR_PIN is used to connect the sensor,  temperature and humidity measure
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
 //#define USE_GPS           //use for standalone clock, without wifi internet access
 #define USE_NEOPIXEL_MAKUNA   //WS2812B led stripe, for tubes lightning. Don't forget to define tubePixels[] !
 
+//--------------------- ESP32 Clock ----------------------------------------------------------
+#if defined(ESP32)
+  #define MULTIPLEX74141
+  //#define MAX6921
+  #define COLON_PIN   15        //Blinking Colon pin.  If not used, SET TO -1                 
+  #define TEMP_SENSOR_PIN 23     //DHT or Dallas temp sensor pin.  If not used, SET TO -1     
+  #define LED_SWITCH_PIN -1     //external led lightning ON/OFF.  If not used, SET TO -1      
+  #define DECIMALPOINT_PIN -1   //Nixie decimal point between digits. If not used, SET TO -1  
+  #define ALARMSPEAKER_PIN 32   //Alarm buzzer pin                                            
+  #define ALARMBUTTON_PIN 33    //Alarm switch off button pin 
+
+#else //-------------- Any 8266 clock ------------------------------------------------------
+  //Use only 1 driver from the following options!
+  #define MULTIPLEX74141   //4..8 Nixie tubes generic driver for ESP8266 or ESP32
+  //#define MAX6921          //4..8 VFD tubes (IV18) driver for ESP8266 or ESP32
+  //#define NO_MULTIPLEX74141 //4..6 Nixie tubes, serial latch driver, 74141 for each tube 
+  //#define MM5450            //6..8 LEDS
+  //#define MAX7219CNG        //4..8 LED 
+  //#define Numitron_4511N      //Numitron 4x tube clock
+  //#define SN75512           //4..8 VFD tubes   
+  //#define samsung           //samsung serial display
+  //#define PCF_MULTIPLEX74141  //PCF pin expander for tube selection
+  //------- pinout -----------------------------------------------------------
+  #define COLON_PIN   -1        //Blinking Colon pin.  If not used, SET TO -1                 (redtube clock:2, IV16:16 Pinter:TX, oldClock: 2 or SDA)
+  #define TEMP_SENSOR_PIN -1     //DHT or Dallas temp sensor pin.  If not used, SET TO -1      (RX or any other free pin) (IV18clockGP: GPIO4)
+  #define LED_SWITCH_PIN -1     //external led lightning ON/OFF.  If not used, SET TO -1      (Pinter: 16)
+  #define DECIMALPOINT_PIN -1   //Nixie decimal point between digits. If not used, SET TO -1  (Pinter:16)
+  #define ALARMSPEAKER_PIN -1   //Alarm buzzer pin                                            (oldCLock: SCL, pcftube6Clock: 3, numitron: 1)
+  #define ALARMBUTTON_PIN -1    //Alarm switch off button pin 
+  //8266 Neopixel LEDstripe pin is always the RX pin!!!
+#endif
+
 #define MAXBRIGHTNESS 10  // (if MM5450, use 15 instead of 10)
-
-//Use only 1 from the following options!
-#define MULTIPLEX74141   //4..8 Nixie tubes generic driver for ESP8266 or ESP32
-//#define MAX6921          //4..8 VFD tubes (IV18) driver for ESP8266 or ESP32
-
-//ESP8266 only drivers
-//#define NO_MULTIPLEX74141 //4..6 Nixie tubes, serial latch driver, 74141 for each tube 
-//#define MM5450            //6..8 LEDS
-//#define MAX7219CNG        //4..8 LED 
-//#define Numitron_4511N      //Numitron 4x tube clock
-//#define SN75512           //4..8 VFD tubes   
-//#define samsung           //samsung serial display
-//#define PCF_MULTIPLEX74141  //PCF pin expander for tube selection
-
-#define COLON_PIN   -1        //Blinking Colon pin.  If not used, SET TO -1                 (redtube clock:2, IV16:16 Pinter:TX, oldClock: 2 or SDA)
-#define TEMP_SENSOR_PIN -1     //DHT or Dallas temp sensor pin.  If not used, SET TO -1      (RX or any other free pin) (IV18clockGP: GPIO4)
-#define LED_SWITCH_PIN -1     //external led lightning ON/OFF.  If not used, SET TO -1      (Pinter: 16)
-#define DECIMALPOINT_PIN -1   //Nixie decimal point between digits. If not used, SET TO -1  (Pinter:16)
-#define ALARMSPEAKER_PIN -1   //Alarm buzzer pin                                            (oldCLock: SCL, pcftube6Clock: 3, numitron: 1)
-#define ALARMBUTTON_PIN -1    //Alarm switch off button pin 
-//8266 Neopixel LEDstripe pin is always the RX pin!!!
 
 //Display temperature and date in every minute between START..END seconds
 #define ENABLE_CLOCK_DISPLAY true   //false, if no clock display is needed (for example: thermometer + hygrometer only)

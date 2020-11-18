@@ -1,47 +1,42 @@
 #ifdef MAX6921   
 //VFD driver driver for ESP8266 os ESP32
 
-//Choose only 1 option from the following:
-#define IV18
-//#define IVL2
-//#define ESP32_VFD
-
-#ifdef IV18
-//Fill this table with the OUT positions of the MAX6921 chip!   
-  byte segmentEnablePins[] =  {0,2,5,6,4,1,3,7};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
-  byte digitEnablePins[] = {18,11,17,12,16,13,14,15}; //19};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  (You may define any number)
-                                                  
-//MAX6921 pins
-  #define PIN_LE    12  // D6 Shift Register Latch Enable
+#if defined(ESP32)
+  //Fill this table with the OUT positions of the MAX6921 chip!   
+  byte segmentEnablePins[] =  {14,17,10,19,18,16,12,11};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
+  byte digitEnablePins[] = {0,1,2,7,8,9};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
+  //MAX6921 pins
+  #define PIN_LE    14  // D6 Shift Register Latch Enable
   #define PIN_CLK   13  // D7 Shift Register Clock
-  #define PIN_DATA  14  // D5 Shift Register Data
-  #define PIN_BL    15  // D8 Shift Register Blank (1=display off     0=display on)
-#endif
+  #define PIN_DATA  27  // D5 Shift Register Data
+  #define PIN_BL    12  // D8 Shift Register Blank (1=display off     0=display on)
 
-#ifdef IVL2
-//Fill this table with the OUT positions of the MAX6921 chip!   
-  byte segmentEnablePins[] =  {11,13,5,8,3,12,2,1};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
-  byte digitEnablePins[] = {10,9,4,0};  //segment enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  
-                                               
-//MAX6921 pins
-  #define PIN_LE    13  // D6 Shift Register Latch Enable
-  #define PIN_CLK   12  // D7 Shift Register Clock
-  #define PIN_DATA  14  // D5 Shift Register Data
-  #define PIN_BL    15  // D8 Shift Register Blank (1=display off     0=display on)
+#else  //Any 8266 clock
+  #define IV18
+  //#define IVL2
 
-  #define TEMP_SENSOR_PIN RX
-#endif
+  #ifdef IV18
+  //Fill this table with the OUT positions of the MAX6921 chip!   
+    byte segmentEnablePins[] =  {0,2,5,6,4,1,3,7};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
+    byte digitEnablePins[] = {18,11,17,12,16,13,14,15}; //19};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  (You may define any number)
+  //MAX6921 pins
+    #define PIN_LE    12  // D6 Shift Register Latch Enable
+    #define PIN_CLK   13  // D7 Shift Register Clock
+    #define PIN_DATA  14  // D5 Shift Register Data
+    #define PIN_BL    15  // D8 Shift Register Blank (1=display off     0=display on)
+  #endif
 
-#ifdef ESP32_VFD
-//Fill this table with the OUT positions of the MAX6921 chip!   
-byte segmentEnablePins[] =  {0,2,5,6,4,1,3,7};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
-byte digitEnablePins[] = {18,11,17,12,16,13,14,15}; //19};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  (You may define any number)
-
-//MAX6921 pins
-  #define PIN_LE    12  // D6 Shift Register Latch Enable
-  #define PIN_CLK   13  // D7 Shift Register Clock
-  #define PIN_DATA  14  // D5 Shift Register Data
-  #define PIN_BL    16  // D8 Shift Register Blank (1=display off     0=display on)
+  #ifdef IVL2
+  //Fill this table with the OUT positions of the MAX6921 chip!   
+    byte segmentEnablePins[] =  {11,13,5,8,3,12,2,1};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
+    byte digitEnablePins[] = {10,9,4,0};  //segment enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  
+  //MAX6921 pins
+    #define PIN_LE    13  // D6 Shift Register Latch Enable
+    #define PIN_CLK   12  // D7 Shift Register Clock
+    #define PIN_DATA  14  // D5 Shift Register Data
+    #define PIN_BL    15  // D8 Shift Register Blank (1=display off     0=display on)
+    #define TEMP_SENSOR_PIN RX
+  #endif
 #endif
 
 //------------------abcdefgDP----------------   definition of different characters

@@ -4,7 +4,7 @@
 
 byte neoBrightness;
 #define COLORSATURATION 255
-#define RANDOM_WHEEL_DISTANCE  40  //how far colors will get in random mode
+#define RANDOM_WHEEL_DISTANCE  20  //how far colors will get in random mode
 
 RgbColor red(COLORSATURATION, 0, 0);
 RgbColor red2(COLORSATURATION/2, 0, 0);
@@ -19,9 +19,10 @@ RgbColor black(0,0,0);
 //byte tubePixels[] = {0,1,2,3};        //4 tubes, single leds
 //byte tubePixels[] = {0,0,1,2,3,3};    //4 tubes, 6 leds
 //byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
-byte tubePixels[] = {0,1,2,3,4,5,6,7};    //8 tubes, single leds
+//byte tubePixels[] = {0,1,2,3,4,5,6,7};    //8 tubes, single leds
 //byte tubePixels[] = {3,2,6,1,0};    //Numitron 4 tubes, 4 x single leds + 1. The extra led in the middle is not used, is always dark!
 //byte tubePixels[] = {0,1,2,3,3,2,1,0};  //4 tubes, double row, 8 leds
+byte tubePixels[] = {0,0,1,1,2,2,3,3};  //4 tubes, double row, 8 leds
 //byte tubePixels[] = {0,0,1,1,2,2,3,3, 3,3,2,2,1,1,0,0};  //4 tubes, double row, 16 leds (GB)
 //byte tubePixels[] = {0,0,1,1,2,2,3,3,3,3,2,2,1,1,0,0,0};  //4 tubes, double row, 17 leds (GP)
 //byte tubePixels[] = {0,0,0,1,1,2,2,3,3,3,3,  3,3,2,2,2,1,1,0,0};  //4 tubes, double row, 20 leds (Robi)
@@ -33,7 +34,7 @@ const int PixelCount = sizeof(tubePixels);
 //NeoBrgFeature give me BGRW (g and r swapped)
 
 #if defined(ESP32)
-  const byte PixelPin = 27;  //on ESP32 usable any pin below 32 
+  const byte PixelPin = 2;  //on ESP32 usable any pin below 32 
   NeoPixelBrightnessBus<NeoGrbFeature, NeoEsp32I2s1800KbpsMethod> strip(PixelCount+2,PixelPin);
 #else
   const byte PixelPin = 3;  // on 8266 it MUST use GPIO3 (RX pin)    
@@ -199,34 +200,35 @@ void effect2() {   //random color picker
 void effect3(boolean enableRandom,boolean eachPixelRandom) {
   static const int c[] = {255,5,12,22,30,40,54,62,78,85,100,110,122,137,177,190,210,227,240,256};
   static const int cMax = sizeof(c) / sizeof(c[0]);  //size of array
-  static unsigned long lastRun = 0;
   static int newColor[maxDigits];
   static int oldColor[maxDigits];
   static int actColor = 0;
   static int i = 2;
-  static int step = 0;
+  static int step = 1;
   static int idx = 0;
   static boolean firstRun = true;
+  static int counter = 0;
   int newC = 0;
-  unsigned long spd = max(0,25 * (258-prm.rgbSpeed));
   boolean changeColor = false;
   
   if (firstRun) {
     firstRun = false;
     for (int i=0;i<maxDigits;i++) {
       oldColor[i] = 0;
-      newColor[i] = 0;
+      newColor[i] = 100;
       actColor = 0;
     }
+    step = max(1,abs(newColor[2]-oldColor[2])/20);
   }
   
-  if (newColor[i] == actColor) { 
-    if (prm.rgbDir) i++;  else i--;     //goto next pixel
+  if (newColor[i] == actColor) {      //newColor reached... 
+    if (prm.rgbDir) i++;  else i--;   //goto next pixel
+    //DPRINT("Count:"); DPRINTLN(counter); counter = 0;
     
     if (i>=maxDigits) { i=0; changeColor = true;}
     else if (i<0) {i=maxDigits-1; changeColor = true;}
     
-    if (eachPixelRandom) {
+    if (eachPixelRandom) {   //each pixel is random color
       changeColor = true;
     }
     
@@ -235,13 +237,13 @@ void effect3(boolean enableRandom,boolean eachPixelRandom) {
       if (enableRandom) {
         do {
           newC = random(0,257);   //get a new random color
-        } while (abs(newC-actColor)<RANDOM_WHEEL_DISTANCE);
+        } while (abs(newC-newColor[i])<RANDOM_WHEEL_DISTANCE);   //here the oldColor is just stored in the newColor... :)
       }
       else {
         idx++; if (idx>=cMax) idx = 0;
         newC =  c[idx]; 
       }
-
+      //DPRINT("Old-New distance:"); DPRINTLN(abs(newC-newColor[i]));
       if (eachPixelRandom) {
         oldColor[i] = newColor[i]; 
         newColor[i] = newC;
@@ -254,14 +256,10 @@ void effect3(boolean enableRandom,boolean eachPixelRandom) {
       }   
     } //endif changeColor
     
-
-      
     actColor = oldColor[i];  //starting color} 
     step = max(1,abs(newColor[i]-oldColor[i])/20);
-    lastRun = millis();
-  }
+  }  //endif (newColor[i] == actColor)
 
-  //DPRINT(i); DPRINT("/"); DPRINTLN(actColor);    
   if (actColor<256) 
       setPixels(i, Wheel(actColor));
   else 
@@ -271,8 +269,9 @@ void effect3(boolean enableRandom,boolean eachPixelRandom) {
     if (oldColor[i]<newColor[i]) actColor = min(newColor[i],actColor+step);
     else actColor = max(newColor[i],actColor-step);
    }
-   //DPRINT("Pix:"); DPRINT(i); DPRINT(" ActCol:"); DPRINTLN(actColor); 
+   //DPRINT("Pix:"); DPRINT(i); DPRINT(" Old:"); DPRINT(oldColor[i]); DPRINT(" ActCol:"); DPRINT(actColor); DPRINT(" New:"); DPRINT(newColor[i]); DPRINT("  Step:"); DPRINTLN(step);
    strip.Show();
+   counter++;
 }
 
 
