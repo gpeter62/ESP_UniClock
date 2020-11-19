@@ -43,9 +43,9 @@
 
 #else //-------------- Any 8266 clock ------------------------------------------------------
   //Use only 1 driver from the following options!
-  #define MULTIPLEX74141   //4..8 Nixie tubes generic driver for ESP8266 or ESP32
+  //#define MULTIPLEX74141   //4..8 Nixie tubes generic driver for ESP8266 or ESP32
   //#define MAX6921          //4..8 VFD tubes (IV18) driver for ESP8266 or ESP32
-  //#define NO_MULTIPLEX74141 //4..6 Nixie tubes, serial latch driver, 74141 for each tube 
+  #define NO_MULTIPLEX74141 //4..6 Nixie tubes, serial latch driver, 74141 for each tube 
   //#define MM5450            //6..8 LEDS
   //#define MAX7219CNG        //4..8 LED 
   //#define Numitron_4511N      //Numitron 4x tube clock
@@ -53,7 +53,7 @@
   //#define samsung           //samsung serial display
   //#define PCF_MULTIPLEX74141  //PCF pin expander for tube selection
   //------- pinout -----------------------------------------------------------
-  #define COLON_PIN   -1        //Blinking Colon pin.  If not used, SET TO -1                 (redtube clock:2, IV16:16 Pinter:TX, oldClock: 2 or SDA)
+  #define COLON_PIN   SDA        //Blinking Colon pin.  If not used, SET TO -1                 (redtube clock:2, IV16:16 Pinter:TX, old-IN1-Clock: 2 or SDA)
   #define TEMP_SENSOR_PIN -1     //DHT or Dallas temp sensor pin.  If not used, SET TO -1      (RX or any other free pin) (IV18clockGP: GPIO4)
   #define LED_SWITCH_PIN -1     //external led lightning ON/OFF.  If not used, SET TO -1      (Pinter: 16)
   #define DECIMALPOINT_PIN -1   //Nixie decimal point between digits. If not used, SET TO -1  (Pinter:16)

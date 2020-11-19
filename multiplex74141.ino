@@ -22,7 +22,7 @@
 const int maxDigits = sizeof(digitEnablePins);
 
 //const byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
-const int PWMrefresh=11000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+const int PWMrefresh=11000;   //msec, Multiplex time period. Greater value => slower multiplex frequency
 #define MAXBRIGHT 10
 const int PWMtiming[MAXBRIGHT+1] = {0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000};
 

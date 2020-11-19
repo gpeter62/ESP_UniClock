@@ -22,8 +22,8 @@ RgbColor black(0,0,0);
 //byte tubePixels[] = {0,1,2,3,4,5,6,7};    //8 tubes, single leds
 //byte tubePixels[] = {3,2,6,1,0};    //Numitron 4 tubes, 4 x single leds + 1. The extra led in the middle is not used, is always dark!
 //byte tubePixels[] = {0,1,2,3,3,2,1,0};  //4 tubes, double row, 8 leds
-byte tubePixels[] = {0,0,1,1,2,2,3,3};  //4 tubes, double row, 8 leds
-//byte tubePixels[] = {0,0,1,1,2,2,3,3, 3,3,2,2,1,1,0,0};  //4 tubes, double row, 16 leds (GB)
+//byte tubePixels[] = {0,0,1,1,2,2,3,3};  //4 tubes, double row, 8 leds
+byte tubePixels[] = {3,3,2,2,1,1,0,0, 0,0,1,1,2,2,3,3};  //4 tubes, double row, 16 leds (GB)
 //byte tubePixels[] = {0,0,1,1,2,2,3,3,3,3,2,2,1,1,0,0,0};  //4 tubes, double row, 17 leds (GP)
 //byte tubePixels[] = {0,0,0,1,1,2,2,3,3,3,3,  3,3,2,2,2,1,1,0,0};  //4 tubes, double row, 20 leds (Robi)
 
