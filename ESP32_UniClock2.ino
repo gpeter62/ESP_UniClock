@@ -79,6 +79,7 @@
 
 byte c_MinBrightness = 8; 
 byte c_MaxBrightness = 255;
+unsigned long intCounter = 0;
 //--------------------------------------------------------------------------------------------------
 
 #include <DNSServer.h>
@@ -106,6 +107,7 @@ byte c_MaxBrightness = 255;
 
   hw_timer_t * ESP32timer = NULL;
   portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+  #define PRESCALER 15   //multiplex timer prescaler, about 80Hz for 6 tubes
 #else
   #error "Board is not supported!"  
 #endif
@@ -237,10 +239,11 @@ void startTimer() {
     
   #elif defined(ESP32)
     //  https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
-    ESP32timer = timerBegin(0, 80, true);  //set prescaler to 80 -> 1MHz signal, true = edge generated signal
+    ESP32timer = timerBegin(0,PRESCALER, true);  //set prescaler to 80 -> 1MHz signal, true = edge generated signal
     timerAttachInterrupt(ESP32timer, &writeDisplay, true);   
     timerAlarmWrite(ESP32timer, 10000, false);   //100millisec, no repeat
     timerAlarmEnable(ESP32timer);
+    DPRINTLN("Starting ESP32 timer...");
   #else
     #error "Unknown controller board!"    
   #endif  
@@ -250,7 +253,8 @@ void stopTimer() {
   #if defined(ESP8266)  
     timer1_detachInterrupt();
   #elif defined(ESP32)
-   // timerDetachInterrupt(ESP32timer);
+    //timerAlarmDisable(ESP32timer);
+   //timerDetachInterrupt(ESP32timer);
   #endif
 }
 
@@ -283,14 +287,21 @@ void Fdelay(unsigned long d) {
 
 void enableDisplay(boolean flag, unsigned long timeout) {
   static unsigned long lastDisable = millis();  
-  static boolean state = true;
+  static boolean state = false;
 
 #if defined(ESP32) || defined(PCF_MULTIPLEX74141)  //safety mode for slow multiplex hardvare to avoid crashing the flash
   if (flag) {
     if (!state && ((timeout ==0) || (millis()-lastDisable) > timeout) ) {
       state = true;
       EEPROMsaving = false;
-      startTimer();
+      #if defined(ESP32)
+        ESP32timer = timerBegin(0, PRESCALER, true);  //set prescalertrue = edge generated signal
+        timerAttachInterrupt(ESP32timer, &writeDisplay, true);   
+        timerAlarmWrite(ESP32timer, 1000, false);   //100millisec, no repeat
+        timerAlarmEnable(ESP32timer);
+      #else 
+        startTimer();
+      #endif
       DPRINTLN("Enable tubes");
     }
   }
@@ -608,6 +619,7 @@ void setup() {
   //WiFi.mode(WIFI_OFF);
   Fdelay(200);
   DPRINTBEGIN(115200); DPRINTLN(" ");
+  DPRINT("Starting "); DPRINTLN(webName);
   clearDigits(); 
   if (ALARMSPEAKER_PIN>=0) {pinMode(ALARMSPEAKER_PIN, OUTPUT); digitalWrite(ALARMSPEAKER_PIN,LOW);}
   if (ALARMBUTTON_PIN>=0)   pinMode(ALARMBUTTON_PIN, INPUT_PULLUP);  
@@ -623,12 +635,12 @@ void setup() {
   }  
   setupRTC();
   setupGPS();
-
+  setup_pins();
+  
   DPRINT("Number of digits:"); DPRINTLN(maxDigits);
   loadEEPROM();
   if (prm.magic !=MAGIC_VALUE) factoryReset();
   
-  setup_pins();
   setupNeopixelMakuna();  
   
   byte saveMode = prm.animMode;
@@ -1269,6 +1281,7 @@ static unsigned long lastRun = millis();
   if (colonBlinkState) DPRINT(" B ");
   else DPRINT("   ");
   //DPRINT(ESP.getFreeHeap());   //show free memory for debugging memory leak
+  //DPRINT(intCounter);
   DPRINTLN(" ");
 }
 
