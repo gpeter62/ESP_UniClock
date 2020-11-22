@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ESP UniClock v2.0</title>
+    <title>Uniclock</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="site.css">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" sizes="16x16">
     <script src="jquery_351.js"></script>
     <script src="page.js"></script>
 </head>
@@ -14,12 +15,20 @@
         <div class="form">
             <div class="header">
                 <div class="control-holder">
+                    <label>Version</label>
+                    <span id="versionHeader" class="info medium"></span>
+                </div>
+                <div class="control-holder">
                     <label>Current Time</label>
                     <span id="currentTime" class="info medium"></span>
                 </div>
-                <div class="control-holder">
+                <div class="control-holder temperature-holder">
                     <label>Temperature</label>
                     <span id="temperature" class="info big"></span>
+                </div>
+                <div class="control-holder humidity-holder">
+                    <label>Humidity</label>
+                    <span id="humidity" class="info big"></span>
                 </div>
 			</div>	
 			
@@ -139,7 +148,7 @@
                 </div>
             </div>
 			
-           <div class="control-holder">
+           <div class="control-holder rgb-holder">
                 <label for="rgbEffect">RGB Effect</label>
                 <select id="rgbEffect">
                     <option value="0">OFF</option>
@@ -155,20 +164,20 @@
 					<option value="10">Knight Rider's KITT</option>
                 </select>
             </div>
-            <div class="control-holder">
+            <div class="control-holder rgb-holder">
                 <label>RGB Brightness</label>
                 <div class="multiple-input">
                     <select id="rgbBrightness" class="number-select small" min="8" max="255" step="1"></select>
                 </div>
             </div>
-            <div class="control-holder">
+            <div class="control-holder rgb-holder">
                 <label>Fix Color</label>
                 <div class="multiple-input">
                     <select id="rgbFixColor" class="number-select" min="1" max="256" step="1" prefix="Color_" suffix=""></select>
                 </div>
             </div>
         
-            <div class="control-holder">
+            <div class="control-holder rgb-holder">
                 <label>Direction</label>
                 <input id="rgbDir" type="checkbox" class="switch two-side">
                 <span class="switcher-text left non-selectable" for="rgbDir">left</span>
@@ -176,7 +185,7 @@
                 <span class="switcher-text right non-selectable" for="rgbDir">right</span>
             </div>
             
-            <div class="control-holder">
+            <div class="control-holder rgb-holder">
                 <label for="rgbSpeed">Speed</label>
                 <select class="number-select small" id="rgbSpeed" min="1" max="255" step="1"></select>
             </div>
