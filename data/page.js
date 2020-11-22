@@ -127,9 +127,9 @@ function Init(){
         }
     }
     $('#currentTime').html(configuration["currentDate"] + " " + configuration["currentTime"]);
-    $('.humidity-holder').toggleClass('hidden',configuration['humidity'] == -1);
+    $('.humidity-holder').toggleClass('hidden',configuration['humidity'] == 255);
     $('.temperature-holder').toggleClass('hidden',configuration['temperature'] == 255);
-    $('.rgb-holder').toggleClass('hidden',configuration['rgbEffect'] == -1);
+    $('.rgb-holder').toggleClass('hidden',configuration['rgbEffect'] == 255);
 
     //sets a possible good timezone, if not already set
     if(!configuration['utc_offset']){

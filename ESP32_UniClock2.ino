@@ -28,7 +28,7 @@
 //#define USE_DHT_TEMP      //TEMP_SENSOR_PIN is used to connect the sensor,  temperature and humidity measure
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
 //#define USE_GPS           //use for standalone clock, without wifi internet access
-#define USE_NEOPIXEL_MAKUNA   //WS2812B led stripe, for tubes lightning. Don't forget to define tubePixels[] !
+//#define USE_NEOPIXEL_MAKUNA   //WS2812B led stripe, for tubes lightning. Don't forget to define tubePixels[] !
 
 //--------------------- ESP32 Clock ----------------------------------------------------------
 #if defined(ESP32)
@@ -573,8 +573,17 @@ void handleSendConfig(AsyncWebServerRequest *request){
   doc["currentDate"] = buf;
   sprintf(buf,"%02d:%02d",hour(),minute());
   doc["currentTime"] = buf;
-  doc["temperature"] = temperature[0];  
-  doc["humidity"] = 0;   
+  
+  if (useTemp>0)
+    doc["temperature"] = temperature[0];  
+  else 
+    doc["temperature"] = 255;
+  
+  if (useHumid)
+    doc["humidity"] = humid;   
+  else
+    doc["humidity"] = 255; 
+
   
   //Clock calculation and display parameters
   doc["utc_offset"] = prm.utc_offset;
@@ -603,7 +612,11 @@ void handleSendConfig(AsyncWebServerRequest *request){
   doc["alarmPeriod"] = prm.alarmPeriod;
   
   //RGB LED values    
-  doc["rgbEffect"] = prm.rgbEffect;       // if -1, no RGB exist!
+  #ifdef USE_NEOPIXEL_MAKUNA
+    doc["rgbEffect"] = prm.rgbEffect;       // if 255, no RGB exist!
+  #else
+    doc["rgbEffect"] = 255;   //Not installed Neopixels!!!
+  #endif
   doc["rgbBrightness"] = prm.rgbBrightness; // c_MinBrightness..255
   doc["rgbFixColor"] = prm.rgbFixColor;   // 0..256
   doc["rgbSpeed"] = prm.rgbSpeed;       // 1..255
