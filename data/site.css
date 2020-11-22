@@ -17,6 +17,9 @@ html {
     background-attachment: fixed;
     color: #c35;
 }
+.hidden{
+    display: none !important;
+}
 a, a:visited{
     color: #c35;
     text-decoration: none;
@@ -84,7 +87,9 @@ input, select{
     line-height: normal;
     border-radius: 3px;
     border: 1px solid #666;
-    transition: 0.15s background;
+    transition: 0.15s background;    
+}
+input:not(:disabled),select:not(:disabled){
     cursor: pointer;
 }
 input:hover, select:hover{
@@ -178,6 +183,7 @@ input:active, select:active{
     margin: auto;
     display: block;
     text-align: center;
+    text-shadow: 1px 1px 0 black;
 }
 .footer span{
     margin: 0 10px;
