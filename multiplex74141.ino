@@ -25,37 +25,36 @@ const int PWMtiming[MAXBRIGHT+1] = {0,1000,2000,3000,4000,5000,6000,7000,8000,90
 
 
 void setup_pins() {
-  DPRINTLN("Setup pins...");
+  DPRINTLN("Setup pins -  Multiplex 74141 mode...");
   for (int i=0;i<maxDigits;i++) pinMode(digitEnablePins[i], OUTPUT);
   for (int i=0;i<4;i++) pinMode(ABCDPins[i], OUTPUT);
   startTimer();
 }
 
 #if defined(ESP32)
-  void IRAM_ATTR  writeDisplay(){
+void IRAM_ATTR  writeDisplay(){
+  portENTER_CRITICAL_ISR(&timerMux);
 #else 
-  void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
+void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
 #endif
   
   static byte pos = 0;
   static volatile byte state=0;
   static int timer = PWMrefresh;
   static byte num,brightness;
-
+  
+  intCounter++;
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
-    digitalWrite(digitEnablePins[pos],LOW);
-    #if defined(ESP8266)    
+    digitalWrite(digitEnablePins[pos],LOW); 
+    #if defined(ESP8266)  
       timer1_write(PWMrefresh);
     #elif defined(ESP32)
-      timerAlarmWrite(ESP32timer, PWMrefresh, false);
+      portEXIT_CRITICAL(&timerMux);
     #endif    
     return;  
   }
 
-  #if defined(ESP32)
-    portENTER_CRITICAL_ISR(&timerMux);
-  #endif
-  
+
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
   timer = PWMrefresh;
@@ -117,7 +116,10 @@ void setup_pins() {
   #if defined(ESP8266)    
     timer1_write(timer);
   #elif defined(ESP32)     
-    timerAlarmWrite(ESP32timer, PWMrefresh, false);
+    ESP32timer = timerBegin(0, PRESCALER, true);  //set prescaler, true = edge generated signal
+    timerAttachInterrupt(ESP32timer, &writeDisplay, true);   
+    timerAlarmWrite(ESP32timer, timer, false);   
+    timerAlarmEnable(ESP32timer);
     portEXIT_CRITICAL_ISR(&timerMux);
   #endif    
 }

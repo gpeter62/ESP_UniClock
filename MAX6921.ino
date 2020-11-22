@@ -91,16 +91,16 @@ const int PWMtiming[MAXBRIGHT+1] = {0,250,500,1000,2000,2500,3000,3500,4000,4500
 #endif
 
 void setup_pins() {
-#if defined(ESP8266) || defined(ESP32)
-#else
-  #error "Board is not supported!"  
-#endif
+  
+  #if defined(ESP8266) || defined(ESP32)
+  #else
+    #error "Board is not supported!"  
+  #endif
   
   pinMode(PIN_LE,  OUTPUT);
   pinMode(PIN_BL,  OUTPUT);   digitalWrite(PIN_BL,LOW);  //brightness
   pinMode(PIN_DATA,OUTPUT);
   pinMode(PIN_CLK, OUTPUT);
-  
     
   DPRINTLN("Setup MAX6921 pins...");
   DPRINT("- CLK   : GPIO"); DPRINTLN(PIN_CLK);
@@ -113,11 +113,11 @@ void setup_pins() {
   startTimer();
 }  
 
-
 #if defined(ESP32)
-  void IRAM_ATTR  writeDisplay(){
+void IRAM_ATTR  writeDisplay(){
+  portENTER_CRITICAL_ISR(&timerMux);
 #else 
-  void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
+void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
 #endif
   
   static volatile int timer = PWMrefresh;
@@ -126,19 +126,16 @@ void setup_pins() {
   static volatile boolean state=true;
   static volatile byte brightness;
 
+  intCounter++;
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
     digitalWrite(PIN_BL,HIGH);    //OFF
     #if defined(ESP8266)    
       timer1_write(PWMrefresh);
     #elif defined(ESP32)
-      timerAlarmWrite(ESP32timer, PWMrefresh, false);
+      portEXIT_CRITICAL(&timerMux);
     #endif    
-    return;  
+    return;
   }
-
-  #if defined(ESP32)
-    portENTER_CRITICAL_ISR(&timerMux);
-  #endif
 
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
@@ -184,7 +181,10 @@ void setup_pins() {
   #if defined(ESP8266)    
     timer1_write(timer);
   #elif defined(ESP32)     
-    timerAlarmWrite(ESP32timer, timer, false);
+    ESP32timer = timerBegin(0, PRESCALER, true);  //set prescaler, true = edge generated signal
+    timerAttachInterrupt(ESP32timer, &writeDisplay, true);   
+    timerAlarmWrite(ESP32timer, timer, false);   //100millisec, no repeat
+    timerAlarmEnable(ESP32timer);
     portEXIT_CRITICAL_ISR(&timerMux);
   #endif    
 }
