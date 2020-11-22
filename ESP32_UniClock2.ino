@@ -34,8 +34,8 @@
 #if defined(ESP32)
   #define MULTIPLEX74141
   //#define MAX6921
-  #define COLON_PIN   15        //Blinking Colon pin.  If not used, SET TO -1                 
-  #define TEMP_SENSOR_PIN 23     //DHT or Dallas temp sensor pin.  If not used, SET TO -1     
+  #define COLON_PIN   -1        //Blinking Colon pin.  If not used, SET TO -1                 
+  #define TEMP_SENSOR_PIN 23    //DHT or Dallas temp sensor pin.  If not used, SET TO -1     
   #define LED_SWITCH_PIN -1     //external led lightning ON/OFF.  If not used, SET TO -1      
   #define DECIMALPOINT_PIN -1   //Nixie decimal point between digits. If not used, SET TO -1  
   #define ALARMSPEAKER_PIN 32   //Alarm buzzer pin                                            
@@ -403,12 +403,6 @@ void startServer() {
     request->send(SPIFFS, "/index.html", "text/html");
   });
 
-   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    enableDisplay(false,0);
-    DPRINTLN("Webserver: /");
-    request->send(SPIFFS, "/index.html", "text/html");
-  });
-  
   server.on("/jquery_351.js", HTTP_GET, [](AsyncWebServerRequest *request){
     enableDisplay(false,0);
     DPRINTLN("Webserver: /jquery_351.js");
@@ -433,8 +427,6 @@ void startServer() {
     AsyncWebServerResponse *response = request->beginResponse(302); //
     response->addHeader("Location", String("http://") + WiFi.softAPIP().toString().c_str());
     request->send(response);
-
-
  /*   
     //request->send(SPIFFS, "/index.html", "text/html");
     AsyncResponseStream *response = request->beginResponseStream("text/html");
@@ -457,7 +449,7 @@ void startServer() {
     
   server.on("/saveSetting", HTTP_POST, handleConfigChanged);
   server.on("/getConfiguration", HTTP_GET, handleSendConfig);
-  
+  server.on("/getData", HTTP_GET, handleSendData);
   server.onNotFound([](AsyncWebServerRequest *request) {
     
   int params = request->params();
@@ -584,7 +576,6 @@ void handleSendConfig(AsyncWebServerRequest *request){
   else
     doc["humidity"] = 255; 
 
-  
   //Clock calculation and display parameters
   doc["utc_offset"] = prm.utc_offset;
   doc["enableDST"] = prm.enableDST;         // Flag to enable DST (summer time...)
@@ -623,6 +614,31 @@ void handleSendConfig(AsyncWebServerRequest *request){
   doc["rgbDir"] = prm.rgbDir;          // 0 = right direction, 1 = left direction
   doc["rgbMinBrightness"] = c_MinBrightness;  //minimum brightness for range check!!
   
+  String json;
+  serializeJson(doc, json);
+  request->send(200, "application/json", json);
+}
+
+void handleSendData(AsyncWebServerRequest *request){
+  StaticJsonDocument<512> doc;
+  char buf[20];  //conversion buffer
+  
+  DPRINTLN("Sending actual data to web client...");
+  //Actual time and environment data
+  sprintf(buf,"%4d.%02d.%02d",year(),month(),day());
+  doc["currentDate"] = buf;
+  sprintf(buf,"%02d:%02d",hour(),minute());
+  doc["currentTime"] = buf;
+  
+  if (useTemp>0)
+    doc["temperature"] = temperature[0];  
+  else 
+    doc["temperature"] = 255;
+  
+  if (useHumid)
+    doc["humidity"] = humid;   
+  else
+    doc["humidity"] = 255; 
   String json;
   serializeJson(doc, json);
   request->send(200, "application/json", json);
