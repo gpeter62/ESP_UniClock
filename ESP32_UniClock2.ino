@@ -449,9 +449,15 @@ void startServer() {
     
   server.on("/saveSetting", HTTP_POST, handleConfigChanged);
   server.on("/getConfiguration", HTTP_GET, handleSendConfig);
-  server.on("/getData", HTTP_GET, handleSendData);
-  server.onNotFound([](AsyncWebServerRequest *request) {
-    
+  server.on("/getCurrentInfos", HTTP_GET, handleSendCurrentInfos);
+  server.onNotFound(handleNotFound);
+  
+  server.begin();
+
+}  //end of procedure
+
+void handleNotFound(AsyncWebServerRequest *request){
+  
   int params = request->params();
   for(int i=0;i<params;i++){
     AsyncWebParameter* p = request->getParam(i);
@@ -464,28 +470,22 @@ void startServer() {
     }
   }
 
-  
-    String message = "File Not Found\n\n";
-    message += "URL: ";
-    message += request->url();
-    message += "\nMethod: ";
-    message += ( request->method() == HTTP_GET ) ? "GET" : "POST";
-    message += "\nArguments: ";
-    message += request->args();
-    message += "\n";
+  String message = "File Not Found\n\n";
+  message += "URL: ";
+  message += request->url();
+  message += "\nMethod: ";
+  message += ( request->method() == HTTP_GET ) ? "GET" : "POST";
+  message += "\nArguments: ";
+  message += request->args();
+  message += "\n";
 
-    for ( uint8_t i = 0; i < request->args(); i++ ) {
-      message += " " + request->argName ( i ) + ": " + request->arg ( i ) + "\n";
-    }
+  for ( uint8_t i = 0; i < request->args(); i++ ) {
+    message += " " + request->argName ( i ) + ": " + request->arg ( i ) + "\n";
+  }
 
-    DPRINTLN(message);
-    request->send( 204, "text/html", "URL Not Found" );
-  });
-  
-  server.begin();
-
-}  //end of procedure
-
+  DPRINTLN(message);
+  request->send( 204, "text/html", "URL Not Found" );
+}
 
 void handleConfigChanged(AsyncWebServerRequest *request){
   if (request->hasParam("key", true) && request->hasParam("value", true)) {
@@ -619,7 +619,7 @@ void handleSendConfig(AsyncWebServerRequest *request){
   request->send(200, "application/json", json);
 }
 
-void handleSendData(AsyncWebServerRequest *request){
+void handleSendCurrentInfos(AsyncWebServerRequest *request){
   StaticJsonDocument<512> doc;
   char buf[20];  //conversion buffer
   

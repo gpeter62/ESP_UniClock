@@ -32,6 +32,10 @@ var configuration = {
 //Runs, when HTML document is fully loaded
 $(document).ready(function(){
     getConfiguration(); 
+
+    //Set current infos, like time, humidity and temperature
+    setCurrentInfos();
+    setInterval(setCurrentInfos,1000);   //refreshes time every second
 });
 
 function getConfiguration(){
@@ -102,7 +106,7 @@ function Init(){
             $('#'+index+'Hours').val(formatToTwoDigit(value[0]));
             $('#'+index+'Minutes').val(formatToTwoDigit(value[1]));
         }
-        else if(index == 'version' || index == 'temperature' || index == 'humidity'){
+        else if(index == 'version'){
             $('#'+index).html(value);
         }
         else if(index == 'utc_offset' || index == 'maxBrightness' || 
@@ -126,7 +130,6 @@ function Init(){
             //TODO
         }
     }
-    $('#currentTime').html(configuration["currentDate"] + " " + configuration["currentTime"]);
     $('.humidity-holder').toggleClass('hidden',configuration['humidity'] == 255);
     $('.temperature-holder').toggleClass('hidden',configuration['temperature'] == 255);
     $('.rgb-holder').toggleClass('hidden',configuration['rgbEffect'] == 255);
@@ -137,10 +140,6 @@ function Init(){
         var tryToFindCurrentZone = -(new Date().getTimezoneOffset() / 60);
         $('#utc_offset').val(tryToFindCurrentZone);
     }
-
-    //Set current date
-    //setCurrentTime();
-    //setInterval(setCurrentTime,1000);   //refreshes time every second
 
     setTimeout(function(){
         $('input, select').on('change',function(){
@@ -163,8 +162,14 @@ function Init(){
     },200);
 }
 
-function setCurrentTime(){
-    $('#currentTime').html(getCurrentTime());
+function setCurrentInfos(){
+    $.get('/getCurrentInfos/').done(function(data){
+        $('#currentTime').html(data["currentDate"] + " " + data["currentTime"]);
+        $('#humidity').html(data["humidity"]);
+        $('#temperature').html(data["temperature"]);
+    }).always(function(){
+        
+    });
 }
 
 //Gets the current time from browser and gives back as readable format
