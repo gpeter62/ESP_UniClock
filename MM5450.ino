@@ -1,5 +1,6 @@
 #ifdef MM5450
 
+MAXBRIGHTNESS 15
 const int maxDigits = 6;
 
 //Fill this table with the pin numbers of MM5450 chip!

@@ -97,6 +97,9 @@ float tmp_temp;
 }
 
 void resetSensors() {
+  #if defined(ESP32)
+    return;
+  #endif  
   DPRINTLN("Reset sensors...");
   oneWire.reset();
   Fdelay(200);  //200ms

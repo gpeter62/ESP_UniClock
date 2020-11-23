@@ -5,20 +5,20 @@
 #if defined(ESP32)
   const byte digitEnablePins[] = {4,16,17,5,18,19};   //ESP32 6x tube Clock
   const byte ABCDPins[4] =  {12,27,14,13};   
-  const byte DpPin = 15; // decimalPoint in Nixie tube, set -1, if not used!
+  const int DpPin = 15; // decimalPoint in Nixie tube, set -1, if not used!
   
 #else //any 8266 clock
  const byte digitEnablePins[] = {14,12,13,15};   //IN16 4x tube clock
  const byte ABCDPins[4] =  {2,4,5,0};   
- const byte DpPin = -1; // decimalPoint in Nixie tube, set -1, if not used!
+ const int DpPin = -1; // decimalPoint in Nixie tube, set -1, if not used!
 
   //const byte digitEnablePins[] = {15,13,12,14};   //IN14 clock-termometer (P.S)
   //const byte ABCDPins[4] =  {2,4,5,0};
- //const byte DpPin = -1; // decimalPoint in Nixie tube, set -1, if not used!
+ //const int DpPin = -1; // decimalPoint in Nixie tube, set -1, if not used!
 
   //const byte digitEnablePins[] = {13,12,14,15};    //red 4x tube nixie clock
   //const byte ABCDPins[4] = {16,5,4,0};
-  //const byte DpPin = -1; // decimalPoint in Nixie tube, set -1, if not used!
+  //const int DpPin = -1; // decimalPoint in Nixie tube, set -1, if not used!
 #endif
 
 const int maxDigits = sizeof(digitEnablePins);
@@ -39,21 +39,25 @@ void setup_pins() {
 
 #if defined(ESP32)
 void IRAM_ATTR  writeDisplay(){
-  portENTER_CRITICAL_ISR(&timerMux);
 #else 
 void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
 #endif
-  
+
+  //if (EEPROMsaving) { return;}
   static byte pos = 0;
   static volatile byte state=0;
   static int timer = PWMrefresh;
   static byte num,brightness;
   byte DPpos;
   
+  #if defined(ESP32)
+    portENTER_CRITICAL_ISR(&timerMux);
+  #endif
+  
   intCounter++;
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
-    digitalWrite(digitEnablePins[pos],LOW); 
     #if defined(ESP8266)  
+      digitalWrite(digitEnablePins[pos],LOW); 
       timer1_write(PWMrefresh);
     #elif defined(ESP32)
       portEXIT_CRITICAL(&timerMux);
@@ -136,8 +140,11 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
 }
 
 void clearTubes() {
-    for (int i=0;i<maxDigits;i++) digitalWrite(digitEnablePins[i],LOW); 
-    if (DpPin>=0) digitalWrite(DpPin,LOW);
+  
+    #if defined(ESP32)
+      for (int i=0;i<maxDigits;i++) digitalWrite(digitEnablePins[i],LOW); 
+      if (DpPin>=0) digitalWrite(DpPin,LOW);
+    #endif
 }
 
 void writeDisplaySingle() {}

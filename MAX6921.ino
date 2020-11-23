@@ -3,8 +3,9 @@
 
 #if defined(ESP32)
   //Fill this table with the OUT positions of the MAX6921 chip!   
-  byte segmentEnablePins[] =  {14,17,10,19,18,16,12,11};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
-  byte digitEnablePins[] = {0,1,2,7,8,9};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
+  byte segmentEnablePins[] =  {19,17,15,12,13,16,18,14};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
+  byte digitEnablePins[] = {9,8,7,2,1,0};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
+  
   //MAX6921 pins
   #define PIN_LE    14  // D6 Shift Register Latch Enable
   #define PIN_CLK   13  // D7 Shift Register Clock
@@ -115,7 +116,6 @@ void setup_pins() {
 
 #if defined(ESP32)
 void IRAM_ATTR  writeDisplay(){
-  portENTER_CRITICAL_ISR(&timerMux);
 #else 
 void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
 #endif
@@ -126,10 +126,14 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   static volatile boolean state=true;
   static volatile byte brightness;
 
+  #if defined(ESP32)
+    portENTER_CRITICAL_ISR(&timerMux);
+  #endif
+
   intCounter++;
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
-    digitalWrite(PIN_BL,HIGH);    //OFF
     #if defined(ESP8266)    
+      digitalWrite(PIN_BL,HIGH);    //OFF
       timer1_write(PWMrefresh);
     #elif defined(ESP32)
       portEXIT_CRITICAL(&timerMux);
@@ -183,7 +187,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   #elif defined(ESP32)     
     ESP32timer = timerBegin(0, PRESCALER, true);  //set prescaler, true = edge generated signal
     timerAttachInterrupt(ESP32timer, &writeDisplay, true);   
-    timerAlarmWrite(ESP32timer, timer, false);   //100millisec, no repeat
+    timerAlarmWrite(ESP32timer, timer, false);   
     timerAlarmEnable(ESP32timer);
     portEXIT_CRITICAL_ISR(&timerMux);
   #endif    

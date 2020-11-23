@@ -20,8 +20,8 @@ RgbColor black(0,0,0);
 // Valid: 0..(maxDigits-1) If a number is equal maxDigits or higher, it will stay always dark!
 //byte tubePixels[] = {0,1,2,3};        //4 tubes, single leds
 //byte tubePixels[] = {0,0,1,2,3,3};    //4 tubes, 6 leds
-//byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
-byte tubePixels[] = {0,1,2,3,4,5,6,7};    //8 tubes, single leds
+byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
+//byte tubePixels[] = {0,1,2,3,4,5,6,7};    //8 tubes, single leds
 //byte tubePixels[] = {3,2,6,1,0};    //Numitron 4 tubes, 4 x single leds + 1. The extra led in the middle is not used, is always dark!
 //byte tubePixels[] = {0,1,2,3,3,2,1,0};  //4 tubes, double row, 8 leds
 //byte tubePixels[] = {0,0,1,1,2,2,3,3};  //4 tubes, double row, 8 leds
@@ -46,7 +46,7 @@ const int PixelCount = sizeof(tubePixels);
 NeoGamma<NeoGammaTableMethod> colorGamma;
 
 void setupNeopixelMakuna() {
-    DPRINTLN("Setup NeoPixel LEDS");
+    DPRINT("Setup NeoPixel LEDS: Pin = "); DPRINTLN(PixelPin);
     DPRINT("Pixel count: "); DPRINTLN(PixelCount);
     DPRINT("Brightness:"); DPRINT(c_MinBrightness); DPRINT(" - "); DPRINTLN(c_MaxBrightness);
     neoBrightness = prm.rgbBrightness;
@@ -172,7 +172,7 @@ void effect1() {  //color dimmer
     dir = 1;
   }
   if (counter >= (prm.rgbBrightness-c_MinBrightness)) {
-    c = random(0,257);
+    c = random(0,270);
     dir = -1;
   }
   strip.Show();
@@ -180,12 +180,12 @@ void effect1() {  //color dimmer
 
 
 void effect2() {   //random color picker
-  static int c = random(0,257);  //actual color
+  static int c = random(0,270);  //actual color
   static unsigned long lastRun = 0;
   
   if ((millis()-lastRun)>100*max(0,(258-prm.rgbSpeed))) {
     lastRun = millis();
-    c = random(0,257);
+    c = random(0,270);
   }
   
   for(int i=0; i<PixelCount; i++) {
@@ -200,7 +200,7 @@ void effect2() {   //random color picker
 }
 
 void effect3(boolean enableRandom,boolean eachPixelRandom) {
-  static const int c[] = {255,5,12,22,30,40,54,62,78,85,100,110,122,137,177,190,210,227,240,256};
+  static const int c[] = {255,5,12,22,30,40,54,62,78,85,100,110,122,137,177,190,210,227,240,270};
   static const int cMax = sizeof(c) / sizeof(c[0]);  //size of array
   static int newColor[maxDigits];
   static int oldColor[maxDigits];
@@ -239,7 +239,7 @@ void effect3(boolean enableRandom,boolean eachPixelRandom) {
       if (enableRandom) {
         counter = 0;
         while (true) {
-          newC = random(0,257);   //get a new random color
+          newC = random(0,270);   //get a new random color
           colorOK = true;
           if (RANDOM_FROM_ALL_PIXELS) {
             for (int j=0;j<maxDigits;j++) {
@@ -292,7 +292,6 @@ void effect3(boolean enableRandom,boolean eachPixelRandom) {
 
 
 void effect4() {    //every pixel is random changer
-  static unsigned long lastRun = 0;
   static int newColor[maxDigits];
   static int oldColor[maxDigits];
   static int actColor[maxDigits];
@@ -306,8 +305,8 @@ void effect4() {    //every pixel is random changer
   if (firstRun) {
     firstRun = false;
     for (int i=0;i<maxDigits;i++) {
-      newColor[i] = random(0,257);
-      oldColor[i] = random(0,257);
+      newColor[i] = random(0,270);
+      oldColor[i] = random(0,270);
       actColor[i] = oldColor[i];
       step[i] = 1;
     }
@@ -318,7 +317,7 @@ void effect4() {    //every pixel is random changer
   if (actColor[t] == newColor[t]) {  //change color
     oldColor[t] = newColor[t];
     do {
-      newColor[t] = random(0,257);   //get a new random color
+      newColor[t] = random(0,270);   //get a new random color
     } while (abs(newColor[t]-oldColor[t])<RANDOM_WHEEL_DISTANCE);
     
     actColor[t] = oldColor[t];  //starting color} 
