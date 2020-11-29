@@ -5,7 +5,7 @@
 byte neoBrightness;
 #define COLORSATURATION 255
 #define RANDOM_WHEEL_DISTANCE  25  //how far colors will get in random mode
-#define RANDOM_MAX_COUNTER 50 //maximum how many times try to found a new color
+#define RANDOM_MAX_COUNTER 50      //maximum how many times try to found a new color
 #define RANDOM_FROM_ALL_PIXELS true  //true or false: when generating new colors, the distance must be calculated from all pixels or only from the actual pixel's color 
 
 RgbColor red(COLORSATURATION, 0, 0);
@@ -19,8 +19,10 @@ RgbColor black(0,0,0);
 //Definition: wich pixels are near wich tube?  Make sure to set all pixels of the stripe! 
 // Valid: 0..(maxDigits-1) If a number is equal maxDigits or higher, it will stay always dark!
 //byte tubePixels[] = {0,1,2,3};        //4 tubes, single leds
+byte tubePixels[] = {3,2,1,0};        //4 tubes, single leds, reverse direction
+//byte tubePixels[] = {0,9,1,9,2,9,3};        //4 tubes, single leds, 3 leds not used
 //byte tubePixels[] = {0,0,1,2,3,3};    //4 tubes, 6 leds
-byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
+//byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
 //byte tubePixels[] = {0,1,2,3,4,5,6,7};    //8 tubes, single leds
 //byte tubePixels[] = {3,2,6,1,0};    //Numitron 4 tubes, 4 x single leds + 1. The extra led in the middle is not used, is always dark!
 //byte tubePixels[] = {0,1,2,3,3,2,1,0};  //4 tubes, double row, 8 leds
@@ -172,7 +174,7 @@ void effect1() {  //color dimmer
     dir = 1;
   }
   if (counter >= (prm.rgbBrightness-c_MinBrightness)) {
-    c = random(0,270);
+    c = random(0,262);
     dir = -1;
   }
   strip.Show();
@@ -180,12 +182,12 @@ void effect1() {  //color dimmer
 
 
 void effect2() {   //random color picker
-  static int c = random(0,270);  //actual color
+  static int c = random(0,262);  //actual color
   static unsigned long lastRun = 0;
   
   if ((millis()-lastRun)>100*max(0,(258-prm.rgbSpeed))) {
     lastRun = millis();
-    c = random(0,270);
+    c = random(0,262);
   }
   
   for(int i=0; i<PixelCount; i++) {
@@ -200,7 +202,7 @@ void effect2() {   //random color picker
 }
 
 void effect3(boolean enableRandom,boolean eachPixelRandom) {
-  static const int c[] = {255,5,12,22,30,40,54,62,78,85,100,110,122,137,177,190,210,227,240,270};
+  static const int c[] = {255,5,12,22,30,40,54,62,78,85,100,110,122,137,177,190,210,227,240,262};
   static const int cMax = sizeof(c) / sizeof(c[0]);  //size of array
   static int newColor[maxDigits];
   static int oldColor[maxDigits];
@@ -238,25 +240,27 @@ void effect3(boolean enableRandom,boolean eachPixelRandom) {
       changeColor = false;
       if (enableRandom) {
         counter = 0;
-        while (true) {
-          newC = random(0,270);   //get a new random color
+        while (true) {  //random color
+          newC = random(0,259);   //get a new random color
           colorOK = true;
           if (RANDOM_FROM_ALL_PIXELS) {
             for (int j=0;j<maxDigits;j++) {
-              if (abs(newC-newColor[j])<RANDOM_WHEEL_DISTANCE) 
+              if (abs(newC-min(256,newColor[j]))<RANDOM_WHEEL_DISTANCE) 
                 colorOK = false;   //here the oldColor is just stored in the newColor... :)
-            }    
+            }   
+          if (abs(newC-min(256,newColor[i])) < 2*RANDOM_WHEEL_DISTANCE) 
+                colorOK = false;
           }   
           else {  
-            if (abs(newC-newColor[i])<RANDOM_WHEEL_DISTANCE)    //check random only from actual pixel
+            if (abs(newC-min(256,newColor[i]))<RANDOM_WHEEL_DISTANCE)    //check random only from actual pixel
                 colorOK = false;   //here the oldColor is just 
           }               
           counter++;
           if (colorOK || (counter>RANDOM_MAX_COUNTER))  break;
         } //end while 
-        //DPRINT(abs(actColor-newColor[i])); DPRINT(":"); DPRINTLN(counter);
+        //DPRINT(abs(actColor-newColor[i])); DPRINT("  No of tries:"); DPRINTLN(counter);
       }
-      else {
+      else {  //new color from table
         idx++; if (idx>=cMax) idx = 0;
         newC =  c[idx]; 
       }
@@ -281,12 +285,11 @@ void effect3(boolean enableRandom,boolean eachPixelRandom) {
       setPixels(i, Wheel(actColor));
   else 
       setPixels(i,white);
-
+  //DPRINT("Pix:"); DPRINT(i); DPRINT(" Old:"); DPRINT(oldColor[i]); DPRINT(" ActCol:"); DPRINT(actColor); DPRINT(" New:"); DPRINT(newColor[i]); DPRINT("  Step:"); DPRINTLN(step);
   if (newColor[i] != actColor) {   //next rainbow color
     if (oldColor[i]<newColor[i]) actColor = min(newColor[i],actColor+step);
     else actColor = max(newColor[i],actColor-step);
    }
-   //DPRINT("Pix:"); DPRINT(i); DPRINT(" Old:"); DPRINT(oldColor[i]); DPRINT(" ActCol:"); DPRINT(actColor); DPRINT(" New:"); DPRINT(newColor[i]); DPRINT("  Step:"); DPRINTLN(step);
    strip.Show();
 }
 
@@ -305,8 +308,8 @@ void effect4() {    //every pixel is random changer
   if (firstRun) {
     firstRun = false;
     for (int i=0;i<maxDigits;i++) {
-      newColor[i] = random(0,270);
-      oldColor[i] = random(0,270);
+      newColor[i] = random(0,262);
+      oldColor[i] = random(0,262);
       actColor[i] = oldColor[i];
       step[i] = 1;
     }
@@ -317,7 +320,7 @@ void effect4() {    //every pixel is random changer
   if (actColor[t] == newColor[t]) {  //change color
     oldColor[t] = newColor[t];
     do {
-      newColor[t] = random(0,270);   //get a new random color
+      newColor[t] = random(0,262);   //get a new random color
     } while (abs(newColor[t]-oldColor[t])<RANDOM_WHEEL_DISTANCE);
     
     actColor[t] = oldColor[t];  //starting color} 
@@ -341,9 +344,13 @@ void effect4() {    //every pixel is random changer
 }
 
 void setPixels(byte tubeNo, RgbColor c) {
-  for (int i=0;i<PixelCount;i++) 
-    if (tubeNo == tubePixels[i]) 
+  for (int i=0;i<PixelCount;i++)  {
+    if (tubeNo == tubePixels[i]) {
       strip.SetPixelColor(i, c);
+      //DPRINT("x");
+    }
+  }    
+  //DPRINTLN(" ");
 }
 
 void fixColor(int col) {

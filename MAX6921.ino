@@ -7,14 +7,15 @@
   byte digitEnablePins[] = {9,8,7,2,1,0};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
   
   //MAX6921 pins
-  #define PIN_LE    14  // D6 Shift Register Latch Enable
-  #define PIN_CLK   13  // D7 Shift Register Clock
-  #define PIN_DATA  27  // D5 Shift Register Data
-  #define PIN_BL    12  // D8 Shift Register Blank (1=display off     0=display on)
+  #define PIN_LE    14  // Shift Register Latch Enable
+  #define PIN_CLK   13  // Shift Register Clock
+  #define PIN_DATA  27  // Shift Register Data
+  #define PIN_BL    12  // Shift Register Blank (1=display off     0=display on)
 
 #else  //Any 8266 clock
-  #define IV18
+  //#define IV18
   //#define IVL2
+  #define IV11
 
   #ifdef IV18
   //Fill this table with the OUT positions of the MAX6921 chip!   
@@ -37,6 +38,17 @@
     #define PIN_DATA  14  // D5 Shift Register Data
     #define PIN_BL    15  // D8 Shift Register Blank (1=display off     0=display on)
     #define TEMP_SENSOR_PIN RX
+  #endif
+
+    #ifdef IV11  //Custom made 4 x IV11 clock
+  //Fill this table with the OUT positions of the MAX6921 chip!   
+    byte segmentEnablePins[] =  {7,5,1,0,2,4,6,3};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
+    byte digitEnablePins[] = {19,18,17,16};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  (You may define any number)
+  //MAX6921 pins
+    #define PIN_LE    12  // D6 Shift Register Latch Enable
+    #define PIN_CLK   13  // D7 Shift Register Clock
+    #define PIN_DATA  14  // D5 Shift Register Data
+    #define PIN_BL    15  // D8 Shift Register Blank (1=display off     0=display on)
   #endif
 #endif
 
