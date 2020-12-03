@@ -23,7 +23,7 @@ OPTIONAL COMPONENTS:
 
 - GPS modul (to use instead of Wifi sync  - standalone mode, only web setup screen available)
 
-- WS2812 adressable LEDS, adjustable for fix color or different animation effects on web page
+- WS2812 adressable LEDS, adjustable for fix color or different animation effects
 
 User defined pin numbers for digits and segments
 

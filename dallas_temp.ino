@@ -5,6 +5,7 @@
 #define SENSOR2 1
 #define TEMPERATURE_PRECISION 12
 
+#include <OneWire.h>
 #include <DallasTemperature.h>
 OneWire oneWire(TEMP_SENSOR_PIN);        // Set up a OneWire instance to communicate with OneWire devices
 DallasTemperature tempSensors(&oneWire); // Create an instance of the temperature sensor class
@@ -19,9 +20,11 @@ const long DS_delay = 1000;         // Reading the temperature from the DS18x20 
 
 void setupTemp() {
   DPRINT("Starting Dallas thermometer on GPIO");  DPRINTLN(TEMP_SENSOR_PIN);
-  pinMode(TEMP_SENSOR_PIN,OUTPUT);
-  oneWire.reset();
-  delay(200 );  //200ms
+  //pinMode(TEMP_SENSOR_PIN,OUTPUT);
+  //#if defined(ESP8266)
+    oneWire.reset();
+    delay(200);  //200ms
+  //#endif  
   tempSensors.begin();                     // Start the temperature sensor  
   tempSensors.setResolution(TEMPERATURE_PRECISION);
   tempSensors.setWaitForConversion(false); // Don't block the program while the temperature sensor is reading
@@ -40,7 +43,7 @@ void setupTemp() {
   if (!tempSensors.getAddress(thermometer1, 0)) DPRINTLN("Unable to find address for Device 0");
   if ((useTemp>1) && !tempSensors.getAddress(thermometer2, 1)) DPRINTLN("Unable to find address for Device 1");
   requestTemp(true);
-  Fdelay(1000);
+  delay(200);
   getTemp();
   }
 }
@@ -60,7 +63,7 @@ float tmp_temp;
 
     if (!requested) return;
     if ((millis()- lastRequest) < DS_delay) return;  // 1000 ms after requesting the temperature
-    
+    //DPRINTLN("getTemp");
     requested = false;
     if (tempSensors.getDeviceCount() == 0) {
           temperature[0] = 0; temperature[1] = 0;
@@ -89,7 +92,7 @@ float tmp_temp;
             DPRINTLN(tmp_temp);
             errors++;
             lastRequest -= intervalTemp;  //retry ASAP!
-            //resetSensors();
+            resetSensors();
             }
     }
   if (errors>20) 
@@ -97,18 +100,17 @@ float tmp_temp;
 }
 
 void resetSensors() {
-  #if defined(ESP32)
-    return;
-  #endif  
+
   DPRINTLN("Reset sensors...");
-  oneWire.reset();
-  Fdelay(200);  //200ms
+  //#if defined(ESP8266)
+    oneWire.reset();
+  //#endif
+  delay(200);  //200ms
 
   tempSensors.begin(); //try to restart sensor
   tempSensors.setWaitForConversion(false);
   tempSensors.getDeviceCount();
-  Fdelay(200);  //200ms
-
+  delay(200);  //200ms
 }
 //-----------------------------------------------------------------------------------------------------
 #else

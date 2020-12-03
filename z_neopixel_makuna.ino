@@ -4,7 +4,7 @@
 
 byte neoBrightness;
 #define COLORSATURATION 255
-#define WHITE_INDEX 248
+#define WHITE_INDEX 192
 #define RANDOM_WHEEL_DISTANCE  30  //how far colors will get in random mode
 #define RANDOM_MAX_COUNTER 100      //maximum how many times try to found a new color
 #define RANDOM_FROM_ALL_PIXELS true  //true or false: when generating new colors, the distance must be calculated from all pixels or only from the actual pixel's color 
@@ -23,7 +23,8 @@ RgbColor black(0,0,0);
 //byte tubePixels[] = {3,2,1,0};        //4 tubes, single leds, reverse direction
 //byte tubePixels[] = {0,9,1,9,2,9,3};        //4 tubes, single leds, 3 leds not used
 //byte tubePixels[] = {0,0,1,2,3,3};    //4 tubes, 6 leds
-byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
+//byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
+byte tubePixels[] = {5,4,3,2,1,0};    //6 tubes, single leds, reverse direction
 //byte tubePixels[] = {0,1,2,3,4,5,6,7};    //8 tubes, single leds
 //byte tubePixels[] = {3,2,6,1,0};    //Numitron 4 tubes, 4 x single leds + 1. The extra led in the middle is not used, is always dark!
 //byte tubePixels[] = {0,1,2,3,3,2,1,0};  //4 tubes, double row, 8 leds
@@ -80,12 +81,12 @@ void alarmLight() {
   static unsigned long lastRun = 0;   
   static byte counter;
   
-  if ((millis()-lastRun)<200) return;
+  if ((millis()-lastRun)<20) return;
   lastRun = millis();
   counter++;
   strip.SetBrightness(200);
-  for(int i=0; i<PixelCount; i++) {
-    if (counter%2 && tubePixels[i]<maxDigits)
+  for(volatile int i=0; i<PixelCount; i++) {
+    if ((counter%10<5) && tubePixels[i]<maxDigits)
       strip.SetPixelColor(i, RgbColor(255,255,255));
     else  
       strip.SetPixelColor(i,black);
@@ -102,8 +103,8 @@ void darkenNeopixels() {
 }
 
 void rainbow() {
-  static byte j=0;
-  int i;    
+ static byte j=0;
+ volatile int i;    
   
   for(i=0; i<PixelCount; i++) {
     if (tubePixels[i]<maxDigits) strip.SetPixelColor(i, Wheel((i+j) & 255));
@@ -155,7 +156,7 @@ void effect1() {  //color dimmer
  
   strip.SetBrightness(max(0,prm.rgbBrightness - counter));
   
-  for(int i=0; i<PixelCount; i++) {
+  for(volatile int i=0; i<PixelCount; i++) {
     if (tubePixels[i]>=maxDigits)
       strip.SetPixelColor(i,black);
     else 
@@ -187,7 +188,7 @@ void effect2() {   //random color picker
     c = random(0,256);
   }
   
-  for(int i=0; i<PixelCount; i++) {
+  for(volatile int i=0; i<PixelCount; i++) {
     if (tubePixels[i]>=maxDigits)
       strip.SetPixelColor(i, black);
     else
@@ -205,7 +206,7 @@ int colorDistance(int c1,int c2) {
 }
 
 void effect3(boolean enableRandom,boolean eachPixelRandom) {
-  static const int c[] = {255,5,12,22,30,40,54,62,78,85,100,110,122,137,177,195,210,227,240,WHITE_INDEX};
+  static const int c[] = {255,5,12,22,30,40,54,62,78,85,100,110,122,137,177,WHITE_INDEX,210,227,240};
   static const int cMax = sizeof(c) / sizeof(c[0]);  //size of array
   static int newColor[maxDigits];
   static int oldColor[maxDigits];
@@ -219,15 +220,13 @@ void effect3(boolean enableRandom,boolean eachPixelRandom) {
   int newC = 0;
   boolean changeColor = false;
   boolean colorOK;
-  int distance = 0;
-  
   
   if (firstRun) {
     firstRun = false;
-    for (int i=0;i<maxDigits;i++) {
-      oldColor[i] = 0;
-      newColor[i] = 100;
-      actColor[i] = 0;
+    for (volatile int k=0;k<maxDigits;k++) {
+      oldColor[k] = 0;
+      newColor[k] = 100;
+      actColor[k] = 0;
     }
     step = max(1,abs(newColor[2]-oldColor[2])/20);
   }
@@ -274,9 +273,9 @@ void effect3(boolean enableRandom,boolean eachPixelRandom) {
         newColor[i] = newC;
       }
       else { 
-        for (int i=0;i<maxDigits;i++) {
-          oldColor[i] = newColor[i]; 
-          newColor[i] = newC;
+        for (volatile int k=0;k<maxDigits;k++) {
+          oldColor[k] = newColor[k]; 
+          newColor[k] = newC;
           }
       }   
       
@@ -353,7 +352,7 @@ void effect4() {    //every pixel is random changer
 }
 
 void setPixels(byte tubeNo, RgbColor c) {
-  for (int i=0;i<PixelCount;i++)  {
+  for (volatile int i=0;i<PixelCount;i++)  {
     if (tubeNo == tubePixels[i]) {
       strip.SetPixelColor(i,c);
     }

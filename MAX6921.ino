@@ -126,8 +126,8 @@ void setup_pins() {
   startTimer();
 }  
 
-#if defined(ESP32)
-void IRAM_ATTR  writeDisplay(){
+#if defined(ESP32) 
+void writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
 #else 
 void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
 #endif
@@ -165,7 +165,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
     timer = PWMrefresh-PWMtiming[brightness];
   }
 
-  if (timer<200) timer = 200;  //safety only...
+  if (timer<500) timer = 500;  //safety only...
 
   if ( (brightness == 0) || (!state) ) {  //OFF state, blank digit
     digitalWrite(PIN_BL,HIGH);    //OFF
@@ -246,6 +246,9 @@ DPRINTLN("---- Generated Character / Pins table -----");
 }
 
 
-void clearTubes() {}
+void clearTubes() {
+  digitalWrite(PIN_BL,HIGH);
+}
+
 void writeDisplaySingle() {}
 #endif

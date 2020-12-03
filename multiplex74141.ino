@@ -1,6 +1,6 @@
 #ifdef MULTIPLEX74141
 //define here the digit enable pins from 4 to 8
-#define LEFTDECIMAL true   //set true, if decimal point is on the left side on the tube. Else set false!
+#define LEFTDECIMAL false   //set true, if decimal point is on the left side on the tube. Else set false!
 
 #if defined(ESP32)
   const byte digitEnablePins[] = {4,16,17,5,18,19};   //ESP32 6x tube Clock
@@ -38,12 +38,11 @@ void setup_pins() {
 }
 
 #if defined(ESP32)
-void IRAM_ATTR  writeDisplay(){
+void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
 #else 
 void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
 #endif
 
-  //if (EEPROMsaving) { return;}
   static byte pos = 0;
   static volatile byte state=0;
   static int timer = PWMrefresh;
@@ -94,7 +93,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
       state = 3;
       break;
    }  //end switch
-   if (timer<200) timer = 200;  //safety only...
+   if (timer<500) timer = 500;  //safety only...
 
  
    //  if ((pos>0) && (num<=9)) num = convert[num];   //tube character conversion, if needed... (maybe bad pin numbering)

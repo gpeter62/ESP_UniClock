@@ -24,22 +24,24 @@
 #define DEBUG               //Enable Serial Monitor, 115200baud (only, if TX pin is not used anywhere!!!)
 
 //---------------------------- CLOCK EXTRA OPTIONS -------------------------------------------------
-//#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor, temperature measure
+#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor, temperature measure
 //#define USE_DHT_TEMP      //TEMP_SENSOR_PIN is used to connect the sensor,  temperature and humidity measure
 //#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
 //#define USE_GPS           //use for standalone clock, without wifi internet access
 #define USE_NEOPIXEL_MAKUNA   //WS2812B led stripe, for tubes lightning. Don't forget to define tubePixels[] !
 
 //--------------------- ESP32 Clock ----------------------------------------------------------
+//https://lastminuteengineers.com/esp32-arduino-ide-tutorial/
 #if defined(ESP32)
-  //#define MULTIPLEX74141
-  #define MAX6921
+  #define MULTIPLEX74141
+  //#define MAX6921
   #define COLON_PIN   -1        //Blinking Colon pin.  If not used, SET TO -1                 
   #define TEMP_SENSOR_PIN 23    //DHT or Dallas temp sensor pin.  If not used, SET TO -1     
   #define LED_SWITCH_PIN -1     //external led lightning ON/OFF.  If not used, SET TO -1      
   #define DECIMALPOINT_PIN -1   //Nixie decimal point between digits. If not used, SET TO -1  
-  #define ALARMSPEAKER_PIN 32   //Alarm buzzer pin                                            
-  #define ALARMBUTTON_PIN 33    //Alarm switch off button pin 
+  #define ALARMSPEAKER_PIN 33   //Alarm buzzer pin                                            
+  #define ALARMBUTTON_PIN 32    //Alarm switch off button pin 
+  #define ALARM_ON HIGH
 
 #else //-------------- Any 8266 clock ------------------------------------------------------
   //Use only 1 driver from the following options!
@@ -59,6 +61,7 @@
   #define DECIMALPOINT_PIN -1   //Nixie decimal point between digits. If not used, SET TO -1  (Pinter:16)
   #define ALARMSPEAKER_PIN -1   //Alarm buzzer pin                                            (oldCLock: SCL, pcftube6Clock: 3, numitron: 1)
   #define ALARMBUTTON_PIN -1    //Alarm switch off button pin 
+  #define ALARM_ON HIGH
   //8266 Neopixel LEDstripe pin is always the RX pin!!!
 #endif
 
@@ -85,7 +88,7 @@ unsigned long intCounter = 0;
 #include <DNSServer.h>
 
 #if defined(ESP8266)  
-  char webName[] = "UniClock 2.2c";
+  char webName[] = "UniClock 2.2d";
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #include <ESP8266WiFi.h>
@@ -95,7 +98,7 @@ unsigned long intCounter = 0;
   #include "FS.h"
 
 #elif defined(ESP32)
-  char webName[] = "ESP32UniClock 2.2c";
+  char webName[] = "ESP32UniClock 2.2d";
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD ""
   //#include <WiFi.h>
@@ -277,6 +280,8 @@ void clearDigits() {
 
 void Fdelay(unsigned long d) {
   unsigned long dStart = millis();
+  
+  doAnimationMakuna();
   while((millis()-dStart)<d) {
     dnsServer.processNextRequest();
     //MDNS.update();
@@ -307,18 +312,21 @@ void enableDisplay(unsigned long timeout) {
 }
 
 void disableDisplay()  {
-  dState = false;
+
   EEPROMsaving = true;
-  lastDisable = millis();
+  
   #if defined(ESP32) //|| defined(PCF_MULTIPLEX74141)  //safety mode for slow multiplex hardvare to avoid crashing the flash
     DPRINTLN("Disable tubes");
     if (dState) {
-      stopTimer();
-      writeDisplay();
       clearTubes();
+      stopTimer();
       delay(15);
+      writeDisplay();
     }
   #endif  
+
+  dState = false;
+  lastDisable = millis();
 }
 
 void startWifiMode() {
@@ -332,15 +340,16 @@ void startWifiMode() {
     #endif
     AsyncWiFiManager MyWifiManager(&server,&dns);
     MyWifiManager.setAPCallback(configModeCallback);
+    //MyWifiManager.setConfigPortalTimeout(180);
     for (int i=0;i<5;i++) {
-      if(!MyWifiManager.autoConnect(AP_NAME,AP_PASSWORD)) {
+      if(!MyWifiManager.autoConnect(AP_NAME)) {   //or autoConnect(AP_NAME,AP_PASSWORD))
         DPRINT("Retry to Connect:"); DPRINTLN(i);
         WiFi.disconnect();
         WiFi.mode(WIFI_OFF);
-        Fdelay(2000);
+        delay(1000);
         WiFi.mode(WIFI_STA);
         if (i==4) {
-          MyWifiManager.autoConnect(AP_NAME,AP_PASSWORD); // Default password is PASSWORD, change as needed
+          MyWifiManager.autoConnect(AP_NAME); // or autoConnect(AP_NAME,AP_PASSWORD))
         }
       }
       else 
@@ -348,7 +357,7 @@ void startWifiMode() {
     }  //end for
     ip = WiFi.localIP();
     WiFi.setAutoReconnect(true);
-    enableDisplay(0);
+    enableDisplay(1000);
     DPRINTLN("Connecting to Time Server...");
     timeClient.begin();
     timeClient.forceUpdate();
@@ -490,7 +499,7 @@ void handleNotFound(AsyncWebServerRequest *request){
 void handleConfigChanged(AsyncWebServerRequest *request){
   if (request->hasParam("key", true) && request->hasParam("value", true)) {
     
-    int args = request->args();
+    //int args = request->args();
     
     //for(int i=0;i<args;i++){
     //  Serial.printf("ARG[%s]: %s\n", request->argName(i).c_str(), request->arg(i).c_str());
@@ -650,15 +659,22 @@ void setup() {
   DPRINTBEGIN(115200); DPRINTLN(" ");
   DPRINT("Starting "); DPRINTLN(webName);
   clearDigits(); 
-  if (ALARMSPEAKER_PIN>=0) {pinMode(ALARMSPEAKER_PIN, OUTPUT); digitalWrite(ALARMSPEAKER_PIN,LOW);}
-  if (ALARMBUTTON_PIN>=0)   pinMode(ALARMBUTTON_PIN, INPUT_PULLUP);  
+  if (ALARMSPEAKER_PIN>=0) {
+    DPRINT("Alarm Speaker Pin:"); DPRINTLN(ALARMSPEAKER_PIN);
+    pinMode(ALARMSPEAKER_PIN, OUTPUT); 
+    digitalWrite(ALARMSPEAKER_PIN,!ALARM_ON);
+    }
+  if (ALARMBUTTON_PIN>=0) {  
+    pinMode(ALARMBUTTON_PIN, INPUT_PULLUP);
+    DPRINT("Alarm Stop Button Pin:"); DPRINTLN(ALARMBUTTON_PIN);
+  }  
   if (COLON_PIN>=0)         pinMode(COLON_PIN, OUTPUT);
   if (LED_SWITCH_PIN>=0)    pinMode(LED_SWITCH_PIN, OUTPUT);
   if (DECIMALPOINT_PIN>=0)  pinMode(DECIMALPOINT_PIN, OUTPUT);
 
   decimalpointON = false;
   
-  if (TEMP_SENSOR_PIN>0) {
+  if (TEMP_SENSOR_PIN>=0) {
     setupTemp();
     setupDHTemp();
   }  
@@ -1150,7 +1166,7 @@ void alarmSound() {
   }
   
   if (!alarmON) {
-    if (ALARMSPEAKER_PIN>=0) digitalWrite(ALARMSPEAKER_PIN,LOW);
+    if (ALARMSPEAKER_PIN>=0) digitalWrite(ALARMSPEAKER_PIN,!ALARM_ON);
     return;  //nothing to do
   }
 
@@ -1168,7 +1184,7 @@ void alarmSound() {
   }
   
   if (!prm.alarmEnable || !alarmON) {  //no alarm, switch off
-      if (ALARMSPEAKER_PIN>=0) digitalWrite(ALARMSPEAKER_PIN,LOW);
+      if (ALARMSPEAKER_PIN>=0) digitalWrite(ALARMSPEAKER_PIN,!ALARM_ON);
       return;
   }
 
@@ -1177,11 +1193,11 @@ void alarmSound() {
   if (millis()>nextEvent) {   //go to the next event
     if (count % 2 == 0) {
       nextEvent += 150;
-      if (ALARMSPEAKER_PIN>=0) digitalWrite(ALARMSPEAKER_PIN,HIGH);
+      if (ALARMSPEAKER_PIN>=0) digitalWrite(ALARMSPEAKER_PIN,ALARM_ON);
       //DPRINT(" Sound ON");  DPRINT("  Next:"); DPRINTLN(nextEvent); 
     }
     else {
-      if (ALARMSPEAKER_PIN>=0) digitalWrite(ALARMSPEAKER_PIN,LOW);
+      if (ALARMSPEAKER_PIN>=0) digitalWrite(ALARMSPEAKER_PIN,!ALARM_ON);
       nextEvent = (count/2 < cMax) ? alarmStarted +  t[count/2] : nextEvent + 200;
       //DPRINT("   OFF"); DPRINT("  Next:"); DPRINTLN(nextEvent); 
     }
@@ -1310,7 +1326,7 @@ static unsigned long lastRun = millis();
   if (colonBlinkState) DPRINT(" B ");
   else DPRINT("   ");
   //DPRINT(ESP.getFreeHeap());   //show free memory for debugging memory leak
-  //DPRINT(intCounter);   //show multiplex interrupt counter
+  DPRINT(intCounter);   //show multiplex interrupt counter
   //DPRINT(" ESaving:"); DPRINT(EEPROMsaving);
   DPRINTLN(" ");
 }
