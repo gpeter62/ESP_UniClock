@@ -409,20 +409,47 @@ void startServer() {
   
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     disableDisplay();
-    DPRINTLN("Webserver: /");
-    request->send(SPIFFS, "/index.html", "text/html");
+    DPRINT("Webserver: /");
+    if (SPIFFS.exists("/index.html.gz")) {
+      DPRINTLN(" sending index.html gzip version");
+      AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/index.html.gz", "text/html");   //gzip compressed file sending
+      response->addHeader("Content-Encoding", "gzip");
+      request->send(response);
+    }
+    else {      
+      request->send(SPIFFS, "/index.html", "text/html");
+      DPRINTLN(" sending index.html txt version");
+    }
   });
 
   server.on("/jquery_351.js", HTTP_GET, [](AsyncWebServerRequest *request){
     disableDisplay();
-    DPRINTLN("Webserver: /jquery_351.js");
-    request->send(SPIFFS, "/jquery_351.js", "text/js");
+    DPRINT("Webserver: /jquery_351.js");
+    if (SPIFFS.exists("/jquery_351.js.gz")) {
+      DPRINTLN(" sending gzip version");
+      AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/jquery_351.js.gz", "text/js");   //gzip compressed file sending
+      response->addHeader("Content-Encoding", "gzip");
+      request->send(response);
+    }
+    else {  
+      request->send(SPIFFS, "/jquery_351.js", "text/js");   //simple text file sending
+      DPRINTLN(" sending txt version");
+    }
   });
 
   server.on("/page.js", HTTP_GET, [](AsyncWebServerRequest *request){
     disableDisplay();
-    DPRINTLN("Webserver: /page.js");
-    request->send(SPIFFS, "/page.js", "text/js");
+    DPRINT("Webserver: /page.js");
+    if (SPIFFS.exists("/page.js.gz")) {
+      DPRINTLN(" sending gzip version");
+      AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/page.js.gz", "text/js");   //gzip compressed file sending
+      response->addHeader("Content-Encoding", "gzip");
+      request->send(response);
+    }
+    else {
+      request->send(SPIFFS, "/page.js", "text/js");
+      DPRINTLN(" sending txt version");
+    }
   });
 
   server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -453,8 +480,17 @@ void startServer() {
   
   server.on("/site.css", HTTP_GET, [](AsyncWebServerRequest *request){
     disableDisplay();
-    DPRINTLN("Webserver: /site.css");
-    request->send(SPIFFS, "/site.css", "text/css");
+    DPRINT("Webserver: /site.css");
+    if (SPIFFS.exists("/site.css.gz")) {
+      DPRINTLN(" sending gzip version");
+      AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/site.css.gz", "text/css");   //gzip compressed file sending
+      response->addHeader("Content-Encoding", "gzip");
+      request->send(response);
+    }
+    else {
+      request->send(SPIFFS, "/site.css", "text/css");
+      DPRINTLN(" sending txt version");
+    }
   });
     
   server.on("/saveSetting", HTTP_POST, handleConfigChanged);
