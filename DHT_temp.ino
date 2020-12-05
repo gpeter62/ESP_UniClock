@@ -35,6 +35,7 @@ void setupDHTemp() {
 void getDHTemp() {
 static unsigned long lastRun = 0;
 
+  if (EEPROMsaving) return;
   if (((millis()-lastRun)<2500) || (second()!=0)) return;
   lastRun = millis();  
 

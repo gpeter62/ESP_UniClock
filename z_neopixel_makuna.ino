@@ -3,6 +3,10 @@
 #ifdef USE_NEOPIXEL_MAKUNA
 
 byte neoBrightness;
+int colorStep = 1;
+
+#define FPS 60 //frame per sec
+#define FPS_MSEC 1000/FPS
 #define COLORSATURATION 255
 #define WHITE_INDEX 192
 #define RANDOM_WHEEL_DISTANCE  30  //how far colors will get in random mode
@@ -23,8 +27,8 @@ RgbColor black(0,0,0);
 //byte tubePixels[] = {3,2,1,0};        //4 tubes, single leds, reverse direction
 //byte tubePixels[] = {0,9,1,9,2,9,3};        //4 tubes, single leds, 3 leds not used
 //byte tubePixels[] = {0,0,1,2,3,3};    //4 tubes, 6 leds
-//byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
-byte tubePixels[] = {5,4,3,2,1,0};    //6 tubes, single leds, reverse direction
+byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
+//byte tubePixels[] = {5,4,3,2,1,0};    //6 tubes, single leds, reverse direction
 //byte tubePixels[] = {0,1,2,3,4,5,6,7};    //8 tubes, single leds
 //byte tubePixels[] = {3,2,6,1,0};    //Numitron 4 tubes, 4 x single leds + 1. The extra led in the middle is not used, is always dark!
 //byte tubePixels[] = {0,1,2,3,3,2,1,0};  //4 tubes, double row, 8 leds
@@ -81,7 +85,7 @@ void alarmLight() {
   static unsigned long lastRun = 0;   
   static byte counter;
   
-  if ((millis()-lastRun)<20) return;
+  if ((millis()-lastRun)<FPS_MSEC) return;
   lastRun = millis();
   counter++;
   strip.SetBrightness(200);
@@ -146,7 +150,6 @@ void rainbow2() {   //Rainbow Stepper
   
   strip.Show();
 }
-
 
 void effect1() {  //color dimmer
   static int c = 0;  //actual color
@@ -402,7 +405,7 @@ static unsigned long lastRun = 0;
   }
   
   if ((prm.rgbEffect <=1) && ((millis()-lastRun)<1000)) return;  //fix color
-  if ((millis()-lastRun)<(258-prm.rgbSpeed)) return;
+  if ((millis()-lastRun)<max(FPS_MSEC,258-prm.rgbSpeed)) return;
   lastRun = millis();
 
   if ((prm.rgbEffect == 0) || !displayON) {   //Night: no RGB lightning
@@ -410,7 +413,8 @@ static unsigned long lastRun = 0;
     fixColor(-1);
     return;
   }
-
+  
+  colorStep = max(1,prm.rgbSpeed/5);
   neoBrightness = prm.rgbBrightness;
   strip.SetBrightness(neoBrightness);
   

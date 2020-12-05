@@ -95,11 +95,14 @@ const int PWMtiming[MAXBRIGHT+1] = {0,250,500,1000,2000,2500,3000,3500,4000,4500
 
 #if defined(ESP8266)   
   void inline delayMS(int d) {
-    for (int i=0;i<d;i++) {asm volatile ("nop"); }
+    //for (int i=0;i<d;i++) 
+      asm volatile ("nop"); 
   }
-#else
+#else  //ESP32
   void inline delayMS(int d) {
-    for (int i=0;i<d*7;i++) {asm volatile ("nop"); }
+    asm volatile ("nop"); 
+    asm volatile ("nop");
+    asm volatile ("nop");
   }
 #endif
 
@@ -127,7 +130,7 @@ void setup_pins() {
 }  
 
 #if defined(ESP32) 
-void writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
+void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
 #else 
 void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
 #endif
@@ -138,21 +141,21 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   static volatile boolean state=true;
   static volatile byte brightness;
 
-  #if defined(ESP32)
-    portENTER_CRITICAL_ISR(&timerMux);
-  #endif
-
-  intCounter++;
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
     #if defined(ESP8266)    
       digitalWrite(PIN_BL,HIGH);    //OFF
       timer1_write(PWMrefresh);
     #elif defined(ESP32)
-      portEXIT_CRITICAL(&timerMux);
+      digitalWrite(PIN_BL,HIGH);    //OFF
+      //portEXIT_CRITICAL(&timerMux);
     #endif    
     return;
   }
-
+  
+  #if defined(ESP32)
+    portENTER_CRITICAL_ISR(&timerMux);
+  #endif
+  intCounter++;
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
   if (brightness==MAXBRIGHT) state = true;
@@ -160,6 +163,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   if (state) {  //ON state
     pos++;  if (pos>maxDigits-1)  pos = 0;  //go to the first tube
     timer = PWMtiming[brightness];
+    //if (pos==2) timer = 3*timer;  //Weak IV11 tube#2 brightness compensation
   }
   else {  //OFF state
     timer = PWMrefresh-PWMtiming[brightness];
@@ -180,11 +184,11 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
       else
         {digitalWrite(PIN_DATA, LOW);    asm volatile ("nop");}
       
-      digitalWrite(PIN_CLK,HIGH);  delayMS(3);
-      digitalWrite(PIN_CLK,LOW);   delayMS(3);
+      digitalWrite(PIN_CLK,HIGH);  asm volatile ("nop");  //delayMS(1);
+      digitalWrite(PIN_CLK,LOW);   asm volatile ("nop"); //delayMS(1);
       } //end for      
  
-    digitalWrite(PIN_LE,HIGH );  delayMS(8);
+    digitalWrite(PIN_LE,HIGH );  asm volatile ("nop");
     digitalWrite(PIN_LE,LOW);
     digitalWrite(PIN_BL,LOW );   //ON
   }  //end else

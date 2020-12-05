@@ -49,6 +49,8 @@ void setupTemp() {
 }
 
 void requestTemp(boolean force) {
+    if (EEPROMsaving) return;
+    
     if (force || (!requested && ((millis()-lastRequest) > intervalTemp))) {       //request a new reading
       tempSensors.requestTemperatures(); // Request the temperature from the sensor (it takes some time to read it)
       requested = true;
@@ -63,7 +65,8 @@ float tmp_temp;
 
     if (!requested) return;
     if ((millis()- lastRequest) < DS_delay) return;  // 1000 ms after requesting the temperature
-    //DPRINTLN("getTemp");
+    if (EEPROMsaving) return;
+
     requested = false;
     if (tempSensors.getDeviceCount() == 0) {
           temperature[0] = 0; temperature[1] = 0;
@@ -100,7 +103,7 @@ float tmp_temp;
 }
 
 void resetSensors() {
-
+   if (EEPROMsaving) return;
   DPRINTLN("Reset sensors...");
   //#if defined(ESP8266)
     oneWire.reset();

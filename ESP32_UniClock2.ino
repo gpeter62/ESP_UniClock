@@ -1,7 +1,7 @@
 /* 
  *    Universal Clock  (Nixie, VFD, LED, Numitron) for ESP8266 or ESP32
  *    with optional Dallas Thermometer and DS3231 RTC, Neopxels stripe, GPS and more...
- *    v2.2c  17/11/2020
+ *    17/11/2020
  *    Copyright (C) 2020  Peter Gautier 
  *    
  *    This program is free software: you can redistribute it and/or modify
@@ -33,8 +33,8 @@
 //--------------------- ESP32 Clock ----------------------------------------------------------
 //https://lastminuteengineers.com/esp32-arduino-ide-tutorial/
 #if defined(ESP32)
-  #define MULTIPLEX74141
-  //#define MAX6921
+  //#define MULTIPLEX74141
+  #define MAX6921
   #define COLON_PIN   -1        //Blinking Colon pin.  If not used, SET TO -1                 
   #define TEMP_SENSOR_PIN 23    //DHT or Dallas temp sensor pin.  If not used, SET TO -1     
   #define LED_SWITCH_PIN -1     //external led lightning ON/OFF.  If not used, SET TO -1      
@@ -45,8 +45,8 @@
 
 #else //-------------- Any 8266 clock ------------------------------------------------------
   //Use only 1 driver from the following options!
-  #define MULTIPLEX74141   //4..8 Nixie tubes generic driver for ESP8266 or ESP32
-  //#define MAX6921          //4..8 VFD tubes (IV18) driver for ESP8266 or ESP32
+  //#define MULTIPLEX74141   //4..8 Nixie tubes generic driver for ESP8266 or ESP32
+  #define MAX6921          //4..8 VFD tubes (IV18) driver for ESP8266 or ESP32
   //#define NO_MULTIPLEX74141 //4..6 Nixie tubes, serial latch driver, 74141 for each tube 
   //#define MM5450            //6..8 LEDS
   //#define MAX7219CNG        //4..8 LED 
@@ -88,7 +88,7 @@ unsigned long intCounter = 0;
 #include <DNSServer.h>
 
 #if defined(ESP8266)  
-  char webName[] = "UniClock 2.2d";
+  char webName[] = "UniClock 2.2e";
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #include <ESP8266WiFi.h>
@@ -98,7 +98,7 @@ unsigned long intCounter = 0;
   #include "FS.h"
 
 #elif defined(ESP32)
-  char webName[] = "ESP32UniClock 2.2d";
+  char webName[] = "ESP32UniClock 2.2e";
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD ""
   //#include <WiFi.h>
@@ -143,6 +143,7 @@ const char* password = AP_PASSWORD;  //Enter Password here
 
 AsyncWebServer server(80);
 DNSServer dns;
+#define CACHE_MAX_AGE "max-age=31536000" //maximum is: 31536000
 
 #define BUFSIZE 10
 byte digit[BUFSIZE];
@@ -314,7 +315,7 @@ void enableDisplay(unsigned long timeout) {
 void disableDisplay()  {
 
   EEPROMsaving = true;
-  
+
   #if defined(ESP32) //|| defined(PCF_MULTIPLEX74141)  //safety mode for slow multiplex hardvare to avoid crashing the flash
     DPRINTLN("Disable tubes");
     if (dState) {
@@ -408,54 +409,70 @@ void startServer() {
   DPRINTLN("Starting Async Webserver...");
   
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    String filenam;
+    boolean gzip;
+    
     disableDisplay();
-    DPRINT("Webserver: /");
-    if (SPIFFS.exists("/index.html.gz")) {
-      DPRINTLN(" sending index.html gzip version");
-      AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/index.html.gz", "text/html");   //gzip compressed file sending
+    DPRINTLN("Webserver: /  -> index.html");
+    gzip = SPIFFS.exists("/index.html.gz");
+    if (gzip)
+      filenam = "/index.html.gz";
+    else 
+      filenam = "/index.html";  
+      
+    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, filenam, "text/html");   //gzip compressed file sending
+    if (gzip)  
       response->addHeader("Content-Encoding", "gzip");
-      request->send(response);
-    }
-    else {      
-      request->send(SPIFFS, "/index.html", "text/html");
-      DPRINTLN(" sending index.html txt version");
-    }
+
+    response->addHeader("Cache-Control", CACHE_MAX_AGE);
+    request->send(response);
   });
 
   server.on("/jquery_351.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    String filenam;
+    boolean gzip;
+    
     disableDisplay();
-    DPRINT("Webserver: /jquery_351.js");
-    if (SPIFFS.exists("/jquery_351.js.gz")) {
-      DPRINTLN(" sending gzip version");
-      AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/jquery_351.js.gz", "text/js");   //gzip compressed file sending
+    DPRINTLN("Webserver: /jquery_351.js");
+    gzip = SPIFFS.exists("/jquery_351.js.gz");
+    if (gzip)
+      filenam = "/jquery_351.js.gz";
+    else 
+      filenam = "/jquery_351.js";
+
+    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, filenam, "text/js");   //gzip compressed file sending
+    if (gzip) 
       response->addHeader("Content-Encoding", "gzip");
-      request->send(response);
-    }
-    else {  
-      request->send(SPIFFS, "/jquery_351.js", "text/js");   //simple text file sending
-      DPRINTLN(" sending txt version");
-    }
+    response->addHeader("Cache-Control", CACHE_MAX_AGE);
+    request->send(response);
   });
 
   server.on("/page.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    String filenam;
+    boolean gzip;
+    
     disableDisplay();
-    DPRINT("Webserver: /page.js");
-    if (SPIFFS.exists("/page.js.gz")) {
-      DPRINTLN(" sending gzip version");
-      AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/page.js.gz", "text/js");   //gzip compressed file sending
+    DPRINTLN("Webserver: /page.js");
+    gzip = SPIFFS.exists("/page.js.gz");
+    if (gzip) 
+      filenam = "/page.js.gz";
+    else
+      filenam = "/page.js";  
+      
+    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, filenam, "text/js");   //gzip compressed file sending
+    if (gzip)
       response->addHeader("Content-Encoding", "gzip");
-      request->send(response);
-    }
-    else {
-      request->send(SPIFFS, "/page.js", "text/js");
-      DPRINTLN(" sending txt version");
-    }
+
+    response->addHeader("Cache-Control", CACHE_MAX_AGE);
+    request->send(response); 
   });
 
   server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request){
     disableDisplay();
     DPRINTLN("Webserver: /favicon.ico");
-    request->send(SPIFFS, "/favicon.ico", "image/png");
+    AsyncWebServerResponse *response = request->beginResponse(SPIFFS,"/favicon.png", "image/png");
+    response->addHeader("Cache-Control", CACHE_MAX_AGE);
+    request->send(response);
   });
 
   server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -479,18 +496,23 @@ void startServer() {
 
   
   server.on("/site.css", HTTP_GET, [](AsyncWebServerRequest *request){
+    String filenam;
+    boolean gzip;
+    
     disableDisplay();
-    DPRINT("Webserver: /site.css");
-    if (SPIFFS.exists("/site.css.gz")) {
-      DPRINTLN(" sending gzip version");
-      AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/site.css.gz", "text/css");   //gzip compressed file sending
+    DPRINTLN("Webserver: /site.css");
+    gzip = SPIFFS.exists("/site.css.gz");
+    
+    if (gzip) 
+      filenam = "/site.css.gz";
+    else
+      filenam = "/site.css";  
+      
+    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, filenam, "text/css");   //gzip compressed file sending
+    if (gzip)  
       response->addHeader("Content-Encoding", "gzip");
-      request->send(response);
-    }
-    else {
-      request->send(SPIFFS, "/site.css", "text/css");
-      DPRINTLN(" sending txt version");
-    }
+    response->addHeader("Cache-Control", CACHE_MAX_AGE);  
+    request->send(response);
   });
     
   server.on("/saveSetting", HTTP_POST, handleConfigChanged);
@@ -1362,7 +1384,7 @@ static unsigned long lastRun = millis();
   if (colonBlinkState) DPRINT(" B ");
   else DPRINT("   ");
   //DPRINT(ESP.getFreeHeap());   //show free memory for debugging memory leak
-  DPRINT(intCounter);   //show multiplex interrupt counter
+  //DPRINT(intCounter);   //show multiplex interrupt counter
   //DPRINT(" ESaving:"); DPRINT(EEPROMsaving);
   DPRINTLN(" ");
 }

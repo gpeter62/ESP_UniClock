@@ -1,6 +1,6 @@
 #ifdef MULTIPLEX74141
 //define here the digit enable pins from 4 to 8
-#define LEFTDECIMAL false   //set true, if decimal point is on the left side on the tube. Else set false!
+#define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
 
 #if defined(ESP32)
   const byte digitEnablePins[] = {4,16,17,5,18,19};   //ESP32 6x tube Clock
