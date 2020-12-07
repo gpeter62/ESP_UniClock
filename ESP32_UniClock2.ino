@@ -46,14 +46,14 @@
 #else //-------------- Any 8266 clock ------------------------------------------------------
   //Use only 1 driver from the following options!
   //#define MULTIPLEX74141   //4..8 Nixie tubes generic driver for ESP8266 or ESP32
-  #define MAX6921          //4..8 VFD tubes (IV18) driver for ESP8266 or ESP32
+  //#define MAX6921          //4..8 VFD tubes (IV18) driver for ESP8266 or ESP32
   //#define NO_MULTIPLEX74141 //4..6 Nixie tubes, serial latch driver, 74141 for each tube 
   //#define MM5450            //6..8 LEDS
   //#define MAX7219CNG        //4..8 LED 
   //#define Numitron_4511N      //Numitron 4x tube clock
   //#define SN75512           //4..8 VFD tubes   
   //#define samsung           //samsung serial display
-  //#define PCF_MULTIPLEX74141  //PCF pin expander for tube selection
+  #define PCF_74141  //PCF pin expander for tube selection
   //------- pinout -----------------------------------------------------------
   #define COLON_PIN   16        //Blinking Colon pin.  If not used, SET TO -1                 (redtube clock:2, IV16:16 Pinter:TX, old-IN1-Clock: 2 or SDA)
   #define TEMP_SENSOR_PIN -1     //DHT or Dallas temp sensor pin.  If not used, SET TO -1      (RX or any other free pin) (IV18clockGP: GPIO4)
@@ -78,7 +78,7 @@
 #define ANIMSPEED   50  //Animation speed in millisec 
 #define TEMP_CHARCODE 15    
 #define GRAD_CHARCODE 16
-#define PERCENT_CHARCODE 8
+#define PERCENT_CHARCODE 17
 
 byte c_MinBrightness = 8; 
 byte c_MaxBrightness = 255;
@@ -298,7 +298,7 @@ void Fdelay(unsigned long d) {
 
 void enableDisplay(unsigned long timeout) {
   unsigned long seged2;
-  #if defined(ESP32) //|| defined(PCF_MULTIPLEX74141)  //safety mode for slow multiplex hardvare to avoid crashing by flash memory usage
+  #if defined(ESP32) || defined(PCF_74141)  //safety mode for slow multiplex hardvare to avoid crash when write to flash memory
     if (dState) return;
     seged2 = lastDisable;
     if (millis()<(seged2+timeout)) return;
@@ -316,7 +316,7 @@ void disableDisplay()  {
 
   EEPROMsaving = true;
 
-  #if defined(ESP32) //|| defined(PCF_MULTIPLEX74141)  //safety mode for slow multiplex hardvare to avoid crashing the flash
+  #if defined(ESP32) || defined(PCF_74141)  //safety mode for slow multiplex hardvare to avoid crash when write to flash memory
     DPRINTLN("Disable tubes");
     if (dState) {
       clearTubes();

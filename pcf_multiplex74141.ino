@@ -1,4 +1,4 @@
-#ifdef PCF_MULTIPLEX74141
+#ifdef PCF_74141
 //PCF8574 I/O expander version, 4..8 tube Nixie Clock, driven by 74141
 //define here the digit enable pins from 4 to 8 tubes
 
@@ -101,10 +101,13 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   byte num,brightness;
   byte p,DPpos;
   
-  if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
-    return;
+if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
+    digitalWrite(digitEnablePins[pos],LOW); 
+    timer1_write(PWMrefresh);
+    return;  
   }
   
+  intCounter++;
   timer = PWMrefresh;
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
