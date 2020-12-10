@@ -35,7 +35,6 @@ $(document).ready(function(){
 
     //Set current infos, like time, humidity and temperature
     setCurrentInfos();
-    setInterval(setCurrentInfos,5000);   //refreshes time every 5 second
 });
 
 function getConfiguration(){
@@ -167,6 +166,7 @@ function setCurrentInfos(){
         $('#currentTime').html(data["currentDate"] + " " + data["currentTime"]);
         $('#humidity').html(data["humidity"]);
         $('#temperature').html(data["temperature"]);
+        setTimeout(setCurrentInfos,5000);   //refreshes time every 5 second by calling itself
     }).always(function(){
         
     });
