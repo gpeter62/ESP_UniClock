@@ -30,7 +30,7 @@
 //#define DEBUG               //Enable Serial Monitor, 115200baud (only, if TX pin is not used anywhere!!!)
 //---------------------------- CLOCK EXTRA OPTION PARAMETERS -------------------------------------------------
 //#define USE_DALLAS_TEMP       //TEMP_SENSOR_PIN is used to connect the sensor, temperature measure
-//#define USE_DHT_TEMP          //TEMP_SENSOR_PIN is used to connect the sensor,  temperature and humidity measure
+//#define USE_DHT_TEMP          //TEMP_SENSOR_PIN is sensor pin #define DHTTYPE DHT22  temperature and humidity
 //#define USE_RTC               //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
 //#define USE_GPS               //use for standalone clock, without wifi internet access
 //#define USE_NEOPIXEL_MAKUNA   //WS2812B led stripe, for tubes lightning. Don't forget to define tubePixels[] !
@@ -50,6 +50,7 @@
 //------- pinout -----------------------------------------------------------
 //#define COLON_PIN   -1        //Blinking Colon pin.  If not used, SET TO -1
 //#define TEMP_SENSOR_PIN -1    //DHT or Dallas temp sensor pin.  If not used, SET TO -1
+//#define DHTTYPE DHT22         //DHT sensor type, if used...
 //#define LED_SWITCH_PIN -1     //external led lightning ON/OFF.  If not used, SET TO -1
 //#define DECIMALPOINT_PIN -1   //Nixie decimal point between digits. If not used, SET TO -1
 //#define ALARMSPEAKER_PIN -1   //Alarm buzzer pin
@@ -71,6 +72,10 @@
 //#define TEMP_CHARCODE 15      //Thermometer "C"
 //#define GRAD_CHARCODE 16      //Thermometer grad
 //#define PERCENT_CHARCODE 17   //Hygrometer %
+
+//#define AP_NAME "UNICLOCK"  		//Access Point name
+//#define AP_PASSWORD ""	   		//AP password	
+//#define WEBNAME "LED UniClock"  	//Clock's name on the web page
 */
 
 byte c_MinBrightness = 8;       //minimum LED brightness
