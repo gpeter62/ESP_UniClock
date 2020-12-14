@@ -23,6 +23,7 @@
 	- and many others
 
 ## Optional Components:
+	- [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP)
 	- DS18B20 temperature sensor  (1 or 2 sensor), 
 	- DHT11/DHT22 temperature/humidity sensor
 	- DS3231 RTC Clock with Wifi/Manual mode switch and pushbuttons to set the date/time - 
