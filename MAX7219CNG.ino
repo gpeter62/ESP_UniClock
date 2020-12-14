@@ -37,7 +37,7 @@ byte charDefinition[] = {
                    B11101110,   // A  abcefg  (13)
                    B11001110,   // P  abefg (14)
                    B10011100,   // C  adef (15)
-                   B11000110    //grad  abfg  (16)         
+                   B11000110,   //grad  abfg  (16)         
                    B10110100    //%  acdf  (17)          
 };
 
