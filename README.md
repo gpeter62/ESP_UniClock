@@ -1,7 +1,7 @@
 
 # ESP_UniClock v2.3
 
-##Universal WifiClock with Nixie, VFD, Numitron tubes or LED display
+## Universal WifiClock with Nixie, VFD, Numitron tubes or LED display
 	- Number of digits: 4, 6 or 8
 	- Adjustable day and night brightness
 	- Tube animation: 5 different animation modes, mode6 means random animation
@@ -9,7 +9,7 @@
 	- Wemos D1 Mini (or any other ESP8266 modul) 160MHz or ESP32 
 	- Drivers: SN74141 (multiplex or latch), MAX6921, MAX7219, MM5450
 
-##OPTIONAL COMPONENTS:
+## OPTIONAL COMPONENTS:
 
 	- DS18B20 temperature sensor  (1 or 2 sensor), 
 	- DHT11/DHT22 temperature/humidity sensor
