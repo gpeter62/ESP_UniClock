@@ -2,7 +2,11 @@
 //used by GP Numitron v3 panel
 //Flash size: 1MB (FS:160k, OTA:422k)
 
-byte panelVersion = 3;   //1,2 or 3
+#ifdef PCB_VERSION
+  byte panelVersion = PCB_VERSION;
+#else  
+  panelVersion = 1;
+#endif
 
 #define LTBIpin 5
 byte digitEnablePins[] = {13,12,14,16};    //define here the digit enable pins from 4 to 8

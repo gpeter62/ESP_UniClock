@@ -37,7 +37,8 @@ byte charDefinition[] = {
                    B11101110,   // A  abcefg  (13)
                    B11001110,   // P  abefg (14)
                    B10011100,   // C  adef (15)
-                   B11000110    //grad  abfg  (16)                   
+                   B11000110    //grad  abfg  (16)         
+                   B10110100    //%  acdf  (17)          
 };
 
 //Fill this table with the OUT bits numbers of MAX7219 chip!   I use only No-Decode mode for flexible hardware
@@ -61,7 +62,7 @@ void setup_pins() {
   #error "Board is not supported!"  
 #endif
   
-  DPRINTLN("Setup pins...");
+  DPRINTLN("MAX7219 Clock - Setup pins...");
   pinMode(PIN_LOAD,OUTPUT);
   pinMode(PIN_DIN, OUTPUT);
   pinMode(PIN_CLK, OUTPUT);

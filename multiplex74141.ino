@@ -1,25 +1,11 @@
 #ifdef MULTIPLEX74141
 //define here the digit enable pins from 4 to 8
-#define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
-
-#if defined(ESP32)
-  const byte digitEnablePins[] = {4,16,17,5,18,19};   //ESP32 6x tube Clock
-  const byte ABCDPins[4] =  {12,27,14,13};   
-  const int DpPin = 15; // decimalPoint in Nixie tube, set -1, if not used!
-  
-#else //any 8266 clock
- const byte digitEnablePins[] = {14,12,13,15};   //IN16 4x tube clock
- const byte ABCDPins[4] =  {2,4,5,0};   
- const int DpPin = -1; // decimalPoint in Nixie tube, set -1, if not used!
-
-  //const byte digitEnablePins[] = {15,13,12,14};   //IN14 clock-termometer (P.S)
-  //const byte ABCDPins[4] =  {2,4,5,0};
- //const int DpPin = -1; // decimalPoint in Nixie tube, set -1, if not used!
-
-  //const byte digitEnablePins[] = {13,12,14,15};    //red 4x tube nixie clock
-  //const byte ABCDPins[4] = {16,5,4,0};
-  //const int DpPin = -1; // decimalPoint in Nixie tube, set -1, if not used!
+#ifndef LEFTDECIMAL
+  #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
 #endif
+//const byte digitEnablePins[] = {15,13,12,14};   //fox example... But SET in clocks.h !!!
+//const byte ABCDPins[4] =  {2,4,5,0};
+//const int DpPin = -1; // decimalPoint inside Nixie tube, set -1, if not used!
 
 const int maxDigits = sizeof(digitEnablePins);
 

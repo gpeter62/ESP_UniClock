@@ -1,6 +1,6 @@
 #ifdef MM5450
 
-MAXBRIGHTNESS 15
+#define MAXBRIGHTNESS 15
 const int maxDigits = 6;
 
 //Fill this table with the pin numbers of MM5450 chip!
@@ -41,7 +41,8 @@ byte charDefinition[] = {
                    B11101110,   // A  abcefg  (13)
                    B11001110,   // P  abefg (14)
                    B10011100,   // C  adef (15)
-                   B11000110    //grad  abfg  (16)                   
+                   B11000110    //grad  abfg  (16)      
+                   B10110100    //%  acdf  (17)
 };
 
 #define MAXCHARS sizeof(charDefinition)
@@ -57,7 +58,7 @@ void setup_pins() {
   #error "Board is not supported!"  
 #endif
   
-  DPRINTLN("Setup pins...");
+  DPRINTLN("MM5450 Clock - Setup pins...");
   pinMode(PIN_LE,  OUTPUT);
   pinMode(PIN_BR,  OUTPUT); 
   pinMode(PIN_DATA,OUTPUT);

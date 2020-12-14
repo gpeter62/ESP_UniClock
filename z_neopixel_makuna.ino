@@ -25,9 +25,9 @@ RgbColor black(0,0,0);
 // Valid: 0..(maxDigits-1) If a number is equal maxDigits or higher, it will stay always dark!
 //byte tubePixels[] = {0,1,2,3};        //4 tubes, single leds
 //byte tubePixels[] = {3,2,1,0};        //4 tubes, single leds, reverse direction
-//byte tubePixels[] = {0,9,1,9,2,9,3};        //4 tubes, single leds, 3 leds not used
+//byte tubePixels[] = {0,9,1,9,2,9,3};  //4 tubes, single leds, 3 leds not used
 //byte tubePixels[] = {0,0,1,2,3,3};    //4 tubes, 6 leds
-byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
+//byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
 //byte tubePixels[] = {5,4,3,2,1,0};    //6 tubes, single leds, reverse direction
 //byte tubePixels[] = {0,1,2,3,4,5,6,7};    //8 tubes, single leds
 //byte tubePixels[] = {3,2,6,1,0};    //Numitron 4 tubes, 4 x single leds + 1. The extra led in the middle is not used, is always dark!

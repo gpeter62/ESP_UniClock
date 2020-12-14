@@ -16,81 +16,78 @@
  *    
  *    Always check the usable pins of 8266: https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/
  *               and usable pins for ESP32: https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
+ *               
+ *    //https://lastminuteengineers.com/esp32-arduino-ide-tutorial/
  *    
  *    Web page files, wich are found in "dat" subfolder must upload to SPIFFS !
  *    ESP8266:  https://randomnerdtutorials.com/install-esp8266-filesystem-uploader-arduino-ide/
  *    ESP32: https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide/
  */
-#define DEBUG               //Enable Serial Monitor, 115200baud (only, if TX pin is not used anywhere!!!)
 
-//---------------------------- CLOCK EXTRA OPTIONS -------------------------------------------------
-#define USE_DALLAS_TEMP   //TEMP_SENSOR_PIN is used to connect the sensor, temperature measure
-//#define USE_DHT_TEMP      //TEMP_SENSOR_PIN is used to connect the sensor,  temperature and humidity measure
-//#define USE_RTC           //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
-//#define USE_GPS           //use for standalone clock, without wifi internet access
-#define USE_NEOPIXEL_MAKUNA   //WS2812B led stripe, for tubes lightning. Don't forget to define tubePixels[] !
+#include "clocks.h"  //DEFINE YOUR CLOCKS SETUP IN THIS FILE!!!
 
-//--------------------- ESP32 Clock ----------------------------------------------------------
-//https://lastminuteengineers.com/esp32-arduino-ide-tutorial/
-#if defined(ESP32)
-  //#define MULTIPLEX74141
-  #define MAX6921
-  #define COLON_PIN   -1        //Blinking Colon pin.  If not used, SET TO -1                 
-  #define TEMP_SENSOR_PIN 23    //DHT or Dallas temp sensor pin.  If not used, SET TO -1     
-  #define LED_SWITCH_PIN -1     //external led lightning ON/OFF.  If not used, SET TO -1      
-  #define DECIMALPOINT_PIN -1   //Nixie decimal point between digits. If not used, SET TO -1  
-  #define ALARMSPEAKER_PIN 33   //Alarm buzzer pin                                            
-  #define ALARMBUTTON_PIN 32    //Alarm switch off button pin 
-  #define ALARM_ON HIGH
+/*_______________________________ USABLE PARAMETERS _______________________________________________________
+//#define DEBUG               //Enable Serial Monitor, 115200baud (only, if TX pin is not used anywhere!!!)
+//---------------------------- CLOCK EXTRA OPTION PARAMETERS -------------------------------------------------
+//#define USE_DALLAS_TEMP       //TEMP_SENSOR_PIN is used to connect the sensor, temperature measure
+//#define USE_DHT_TEMP          //TEMP_SENSOR_PIN is used to connect the sensor,  temperature and humidity measure
+//#define USE_RTC               //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
+//#define USE_GPS               //use for standalone clock, without wifi internet access
+//#define USE_NEOPIXEL_MAKUNA   //WS2812B led stripe, for tubes lightning. Don't forget to define tubePixels[] !
 
-#else //-------------- Any 8266 clock ------------------------------------------------------
-  //Use only 1 driver from the following options!
-  //#define MULTIPLEX74141   //4..8 Nixie tubes generic driver for ESP8266 or ESP32
-  //#define MAX6921          //4..8 VFD tubes (IV18) driver for ESP8266 or ESP32
-  //#define NO_MULTIPLEX74141 //4..6 Nixie tubes, serial latch driver, 74141 for each tube 
-  //#define MM5450            //6..8 LEDS
-  //#define MAX7219CNG        //4..8 LED 
-  //#define Numitron_4511N      //Numitron 4x tube clock
-  //#define SN75512           //4..8 VFD tubes   
-  //#define samsung           //samsung serial display
-  #define PCF_74141  //PCF pin expander for tube selection
-  //------- pinout -----------------------------------------------------------
-  #define COLON_PIN   16        //Blinking Colon pin.  If not used, SET TO -1                 (redtube clock:2, IV16:16 Pinter:TX, old-IN1-Clock: 2 or SDA)
-  #define TEMP_SENSOR_PIN -1     //DHT or Dallas temp sensor pin.  If not used, SET TO -1      (RX or any other free pin) (IV18clockGP: GPIO4)
-  #define LED_SWITCH_PIN -1     //external led lightning ON/OFF.  If not used, SET TO -1      (Pinter: 16)
-  #define DECIMALPOINT_PIN -1   //Nixie decimal point between digits. If not used, SET TO -1  (Pinter:16)
-  #define ALARMSPEAKER_PIN -1   //Alarm buzzer pin                                            (oldCLock: SCL, pcftube6Clock: 3, numitron: 1)
-  #define ALARMBUTTON_PIN -1    //Alarm switch off button pin 
-  #define ALARM_ON HIGH
-  //8266 Neopixel LEDstripe pin is always the RX pin!!!
-#endif
+//----- DRIVER SELECTION - ----- Use only 1 driver from the following options in the clocks.h file!
+//#define MULTIPLEX74141   //4..8 Nixie tubes generic driver for ESP8266 or ESP32
+//#define MAX6921          //4..8 VFD tubes (IV18) driver for ESP8266 or ESP32
+//-------------- ONLY 8266 clock drivers --------------------------------------------------
+//#define NO_MULTIPLEX74141 //4..6 Nixie tubes, serial latch driver, 74141 for each tube 
+//#define MM5450            //6..8 LEDS
+//#define MAX7219CNG        //4..8 LED 
+//#define Numitron_4511N    //Numitron 4x tube clock
+//#define SN75512           //4..8 VFD tubes   
+//#define samsung           //samsung serial display
+//#define PCF_74141  //PCF pin expander for tube selection
 
-#define MAXBRIGHTNESS 10  // (if MM5450, use 15 instead of 10)
+//------- pinout -----------------------------------------------------------
+//#define COLON_PIN   -1        //Blinking Colon pin.  If not used, SET TO -1
+//#define TEMP_SENSOR_PIN -1    //DHT or Dallas temp sensor pin.  If not used, SET TO -1
+//#define LED_SWITCH_PIN -1     //external led lightning ON/OFF.  If not used, SET TO -1
+//#define DECIMALPOINT_PIN -1   //Nixie decimal point between digits. If not used, SET TO -1
+//#define ALARMSPEAKER_PIN -1   //Alarm buzzer pin
+//#define ALARMBUTTON_PIN -1    //Alarm switch off button pin 
+//#define ALARM_ON HIGH         //HIGH or LOW level is needed to switch ON the buzzer?
+//8266 Neopixel LEDstripe pin is always the RX pin!!!
+//#define MAXBRIGHTNESS 10 // (if MM5450, use 15 instead of 10)
 
 //Display temperature and date in every minute between START..END seconds
-#define ENABLE_CLOCK_DISPLAY true   //false, if no clock display is needed (for example: thermometer + hygrometer only)
-#define TEMP_START  35
-#define TEMP_END    40
-#define HUMID_START 40
-#define HUMID_END   45
-#define DATE_START  45
-#define DATE_END    50
-#define ANIMSPEED   50  //Animation speed in millisec 
-#define TEMP_CHARCODE 15    
-#define GRAD_CHARCODE 16
-#define PERCENT_CHARCODE 17
+//#define ENABLE_CLOCK_DISPLAY true  //false, if no clock display is needed (for example: thermometer + hygrometer only)
+//#define SHIFT_TUBES_LEFT_BY_1      //shift left by 1 tube the display, if a thermometer is used with spec tube
+//#define TEMP_START  35        //Temperature display start..end
+//#define TEMP_END    40 
+//#define HUMID_START 40        //Humidity% display start..end
+//#define HUMID_END   45 
+//#define DATE_START  45        //Date is displayed start..end
+//#define DATE_END    50 
+//#define ANIMSPEED   50        //Animation speed in millisec 
+//#define TEMP_CHARCODE 15      //Thermometer "C"
+//#define GRAD_CHARCODE 16      //Thermometer grad
+//#define PERCENT_CHARCODE 17   //Hygrometer %
+*/
 
-byte c_MinBrightness = 8; 
-byte c_MaxBrightness = 255;
+byte c_MinBrightness = 8;       //minimum LED brightness
+byte c_MaxBrightness = 255;     //maximum LED brightness
 unsigned long intCounter = 0;
 //--------------------------------------------------------------------------------------------------
 
-#include <DNSServer.h>
-
 #if defined(ESP8266)  
-  char webName[] = "UniClock 2.2e";
-  #define AP_NAME "UNICLOCK"
-  #define AP_PASSWORD ""
+  #ifndef WEBNAME
+    #define WEBNAME "ESP32UniClock 2.3"
+  #endif
+  #ifndef AP_NAME
+    #define AP_NAME "UNICLOCK"
+  #endif
+  #ifndef AP_PASSWORD
+    #define AP_PASSWORD ""
+  #endif  
   #include <ESP8266WiFi.h>
   #include <DNSServer.h>
   //#include <ESP8266mDNS.h>
@@ -98,9 +95,15 @@ unsigned long intCounter = 0;
   #include "FS.h"
 
 #elif defined(ESP32)
-  char webName[] = "ESP32UniClock 2.2e";
-  #define AP_NAME "UNICLOCK32"
-  #define AP_PASSWORD ""
+  #ifndef WEBNAME
+    #define WEBNAME "ESP32UniClock 2.3"
+  #endif  
+  #ifndef AP_NAME
+    #define AP_NAME "UNICLOCK32"
+  #endif
+  #ifndef AP_PASSWORD
+    #define AP_PASSWORD ""
+  #endif  
   //#include <WiFi.h>
   #include <esp_wifi.h>
   #include <DNSServer.h>
@@ -140,7 +143,7 @@ extern const int maxDigits;
 
 const char* ssid = AP_NAME;  // Enter SSID here
 const char* password = AP_PASSWORD;  //Enter Password here
-
+char webName[] = WEBNAME;
 AsyncWebServer server(80);
 DNSServer dns;
 #define CACHE_MAX_AGE "max-age=31536000" //maximum is: 31536000
@@ -305,7 +308,7 @@ void enableDisplay(unsigned long timeout) {
    
     dState = true;
     EEPROMsaving = false;
-    DPRINTLN("Enable tubes");
+    DPRINT("Enable tubes:"); DPRINTLN(timeout); //    DPRINT(millis()); DPRINT("/"); DPRINTLN(lastDisable);
     startTimer();
   #else    
     EEPROMsaving = false;
@@ -321,7 +324,7 @@ void disableDisplay()  {
     if (dState) {
       clearTubes();
       stopTimer();
-      delay(15);
+      delay(20);
       writeDisplay();
     }
   #endif  
@@ -337,6 +340,11 @@ void startWifiMode() {
     DPRINTLN("Starting Clock in WiFi Mode!");
     WiFi.mode(WIFI_STA);
     #if defined(ESP32)
+      WiFi.setHostname(webName);
+    #else
+      WiFi.hostname(webName);
+     #endif
+    #if defined(ESP32)
       esp_wifi_set_ps (WIFI_PS_NONE);
     #endif
     AsyncWiFiManager MyWifiManager(&server,&dns);
@@ -349,6 +357,11 @@ void startWifiMode() {
         WiFi.mode(WIFI_OFF);
         delay(1000);
         WiFi.mode(WIFI_STA);
+        #if defined(ESP32)
+          WiFi.setHostname(webName);
+        #else
+          WiFi.hostname(webName);
+        #endif
         if (i==4) {
           MyWifiManager.autoConnect(AP_NAME); // or autoConnect(AP_NAME,AP_PASSWORD))
         }
@@ -358,12 +371,12 @@ void startWifiMode() {
     }  //end for
     ip = WiFi.localIP();
     WiFi.setAutoReconnect(true);
-    enableDisplay(1000);
     DPRINTLN("Connecting to Time Server...");
     timeClient.begin();
     timeClient.forceUpdate();
     while (true) { 
-      Fdelay(100);
+      delay(100);
+      enableDisplay(1000);
       if (timeClient.update()) break;
       count ++; if (count>999) count = 1;
       writeIpTag(count);
@@ -1296,14 +1309,21 @@ void evalShutoffTime() {  // Determine whether  tubes should be turned to NIGHT 
 
 
 void writeIpTag(byte iptag) {
+  
+  #ifdef SHIFT_TUBES_LEFT_BY_1
+    byte offset = 1;
+  #else
+    byte offset = 0;
+  #endif
+      
   memset(newDigit,10,sizeof(newDigit));
   if (!digitsOnly && (maxDigits>=6)) {
     newDigit[4] = 1;
     newDigit[3] = 14;
   }
-  if (iptag>=100) newDigit[2] = iptag / 100;
-  newDigit[1] = (iptag % 100) / 10;
-  newDigit[0] = iptag % 10;
+  if (iptag>=100) newDigit[2+offset] = iptag / 100;
+  newDigit[1+offset] = (iptag % 100) / 10;
+  newDigit[0+offset] = iptag % 10;
   writeDisplaySingle();
   changeDigit();
 }

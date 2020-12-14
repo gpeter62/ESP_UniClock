@@ -20,7 +20,7 @@ const int PWMtiming[] = {2000,1000,2000,3000,4000,5000,6000,7000,8000,10000,1200
 void writeDisplaySingle() { }   
 
 void setup_pins(){
-  DPRINTLN("Setup tube driver pins...");
+  DPRINTLN("NON-MULTIPLEX 4x74141: Setup tube driver pins...");
   pinMode(dataPin, OUTPUT);
   pinMode(latchPin,OUTPUT);
   pinMode(clkPin,OUTPUT);
