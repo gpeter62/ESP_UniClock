@@ -2,20 +2,24 @@
 # ESP_UniClock v2.3
 
 ## Universal WifiClock with Nixie, VFD, Numitron tubes or LED display
-	- Number of digits: 4, 6 or 8
-	- Adjustable day and night brightness
-	- Tube animation: 5 different animation modes (Mode-6 is random animation)
+	- Any ESP8266 or ESP32 modul is supported
+	- Clock digits (tubes): 4, 6 or 8
+	- Time sync from WiFi, GPS or RTC
 	- Temperature / Hygrometer support
-	- Alarm function
+	- Adjustable Day and Night brightness
+	- Tube animation: 5 different animation modes (Mode-6 is random animation)
 	- Tube backlightning with WS2812 addressable leds, many full color animations 
+	- Alarm function with buzzer and LED lightning
 	- Hardver: (Schematics and board design by Zoltan Unferdorben are in "schematics" subfolder)
 	- Wemos D1 Mini (or any other ESP8266 modul) 160MHz or ESP32 
 	- Drivers: SN74141 (multiplex or latch), MAX6921, MAX7219, MM5450
-
-## Hardver schematics and PCB plans are found in schematics folder (https://github.com/gpeter62/ESP_UniClock/tree/master/schematics)
+	- Clock setup can be defined in clocks.h file (check it)
+	- Web page: [https://github.com/gpeter62/ESP_UniClock/blob/master/Webpage.jpg]
+## Hardver schematics and PCB plans are found in schematics folder 
 	- ESP32 Clock, 6x IN-11 VFD tubes
 	- ESP32 Clock, 6x Z573M/Z574M Nixie tubes
-	- 8266 Numitron Clock 4x IV-16 tubes
+	- ESP8266 Numitron Clock 4x IV-16 tubes
+	- and many others
 
 ## Optional Components:
 	- DS18B20 temperature sensor  (1 or 2 sensor), 
