@@ -59,7 +59,7 @@ while (true) {
 */  
 
   DPRINTLN("Starting RTC Clock...");    
-  Fdelay(1000);
+  delay(2000);
   pinMode(PIN_SDA,OUTPUT); DPRINT("- SDA: GPIO"); DPRINTLN(PIN_SDA);
   pinMode(PIN_SCL,OUTPUT); DPRINT("- SCL: GPIO"); DPRINTLN(PIN_SCL);
 

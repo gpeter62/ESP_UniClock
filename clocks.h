@@ -9,13 +9,13 @@
 //#define CLOCK_2
 //#define CLOCK_3
 //#define CLOCK_4
-//#define CLOCK_5
+#define CLOCK_5
 //#define CLOCK_6
 //#define CLOCK_7
 //#define CLOCK_8
 //#define CLOCK_9
 //#define CLOCK_10
-#define CLOCK_11
+//#define CLOCK_11
 //#define CLOCK_12
 //#define CLOCK_13
 
@@ -97,8 +97,10 @@
   #define WEBNAME "IV-11 VFD Clock"
 #endif
 
-#ifdef CLOCK_5   //8266, UNFI PCB clock IVL-2 tube with RTC
-  #define DEBUG 
+#ifdef CLOCK_5   //8266, UNFI PCB clock IVL-2-5/7 tube with RTC
+  //#define DEBUG 
+  #define USE_DALLAS_TEMP
+  #define TEMP_SENSOR_PIN 3
   #define USE_RTC    
   #define MAX6921
   //Fill this table with the OUT positions of the MAX6921 chip!   
@@ -109,7 +111,6 @@
     #define PIN_CLK   12  // D7 Shift Register Clock
     #define PIN_DATA  14  // D5 Shift Register Data
     #define PIN_BL    15  // D8 Shift Register Blank (1=display off     0=display on)
-    #define TEMP_SENSOR_PIN 3 //RX
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "IVL-2 VFD Clock"

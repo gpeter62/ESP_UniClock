@@ -442,7 +442,7 @@ void startServer() {
     if (gzip)  
       response->addHeader("Content-Encoding", "gzip");
 
-    response->addHeader("Cache-Control", CACHE_MAX_AGE);
+    //response->addHeader("Cache-Control", CACHE_MAX_AGE);
     request->send(response);
   });
 
