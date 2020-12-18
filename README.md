@@ -40,5 +40,5 @@
 		- [ESP32 Tool:](https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide)
 --------------------------------------------------------------------------------------------------------
 ## More info & support:
-# Before uploading to ESP board don't forget to unzip the libary zip files to Arduino's libraries folder and RENAME the main folder to ESP32_UNICLOCK2!
+# Before uploading to ESP board don't forget to unzip the libary zip files to Arduino's libraries folder and RENAME the main folder to ESP32_UniClock2!
 Peter Gautier [Email: gautier.p62@gmail.com]
