@@ -77,6 +77,8 @@
 //#define AP_PASSWORD ""	   		//AP password	
 //#define WEBNAME "LED UniClock"  	//Clock's name on the web page
 */
+#define TIMESERVER_REFRESH 86400000     //7200000   Refresh time in millisec   86400000 = 24h
+int timeserverErrors = 0;        //timeserver refresh errors
 
 byte c_MinBrightness = 8;       //minimum LED brightness
 byte c_MaxBrightness = 255;     //maximum LED brightness
@@ -188,7 +190,7 @@ volatile boolean EEPROMsaving = false; //saving in progress - stop display refre
 bool colonBlinkState = false;
 
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "pool.ntp.org", 0, 7200000); // Update time every two hours
+NTPClient timeClient(ntpUDP, "pool.ntp.org", 0, TIMESERVER_REFRESH); // Refresh time in millisec
 IPAddress ip; 
 
 // Set timezone rules.  Offsets set to zero, since they will be loaded from EEPROM
@@ -383,7 +385,8 @@ void startWifiMode() {
       delay(100);
       enableDisplay(1000);
       if (timeClient.update()) break;
-      count ++; if (count>999) count = 1;
+      DPRINT(" - Connecting to timeserver: "); DPRINT(count); 
+      count ++; if (count>30) restartClock();   //restart clock
       writeIpTag(count);
       Fdelay(500); 
     }
@@ -810,6 +813,7 @@ void calcTime() {
   if (clockWifiMode) {
     if (WiFi.status() == WL_CONNECTED) {
       if (timeClient.update()) {
+        timeserverErrors = 0;
         setTime(myTZ.toLocal(timeClient.getEpochTime()));
         if (year()>2019) 
           updateRTC();    //update RTC, if needed
@@ -818,6 +822,11 @@ void calcTime() {
           getGPS();
         }
       } //endif update?
+      else {
+        DPRINT("Timeserver update failed. In "); DPRINT(180-timeserverErrors); DPRINTLN(" seconds clock will restart.");
+        timeserverErrors++;
+        if (timeserverErrors>180) restartClock();  //restart clock
+      }
     }  //endif Connected?
     else {
         getRTC();  
@@ -1365,13 +1374,13 @@ static unsigned int counter =0;
   if ((millis()-lastTest)<60000) return;   //60000 //check in every 60sec
   lastTest = millis();
   counter++;   
-  DPRINTLN("Wifi lost! Waiting for "); DPRINT(counter); DPRINTLN(" minutes...");
+  DPRINT("Wifi lost! Minutes to restart:"); DPRINTLN(180-counter); 
   if (counter<180) return;    //3 hours passed
   //WiFiManager MyWifiManager;
   //MyWifiManager.resetSettings();    //reset all AP and wifi passwords...
   DPRINTLN("Restart Clock...");
-  Fdelay(1000);
-  ESP.restart();
+  delay(1000);
+  restartClock();
 }
 
 inline int mod(int a, int b) {
@@ -1433,4 +1442,11 @@ void loop() {
      editor();
   } //endelse
   yield();
+}
+
+void restartClock() {
+  WiFi.setOutputPower(0);
+  WiFi.disconnect();
+  delay(1000);
+  ESP.restart();
 }

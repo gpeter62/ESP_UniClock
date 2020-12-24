@@ -5,7 +5,10 @@
 //if a digitEnablePort is on PCF chip, add 100 to the port number!   (for example  2-->102)
 
 #define I2C_ADDR 0x20
-#define LEFTDECIMAL true   //set true, if decimal point is on the left side on the tube. Else set false!
+
+#ifndef LEFTDECIMAL
+  #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
+#endif
 
 //If a digitEnablePin is on pcf8574, add 100 to the pin number.   (P0 = 100,... P7 = 107)
 const byte digitEnablePins[] = {100,101,102,103,104,105};    //6 tube nixie driven by PCF 
@@ -25,7 +28,7 @@ const int PWMtiming[] = {0,2000,3000,4000,5000,6000,7000,8000,10000,12000,14000}
 #endif
 
 void inline delayMS(int d) {
-  for (int i=0;i<d*7;i++) {asm volatile ("nop"); }
+  for (int i=0;i<d*12;i++) {asm volatile ("nop"); }
 }
 
 void ICACHE_RAM_ATTR shiftout(byte in) {

@@ -9,9 +9,9 @@
 //#define CLOCK_2
 //#define CLOCK_3
 //#define CLOCK_4
-#define CLOCK_5
+//#define CLOCK_5
 //#define CLOCK_6
-//#define CLOCK_7
+#define CLOCK_7   //6 tube, PCF digit selector
 //#define CLOCK_8
 //#define CLOCK_9
 //#define CLOCK_10
@@ -89,7 +89,7 @@
     #define PIN_CLK   13  // D7 Shift Register Clock
     #define PIN_DATA  14  // D5 Shift Register Data
     #define PIN_BL    15  // D8 Shift Register Blank (1=display off     0=display on)
-  #define ALARMSPEAKER_PIN -1   //Alarm buzzer pin                                            (oldCLock: SCL, pcftube6Clock: 3, numitron: 1)
+  #define ALARMSPEAKER_PIN -1   //Alarm buzzer pin                                        
   #define ALARMBUTTON_PIN -1    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   #define AP_NAME "UNICLOCK"
@@ -138,6 +138,7 @@
   //#define USE_NEOPIXEL_MAKUNA
   //byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   //byte tubePixels[] = {5,4,3,2,1,0};    //6 tubes, single leds, reverse direction 
+  #define LEFTDECIMAL false 
   #define PCF_74141
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""

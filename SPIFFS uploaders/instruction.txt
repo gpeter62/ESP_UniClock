@@ -1,0 +1,6 @@
+8266 and ESP32 SPIFFS uploader tools.
+
+Installation: 
+Usually copy to:    C:\Program Files(x86)\Arduino\Tools
+
+and restart Arduino IDE
