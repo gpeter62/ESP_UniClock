@@ -62,6 +62,7 @@
 //Display temperature and date in every minute between START..END seconds
 //#define ENABLE_CLOCK_DISPLAY true  //false, if no clock display is needed (for example: thermometer + hygrometer only)
 //#define SHIFT_TUBES_LEFT_BY_1      //shift left by 1 tube the display, if a thermometer is used with spec tube
+//#define LEFTDECIMAL false      //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
 //#define TEMP_START  35        //Temperature display start..end
 //#define TEMP_END    40 
 //#define HUMID_START 40        //Humidity% display start..end

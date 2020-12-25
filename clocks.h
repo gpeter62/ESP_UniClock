@@ -133,12 +133,12 @@
 
 #ifdef CLOCK_7   //8266 UNFI PCB clock 6x Z574M/Z573M tubes, tube selection by PCF8574 chip
   #define DEBUG 
-  //#define USE_DALLAS_TEMP
-  //#define TEMP_SENSOR_PIN -1
+  #define USE_DALLAS_TEMP
+  #define TEMP_SENSOR_PIN 0
   //#define USE_NEOPIXEL_MAKUNA
   //byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   //byte tubePixels[] = {5,4,3,2,1,0};    //6 tubes, single leds, reverse direction 
-  #define LEFTDECIMAL false 
+  #define LEFTDECIMAL true   //set true (Z574M), false to Z573M
   #define PCF_74141
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
@@ -367,4 +367,8 @@
 
 #ifndef PERCENT_CHARCODE 
   #define PERCENT_CHARCODE 17 
+#endif
+
+#ifndef LEFTDECIMAL
+  #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
 #endif

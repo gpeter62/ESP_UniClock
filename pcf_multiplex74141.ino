@@ -6,10 +6,6 @@
 
 #define I2C_ADDR 0x20
 
-#ifndef LEFTDECIMAL
-  #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
-#endif
-
 //If a digitEnablePin is on pcf8574, add 100 to the pin number.   (P0 = 100,... P7 = 107)
 const byte digitEnablePins[] = {100,101,102,103,104,105};    //6 tube nixie driven by PCF 
 const byte ABCDPins[4] = {14,12,13,2};  //D5,D6,D7,D4 on 8266
@@ -28,7 +24,7 @@ const int PWMtiming[] = {0,2000,3000,4000,5000,6000,7000,8000,10000,12000,14000}
 #endif
 
 void inline delayMS(int d) {
-  for (int i=0;i<d*12;i++) {asm volatile ("nop"); }
+  for (int i=0;i<d*15;i++) {asm volatile ("nop"); }
 }
 
 void ICACHE_RAM_ATTR shiftout(byte in) {
@@ -105,7 +101,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   byte p,DPpos;
   
 if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
-    digitalWrite(digitEnablePins[pos],LOW); 
+    //digitalWrite(digitEnablePins[pos],LOW); 
     timer1_write(PWMrefresh);
     return;  
   }

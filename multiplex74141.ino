@@ -1,10 +1,6 @@
 #ifdef MULTIPLEX74141
 //define here the digit enable pins from 4 to 8
 
-#ifndef LEFTDECIMAL
-  #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
-#endif
-
 //const byte digitEnablePins[] = {15,13,12,14};   //fox example... But SET in clocks.h !!!
 //const byte ABCDPins[4] =  {2,4,5,0};
 //const int DpPin = -1; // decimalPoint inside Nixie tube, set -1, if not used!
