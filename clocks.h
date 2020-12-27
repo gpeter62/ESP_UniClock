@@ -139,6 +139,8 @@
   //byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   //byte tubePixels[] = {5,4,3,2,1,0};    //6 tubes, single leds, reverse direction 
   #define LEFTDECIMAL true   //set true (Z574M), false to Z573M
+  #define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
+  //#define GRAD_CHARCODE -1   //disable char => shift display right with 1 digit
   #define PCF_74141
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
@@ -194,11 +196,11 @@
   const byte ABCDPins[4] =  {2,4,5,0};
   const int DpPin = -1; // decimalPoint inside Nixie tube, set -1, if not used!
   #define ENABLE_CLOCK_DISPLAY true  //don't display date/time!!!
-  #define SHIFT_TUBES_LEFT_BY_1  //shift left by 1 tube the display, if a thermometer is used with spec tube
+  #define SHIFT_TUBES_LEFT_BY_1  //shift left IP address by 1 tube the display, if a thermometer is used with spec tube
   #define TEMP_CHARCODE 15
   #define GRAD_CHARCODE 16 
   #define PERCENT_CHARCODE 17
-  #define COLON_PIN  1  //TX        //Blinking Colon pin.  If not used, SET TO -1               
+  #define COLON_PIN  1  //TX     //Blinking Colon pin.  If not used, SET TO -1               
   #define LED_SWITCH_PIN 16     //external led lightning ON/OFF.  If not used, SET TO -1 
   #define AP_NAME "Nixie ORA"
   #define AP_PASSWORD "q1w2e3r4"
@@ -215,7 +217,7 @@
   const byte ABCDPins[4] =  {2,4,5,0};
   const int DpPin = -1; // decimalPoint inside Nixie tube, set -1, if not used!
   #define ENABLE_CLOCK_DISPLAY false  //don't display date/time!!!
-  #define SHIFT_TUBES_LEFT_BY_1 //shift left by 1 tube the display, if a thermometer is used with spec tube
+  #define SHIFT_TUBES_LEFT_BY_1 //shift left IP address by 1 tube the display, if a thermometer is used with spec tube
   #define TEMP_CHARCODE 4
   #define GRAD_CHARCODE 16 
   #define PERCENT_CHARCODE 7
@@ -282,6 +284,8 @@
   const byte ABCDPins[4] =  {12,27,14,13};   
   const int DpPin = 15; // decimalPoint inside Nixie tube, set -1, if not used!
   #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
+  //#define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
+  //#define GRAD_CHARCODE -1   //disable char => shift display right with 1 digit
   #define ALARMSPEAKER_PIN 33   //Alarm buzzer pin                                            
   #define ALARMBUTTON_PIN 32    //Alarm switch off button pin 
   #define ALARM_ON HIGH

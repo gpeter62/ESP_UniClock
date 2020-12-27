@@ -61,7 +61,7 @@
 
 //Display temperature and date in every minute between START..END seconds
 //#define ENABLE_CLOCK_DISPLAY true  //false, if no clock display is needed (for example: thermometer + hygrometer only)
-//#define SHIFT_TUBES_LEFT_BY_1      //shift left by 1 tube the display, if a thermometer is used with spec tube
+//#define SHIFT_TUBES_LEFT_BY_1   //shift leftIP address by 1 tube the display, if a thermometer is used with spec tube
 //#define LEFTDECIMAL false      //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
 //#define TEMP_START  35        //Temperature display start..end
 //#define TEMP_END    40 
@@ -70,8 +70,8 @@
 //#define DATE_START  45        //Date is displayed start..end
 //#define DATE_END    50 
 //#define ANIMSPEED   50        //Animation speed in millisec 
-//#define TEMP_CHARCODE 15      //Thermometer "C"
-//#define GRAD_CHARCODE 16      //Thermometer grad
+//#define TEMP_CHARCODE 15      //Thermometer "C", set to -1 to disable 
+//#define GRAD_CHARCODE 16      //Thermometer grad, set to -1 to disable 
 //#define PERCENT_CHARCODE 17   //Hygrometer %
 
 //#define AP_NAME "UNICLOCK"  		//Access Point name
@@ -1000,8 +1000,8 @@ int digPtr = 0;
     newDigit[i] = 10; 
   }
 
-  newDigit[digPtr++] = TEMP_CHARCODE;  //  "C"
-  if (maxDigits>4) newDigit[digPtr++] = GRAD_CHARCODE;   //grad
+  if (TEMP_CHARCODE>=0) newDigit[digPtr++] = TEMP_CHARCODE;  //  "C"
+  if ((maxDigits>4) && (GRAD_CHARCODE>=0)) newDigit[digPtr++] = GRAD_CHARCODE;   //grad
   
   newDigit[digPtr++] = int(temperature[ptr]*10) % 10; 
   digitDP[digPtr] = true;
