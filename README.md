@@ -33,9 +33,9 @@
 	- Web page for setup. See: Uniclock_v2.jpg
 
 ## External libraries used (available zipped in libraries folder)
-	- ESP8266: Time, Timezone, NtpClient, ESPAsyncWifiManager, ESPAsyncTCP, ArduinoJson6.0, AsyncTCP-ESP32 
-	- Optional: ds3231, TinyGPSPlus, NeoPixelBus_by_Makuna
-	- Web page files are found in "dat" subfolder must upload to SPIFFS with uploader tool!
+- ESP8266: Time, Timezone, NtpClient, ESPAsyncWifiManager, ESPAsyncTCP, ArduinoJson6.0, AsyncTCP-ESP32 
+- Optional: ds3231, TinyGPSPlus, NeoPixelBus_by_Makuna
+- Web page files are found in "dat" subfolder must upload to SPIFFS with uploader tool!
 - [ESP8266 Tool](https://randomnerdtutorials.com/install-esp8266-filesystem-uploader-arduino-ide)
 - [ESP32 Tool](https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide)
 
