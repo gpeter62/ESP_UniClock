@@ -27,17 +27,17 @@
 #include "clocks.h"  //DEFINE YOUR CLOCKS SETUP IN THIS FILE!!!
 
 /*_______________________________ USABLE PARAMETERS _______________________________________________________
-//#define DEBUG               //Enable Serial Monitor, 115200baud (only, if TX pin is not used anywhere!!!)
+//#define DEBUG                 //Enable Serial Monitor, 115200baud (only, if TX pin is not used anywhere!!!)
 //---------------------------- CLOCK EXTRA OPTION PARAMETERS -------------------------------------------------
 //#define USE_DALLAS_TEMP       //TEMP_SENSOR_PIN is used to connect the sensor, temperature measure
 //#define USE_DHT_TEMP          //TEMP_SENSOR_PIN is sensor pin #define DHTTYPE DHT22  temperature and humidity
 //#define USE_RTC               //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
 //#define USE_GPS               //use for standalone clock, without wifi internet access
-//#define USE_NEOPIXEL_MAKUNA   //WS2812B led stripe, for tubes lightning. Don't forget to define tubePixels[] !
+//#define USE_NEOPIXEL_MAKUNA   //WS2812B led stripe, for tubes backlight. Don't forget to define tubePixels[] !
 
 //----- DRIVER SELECTION - ----- Use only 1 driver from the following options in the clocks.h file!
-//#define MULTIPLEX74141   //4..8 Nixie tubes generic driver for ESP8266 or ESP32
-//#define MAX6921          //4..8 VFD tubes (IV18) driver for ESP8266 or ESP32
+//#define MULTIPLEX74141    //4..8 Nixie tubes generic driver for ESP8266 or ESP32
+//#define MAX6921           //4..8 VFD tubes (IV18) driver for ESP8266 or ESP32
 //-------------- ONLY 8266 clock drivers --------------------------------------------------
 //#define NO_MULTIPLEX74141 //4..6 Nixie tubes, serial latch driver, 74141 for each tube 
 //#define MM5450            //6..8 LEDS
@@ -51,7 +51,7 @@
 //#define COLON_PIN   -1        //Blinking Colon pin.  If not used, SET TO -1
 //#define TEMP_SENSOR_PIN -1    //DHT or Dallas temp sensor pin.  If not used, SET TO -1
 //#define DHTTYPE DHT22         //DHT sensor type, if used...
-//#define LED_SWITCH_PIN -1     //external led lightning ON/OFF.  If not used, SET TO -1
+//#define LED_SWITCH_PIN -1     //external led backlight ON/OFF.  If not used, SET TO -1
 //#define DECIMALPOINT_PIN -1   //Nixie decimal point between digits. If not used, SET TO -1
 //#define ALARMSPEAKER_PIN -1   //Alarm buzzer pin
 //#define ALARMBUTTON_PIN -1    //Alarm switch off button pin 
@@ -60,7 +60,7 @@
 //#define MAXBRIGHTNESS 10 // (if MM5450, use 15 instead of 10)
 
 //Display temperature and date in every minute between START..END seconds
-//#define ENABLE_CLOCK_DISPLAY true  //false, if no clock display is needed (for example: thermometer + hygrometer only)
+//#define ENABLE_CLOCK_DISPLAY true  //false, if no clock display is needed (for example: thermometer + humidity only)
 //#define SHIFT_TUBES_LEFT_BY_1   //shift leftIP address by 1 tube the display, if a thermometer is used with spec tube
 //#define LEFTDECIMAL false      //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
 //#define TEMP_START  35        //Temperature display start..end
@@ -72,11 +72,11 @@
 //#define ANIMSPEED   50        //Animation speed in millisec 
 //#define TEMP_CHARCODE 15      //Thermometer "C", set to -1 to disable 
 //#define GRAD_CHARCODE 16      //Thermometer grad, set to -1 to disable 
-//#define PERCENT_CHARCODE 17   //Hygrometer %
+//#define PERCENT_CHARCODE 17   //Humidity %
 
-//#define AP_NAME "UNICLOCK"  		//Access Point name
+//#define AP_NAME "UNICLOCK"  	//Access Point name
 //#define AP_PASSWORD ""	   		//AP password	
-//#define WEBNAME "LED UniClock"  	//Clock's name on the web page
+//#define WEBNAME "LED UniClock"  //Clock's name on the web page
 */
 #define TIMESERVER_REFRESH 86400000     //7200000   Refresh time in millisec   86400000 = 24h
 int timeserverErrors = 0;        //timeserver refresh errors
@@ -879,7 +879,7 @@ static unsigned long lastRun = 0;
     else displayTime4();
     
  //   if (COLON_PIN>=0) digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
-    if ((LED_SWITCH_PIN>=0) && displayON) //Switch on underlightning LED only daytime
+    if ((LED_SWITCH_PIN>=0) && displayON) //Switch on backlight LED only daytime
       digitalWrite(LED_SWITCH_PIN,HIGH);   
     else 
       digitalWrite(LED_SWITCH_PIN,LOW);

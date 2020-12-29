@@ -5,13 +5,13 @@
  * ***********************************************************
 */
 
-//#define CLOCK_1
+#define CLOCK_1
 //#define CLOCK_2
 //#define CLOCK_3
 //#define CLOCK_4
 //#define CLOCK_5
 //#define CLOCK_6
-#define CLOCK_7   //6 tube, PCF digit selector
+//#define CLOCK_7   //6 tube, PCF digit selector
 //#define CLOCK_8
 //#define CLOCK_9
 //#define CLOCK_10
@@ -201,13 +201,13 @@
   #define GRAD_CHARCODE 16 
   #define PERCENT_CHARCODE 17
   #define COLON_PIN  1  //TX     //Blinking Colon pin.  If not used, SET TO -1               
-  #define LED_SWITCH_PIN 16     //external led lightning ON/OFF.  If not used, SET TO -1 
+  #define LED_SWITCH_PIN 16     //external led backlight ON/OFF.  If not used, SET TO -1 
   #define AP_NAME "Nixie ORA"
   #define AP_PASSWORD "q1w2e3r4"
   #define WEBNAME "Nixie IN-14 ora"  
 #endif
 
-#ifdef CLOCK_21   //8266 D1-mini, P.S. PCB 4xIN14 thermometer / hygrometer 
+#ifdef CLOCK_21   //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
   //#define DEBUG 
   #define USE_DHT_TEMP
   #define DHTTYPE DHT22
@@ -221,14 +221,14 @@
   #define TEMP_CHARCODE 4
   #define GRAD_CHARCODE 16 
   #define PERCENT_CHARCODE 7
-  #define LED_SWITCH_PIN   16   //external led lightning ON/OFF.  If not used, SET TO -1 
+  #define LED_SWITCH_PIN   16   //external led backlight ON/OFF.  If not used, SET TO -1 
   #define DECIMALPOINT_PIN 1 //TX   //Nixie decimal point between digits. If not used, SET TO -1 
   #define AP_NAME "Nixie Homero 5.6"
   #define AP_PASSWORD "q1w2e3r4"
   #define WEBNAME "Nixie Homero 5.6"
 #endif
 
-#ifdef CLOCK_22   //8266 NOMEMCU, P.S. PCB 4xIN14 thermometer / hygrometer
+#ifdef CLOCK_22   //8266 NOMEMCU, P.S. PCB 4xIN14 thermometer / humidity
   //#define DEBUG 
   #define USE_NEOPIXEL_MAKUNA 
   byte tubePixels[] = {0,1,2,3};        //4 tubes, single leds
@@ -305,7 +305,7 @@
 #endif
 
 #ifndef LED_SWITCH_PIN
-  #define LED_SWITCH_PIN -1     //external led lightning ON/OFF.
+  #define LED_SWITCH_PIN -1     //external led backlight ON/OFF.
 #endif
   
 #ifndef DECIMALPOINT_PIN
@@ -330,7 +330,7 @@
 
 //Display temperature and date in every minute between START..END seconds
 #ifndef ENABLE_CLOCK_DISPLAY 
-  #define ENABLE_CLOCK_DISPLAY true  //false, if no clock display is needed (for example: thermometer + hygrometer only)
+  #define ENABLE_CLOCK_DISPLAY true  //false, if no clock display is needed (for example: thermometer + humidity only)
 #endif
 
 #ifndef TEMP_START    
