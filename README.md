@@ -40,4 +40,3 @@
 # More info & support:
 ## Before uploading to the ESP board don't forget to unzip the libary files to the Arduino IDE's \libraries folder and RENAME the main folder to ESP32_UniClock2!
 Peter Gautier [Email: gautier.p62@gmail.com]
-

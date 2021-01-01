@@ -1,4 +1,4 @@
-// NeoPixel Tube Lightning
+// NeoPixel Tube Backlight
 
 #ifdef USE_NEOPIXEL_MAKUNA
 
@@ -408,7 +408,7 @@ static unsigned long lastRun = 0;
   if ((millis()-lastRun)<max(FPS_MSEC,258-prm.rgbSpeed)) return;
   lastRun = millis();
 
-  if ((prm.rgbEffect == 0) || !displayON) {   //Night: no RGB lightning
+  if ((prm.rgbEffect == 0) || !displayON) {   //Night: no RGB backlight
     neoBrightness = 0;
     fixColor(-1);
     return;

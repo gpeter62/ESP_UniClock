@@ -45,7 +45,8 @@
 //#define Numitron_4511N    //Numitron 4x tube clock
 //#define SN75512           //4..8 VFD tubes   
 //#define samsung           //samsung serial display
-//#define PCF_74141  //PCF pin expander for tube selection
+//#define PCF_74141         //PCF pin expander for tube selection
+//#define PT6355            //VFD clock - development in progress
 
 //------- pinout -----------------------------------------------------------
 //#define COLON_PIN   -1        //Blinking Colon pin.  If not used, SET TO -1
@@ -230,7 +231,7 @@ struct {
   byte alarmPeriod = 15;           //Alarm length, sec 
   byte rgbEffect = 1;              //0=OFF, 1=FixColor
   byte rgbBrightness = 100;        // 0..255
-  unsigned int  rgbFixColor = 150;          //0..255, 256 = white
+  unsigned int  rgbFixColor = 150;          //0..255
   byte rgbSpeed = 50;              //0..255msec / step
   boolean rgbDir = false;          //false = right, true = left
   byte magic = MAGIC_VALUE;        //magic value, to check EEPROM version when starting the clock
@@ -300,7 +301,6 @@ void Fdelay(unsigned long d) {
     enableDisplay(2000);
     doAnimationMakuna();
     alarmSound();
-    writeDisplaySingle();
     yield();
   }
 }
@@ -1339,8 +1339,8 @@ void writeIpTag(byte iptag) {
   if (iptag>=100) newDigit[2+offset] = iptag / 100;
   newDigit[1+offset] = (iptag % 100) / 10;
   newDigit[0+offset] = iptag % 10;
-  writeDisplaySingle();
   changeDigit();
+  writeDisplaySingle();
 }
 
 void showMyIp() {   //at startup, show the web page internet address
@@ -1446,7 +1446,10 @@ void loop() {
 }
 
 void restartClock() {
-  WiFi.setOutputPower(0);
+  #if defined(ESP8266) 
+    WiFi.setOutputPower(0);
+  #endif
+
   WiFi.disconnect();
   delay(1000);
   ESP.restart();

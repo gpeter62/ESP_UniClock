@@ -8,10 +8,6 @@ byte tubes[] = {0,1,2,3,4,5};    //change it, if needed for the correct tube seq
 #define PIN_CLK  14  // D5 Clock
 #define PIN_DIN  13  // D7 DataIN
 
-#define PIN_HOUR_BUTTON 16    //D0
-#define PIN_MIN_BUTTON  2     //D4
-#define PIN_MODE_SWITCH 12    //D6
-
 //MAX7219 Registers
 #define REG_SHUTDOWN   0x0C
 #define REG_SCANLIMIT  0x0B  
@@ -38,7 +34,9 @@ byte charDefinition[] = {
                    B11001110,   // P  abefg (14)
                    B10011100,   // C  adef (15)
                    B11000110,   //grad  abfg  (16)         
-                   B10110100    //%  acdf  (17)          
+                   B10110100,   //%  acdf  (17)    
+                   B01100000,   //I  bc    (18)
+                   B10001110    //F  aefg  (19)                         
 };
 
 //Fill this table with the OUT bits numbers of MAX7219 chip!   I use only No-Decode mode for flexible hardware
@@ -66,9 +64,6 @@ void setup_pins() {
   pinMode(PIN_LOAD,OUTPUT);
   pinMode(PIN_DIN, OUTPUT);
   pinMode(PIN_CLK, OUTPUT);
-  pinMode(PIN_HOUR_BUTTON,INPUT_PULLUP);
-  pinMode(PIN_MIN_BUTTON, INPUT_PULLUP);
-  pinMode(PIN_MODE_SWITCH, INPUT_PULLUP);
   digitsOnly = false;
   
   sendBits(REG_SHUTDOWN,1);              //Set to Normal (not Shutdown) mode

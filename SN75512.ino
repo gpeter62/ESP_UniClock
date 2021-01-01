@@ -20,6 +20,8 @@ byte digitEnablePins[] = {0,1,2,3,4,5,6,7,8};           //digit enable bits   (Y
 #define PIN_DATA_BIT   1<<PIN_DATA  
 #define PIN_STROBE_BIT 1<<PIN_STROBE    
 
+
+
 //------------------abcdefgDP----------------   definition of different characters
 byte charDefinition[] = {
                    B11111100,   //0: abcdef
@@ -39,7 +41,9 @@ byte charDefinition[] = {
                    B11001110,   // P  abefg (14)
                    B10011100,   // C  adef (15)
                    B11000110,   //grad  abfg  (16)
-                   B10110100    //%  acdf  (17)
+                   B10110100,   //%  acdf  (17)
+                   B01100000,   //I  bc    (18)
+                   B10001110    //F  aefg  (19)                   
 };
 
 #define MAXCHARS sizeof(charDefinition)

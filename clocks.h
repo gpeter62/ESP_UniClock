@@ -5,7 +5,7 @@
  * ***********************************************************
 */
 
-#define CLOCK_1
+//#define CLOCK_1
 //#define CLOCK_2
 //#define CLOCK_3
 //#define CLOCK_4
@@ -24,7 +24,7 @@
 //#define CLOCK_22
 
 //#define CLOCK_30
-//#define CLOCK_31
+#define CLOCK_31
 
 //______________________ESP8266 CLOCKS by UNFI and GP ______________________________________________________
 #ifdef CLOCK_1   //8266, UNFI PCB clock, 4x IN-16 tubes
@@ -184,6 +184,14 @@
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "LED UniClock"
+#endif
+
+#ifdef CLOCK_12   //8266 VFD Clock with PT6355 chip
+  #define DEBUG 
+  #define PT6355
+  #define AP_NAME "UNICLOCK"
+  #define AP_PASSWORD ""
+  #define WEBNAME "VFD UniClock"
 #endif
 
 //____________ P.S. clocks / thermometers ____________________________________________

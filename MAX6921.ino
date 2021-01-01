@@ -33,7 +33,9 @@ byte charDefinition[] = {
                    B11001110,   // P  abefg (14)
                    B10011100,   // C  adef (15)
                    B11000110,   //grad  abfg (16)
-                   B10110100    //%  acdf  (17)
+                   B10110100,   //%  acdf  (17)
+                   B01100000,   //I  bc    (18)
+                   B10001110    //F  aefg  (19)
 };
 
 uint32_t animationMaskBits[5];
