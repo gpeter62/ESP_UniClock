@@ -823,11 +823,13 @@ void calcTime() {
           getGPS();
         }
       } //endif update?
+/*      
       else {
         DPRINT("Timeserver update failed. In "); DPRINT(180-timeserverErrors); DPRINTLN(" seconds clock will restart.");
         timeserverErrors++;
         if (timeserverErrors>180) restartClock();  //restart clock
       }
+*/      
     }  //endif Connected?
     else {
         getRTC();  
@@ -1374,7 +1376,10 @@ static unsigned int counter =0;
 
   if ((millis()-lastTest)<60000) return;   //60000 //check in every 60sec
   lastTest = millis();
-  counter++;   
+  WiFi.reconnect();
+  return;
+  
+  counter++;        
   DPRINT("Wifi lost! Minutes to restart:"); DPRINTLN(180-counter); 
   if (counter<180) return;    //3 hours passed
   //WiFiManager MyWifiManager;
@@ -1435,7 +1440,6 @@ void loop() {
   checkWifiMode();
   if (clockWifiMode) { //Wifi Clock Mode
     if (WiFi.status() != WL_CONNECTED) {
-      WiFi.reconnect();
       resetWiFi();
     }  
   }
