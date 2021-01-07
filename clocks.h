@@ -24,7 +24,8 @@
 //#define CLOCK_22
 
 //#define CLOCK_30
-#define CLOCK_31
+//#define CLOCK_31
+#define CLOCK_32
 
 //______________________ESP8266 CLOCKS by UNFI and GP ______________________________________________________
 #ifdef CLOCK_1   //8266, UNFI PCB clock, 4x IN-16 tubes
@@ -302,6 +303,29 @@
   #define WEBNAME "ESP32UniClock 2.3"
 #endif
 
+//______________________ESP-32 CLOCKS______________________________________________________
+#ifdef CLOCK_32   //ESP32, UNFI PCB clock, 6 x IV-11 VFD tubes, DHT22 sensor
+  #define DEBUG 
+  #define USE_NEOPIXEL_MAKUNA 
+  byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
+  #define USE_DHT_TEMP
+  #define DHTTYPE DHT22
+  #define TEMP_SENSOR_PIN 23    //DHT or Dallas temp sensor pin.  If not used, SET TO -1     
+  #define MAX6921
+  byte segmentEnablePins[] =  {19,17,15,12,13,16,18,14};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
+  byte digitEnablePins[] = {9,8,7,2,1,0};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
+  //MAX6921 pins
+    #define PIN_LE    14  // Shift Register Latch Enable
+    #define PIN_CLK   13  // Shift Register Clock
+    #define PIN_DATA  27  // Shift Register Data
+    #define PIN_BL    12  // Shift Register Blank (1=display off     0=display on)
+  #define ALARMSPEAKER_PIN 33   //Alarm buzzer pin                                            
+  #define ALARMBUTTON_PIN 32    //Alarm switch off button pin 
+  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
+  #define AP_NAME "UNICLOCK32"
+  #define AP_PASSWORD ""  
+  #define WEBNAME "ESP32UniClock 2.3"
+#endif
 
 //if not defined, here is defined as NOT USED
 #ifndef COLON_PIN

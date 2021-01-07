@@ -1133,7 +1133,7 @@ void displayTime8(){
 
 void changeDigit() {
   int j=0;
-  byte tmp[30];
+  byte tmp[50];
   byte space = 4;
   byte anim;
   

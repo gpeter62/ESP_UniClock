@@ -22,10 +22,7 @@
 // Connect pin 4 (on the right) of the sensor to GROUND
 // Connect a 10K resistor from pin 2 (data) to pin 1 (power) of the sensor
 
-// Initialize DHT sensor.
-// Note that older versions of this library took an optional third parameter to
-// tweak the timings for faster processors.  This parameter is no longer needed
-// as the current DHT reading algorithm adjusts itself to work on faster procs.
+
 DHT dht(TEMP_SENSOR_PIN, DHTTYPE);
 
 void setupDHTemp() {
@@ -38,13 +35,15 @@ void getDHTemp() {
 static unsigned long lastRun = 0;
 
   if (EEPROMsaving) return;
-  if (((millis()-lastRun)<2500) || (second()!=0)) return;
+  if (((millis()-lastRun)<2500) || (second()!=00)) return;
   lastRun = millis();  
 
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+  EEPROMsaving = true;
   humid = dht.readHumidity();
   temperature[0] = dht.readTemperature();      // Read temperature as Celsius (the default)
+  EEPROMsaving = false;
   useTemp = 1;
   useHumid = 1;
   //DPRINT(temperature[0]); DPRINT("C  "); DPRINT(humid); DPRINTLN("%");
@@ -60,6 +59,9 @@ static unsigned long lastRun = 0;
     temperature[0] = 99.9f;
     humid = 0;
     useHumid = 0;
+  }
+  else {
+    DPRINT("Temp:"); DPRINTLN(temperature[0]);
   }
 }
 
