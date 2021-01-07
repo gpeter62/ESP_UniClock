@@ -11,7 +11,7 @@
 //#define CLOCK_4
 //#define CLOCK_5
 //#define CLOCK_6
-//#define CLOCK_7   //6 tube, PCF digit selector
+#define CLOCK_7   //6 tube, PCF digit selector
 //#define CLOCK_8
 //#define CLOCK_9
 //#define CLOCK_10
@@ -25,7 +25,7 @@
 
 //#define CLOCK_30
 //#define CLOCK_31
-#define CLOCK_32
+//#define CLOCK_32
 
 //______________________ESP8266 CLOCKS by UNFI and GP ______________________________________________________
 #ifdef CLOCK_1   //8266, UNFI PCB clock, 4x IN-16 tubes

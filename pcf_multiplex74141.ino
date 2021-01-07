@@ -136,7 +136,6 @@ if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
       state = 3;
       break;
    }  //end switch
-   if (timer<200) timer = 200;  //safety only...
  
    //  if ((pos>0) && (num<=9)) num = convert[num];   //tube character conversion, if needed... (maybe bad pin numbering)
    
@@ -170,7 +169,7 @@ if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
           if (decimalpointON) digitalWrite(DECIMALPOINT_PIN,HIGH);
         }
   }
-  if (timer<200) timer = 200;  //safety only...
+  if (timer<500) timer = 500;  //safety only...
  
   timer1_write(timer); 
 }

@@ -80,7 +80,7 @@
 //#define WEBNAME "LED UniClock"  //Clock's name on the web page
 */
 #define TIMESERVER_REFRESH 86400000     //7200000   Refresh time in millisec   86400000 = 24h
-int timeserverErrors = 0;        //timeserver refresh errors
+unsigned long timeserverErrors = 0;        //timeserver refresh errors
 
 byte c_MinBrightness = 8;       //minimum LED brightness
 byte c_MaxBrightness = 255;     //maximum LED brightness
@@ -89,7 +89,7 @@ unsigned long intCounter = 0;
 
 #if defined(ESP8266)  
   #ifndef WEBNAME
-    #define WEBNAME "ESP32UniClock 2.3"
+    #define WEBNAME "ESP32_UniClock 2.3"
   #endif
   #ifndef AP_NAME
     #define AP_NAME "UNICLOCK"
@@ -157,7 +157,7 @@ AsyncWebServer server(80);
 DNSServer dns;
 #define CACHE_MAX_AGE "max-age=31536000" //maximum is: 31536000
 
-#define BUFSIZE 10
+#define BUFSIZE 12
 byte digit[BUFSIZE];
 byte newDigit[BUFSIZE];
 byte oldDigit[BUFSIZE];
@@ -823,13 +823,12 @@ void calcTime() {
           getGPS();
         }
       } //endif update?
-/*      
       else {
-        DPRINT("Timeserver update failed. In "); DPRINT(180-timeserverErrors); DPRINTLN(" seconds clock will restart.");
         timeserverErrors++;
-        if (timeserverErrors>180) restartClock();  //restart clock
+        DPRINT("TS error. ");
+        //DPRINT(180-timeserverErrors); DPRINTLN(" seconds clock will restart.");
+        //  if (timeserverErrors>180) restartClock();  //restart clock
       }
-*/      
     }  //endif Connected?
     else {
         getRTC();  
@@ -1377,6 +1376,7 @@ static unsigned int counter =0;
   if ((millis()-lastTest)<60000) return;   //60000 //check in every 60sec
   lastTest = millis();
   WiFi.reconnect();
+  DPRINTLN("Lost WiFi. Reconnect.");
   return;
   
   counter++;        
