@@ -11,7 +11,7 @@
 //#define CLOCK_4
 //#define CLOCK_5
 //#define CLOCK_6
-//#define CLOCK_7   //6 tube, PCF digit selector
+#define CLOCK_7   //6 tube, PCF digit selector
 //#define CLOCK_8
 //#define CLOCK_9
 //#define CLOCK_10
@@ -27,7 +27,7 @@
 //#define CLOCK_31
 //#define CLOCK_32
 
-#define CLOCK_41
+//#define CLOCK_41
 //#define CLOCK_40
 //______________________ESP8266 CLOCKS by UNFI and GP ______________________________________________________
 #ifdef CLOCK_1   //8266, UNFI PCB clock, 4x IN-16 tubes
@@ -353,7 +353,7 @@
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD ""  
-  #define WEBNAME "ESP32UniClock 2.3"
+  #define WEBNAME "ESP32 IV-11 VFD-Clock"
 #endif
 
 #ifdef CLOCK_41   //ESP32 WEMOS D1 mini, UNFI board, 6 x Z573M Nixie tubes
@@ -366,7 +366,7 @@
   #define MULTIPLEX74141
   const byte digitEnablePins[] = {26,18,33,19,23,5};   //ESP32 6x tube Clock
   const byte ABCDPins[4] =  {32,16,4,17};   
-  const int DpPin = 15; // decimalPoint inside Nixie tube, set -1, if not used!
+  const int DpPin = 27; // decimalPoint inside Nixie tube, set -1, if not used!
   #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
   //#define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
   //#define GRAD_CHARCODE -1   //disable char => shift display right with 1 digit
@@ -375,7 +375,7 @@
   #define ALARM_ON HIGH
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD ""
-  #define WEBNAME "ESP32UniClock 2.3"
+  #define WEBNAME "ESP32 Z573M Nixie-Clock"
 #endif
 
 //__________________________________________________________________________________________________________________________

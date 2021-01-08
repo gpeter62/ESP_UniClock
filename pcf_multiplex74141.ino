@@ -24,7 +24,7 @@ const int PWMtiming[] = {0,2000,3000,4000,5000,6000,7000,8000,10000,12000,14000}
 #endif
 
 void inline delayMS(int d) {
-  for (int i=0;i<d*15;i++) {asm volatile ("nop"); }
+  for (int i=0;i<d*25;i++) {asm volatile ("nop"); }
 }
 
 void ICACHE_RAM_ATTR shiftout(byte in) {
