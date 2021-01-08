@@ -44,7 +44,10 @@ const int PixelCount = sizeof(tubePixels)+4;
 //NeoBrgFeature give me BGRW (g and r swapped)
 
 #if defined(ESP32)
-  const byte PixelPin = 2;  //on ESP32 usable any pin below 32 
+  #ifndef NEOPIXEL_PIN 
+	#define NEOPIXEL_PIN 2
+  #endif
+  const byte PixelPin = NEOPIXEL_PIN;  //on ESP32 usable any pin below 32 
   NeoPixelBrightnessBus<NeoGrbFeature, NeoEsp32I2s1800KbpsMethod> strip(PixelCount+2,PixelPin);  //instead of NeoEsp32Rmt7Ws2812xMethod the  NeoEsp32I2s1800KbpsMethod is better!
 #else
   const byte PixelPin = 3;  // on 8266 it MUST use GPIO3 (RX pin)    

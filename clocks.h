@@ -11,7 +11,7 @@
 //#define CLOCK_4
 //#define CLOCK_5
 //#define CLOCK_6
-#define CLOCK_7   //6 tube, PCF digit selector
+//#define CLOCK_7   //6 tube, PCF digit selector
 //#define CLOCK_8
 //#define CLOCK_9
 //#define CLOCK_10
@@ -27,6 +27,8 @@
 //#define CLOCK_31
 //#define CLOCK_32
 
+#define CLOCK_41
+//#define CLOCK_40
 //______________________ESP8266 CLOCKS by UNFI and GP ______________________________________________________
 #ifdef CLOCK_1   //8266, UNFI PCB clock, 4x IN-16 tubes
   #define DEBUG 
@@ -259,10 +261,11 @@
   #define WEBNAME "Nixie Homero 6.0"
 #endif
 
-//______________________ESP-32 CLOCKS______________________________________________________
+//______________________ESP-32 CLOCKS  (2x18pin ESP32 modul) ______________________________________________________
 #ifdef CLOCK_30   //ESP32, UNFI PCB clock, 6 x IV-11 VFD tubes
   #define DEBUG 
   #define USE_NEOPIXEL_MAKUNA 
+  #define NEOPIXEL_PIN 2
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   #define USE_DALLAS_TEMP
   #define TEMP_SENSOR_PIN 23    //DHT or Dallas temp sensor pin.  If not used, SET TO -1     
@@ -285,6 +288,7 @@
 #ifdef CLOCK_31   //ESP32, UNFI board, 6 x Z573M Nixie tubes
   #define DEBUG 
   #define USE_NEOPIXEL_MAKUNA 
+  #define NEOPIXEL_PIN 2
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   #define USE_DALLAS_TEMP
   #define TEMP_SENSOR_PIN 23    //DHT or Dallas temp sensor pin.  If not used, SET TO -1    
@@ -303,10 +307,11 @@
   #define WEBNAME "ESP32UniClock 2.3"
 #endif
 
-//______________________ESP-32 CLOCKS______________________________________________________
-#ifdef CLOCK_32   //ESP32, UNFI PCB clock, 6 x IV-11 VFD tubes, DHT22 sensor
+
+#ifdef CLOCK_32   //ESP32, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
   #define DEBUG 
   #define USE_NEOPIXEL_MAKUNA 
+  #define NEOPIXEL_PIN 2
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   #define USE_DHT_TEMP
   #define DHTTYPE DHT22
@@ -327,6 +332,53 @@
   #define WEBNAME "ESP32UniClock 2.3"
 #endif
 
+//______________________ESP-32 CLOCKS  (2x20pin Wemos D1 mini ESP32 modul) ______________________________________________________
+#ifdef CLOCK_40   //ESP32 WEMOS D1 mini, UNFI 6 x IV-11 VFD tubes clock
+  #define DEBUG 
+  #define USE_NEOPIXEL_MAKUNA 
+  #define NEOPIXEL_PIN 22
+  byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
+  #define USE_DALLAS_TEMP
+  #define TEMP_SENSOR_PIN 25    //DHT or Dallas temp sensor pin.  If not used, SET TO -1     
+  #define MAX6921
+  byte segmentEnablePins[] =  {19,17,15,12,13,16,18,14};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
+  byte digitEnablePins[] = {9,8,7,2,1,0};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
+  //MAX6921 pins
+    #define PIN_LE    4  // Shift Register Latch Enable
+    #define PIN_CLK   17  // Shift Register Clock
+    #define PIN_DATA  16  // Shift Register Data
+    #define PIN_BL    32  // Shift Register Blank (1=display off     0=display on)
+  #define ALARMSPEAKER_PIN 2   //Alarm buzzer pin                                            
+  #define ALARMBUTTON_PIN 0    //Alarm switch off button pin 
+  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
+  #define AP_NAME "UNICLOCK32"
+  #define AP_PASSWORD ""  
+  #define WEBNAME "ESP32UniClock 2.3"
+#endif
+
+#ifdef CLOCK_41   //ESP32 WEMOS D1 mini, UNFI board, 6 x Z573M Nixie tubes
+  #define DEBUG 
+  #define USE_NEOPIXEL_MAKUNA 
+  #define NEOPIXEL_PIN 22
+  byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
+  #define USE_DALLAS_TEMP
+  #define TEMP_SENSOR_PIN 25    //DHT or Dallas temp sensor pin.  If not used, SET TO -1    
+  #define MULTIPLEX74141
+  const byte digitEnablePins[] = {26,18,33,19,23,5};   //ESP32 6x tube Clock
+  const byte ABCDPins[4] =  {32,16,4,17};   
+  const int DpPin = 15; // decimalPoint inside Nixie tube, set -1, if not used!
+  #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
+  //#define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
+  //#define GRAD_CHARCODE -1   //disable char => shift display right with 1 digit
+  #define ALARMSPEAKER_PIN 2   //Alarm buzzer pin                                            
+  #define ALARMBUTTON_PIN 0    //Alarm switch off button pin 
+  #define ALARM_ON HIGH
+  #define AP_NAME "UNICLOCK32"
+  #define AP_PASSWORD ""
+  #define WEBNAME "ESP32UniClock 2.3"
+#endif
+
+//__________________________________________________________________________________________________________________________
 //if not defined, here is defined as NOT USED
 #ifndef COLON_PIN
   #define COLON_PIN   -1        //Blinking Colon pin.
