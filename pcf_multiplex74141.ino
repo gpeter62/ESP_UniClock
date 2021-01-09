@@ -23,53 +23,54 @@ const int PWMtiming[] = {0,2000,3000,4000,5000,6000,7000,8000,10000,12000,14000}
   #error "Board is not supported!"  
 #endif
 
-void inline delayMS(int d) {
-  for (int i=0;i<d*25;i++) {asm volatile ("nop"); }
+void inline delayMS(int d) {        //Delay microsec
+  for (int i=0;i<d*30;i++) {asm volatile ("nop"); }
 }
 
-void ICACHE_RAM_ATTR shiftout(byte in) {
+void inline ICACHE_RAM_ATTR shiftout(byte in) {
   for (int i=0;i<8;i++) {
     digitalWrite(SDA,in  & (1<<(7-i)));
     delayMS(1);
     digitalWrite(SCL,HIGH);
-    if (i==0) delayMS(4);
-    delayMS(1);
+    //if (i==0) delayMS(8);
+    delayMS(4);
     digitalWrite(SCL,LOW);
   }  
 
   //ACK is coming
   //pinMode(SDA,INPUT_PULLUP); 
-  digitalWrite(SDA,LOW);
-  delayMS(1);
+  digitalWrite(SDA,LOW);  //LOW
+  delayMS(12);
   digitalWrite(SCL,HIGH);  //clock pulse
-  delayMS(1); 
+  delayMS(4); 
   digitalWrite(SCL,LOW);
   //pinMode(SDA,OUTPUT);
+    delayMS(4); 
  }
 
 void ICACHE_RAM_ATTR sendBits(byte address,byte val){ 
   //Serial.print(address,HEX); Serial.print("/"); Serial.println(val);
   
   //void ICACHE_RAM_ATTR startCondition() {
-  digitalWrite(SDA,HIGH);
-  delayMS(1); 
-  digitalWrite(SCL,HIGH);
-  delayMS(1); 
+  //digitalWrite(SDA,HIGH);   //SDA HIGH -> LOW, while SCL is HIGH
+  //digitalWrite(SCL,HIGH);
+  //delayMS(4); 
   digitalWrite(SDA,LOW);
   delayMS(3); 
   digitalWrite(SCL,LOW);
-  delayMS(2); 
+  delayMS(4); 
   
   shiftout(address<<1);   //shift address one bit left, because 0bit is READ/WRITE mode. 0=WRITE
   shiftout(val);
   
   //void ICACHE_RAM_ATTR stopCondition() {
+  delayMS(4);
+  digitalWrite(SDA,LOW);   //SDA LOW -> HIGH, while SCL is HIGH
   delayMS(2); 
-  digitalWrite(SDA,LOW);
   digitalWrite(SCL,HIGH);
-  delayMS(2); 
+  delayMS(4);
   digitalWrite(SDA,HIGH);
-  //delayMS(4); 
+  delayMS(4); 
 }
 
 
@@ -114,7 +115,7 @@ if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
    switch (state) {   //state machine...
     case 0:
       pos++;  if (pos>maxDigits-1)  pos = 0;  //go to the first tube
-      
+
       if (animMask[pos] > 0) { //Animation?
         num = oldDigit[pos];  //show old character
         timer = (PWMtiming[brightness] * (10-animMask[pos]))/10;

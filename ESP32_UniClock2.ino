@@ -386,7 +386,7 @@ void startWifiMode() {
       delay(100);
       enableDisplay(1000);
       if (timeClient.update()) break;
-      DPRINT(" - Connecting to timeserver: "); DPRINT(count); 
+      DPRINT(" - Connecting to timeserver: "); DPRINTLN(count); 
       count ++; if (count>30) restartClock();   //restart clock
       writeIpTag(count);
       Fdelay(500); 
