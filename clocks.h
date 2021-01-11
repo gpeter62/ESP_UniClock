@@ -11,7 +11,7 @@
 //#define CLOCK_4
 //#define CLOCK_5
 //#define CLOCK_6
-#define CLOCK_7   //6 tube, PCF digit selector
+//#define CLOCK_7   //6 tube, PCF digit selector
 //#define CLOCK_8
 //#define CLOCK_9
 //#define CLOCK_10
@@ -27,8 +27,9 @@
 //#define CLOCK_31
 //#define CLOCK_32
 
+#define CLOCK_40
 //#define CLOCK_41
-//#define CLOCK_40
+
 //______________________ESP8266 CLOCKS by UNFI and GP ______________________________________________________
 #ifdef CLOCK_1   //8266, UNFI PCB clock, 4x IN-16 tubes
   #define DEBUG 
@@ -282,7 +283,7 @@
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD ""  
-  #define WEBNAME "ESP32UniClock 2.3"
+  #define WEBNAME "ESP32 IN-11 UniClock 2.3"
 #endif
 
 #ifdef CLOCK_31   //ESP32, UNFI board, 6 x Z573M Nixie tubes
@@ -338,7 +339,9 @@
   #define USE_NEOPIXEL_MAKUNA 
   #define NEOPIXEL_PIN 22
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
-  #define USE_DALLAS_TEMP
+  //#define USE_DALLAS_TEMP
+  #define USE_DHT_TEMP
+  #define DHTTYPE DHT22
   #define TEMP_SENSOR_PIN 25    //DHT or Dallas temp sensor pin.  If not used, SET TO -1     
   #define MAX6921
   byte segmentEnablePins[] =  {19,17,15,12,13,16,18,14};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
@@ -361,7 +364,9 @@
   #define USE_NEOPIXEL_MAKUNA 
   #define NEOPIXEL_PIN 22
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
-  #define USE_DALLAS_TEMP
+  //#define USE_DALLAS_TEMP
+  #define USE_DHT_TEMP
+  #define DHTTYPE DHT22
   #define TEMP_SENSOR_PIN 25    //DHT or Dallas temp sensor pin.  If not used, SET TO -1    
   #define MULTIPLEX74141
   const byte digitEnablePins[] = {26,18,33,19,23,5};   //ESP32 6x tube Clock

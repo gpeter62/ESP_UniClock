@@ -33,6 +33,7 @@ void setupDHTemp() {
 
 void getDHTemp() {
 static unsigned long lastRun = 0;
+float tempTMP, humidTMP;
 
   if (EEPROMsaving) return;
   if (((millis()-lastRun)<2500) || (second()!=00)) return;
@@ -41,12 +42,15 @@ static unsigned long lastRun = 0;
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
   EEPROMsaving = true;
-  humid = dht.readHumidity();
-  temperature[0] = dht.readTemperature();      // Read temperature as Celsius (the default)
+  //disableDisplay();
+  humidTMP = dht.readHumidity();
+  if ((humidTMP>0) && (humidTMP<=100))  humid = humidTMP;
+  tempTMP = dht.readTemperature();      // Read temperature as Celsius (the default)
+  if (tempTMP<99) temperature[0] = tempTMP;
+  //enableDisplay(0);
   EEPROMsaving = false;
   useTemp = 1;
   useHumid = 1;
-  //DPRINT(temperature[0]); DPRINT("C  "); DPRINT(humid); DPRINTLN("%");
   // Read temperature as Fahrenheit (isFahrenheit = true)
   //float f = dht.readTemperature(true);   Compute heat index in Fahrenheit (the default)
   //float hif = dht.computeHeatIndex(f, h);
@@ -61,7 +65,7 @@ static unsigned long lastRun = 0;
     useHumid = 0;
   }
   else {
-    DPRINT("Temp:"); DPRINTLN(temperature[0]);
+      DPRINT("Temp:"); DPRINT(temperature[0]); DPRINT("C  Humidity:"); DPRINT(humid); DPRINTLN(" %");
   }
 }
 
