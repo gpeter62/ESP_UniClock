@@ -166,7 +166,7 @@ function setCurrentInfos(){
         $('#currentTime').html(data["currentDate"] + " " + data["currentTime"]);
         $('#humidity').html(data["humidity"]);
         $('#temperature').html(data["temperature"]);
-        setTimeout(setCurrentInfos,5000);   //refreshes time every 5 second by calling itself
+        setTimeout(setCurrentInfos,20000);   //refreshes time every 20 second by calling itself
     }).always(function(){
         
     });
