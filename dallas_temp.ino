@@ -52,7 +52,9 @@ void requestTemp(boolean force) {
     if (EEPROMsaving) return;
     
     if (force || (!requested && ((millis()-lastRequest) > intervalTemp))) {       //request a new reading
+      EEPROMsaving = true;
       tempSensors.requestTemperatures(); // Request the temperature from the sensor (it takes some time to read it)
+      EEPROMsaving = false;
       requested = true;
       lastRequest = millis();
       DPRINTLN("Temperature requested");
@@ -77,7 +79,9 @@ float tmp_temp;
           }
     else {    
           delay(10);
+          EEPROMsaving = true;
           tmp_temp = tempSensors.getTempCByIndex(0); // Get the temperature from the sensor
+          EEPROMsaving = false;
           if (tmp_temp > -127) {
             tmp_temp = round(tmp_temp * 10.0) / 10.0; // round temperature to 1 digits
             DallasOK = true;
@@ -86,7 +90,9 @@ float tmp_temp;
             dtostrf(temperature[0], 4, 1, lastTemperatureStr);
             errors = 0;
             if (useTemp>1) {
+              EEPROMsaving = true;
               temperature[1] = round(tempSensors.getTempCByIndex(1) * 10.0) / 10.0; // round temperature to 1 digits
+              EEPROMsaving = false;
               DPRINT("Dallas#2 temp:"); DPRINTLN(temperature[1]);
             }
             }
