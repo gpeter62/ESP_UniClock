@@ -1415,10 +1415,6 @@ void testTubes(int dely) {
 }
 
 
-float getFragmentation() {   //https://cpp4arduino.com/2018/11/06/what-is-heap-fragmentation.html
-  return 100 - ESP.getMaxFreeBlockSize() * 100.0 / ESP.getFreeHeap();
-}
-
 void printDigits(unsigned long timeout) {
 static unsigned long lastRun = millis();
 
@@ -1433,7 +1429,7 @@ static unsigned long lastRun = millis();
   if ((millis()/1000%10) == 1) {  //show free memory for debugging memory leak
     DPRINT("Heap:"); DPRINT(ESP.getFreeHeap()); DPRINT(" byte");
     #if defined(ESP8266)  
-      DPRINT(" Fragmentation:");  DPRINT(getFragmentation()); DPRINT("%");
+      DPRINT(" Fragmentation:");  DPRINT(100 - ESP.getMaxFreeBlockSize() * 100.0 / ESP.getFreeHeap()); DPRINT("%");
     #endif
   }  
   */
