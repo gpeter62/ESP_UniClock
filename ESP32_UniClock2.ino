@@ -639,10 +639,10 @@ void handleConfigChanged(AsyncWebServerRequest *request){
 }
 
 void handleSendConfig(AsyncWebServerRequest *request){
-  
-  StaticJsonDocument<512> doc;
+  StaticJsonDocument<1024> doc;
   char buf[20];  //conversion buffer
-  DPRINTLN("Sending configuration to web client...");
+
+  DPRINTLN("Sending configuration to web client.");
   
   //Global data
   doc["version"] = webName;
@@ -709,7 +709,8 @@ void handleSendConfig(AsyncWebServerRequest *request){
 }
 
 void handleSendCurrentInfos(AsyncWebServerRequest *request){
-  StaticJsonDocument<512> doc;
+  StaticJsonDocument<200> doc;
+  //StaticJsonDocument<512> doc;
   char buf[20];  //conversion buffer
   
   DPRINTLN("WebRefresh");
@@ -1423,8 +1424,8 @@ static unsigned long lastRun = millis();
     else DPRINT("-");
   if (colonBlinkState) DPRINT(" B ");
   else DPRINT("   ");
-  //DPRINT(ESP.getFreeHeap());   //show free memory for debugging memory leak
-  //DPRINT(intCounter);   //show multiplex interrupt counter
+  if ((millis()/1000%10) == 1) {DPRINT("Heap:"); DPRINT(ESP.getFreeHeap()); }  //show free memory for debugging memory leak
+  //DPRINT("INT:"); DPRINT(intCounter);   //show multiplex interrupt counter
   //DPRINT(" ESaving:"); DPRINT(EEPROMsaving);
   DPRINTLN(" ");
 }
