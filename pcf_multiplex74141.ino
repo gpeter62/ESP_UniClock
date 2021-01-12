@@ -24,10 +24,10 @@ const int PWMtiming[] = {0,2000,3000,4000,5000,6000,7000,8000,10000,12000,14000}
 #endif
 
 void inline delayMS(int d) {        //Delay microsec
-  for (int i=0;i<d*30;i++) {asm volatile ("nop"); }
+  for (volatile int i=0;i<d*30;i++) {asm volatile ("nop"); }
 }
 
-void inline ICACHE_RAM_ATTR shiftout(byte in) {
+void inline shiftout(byte in) {
   for (int i=0;i<8;i++) {
     digitalWrite(SDA,in  & (1<<(7-i)));
     delayMS(1);

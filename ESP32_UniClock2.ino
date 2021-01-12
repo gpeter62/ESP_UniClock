@@ -1,7 +1,7 @@
 /* 
  *    Universal Clock  (Nixie, VFD, LED, Numitron) for ESP8266 or ESP32
  *    with optional Dallas Thermometer and DS3231 RTC, Neopxels stripe, GPS and more...
- *    17/11/2020
+ *    12/01/2021
  *    Copyright (C) 2020  Peter Gautier 
  *    
  *    This program is free software: you can redistribute it and/or modify
@@ -1414,6 +1414,11 @@ void testTubes(int dely) {
    memset(digitDP,0,sizeof(digitDP));
 }
 
+
+float getFragmentation() {   //https://cpp4arduino.com/2018/11/06/what-is-heap-fragmentation.html
+  return 100 - ESP.getMaxFreeBlockSize() * 100.0 / ESP.getFreeHeap();
+}
+
 void printDigits(unsigned long timeout) {
 static unsigned long lastRun = millis();
 
@@ -1424,11 +1429,19 @@ static unsigned long lastRun = millis();
     else DPRINT("-");
   if (colonBlinkState) DPRINT(" B ");
   else DPRINT("   ");
-  if ((millis()/1000%10) == 1) {DPRINT("Heap:"); DPRINT(ESP.getFreeHeap()); }  //show free memory for debugging memory leak
+  /*
+  if ((millis()/1000%10) == 1) {  //show free memory for debugging memory leak
+    DPRINT("Heap:"); DPRINT(ESP.getFreeHeap()); DPRINT(" byte");
+    #if defined(ESP8266)  
+      DPRINT(" Fragmentation:");  DPRINT(getFragmentation()); DPRINT("%");
+    #endif
+  }  
+  */
   //DPRINT("INT:"); DPRINT(intCounter);   //show multiplex interrupt counter
   //DPRINT(" ESaving:"); DPRINT(EEPROMsaving);
   DPRINTLN(" ");
 }
+
 
 void loop() {  
   dnsServer.processNextRequest();
