@@ -41,14 +41,12 @@ float tempTMP, humidTMP;
 
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-  EEPROMsaving = true;
-  //disableDisplay();
+  disableDisplay();
   humidTMP = dht.readHumidity();
   if ((humidTMP>0) && (humidTMP<=100))  humid = humidTMP;
   tempTMP = dht.readTemperature();      // Read temperature as Celsius (the default)
   if (tempTMP<99) temperature[0] = tempTMP;
-  //enableDisplay(0);
-  EEPROMsaving = false;
+  enableDisplay(0);
   useTemp = 1;
   useHumid = 1;
   // Read temperature as Fahrenheit (isFahrenheit = true)
