@@ -11,7 +11,7 @@
 //#define CLOCK_4
 //#define CLOCK_5
 //#define CLOCK_6
-#define CLOCK_7   //6 tube, PCF digit selector
+//#define CLOCK_7   //6 tube, PCF digit selector
 //#define CLOCK_8
 //#define CLOCK_9
 //#define CLOCK_10
@@ -22,6 +22,7 @@
 //#define CLOCK_20
 //#define CLOCK_21
 //#define CLOCK_22
+#define CLOCK_23
 
 //#define CLOCK_30
 //#define CLOCK_31
@@ -240,7 +241,7 @@
   #define WEBNAME "Nixie Homero 5.6"
 #endif
 
-#ifdef CLOCK_22   //8266 NOMEMCU, P.S. PCB 4xIN14 thermometer / humidity
+#ifdef CLOCK_22   //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
   //#define DEBUG 
   #define USE_NEOPIXEL_MAKUNA 
   byte tubePixels[] = {0,1,2,3};        //4 tubes, single leds
@@ -260,6 +261,25 @@
   #define AP_NAME "Nixie Homero 6.0"
   #define AP_PASSWORD "q1w2e3r4"
   #define WEBNAME "Nixie Homero 6.0"
+#endif
+
+#ifdef CLOCK_23   //Wemos D1 mini ESP32, P.S. 2xHV5122 PCB 6xIN18 clock
+  #define DEBUG 
+  #define USE_NEOPIXEL_MAKUNA 
+  byte tubePixels[] = {0,1,2,3,4,5};        //6 tubes, single leds
+  //#define USE_DHT_TEMP
+  #define DHTTYPE DHT22
+  //#define TEMP_SENSOR_PIN  D7
+  #define HV5122
+  #define ENABLE_CLOCK_DISPLAY true  
+  #define SHIFT_TUBES_LEFT_BY_1 //shift left by 1 tube the display, if a thermometer is used with spec tube
+  #define TEMP_CHARCODE 4
+  #define GRAD_CHARCODE 16 
+  #define PERCENT_CHARCODE 17
+  #define DECIMALPOINT_PIN  16  //Nixie decimal point between digits. If not used, SET TO -1 
+  #define AP_NAME "Nixie Homero 6.0"
+  #define AP_PASSWORD ""   //"q1w2e3r4"
+  #define WEBNAME "Nixie Clock HV5122"
 #endif
 
 //______________________ESP-32 CLOCKS  (2x18pin ESP32 modul) ______________________________________________________

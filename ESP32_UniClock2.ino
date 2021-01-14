@@ -736,7 +736,7 @@ void handleSendCurrentInfos(AsyncWebServerRequest *request){
 
 void setup() {
   //WiFi.mode(WIFI_OFF);
-  Fdelay(200);
+  delay(200);
   DPRINTBEGIN(115200); DPRINTLN(" ");
   DPRINT("Starting "); DPRINTLN(webName);
   clearDigits(); 
@@ -1422,9 +1422,9 @@ static unsigned long lastRun = millis();
   lastRun = millis();
   for (int i=maxDigits-1;i>=0;i--)  
     if (digit[i]<10) DPRINT(digit[i]);  
-    else DPRINT("-");
+    else {DPRINT("-");}
   if (colonBlinkState) DPRINT(" B ");
-  else DPRINT("   ");
+  else {DPRINT("   ");}
   /*
   if ((millis()/1000%10) == 1) {  //show free memory for debugging memory leak
     DPRINT("Heap:"); DPRINT(ESP.getFreeHeap()); DPRINT(" byte");
