@@ -5,6 +5,7 @@
 #define PIN_DIN  12   // DataIn
 #define PIN_CLK  13   // Clock
 #define PIN_OE   14   // OutputEnable
+#define SHIFT_LSB_FIRST true  //true= LSB first, false= MSB first
 
 const int wt = 5;   //Serial timing
 
@@ -82,7 +83,8 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
 void inline shift(uint32_t Data) {
   for (int i=0;i<32;i++) {
     digitalWrite(PIN_CLK,HIGH);
-    digitalWrite(PIN_DIN, Data & (1<<i));
+    if (SHIFT_LSB_FIRST) digitalWrite(PIN_DIN, Data & (1<<i));        //LSB first
+    else                 digitalWrite(PIN_DIN, Data & (1<<(31-i)));   //MSB first
     digitalWrite(PIN_CLK,LOW);
   }
 }
