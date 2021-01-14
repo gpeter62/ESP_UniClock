@@ -5,23 +5,22 @@
 #define PIN_DIN  12   // DataIn
 #define PIN_CLK  13   // Clock
 #define PIN_OE   14   // OutputEnable
-#define SHIFT_LSB_FIRST true  //true= LSB first, false= MSB first
 
-const int wt = 5;   //Serial timing
+#define SHIFT_LSB_FIRST true  //true= LSB first, false= MSB first
+//chip0 DOUT pin is connected to chip1 DIN pin!
 
 const int maxDigits = 6;
-byte digitPins[maxDigits][10] = {
+byte digitPins[maxDigits+1][10] = {
   {121,122,123,124,125,126,127,128,129,130},  //sec   1 , chip1
   {111,112,113,114,115,116,117,118,119,120},  //sec  10 , chip1
-  {101,102,103,104,105,106,107,108,109,110},           //min   1 , chip1
-  {21,22,23,24,25,26,27,28,29,30},  //min  10 , chip0
-  {11,12,13,14,15,16,17,18,19,20},  //hour  1 , chip0
-  {1,2,3,4,5,6,7,8,9,10}            //hour 10 , chip0
-  };    //define here the digit enable pins from 4 to 8
+  {101,102,103,104,105,106,107,108,109,110},  //min   1 , chip1
+  {21,22,23,24,25,26,27,28,29,30},            //min  10 , chip0
+  {11,12,13,14,15,16,17,18,19,20},            //hour  1 , chip0
+  {1,2,3,4,5,6,7,8,9,10},                     //hour 10 , chip0
+  {31,32,131,132,0,0,0,0,0,0}                 //extra GL dots
+  };    
 
-byte GL[] = {31,32,31,32};
-
-int PWMrefresh=10000;   //Multiplex time period. Greater value => slower multiplex frequency
+int PWMrefresh=10000;   //Brightness PWM period. Greater value => slower multiplex frequency
 
 void setup_pins() {
   DPRINTLN("Setup pins -  HV5122 Nixie driver...");
@@ -66,8 +65,6 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   
   brightCounter++;   if (brightCounter>MAXBRIGHTNESS) brightCounter = 1;
   
-  if (COLON_PIN>=0) digitalWrite(COLON_PIN,!colonBlinkState);  // Blink colon pin
-  
   #if defined(ESP8266)    
     timer1_write(timer);
   #elif defined(ESP32)     
@@ -80,33 +77,63 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
 }
 
 
-void inline shift(uint32_t Data) {
-  for (int i=0;i<32;i++) {
+#if defined(ESP32)
+void IRAM_ATTR shift(uint32_t Data){  
+#else 
+void ICACHE_RAM_ATTR shift(uint32_t Data){      
+#endif
+  static boolean b;
+
+  for (uint32_t i=0;i<32;i++) {
     digitalWrite(PIN_CLK,HIGH);
-    if (SHIFT_LSB_FIRST) digitalWrite(PIN_DIN, Data & (1<<i));        //LSB first
-    else                 digitalWrite(PIN_DIN, Data & (1<<(31-i)));   //MSB first
-    digitalWrite(PIN_CLK,LOW);
+    if (SHIFT_LSB_FIRST) 
+      b = ((Data & (uint32_t(1)<<i)))>0;      //LSB first
+    else                 
+      b = (Data & (uint32_t(1)<<(31-i)))>0;   //MSB first
+    digitalWrite(PIN_DIN, b);
+    digitalWrite(PIN_CLK,LOW);   //falling CLK  to store DIN
   }
+  digitalWrite(PIN_CLK,HIGH);
 }
 
 void clearTubes() {
   shift(0);
+  shift(0);
 }
 
-
 void writeDisplaySingle() {
-  uint32_t bitBuffer=0;
+  static unsigned long lastRun = 0;
+  uint32_t bitBuffer0=0;
+  uint32_t bitBuffer1=0;
   byte num;
 
-  for (int i=0;i<maxDigits;i++) {
+  if ((millis()-lastRun)<500) return;   //for test only, to slow down!!!
+  lastRun = millis();
+  
+  for (int i=0;i<maxDigits;i++) {  //Set the clock digits
     num = digit[i]; 
     if (num<10) {
-        if (digitPins[i][num] <100) bitBuffer |= 1<<digitPins[i][num];      //chip0
-        else                        bitBuffer |= 1<<(digitPins[i][num]+16); //chip1  
-      }  
-
-  // write GL pins... ???
+        if (digitPins[i][num] <100) bitBuffer0 |= (uint32_t)(1<<digitPins[i][num]);  //chip0
+        else                        bitBuffer1 |= (uint32_t)(1<<digitPins[i][num]);  //chip1  
+      }
   }  //end for i
-  shift(bitBuffer);   //DPRINTLN(bitBuffer,BIN);
+
+  for (int i=0;i<4;i++) {   //Set the extra GL dots
+    if (colonBlinkState || i<2) {
+        if (digitPins[maxDigits][i] <100) bitBuffer0 |= (uint32_t)(1<<digitPins[maxDigits][i]); //chip0
+        else                              bitBuffer1 |= (uint32_t)(1<<digitPins[maxDigits][i]); //chip1  
+      }  
+  }  //end for i
+  
+  shift(bitBuffer1);   
+  //delayMicroseconds(1);   //for testing on oscilloscope
+  shift(bitBuffer0);   
+  showBits(bitBuffer1);  showBits(bitBuffer0);   DPRINTLN(" "); 
+}
+  
+void showBits(uint32_t bits) {  
+  for (uint32_t i=0;i<32;i++) 
+    if (bits & (1<<i)) DPRINT("1"); else DPRINT("0");
+  DPRINT("-");
 }
 #endif
