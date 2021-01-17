@@ -74,6 +74,7 @@
   //#define TEMP_CHARCODE 15      //Thermometer "C", set to -1 to disable
   //#define GRAD_CHARCODE 16      //Thermometer grad, set to -1 to disable
   //#define PERCENT_CHARCODE 17   //Humidity %
+  //#define DOUBLE_BLINK          //both separator points are blinking (6 or 8 tubes VFD clock)
 
   //#define AP_NAME "UNICLOCK"  	//Access Point name
   //#define AP_PASSWORD ""	   		//AP password
@@ -1085,6 +1086,7 @@ void displayHumid() {
   }
 
   newDigit[digPtr++] = PERCENT_CHARCODE;  //  "%"
+  digPtr++;   //empty character
   newDigit[digPtr++] = int(humid * 10) % 10;
   digitDP[digPtr] = true;
   newDigit[digPtr++] = int(humid) % 10;
@@ -1146,7 +1148,12 @@ void displayTime6() {
     newDigit[4] = hour12_24 % 10;
     newDigit[3] = minute() / 10;
     newDigit[2] = minute() % 10;
-    if (prm.enableBlink && (second() % 2 == 0)) digitDP[2] = false;
+    if (prm.enableBlink && (second() % 2 == 0)){
+      digitDP[2] = false;
+      #ifdef DOUBLE_BLINK
+        digitDP[4] = false;
+      #endif 
+    }
     newDigit[1] = second() / 10;
     newDigit[0] = second() % 10;
   }
@@ -1186,7 +1193,12 @@ void displayTime8() {
       newDigit[4] = minute() / 10;
       newDigit[3] = minute() % 10;
       newDigit[2] = 11;  //- sign
-      if (prm.enableBlink && (second() % 2 == 0)) newDigit[2] = 10; //BLANK
+      if (prm.enableBlink && (second() % 2 == 0)) {
+        digitDP[2] = 10; //BLANK
+        #ifdef DOUBLE_BLINK
+          digitDP[5] = 10; //BLANK
+        #endif 
+      }
       newDigit[1] = second() / 10;
       newDigit[0] = second() % 10;
     }

@@ -22,9 +22,9 @@
 //#define CLOCK_20
 //#define CLOCK_21
 //#define CLOCK_22
-#define CLOCK_23
+//#define CLOCK_23
 
-//#define CLOCK_30
+#define CLOCK_30
 //#define CLOCK_31
 //#define CLOCK_32
 
@@ -293,6 +293,7 @@
   #define MAX6921
   byte segmentEnablePins[] =  {19,17,15,12,13,16,18,14};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
   byte digitEnablePins[] = {9,8,7,2,1,0};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
+  #define DOUBLE_BLINK  //both separator points are blinking 
   //MAX6921 pins
     #define PIN_LE    14  // Shift Register Latch Enable
     #define PIN_CLK   13  // Shift Register Clock

@@ -114,14 +114,14 @@ void writeDisplaySingle() {
     num = digit[i]; 
     if (num<10) {
         if (digitPins[i][num] <100) bitBuffer0 |= (uint32_t)(1<<digitPins[i][num]);  //chip0
-        else                        bitBuffer1 |= (uint32_t)(1<<digitPins[i][num]);  //chip1  
+        else                        bitBuffer1 |= (uint32_t)(1<<(digitPins[i][num]-100));  //chip1  
       }
   }  //end for i
 
   for (int i=0;i<4;i++) {   //Set the extra GL dots
     if (colonBlinkState || i<2) {
         if (digitPins[maxDigits][i] <100) bitBuffer0 |= (uint32_t)(1<<digitPins[maxDigits][i]); //chip0
-        else                              bitBuffer1 |= (uint32_t)(1<<digitPins[maxDigits][i]); //chip1  
+        else                              bitBuffer1 |= (uint32_t)(1<<(digitPins[maxDigits][i]-100)); //chip1  
       }  
   }  //end for i
   

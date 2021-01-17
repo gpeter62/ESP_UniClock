@@ -16,7 +16,7 @@ boolean DallasOK = true;   //is any measure from Dallas thermometer?
 float lastTemperature = 0;
 char lastTemperatureStr[5] = "----";
 const long intervalTemp = 30000;      // Do a temperature measurement every 30sec
-const long DS_delay = 1000;         // Reading the temperature from the DS18x20 can take up to 750ms
+const long DS_delay = 800;         // Reading the temperature from the DS18x20 can take up to 750ms
 
 void setupTemp() {
   DPRINT("Starting Dallas thermometer on GPIO");  DPRINTLN(TEMP_SENSOR_PIN);
@@ -51,7 +51,8 @@ void setupTemp() {
 void requestTemp(boolean force) {
     if (EEPROMsaving) return;
     
-    if (force || (!requested && ((millis()-lastRequest) > intervalTemp))) {       //request a new reading
+    //if (force || (!requested && ((millis()-lastRequest) > intervalTemp))) {       //request a new reading
+    if (force || (!requested && (second()==TEMP_START-1))) {       //request a new reading
       disableDisplay();
       tempSensors.requestTemperatures(); // Request the temperature from the sensor (it takes some time to read it)
       enableDisplay(0);
