@@ -1,18 +1,5 @@
 #ifdef MAX6921   
-//VFD driver driver for ESP8266 os ESP32
-
-  //#define IVL2
-  #ifdef IVL2
-  //Fill this table with the OUT positions of the MAX6921 chip!   
-    byte segmentEnablePins[] =  {11,13,5,8,3,12,2,1};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
-    byte digitEnablePins[] = {10,9,4,0};  //segment enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  
-  //MAX6921 pins
-    #define PIN_LE    13  // D6 Shift Register Latch Enable
-    #define PIN_CLK   12  // D7 Shift Register Clock
-    #define PIN_DATA  14  // D5 Shift Register Data
-    #define PIN_BL    15  // D8 Shift Register Blank (1=display off     0=display on)
-    #define TEMP_SENSOR_PIN RX
-  #endif
+//VFD driver driver for ESP8266
 
 //------------------abcdefgDP----------------   definition of different characters
 byte charDefinition[] = {
@@ -32,10 +19,12 @@ byte charDefinition[] = {
                    B11101110,   // A  abcefg (13)
                    B11001110,   // P  abefg (14)
                    B10011100,   // C  adef (15)
-                   B11000110,   //grad  abfg (16)
+                   B11000110,   //grad (upper circle) abfg (16)
                    B10110100,   //%  acdf  (17)
-                   B01100000,   //I  bc    (18)
-                   B10001110    //F  aefg  (19)
+                   B00111010,   //lower circle cdeg  (18)
+                   B01100000,   //I  bc    (19)
+                   B10001110    //F  aefg  (20)
+
 };
 
 uint32_t animationMaskBits[5];
@@ -48,9 +37,9 @@ uint32_t charTable[MAXCHARS];              //generated pin table from segmentDef
 uint32_t segmentEnableBits[MAXSEGMENTS];   //bitmaps, generated from EnablePins tables
 uint32_t digitEnableBits[10];
 
-const int PWMrefresh=5500;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+int PWMrefresh=5500;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
 #define MAXBRIGHT 10
-const int PWMtiming[MAXBRIGHT+1] = {0,250,500,1000,2000,2500,3000,3500,4000,4500,5000};
+int PWMtiming[MAXBRIGHT+1] = {0,250,500,1000,2000,2500,3000,3500,4000,4500,5000};
 //-----------------------------------------------------------------------------------------
 
 //https://sub.nanona.fi/esp8266/timing-and-ticks.html
@@ -58,24 +47,18 @@ const int PWMtiming[MAXBRIGHT+1] = {0,250,500,1000,2000,2500,3000,3500,4000,4500
 //One tick is 1us / 80 = 0.0125us = 6.25ns on 160MHz
 // 1 NOP is 1 tick
 
-#if defined(ESP8266)   
-  void inline delayMS(int d) {
+
+void inline delayMS(int d) {
     //for (int i=0;i<d;i++) 
       asm volatile ("nop"); 
-  }
-#else  //ESP32
-  void inline delayMS(int d) {
-    asm volatile ("nop"); 
-    asm volatile ("nop");
-    asm volatile ("nop");
-  }
-#endif
+}
+
 
 void setup_pins() {
   
-  #if defined(ESP8266) || defined(ESP32)
+  #if defined(ESP8266)
   #else
-    #error "Board is not supported!"  
+    #error "Board is not supported! For ESP32 use MAX6921_ESP32 !"  
   #endif
   
   pinMode(PIN_LE,  OUTPUT);
@@ -94,12 +77,7 @@ void setup_pins() {
   startTimer();
 }  
 
-#if defined(ESP32) 
-void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
-#else 
 void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
-#endif
-  
   static volatile int timer = PWMrefresh;
   static volatile uint32_t val;
   static volatile byte pos = 0;
@@ -107,19 +85,11 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   static volatile byte brightness;
 
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
-    #if defined(ESP8266)    
       digitalWrite(PIN_BL,HIGH);    //OFF
       timer1_write(PWMrefresh);
-    #elif defined(ESP32)
-      digitalWrite(PIN_BL,HIGH);    //OFF
-      //portEXIT_CRITICAL(&timerMux);
-    #endif    
     return;
   }
   
-  #if defined(ESP32)
-    portENTER_CRITICAL_ISR(&timerMux);
-  #endif
   intCounter++;
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
@@ -158,20 +128,12 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
     digitalWrite(PIN_BL,LOW );   //ON
   }  //end else
     
-  if (COLON_PIN>=0) {
+  #ifdef COLON_PIN >= 0
     digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
-  }
+  #endif
   
   state = !state;  
-  #if defined(ESP8266)    
-    timer1_write(timer);
-  #elif defined(ESP32)     
-    ESP32timer = timerBegin(0, PRESCALER, true);  //set prescaler, true = edge generated signal
-    timerAttachInterrupt(ESP32timer, &writeDisplay, true);   
-    timerAlarmWrite(ESP32timer, timer, false);   
-    timerAlarmEnable(ESP32timer);
-    portEXIT_CRITICAL_ISR(&timerMux);
-  #endif    
+  timer1_write(timer);
 }
 
 void generateBitTable() {

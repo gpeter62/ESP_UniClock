@@ -1,6 +1,5 @@
 #ifdef MM5450
 
-#define MAXBRIGHTNESS 15
 const int maxDigits = 6;
 
 //Fill this table with the pin numbers of MM5450 chip!
@@ -41,10 +40,11 @@ byte charDefinition[] = {
                    B11101110,   // A  abcefg  (13)
                    B11001110,   // P  abefg (14)
                    B10011100,   // C  adef (15)
-                   B11000110,   //grad  abfg  (16)      
+                   B11000110,   //grad (upper circle) abfg  (16)      
                    B10110100,   //%  acdf  (17)
-                   B01100000,   //I  bc    (18)
-                   B10001110    //F  aefg  (19)                   
+                   B00111010,   //lower circle cdeg  (18)                   
+                   B01100000,   //I  bc    (19)
+                   B10001110    //F  aefg  (20)                   
 };
 
 #define MAXCHARS sizeof(charDefinition)
@@ -60,11 +60,11 @@ void setup_pins() {
   #error "Board is not supported!"  
 #endif
   
-  DPRINTLN("MM5450 Clock - Setup pins...");
-  pinMode(PIN_LE,  OUTPUT);
-  pinMode(PIN_BR,  OUTPUT); 
-  pinMode(PIN_DATA,OUTPUT);
-  pinMode(PIN_CLK, OUTPUT);
+  DPRINTLN("MM5450 - Setup pins...");
+  pinMode(PIN_LE,  OUTPUT);  DPRINT("PIN_LE:");   DPRINTLN(PIN_LE);
+  pinMode(PIN_BR,  OUTPUT);  DPRINT("PIN_BR:");   DPRINTLN(PIN_BR);
+  pinMode(PIN_DATA,OUTPUT);  DPRINT("PIN_DATA:"); DPRINTLN(PIN_DATA);
+  pinMode(PIN_CLK, OUTPUT);  DPRINT("PIN_CLK:");  DPRINTLN(PIN_CLK);
   digitalWrite(PIN_BR,HIGH);  //brightness
   digitsOnly = false;
   startTimer();
@@ -111,7 +111,7 @@ byte num = 0;
     return;  
   }
 
-  if (brightCounter % MAXBRIGHTNESS <= (displayON ?  prm.dayBright : prm.nightBright))
+  if (brightCounter < (displayON ?  prm.dayBright : prm.nightBright))
     WRITE_PERI_REG( PIN_OUT_SET, PIN_BR_BIT );   //ON
   else 
     WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_BR_BIT );    //OFF

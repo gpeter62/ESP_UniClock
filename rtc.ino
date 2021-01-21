@@ -3,16 +3,22 @@
 //with manual clock setup buttons
 
 //------ Mode Switch and Push Buttons ---------------------
-#define PIN_MODE_SWITCH  17   //Analog A0 port!!!    
-#define PIN_FLD_BUTTON   16     
-#define PIN_SET_BUTTON   0    
+#ifndef PIN_MODE_SWITCH
+  #define PIN_MODE_SWITCH  -1  //Analog A0 port!!!  
+#endif
 
-//------- I2C bus definition   Any pins are usable --------
-//#define PIN_SDA 4           //D2   original general setup
+#ifndef PIN_FLD_BUTTON
+  #define PIN_FLD_BUTTON -1
+#endif
+#ifndef PIN_SET_BUTTON
+  #define PIN_SET_BUTTON -1    
+#endif
+
+//------- I2C bus definition   Any pins are usable  Please, SET in clocks.h --------
+//#define PIN_SDA 4           //D2   original general setup for 8266
 //#define PIN_SCL 5           //D1
 
-#define PIN_SDA 5           //D1   SDA/SCL changed
-#define PIN_SCL 4           //D2
+
 
 #define MENU_UNSELECT_TIMEOUT 30000
 
@@ -46,9 +52,17 @@ int fld = 0;
 unsigned long LastModify = 0;
 
 void setupRTC() {
-  pinMode(PIN_MODE_SWITCH,INPUT_PULLUP);   DPRINT("- MODE Switch : GPIO"); DPRINTLN(PIN_MODE_SWITCH);
-  pinMode(PIN_FLD_BUTTON,INPUT_PULLUP);    DPRINT("- FIELD Button: GPIO"); DPRINTLN(PIN_FLD_BUTTON); 
-  pinMode(PIN_SET_BUTTON,INPUT_PULLUP);    DPRINT("- SET   Button: GPIO"); DPRINTLN(PIN_SET_BUTTON);
+  DPRINT("- MODE Switch : GPIO"); DPRINTLN(PIN_MODE_SWITCH);  
+  if (PIN_MODE_SWITCH>=0) 
+    pinMode(PIN_MODE_SWITCH,INPUT_PULLUP);   
+  
+  DPRINT("- FIELD Button: GPIO"); DPRINTLN(PIN_FLD_BUTTON);   
+  if (PIN_FLD_BUTTON>=0)  
+    pinMode(PIN_FLD_BUTTON,INPUT_PULLUP);   
+      
+  DPRINT("- SET   Button: GPIO"); DPRINTLN(PIN_SET_BUTTON);   
+  if (PIN_SET_BUTTON>=0)  
+    pinMode(PIN_SET_BUTTON,INPUT_PULLUP);    
 /*  
 while (true) {
   DPRINT(digitalRead(PIN_MODE_SWITCH)); DPRINT(" / "); 
@@ -60,12 +74,12 @@ while (true) {
 
   DPRINTLN("Starting RTC Clock...");    
   delay(2000);
-  pinMode(PIN_SDA,OUTPUT); DPRINT("- SDA: GPIO"); DPRINTLN(PIN_SDA);
-  pinMode(PIN_SCL,OUTPUT); DPRINT("- SCL: GPIO"); DPRINTLN(PIN_SCL);
+  DPRINT("- SDA: GPIO"); DPRINTLN(PIN_SDA); pinMode(PIN_SDA,OUTPUT); 
+  DPRINT("- SCL: GPIO"); DPRINTLN(PIN_SCL); pinMode(PIN_SCL,OUTPUT); 
 
   I2C_ClearBus();
   Wire.begin(PIN_SDA,PIN_SCL); 
-  Wire.begin();   
+  //Wire.begin();   
   delay(100);
   Wire.beginTransmission(0x68);
   byte error = Wire.endTransmission();
@@ -194,6 +208,7 @@ static boolean lastState = false;
 static switchStates butState;
 byte sw;
 
+  if (PIN_FLD_BUTTON<0) return;
   if ((millis() - lastRun) < mill) return;   //refresh rate
   lastRun = millis(); 
 
@@ -245,6 +260,7 @@ static boolean lastState = false;
 static switchStates butState;
 byte sw;
 
+  if (PIN_SET_BUTTON<0) return;
   if ((millis() - lastRun) < mill) return;   //refresh rate
   lastRun = millis(); 
 

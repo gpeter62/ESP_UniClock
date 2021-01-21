@@ -41,10 +41,11 @@ byte charDefinition[] = {
                    B11101110,   // A  abcefg  (13)
                    B11001110,   // P  abefg (14)
                    B10011100,   // C  adef (15)
-                   B11000110,   //grad  abfg  (16)         
+                   B11000110,   //grad (upper circle) abfg  (16)         
                    B10110100,   //%  acdf  (17) 
-                   B01100000,   //I  bc    (18)
-                   B10001110    //F  aefg  (19)                            
+                   B00111010,   //lower circle cdeg  (18)                   
+                   B01100000,   //I  bc    (19)
+                   B10001110    //F  aefg  (20)                            
 };
 
 byte segmentEnablePins[] =  {9,8,5,3,4,7,6,2};   //segment enable bits (a,b,c,d,e,f,g,DP)   (You MUST define always 8 bits!!!)
@@ -54,7 +55,7 @@ byte segmentEnablePins[] =  {9,8,5,3,4,7,6,2};   //segment enable bits (a,b,c,d,
 #define C2_GRID_SELECTION          B10101000  //Grid start pin setting D17..D7
 #define MAXSEGMENTS 17
 boolean ASCIImode = true;
-const uint32_t charDefinition[96] = {
+uint32_t charDefinition[96] = {
   0b00000000000000000, /* (space) */ 
   0b10000000000001100, /* ! */   
   0b00000001000000100, /* " */   //   100000001

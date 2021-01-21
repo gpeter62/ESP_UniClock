@@ -1,7 +1,7 @@
 /*
       Universal Clock  (Nixie, VFD, LED, Numitron) for ESP8266 or ESP32
       with optional Dallas Thermometer and DS3231 RTC, Neopxels stripe, GPS and more...
-      12/01/2021
+      18/01/2021
       Copyright (C) 2020  Peter Gautier
 
       This program is free software: you can redistribute it and/or modify
@@ -29,36 +29,51 @@
 /*_______________________________ USABLE PARAMETERS _______________________________________________________
   //#define DEBUG                 //Enable Serial Monitor, 115200baud (only, if TX pin is not used anywhere!!!)
   //---------------------------- CLOCK EXTRA OPTION PARAMETERS -------------------------------------------------
-  //#define USE_DALLAS_TEMP       //TEMP_SENSOR_PIN is used to connect the sensor, temperature measure
-  //#define USE_DHT_TEMP          //TEMP_SENSOR_PIN is sensor pin #define DHTTYPE DHT22  temperature and humidity
-  //#define USE_RTC               //I2C pins are used!   SCL = D1 (GPIO5), SDA = D2 (GPIO4)
+  //#define USE_DALLAS_TEMP       //TEMP_DALLAS_PIN is used to connect DS18B20 temperature sensors
+  //#define USE_DHT_TEMP          //TEMP_DHT_PIN is sensor pin #define DHTTYPE DHTxx  temperature and humidity sensor
+  //#define USE_BME280            //I2C Temperature + humidity + pressure, SDA+SCL I2C pins are used!   
+  //#define USE_BMP280            //I2C Temperature + barometric pressure, SDA+SCL I2C pins are used!   
+  //#define USE_AHTX0             //I2C Temperature + humidity, SDA+SCL I2C pins are used!   
+  //#define USE_SHT21             //I2C Temperature + humidity, SDA+SCL I2C pins are used!   
+  //#define USE_RTC               //DS3231 realtime clock, SDA+SCL I2C pins are used!   
   //#define USE_GPS               //use for standalone clock, without wifi internet access
   //#define USE_NEOPIXEL_MAKUNA   //WS2812B led stripe, for tubes backlight. Don't forget to define tubePixels[] !
 
-  //----- DRIVER SELECTION - ----- Use only 1 driver from the following options in the clocks.h file!
-  //#define MULTIPLEX74141    //4..8 Nixie tubes generic driver for ESP8266 or ESP32
-  //#define MAX6921           //4..8 VFD tubes (IV18) driver for ESP8266 or ESP32
-  //-------------- ONLY 8266 clock drivers --------------------------------------------------
-  //#define NO_MULTIPLEX74141 //4..6 Nixie tubes, serial latch driver, 74141 for each tube
-  //#define MM5450            //6..8 LEDS
-  //#define MAX7219CNG        //4..8 LED
-  //#define Numitron_4511N    //Numitron 4x tube clock
-  //#define SN75512           //4..8 VFD tubes
-  //#define samsung           //samsung serial display
-  //#define PCF_74141         //PCF pin expander for tube selection
-  //#define PT6355            //VFD clock - development in progress
+  //----- DRIVER SELECTION ------ Use only 1 driver from the following options in the clocks.h file!
+  //#define MULTIPLEX74141_ESP32  //4..8 Nixie tubes generic driver for ESP32
+  //#define MAX6921_ESP32         //4..8 VFD tubes (IV18) driver for ESP8232
+  //#define HV5122                //4..8 Nixie driver - development in progress
+  //-------------- 8266 clock drivers --------------------------------------------------
+  //#define MULTIPLEX74141        //4..8 Nixie tubes generic driver for ESP8266
+  //#define MAX6921               //4..8 VFD tubes (IV18) driver for ESP8266
+  //#define NO_MULTIPLEX74141     /4..6 Nixie tubes, serial latch driver, 74141 for each tube
+  //#define MM5450                //6..8 LEDS
+  //#define MAX7219CNG            //4..8 LED
+  //#define Numitron_4511N        //Numitron 4x tube clock
+  //#define SN75512               //4..8 VFD tubes
+  //#define samsung               //samsung serial display
+  //#define PCF_74141             //PCF pin expander for tube selection
+  //#define PT6355                //VFD clock - development in progress
 
-  //------- pinout -----------------------------------------------------------
+  //--------------------- PINOUT -----------------------------------------------------------
+  //#define PIN_SDA xx             // you can set the used SDA and SCL pins
+  //#define PIN_SCL xx             // if it is not default value
   //#define COLON_PIN   -1        //Blinking Colon pin.  If not used, SET TO -1
-  //#define TEMP_SENSOR_PIN -1    //DHT or Dallas temp sensor pin.  If not used, SET TO -1
+  //#define TEMP_DALLAS_PIN -1     //Dallas DS18B20 temp sensor pin.  If not used, SET TO -1
+  //#define TEMP_DHT_PIN -1       //DHT temp sensor pin.  If not used, SET TO -1
   //#define DHTTYPE DHT22         //DHT sensor type, if used...
   //#define LED_SWITCH_PIN -1     //external led backlight ON/OFF.  If not used, SET TO -1
   //#define DECIMALPOINT_PIN -1   //Nixie decimal point between digits. If not used, SET TO -1
   //#define ALARMSPEAKER_PIN -1   //Alarm buzzer pin
   //#define ALARMBUTTON_PIN -1    //Alarm switch off button pin
   //#define ALARM_ON HIGH         //HIGH or LOW level is needed to switch ON the buzzer?
-  //8266 Neopixel LEDstripe pin is always the RX pin!!!
-  //#define MAXBRIGHTNESS 10 // (if MM5450, use 15 instead of 10)
+  //#define NEOPIXEL_PIN 2        //8266 Neopixel LEDstripe pin is always the RX pin!!!
+  //#define RADAR_PIN 34          //Radar sensor pin
+  //#define RADAR_TIMEOUT 300     //Automatic switch off tubes (without radar detecting somebody) after xxx sec
+  //#define TUBE_POWER_PIN 23     //Filament or HV switch ON/OFF pin
+  //#define TUBE_POWER_ON HIGH    //HIGH or LOW level is needed to switch ON the TUBE POWER?
+
+  //#define MAXBRIGHTNESS 10      //Do not change this value!
 
   //Display temperature and date in every minute between START..END seconds
   //#define ENABLE_CLOCK_DISPLAY true  //false, if no clock display is needed (for example: thermometer + humidity only)
@@ -89,43 +104,43 @@ unsigned long intCounter = 0;
 //--------------------------------------------------------------------------------------------------
 
 #if defined(ESP8266)
-#ifndef WEBNAME
-#define WEBNAME "ESP32_UniClock 2.3"
-#endif
-#ifndef AP_NAME
-#define AP_NAME "UNICLOCK"
-#endif
-#ifndef AP_PASSWORD
-#define AP_PASSWORD ""
-#endif
-#include <ESP8266WiFi.h>
-#include <DNSServer.h>
-//#include <ESP8266mDNS.h>
-#include "ESPAsyncTCP.h"
-#include "FS.h"
+  #ifndef WEBNAME
+    #define WEBNAME "ESP32_UniClock 2.5"
+  #endif
+  #ifndef AP_NAME
+    #define AP_NAME "UNICLOCK"
+  #endif
+  #ifndef AP_PASSWORD
+    #define AP_PASSWORD ""
+  #endif
+  #include <ESP8266WiFi.h>
+  #include <DNSServer.h>
+  //#include <ESP8266mDNS.h>
+  #include "ESPAsyncTCP.h"
+  #include "FS.h"
 
 #elif defined(ESP32)
-#ifndef WEBNAME
-#define WEBNAME "ESP32UniClock 2.3"
-#endif
-#ifndef AP_NAME
-#define AP_NAME "UNICLOCK32"
-#endif
-#ifndef AP_PASSWORD
-#define AP_PASSWORD ""
-#endif
-//#include <WiFi.h>
-#include <esp_wifi.h>
-#include <DNSServer.h>
-//#include <ESPmDNS.h>
-#include "AsyncTCP.h"
-#include "SPIFFS.h"
+  #ifndef WEBNAME
+    #define WEBNAME "ESP32UniClock 2.5"
+  #endif
+  #ifndef AP_NAME
+    #define AP_NAME "UNICLOCK32"
+  #endif
+  #ifndef AP_PASSWORD
+    #define AP_PASSWORD ""
+  #endif
+  //#include <WiFi.h>
+  #include <esp_wifi.h>
+  #include <DNSServer.h>
+  //#include <ESPmDNS.h>
+  #include "AsyncTCP.h"
+  #include "SPIFFS.h"
 
-hw_timer_t * ESP32timer = NULL;
-portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
-#define PRESCALER 15   //multiplex timer prescaler, about 80Hz for 6 tubes
+  hw_timer_t * ESP32timer = NULL;
+  portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+  #define PRESCALER 15   //multiplex timer prescaler, about 80Hz for 6 tubes
 #else
-#error "Board is not supported!"
+  #error "Board is not supported!"
 #endif
 
 DNSServer dnsServer;
@@ -139,7 +154,6 @@ DNSServer dnsServer;
 #include <ESPAsyncWiFiManager.h>
 #include <EEPROM.h>
 #include "ArduinoJson.h"
-
 
 #ifdef USE_NEOPIXEL_MAKUNA
 #include <NeoPixelBrightnessBus.h>
@@ -202,11 +216,13 @@ TimeChangeRule mySTD = {"STD", First, Sun, Nov, 2, 0};
 Timezone myTZ(myDST, mySTD);
 
 boolean clockWifiMode = true;
+boolean radarON = true;
 
-byte useTemp = 0;   //number of temp sensors: 0,1,2
-float temperature[2] = {0, 0};
-byte useHumid = 0;
-float humid = 0;
+byte useDallasTemp = 0;   //number of Dallas temperature sensors: 0,1,2
+byte useTemp = 0;         //Total number of any temperature sensors: 0..6
+float temperature[6] = {0,0,0,0,0,0};
+byte useHumid = 0;        //Total number of humidity sensors
+float humid[6] = {0,0,0,0,0,0};  
 
 //----------------- EEPROM addresses -------------------------------------------------------------------
 const int EEPROM_addr = 0;
@@ -250,7 +266,7 @@ bool alarmON = false;             //Alarm in progress
 unsigned long alarmStarted = 0;   //Start timestamp millis()
 
 
-void startTimer() {
+void startTimer() {   //ESP_INTR_FLAG_IRAM
 #if defined(ESP8266)
   timer1_attachInterrupt(writeDisplay);
   timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE);
@@ -261,7 +277,7 @@ void startTimer() {
   //  https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
   ESP32timer = timerBegin(0, PRESCALER, true); //set prescaler to 80 -> 1MHz signal, true = edge generated signal
   timerAttachInterrupt(ESP32timer, &writeDisplay, true);
-  timerAlarmWrite(ESP32timer, 1000, false);   //100millisec, no repeat
+  timerAlarmWrite(ESP32timer, 1000, true);   //100millisec, no repeat
   timerAlarmEnable(ESP32timer);
   //DPRINTLN("Starting ESP32 timer...");
 #else
@@ -272,9 +288,6 @@ void startTimer() {
 void stopTimer() {
 #if defined(ESP8266)
   timer1_detachInterrupt();
-#elif defined(ESP32)
-  //timerAlarmDisable(ESP32timer);
-  //timerDetachInterrupt(ESP32timer);
 #endif
 }
 
@@ -318,7 +331,7 @@ void enableDisplay(unsigned long timeout) {
   dState = true;
   EEPROMsaving = false;
   DPRINT("Enable tubes:"); DPRINTLN(timeout); //    DPRINT(millis()); DPRINT("/"); DPRINTLN(lastDisable);
-  startTimer();
+  //startTimer();
 #else
   EEPROMsaving = false;
 #endif
@@ -332,7 +345,7 @@ void disableDisplay()  {
   DPRINTLN("Disable tubes");
   if (dState) {
     clearTubes();
-    stopTimer();
+    //stopTimer();
     delay(20);
     writeDisplay();
   }
@@ -719,7 +732,7 @@ void handleSendConfig(AsyncWebServerRequest *request) {
     doc["temperature"] = 255;
 
   if (useHumid)
-    doc["humidity"] = humid;
+    doc["humidity"] = humid[0];
   else
     doc["humidity"] = 255;
 
@@ -784,7 +797,7 @@ void handleSendCurrentInfos(AsyncWebServerRequest *request) {
     doc["temperature"] = 255;
 
   if (useHumid)
-    doc["humidity"] = humid;
+    doc["humidity"] = humid[0];
   else
     doc["humidity"] = 255;
   String json;
@@ -798,29 +811,58 @@ void setup() {
   DPRINTBEGIN(115200); DPRINTLN(" ");
   DPRINT("Starting "); DPRINTLN(webName);
   clearDigits();
-  if (ALARMSPEAKER_PIN >= 0) {
-    DPRINT("Alarm Speaker Pin:"); DPRINTLN(ALARMSPEAKER_PIN);
+  #if ALARMSPEAKER_PIN >= 0
+    DPRINT("ALARMSPEAKER_PIN:"); DPRINTLN(ALARMSPEAKER_PIN);
     pinMode(ALARMSPEAKER_PIN, OUTPUT);
     digitalWrite(ALARMSPEAKER_PIN, !ALARM_ON);
-  }
-  if (ALARMBUTTON_PIN >= 0) {
+  #endif
+  #if ALARMBUTTON_PIN >= 0
     pinMode(ALARMBUTTON_PIN, INPUT_PULLUP);
-    DPRINT("Alarm Stop Button Pin:"); DPRINTLN(ALARMBUTTON_PIN);
-  }
-  if (COLON_PIN >= 0)         pinMode(COLON_PIN, OUTPUT);
-  if (LED_SWITCH_PIN >= 0)    pinMode(LED_SWITCH_PIN, OUTPUT);
-  if (DECIMALPOINT_PIN >= 0)  pinMode(DECIMALPOINT_PIN, OUTPUT);
+    DPRINT("ALARMBUTTON_PIN:"); DPRINTLN(ALARMBUTTON_PIN);
+  #endif
+  #if COLON_PIN >= 0
+    pinMode(COLON_PIN, OUTPUT);
+    DPRINT("COLON_PIN:");DPRINTLN(COLON_PIN);
+  #endif
+  #if LED_SWITCH_PIN >= 0
+    pinMode(LED_SWITCH_PIN, OUTPUT);
+    DPRINT("LED_SWITCH_PIN:");DPRINTLN(LED_SWITCH_PIN);
+  #endif
+  #if DECIMALPOINT_PIN >= 0
+    pinMode(DECIMALPOINT_PIN, OUTPUT);
+    DPRINT("DECIMALPOINT_PIN:");DPRINTLN(DECIMALPOINT_PIN);
+  #endif
+  #if RADAR_PIN >= 0
+    pinMode(RADAR_PIN, INPUT);
+    DPRINT("RADAR_PIN:");DPRINTLN(RADAR_PIN);
+  #endif
+  #if TUBE_POWER_PIN >= 0
+    pinMode(TUBE_POWER_PIN, OUTPUT);
+    DPRINT("TUBE_POWER_PIN:");DPRINTLN(TUBE_POWER_PIN);
+  #endif
 
   decimalpointON = false;
 
-  if (TEMP_SENSOR_PIN >= 0) {
-    setupTemp();
+  #if TEMP_DALLAS_PIN >= 0
+    setupDallasTemp();
+  #endif
+  #if TEMP_DHT_PIN >= 0
     setupDHTemp();
-  }
-  setupRTC();
-  setupGPS();
+  #endif
+  #ifdef USE_I2CSENSORS
+    setupI2Csensors();
+  #endif
+  
+  #ifdef USE_RTC
+    setupRTC();
+  #endif
+  
+  #ifdef USE_GPS
+    setupGPS();
+  #endif
+    
   setup_pins();
-
+  
   DPRINT("Number of digits:"); DPRINTLN(maxDigits);
   loadEEPROM();
   if (prm.magic != MAGIC_VALUE) factoryReset();
@@ -910,11 +952,12 @@ void timeProgram() {
 
   lastRun = millis();
   calcTime();
-  if (useTemp > 0) {
-    requestTemp(false);
+  if (useDallasTemp > 0) {
+    requestDallasTemp(false);
     getTemp();
   }
   getDHTemp();
+  getI2Csensors();
   if (prm.interval > 0) {  // protection is enabled
     // At the first top of the hour, initialize protection logic timer
     if (!initProtectionTimer && (minute() == 0)) {
@@ -1058,41 +1101,56 @@ inline void incMod10(byte &x) {
 
 
 void displayTemp(byte ptr) {
-  int digPtr = 0;
+  int digPtr = maxDigits-1;
   for (int i = 0; i < maxDigits; i++) {
     digitDP[i] = false;
     newDigit[i] = 10;
   }
-
-  if (TEMP_CHARCODE >= 0) newDigit[digPtr++] = TEMP_CHARCODE; //  "C"
-  if ((maxDigits > 4) && (GRAD_CHARCODE >= 0)) newDigit[digPtr++] = GRAD_CHARCODE; //grad
-
-  newDigit[digPtr++] = int(temperature[ptr] * 10) % 10;
-  digitDP[digPtr] = true;
-  newDigit[digPtr++] = int(temperature[ptr]) % 10;
-
+  
   newDigit[digPtr] = int(temperature[ptr]) / 10;
   if (newDigit[digPtr] == 0) newDigit[digPtr] = 10; //BLANK!!!
+  newDigit[--digPtr] = int(temperature[ptr]) % 10;
+  digitDP[digPtr] = true;
+  newDigit[--digPtr] = int(temperature[ptr] * 10) % 10;
+  if ((maxDigits > 4) && (GRAD_CHARCODE >= 0)) {
+    digPtr -=1;
+    newDigit[digPtr] = GRAD_CHARCODE; //grad
+  }
+  if (TEMP_CHARCODE >= 0) newDigit[--digPtr] = TEMP_CHARCODE; //  "C"
+
+
   if (prm.animMode == 0)  memcpy(oldDigit, newDigit, sizeof(oldDigit)); //don't do animation
   colonBlinkState = true;
   decimalpointON = true;
 }
 
-void displayHumid() {
-  int digPtr = 0;
+void displayHumid(byte ptr) {
+  int digPtr = maxDigits-1;
   for (int i = 0; i < maxDigits; i++) {
     digitDP[i] = false;
     newDigit[i] = 10;
   }
-
-  newDigit[digPtr++] = PERCENT_CHARCODE;  //  "%"
-  digPtr++;   //empty character
-  newDigit[digPtr++] = int(humid * 10) % 10;
+  
+  newDigit[digPtr] = int(humid[ptr]) / 10;
+  if (newDigit[digPtr] == 0) newDigit[digPtr] = 10; //BLANK if zero!!!
+  newDigit[--digPtr] = int(humid[ptr]) % 10;
   digitDP[digPtr] = true;
-  newDigit[digPtr++] = int(humid) % 10;
-
-  newDigit[digPtr] = int(humid) / 10;
-  if (newDigit[digPtr] == 0) newDigit[digPtr] = 10; //BLANK!!!
+  newDigit[--digPtr] = int(humid[ptr] * 10) % 10;
+  if (maxDigits > 4) {
+    if (digitsOnly) {
+      newDigit[--digPtr] = 10;   //empty character
+      newDigit[--digPtr] = PERCENT_CHARCODE;  //  "%"
+    }
+    else {
+      newDigit[--digPtr] = 10;   //empty character
+      newDigit[--digPtr] = 16;   //upper circle
+      newDigit[--digPtr] = 18;  // lower circle
+    }
+  } //4 tubes only
+  else {
+    newDigit[--digPtr] = PERCENT_CHARCODE;  //  "%"
+  }
+     
   if (prm.animMode == 0)  memcpy(oldDigit, newDigit, sizeof(oldDigit)); //don't do animation
   colonBlinkState = true;
   decimalpointON = true;
@@ -1102,9 +1160,10 @@ void displayTime4() {
   for (int i = 0; i < maxDigits; i++) digitDP[i] = false;
   digitDP[4] = true;   digitDP[2] = true;
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
-  if ((useTemp == 2) && (second() >= TEMP_START + (TEMP_END - TEMP_START) / 2) && (second() < TEMP_END)) displayTemp(1);
+  if ((useTemp > 1) && (second() >= TEMP_START + (TEMP_END - TEMP_START) / 2) && (second() < TEMP_END)) displayTemp(1);
   else if ((useTemp > 0) && (second() >= TEMP_START) && (second() < TEMP_END)) displayTemp(0);
-  else if ((useHumid > 0) && (second() >= HUMID_START) && (second() < HUMID_END)) displayHumid();
+  else if ((useHumid >1) && (second() >= HUMID_START + (HUMID_END-HUMID_START)/2) && (second() < HUMID_END)) displayHumid(1);
+  else if ((useHumid > 0) && (second() >= HUMID_START) && (second() < HUMID_END)) displayHumid(0);
   else if ((ENABLE_CLOCK_DISPLAY) && (second() >= DATE_START) && (second() < DATE_END)) {
     newDigit[3] = month() / 10;
     newDigit[2] = month() % 10;
@@ -1130,7 +1189,8 @@ void displayTime6() {
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
   if ((useTemp == 2) && (second() >= TEMP_START + (TEMP_END - TEMP_START) / 2) && (second() < TEMP_END)) displayTemp(1);
   else if ((useTemp > 0) && (second() >= TEMP_START) && (second() < TEMP_END)) displayTemp(0);
-  else if ((useHumid > 0) && (second() >= HUMID_START) && (second() < HUMID_END)) displayHumid();
+  else if ((useHumid >1) && (second() >= HUMID_START + (HUMID_END-HUMID_START)/2) && (second() < HUMID_END)) displayHumid(1);
+  else if ((useHumid > 0) && (second() >= HUMID_START) && (second() < HUMID_END)) displayHumid(0);
   else if (ENABLE_CLOCK_DISPLAY && (second() >= DATE_START) && (second() < DATE_END)) {
     newDigit[5] = (year() % 100) / 10;
     newDigit[4] = year() % 10;
@@ -1168,7 +1228,8 @@ void displayTime8() {
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
   if ((useTemp == 2) && (second() >= TEMP_START + (TEMP_END - TEMP_START) / 2) && (second() < TEMP_END)) displayTemp(1);
   else if ((useTemp > 0) && (second() >= TEMP_START) && (second() < TEMP_END)) displayTemp(0);
-  else if ((useHumid > 0) && (second() >= HUMID_START) && (second() < HUMID_END)) displayHumid();
+  else if ((useHumid >1) && (second() >= HUMID_START + (HUMID_END-HUMID_START)/2) && (second() < HUMID_END)) displayHumid(1);
+  else if ((useHumid > 0) && (second() >= HUMID_START) && (second() < HUMID_END)) displayHumid(0);
   else {
     if (ENABLE_CLOCK_DISPLAY && (second() >= DATE_START) && (second() < DATE_END)) {
       newDigit[7] = year() / 1000;
@@ -1411,8 +1472,8 @@ void writeIpTag(byte iptag) {
 
   memset(newDigit, 10, sizeof(newDigit));
   if (!digitsOnly && (maxDigits >= 6)) {
-    newDigit[4] = 1;
-    newDigit[3] = 14;
+    newDigit[5] = 19;  //'I'
+    newDigit[4] = 14;  //'P'
   }
   if (iptag >= 100) newDigit[2 + offset] = iptag / 100;
   newDigit[1 + offset] = (iptag % 100) / 10;
@@ -1450,9 +1511,13 @@ void resetWiFi() {
   static unsigned long lastTest = millis();
   static unsigned int counter = 0;
 
-  if ((millis() - lastTest) < 60000) return; //60000 //check in every 60sec
+  if ((millis() - lastTest) < 600000) return; //check in every 10 min  
   lastTest = millis();
-  WiFi.reconnect();
+  //disableDisplay();
+  #if defined(ESP8266)  
+    WiFi.reconnect();
+  #endif  
+  //enableDisplay(5000);
   DPRINTLN("Lost WiFi. Reconnect.");
   return;
 
@@ -1491,20 +1556,47 @@ void testTubes(int dely) {
 }
 
 
+void printSensors() {
+  static unsigned long lastRun = millis();
+  
+  if ((millis() - lastRun) < 30000) return;
+  lastRun = millis();  
+  
+  DPRINT("Temperature ("); DPRINT(useTemp); DPRINT("): ");
+  for (int i=0;i<useTemp;i++) {
+    DPRINT(temperature[i]); DPRINT(", ");
+  }
+  DPRINTLN(" ");
+  DPRINT("Humidity    ("); DPRINT(useHumid); DPRINT("): ");
+  for (int i=0;i<useHumid;i++) {
+    DPRINT(humid[i]); DPRINT(", ");
+  }
+  DPRINTLN(" ");
+}
+
 void printDigits(unsigned long timeout) {
   static unsigned long lastRun = millis();
 
+#ifdef DEBUG
   if ((millis() - lastRun) < timeout) return;
   lastRun = millis();
-  for (int i = maxDigits - 1; i >= 0; i--)
-    if (digit[i] < 10) DPRINT(digit[i]);
-    else {
-      DPRINT("-");
-    }
-  if (colonBlinkState) DPRINT(" B ");
-  else {
-    DPRINT("   ");
+  
+  for (int i = maxDigits - 1; i >= 0; i--) {
+    if (digit[i] < 10)      DPRINT(digit[i]);
+    else if (digit[i]==10)  DPRINT(" ");
+    else if (digit[i]==TEMP_CHARCODE)    DPRINT("C");
+    else if (digit[i]==GRAD_CHARCODE)    DPRINT("°");
+    else if (digit[i]==18)    DPRINT(".");
+    else if (digit[i]==PERCENT_CHARCODE) DPRINT("%");    
+    else if (digit[i]==19) DPRINT("I");    
+    else if (digit[i]==14) DPRINT("P");    
+    else    DPRINT("-");
+    
+    if (digitDP[i]) DPRINT(".");
   }
+
+  if (colonBlinkState) {DPRINT(" * ");}
+  else  {DPRINT("   ");}
   /*
     if ((millis()/1000%10) == 1) {  //show free memory for debugging memory leak
     DPRINT("Heap:"); DPRINT(ESP.getFreeHeap()); DPRINT(" byte");
@@ -1516,17 +1608,47 @@ void printDigits(unsigned long timeout) {
   //DPRINT("INT:"); DPRINT(intCounter);   //show multiplex interrupt counter
   //DPRINT(" ESaving:"); DPRINT(EEPROMsaving);
   DPRINTLN(" ");
+  printSensors();
+  #endif  
 }
 
+
+void checkTubePowerOnOff() {
+  
+  #if TUBE_POWER_PIN >=0
+    static unsigned long lastRun = 0;
+    static unsigned long lastON = 0;
+    
+    if ((millis()-lastRun)<1000) return;
+    lastRun = millis();
+
+    #if RADAR_PIN >=0
+      if (digitalRead(RADAR_PIN) == HIGH) lastON = millis(); 
+      radarON = ((millis()-lastON)<RADAR_TIMEOUT);
+    #else
+      radarON = true;  //without radar sensor, always ON 
+    #endif
+
+    if (((displayON ?  prm.dayBright : prm.nightBright) == 0) || !radarON) {
+      digitalWrite(TUBE_POWER_PIN,!TUBE_POWER_ON);  //Switch OFF
+      //DPRINTLN("OFF");
+    }
+    else   {
+       digitalWrite(TUBE_POWER_PIN,TUBE_POWER_ON);   //Switch ON
+       //DPRINTLN("ON");
+    }
+  #endif
+}
 
 void loop() {
   dnsServer.processNextRequest();
   //MDNS.update();
-  enableDisplay(2000);
+  enableDisplay(3000);
   timeProgram();
   writeDisplaySingle();
   doAnimationMakuna();
   alarmSound();
+  checkTubePowerOnOff();
   checkWifiMode();
   if (clockWifiMode) { //Wifi Clock Mode
     if (WiFi.status() != WL_CONNECTED) {

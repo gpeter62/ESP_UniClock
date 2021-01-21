@@ -2,6 +2,7 @@
 
 const int maxDigits = 6;
 byte tubes[] = {0,1,2,3,4,5};    //change it, if needed for the correct tube sequence
+byte brightConvert[] = {0,1,2,3,4,6,8,10,12,14,15};   //convert brightness from 0..10 to 0..15
 
 //MAX7219CNG control pins
 #define PIN_LOAD 15  // D8 LOAD/CS_
@@ -33,10 +34,11 @@ byte charDefinition[] = {
                    B11101110,   // A  abcefg  (13)
                    B11001110,   // P  abefg (14)
                    B10011100,   // C  adef (15)
-                   B11000110,   //grad  abfg  (16)         
+                   B11000110,   //grad  (upper circle) abfg  (16)         
                    B10110100,   //%  acdf  (17)    
-                   B01100000,   //I  bc    (18)
-                   B10001110    //F  aefg  (19)                         
+                   B00111010,   //lower circle cdeg  (18)                   
+                   B01100000,   //I  bc    (19)
+                   B10001110    //F  aefg  (20)                         
 };
 
 //Fill this table with the OUT bits numbers of MAX7219 chip!   I use only No-Decode mode for flexible hardware
@@ -60,11 +62,11 @@ void setup_pins() {
   #error "Board is not supported!"  
 #endif
   
-  DPRINTLN("MAX7219 Clock - Setup pins...");
-  pinMode(PIN_LOAD,OUTPUT);
-  pinMode(PIN_DIN, OUTPUT);
-  pinMode(PIN_CLK, OUTPUT);
-  digitsOnly = false;
+  DPRINTLN("MAX7219 - Setup pins...");
+  pinMode(PIN_LOAD,OUTPUT);  DPRINT("PIN_LOAD:"); DPRINTLN(PIN_LOAD);
+  pinMode(PIN_DIN, OUTPUT);  DPRINT("PIN_DIN:");  DPRINTLN(PIN_DIN);
+  pinMode(PIN_CLK, OUTPUT);  DPRINT("PIN_CLK:");  DPRINTLN(PIN_CLK);
+  digitsOnly = false; 
   
   sendBits(REG_SHUTDOWN,1);              //Set to Normal (not Shutdown) mode
   sendBits(REG_TEST,0);                  //Set to Normal, (Non-Test) mode
@@ -73,7 +75,7 @@ void setup_pins() {
   sendBits(REG_INTENSITY,0x0F);          //Set maximum brightness
 }
 
-void writeDisplaySingle() {
+void ICACHE_RAM_ATTR writeDisplaySingle() {
 static byte oldBright = 0;
 static byte newBright = 0;
 int bitBuffer;  
@@ -84,7 +86,7 @@ int bitBuffer;
 // 1 NOP is 1 tick
 
 
-  newBright = displayON ?  prm.dayBright : prm.nightBright;
+  newBright = brightConvert[displayON ?  prm.dayBright : prm.nightBright];  //convert 0..10 brightness levels to 0..15
   if (newBright != oldBright) {
     sendBits(REG_INTENSITY, newBright);    //Set Brightness
     oldBright = newBright;

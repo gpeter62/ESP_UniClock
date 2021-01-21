@@ -55,7 +55,9 @@ byte num;
   brightCounter++; 
   if (brightCounter>MAXBRIGHTNESS) brightCounter = 1;
   
-  if (COLON_PIN>=0) digitalWrite(COLON_PIN,!colonBlinkState);  // Blink colon pin
+  #if COLON_PIN >=0  
+    digitalWrite(COLON_PIN,!colonBlinkState);  // Blink colon pin
+  #endif  
   timer1_write(PWMrefresh);
 }
 

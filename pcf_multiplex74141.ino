@@ -7,20 +7,20 @@
 #define I2C_ADDR 0x20
 
 //If a digitEnablePin is on pcf8574, add 100 to the pin number.   (P0 = 100,... P7 = 107)
-const byte digitEnablePins[] = {100,101,102,103,104,105};    //6 tube nixie driven by PCF 
-const byte ABCDPins[4] = {14,12,13,2};  //D5,D6,D7,D4 on 8266
-const byte DpPin = 16; // decimalPoint on 8266's D0
+byte digitEnablePins[] = {100,101,102,103,104,105};    //6 tube nixie driven by PCF 
+byte ABCDPins[4] = {14,12,13,2};  //D5,D6,D7,D4 on 8266
+#define DP_PIN  16 // decimalPoint on 8266's D0
 
 const int maxDigits = sizeof(digitEnablePins);
 
 //const byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
-const int PWMrefresh=15000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-const int PWMtiming[] = {0,2000,3000,4000,5000,6000,7000,8000,10000,12000,14000};
+int PWMrefresh=15000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+int PWMtiming[] = {0,2000,3000,4000,5000,6000,7000,8000,10000,12000,14000};
 #define MAXBRIGHT 10
 
 #if defined(ESP8266) 
 #else
-  #error "Board is not supported!"  
+  #error "Board is not supported! This modul is for 8266 only!"  
 #endif
 
 void ICACHE_RAM_ATTR delayMS(int d) {        //Delay microsec
@@ -82,7 +82,7 @@ void setup_pins() {
   for (int i=0;i<4;i++)  pinMode(ABCDPins[i], OUTPUT);
   pinMode(SCL,OUTPUT);
   pinMode(SDA,OUTPUT);
-  pinMode(DpPin,OUTPUT);  
+  pinMode(DP_PIN,OUTPUT);  
   digitalWrite(SDA,HIGH);
   digitalWrite(SCL,HIGH);
   delay(100); 
@@ -98,8 +98,8 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   static byte pos = 0;
   static byte state=0;
   static int timer = PWMrefresh;
-  byte num,brightness;
-  byte p,DPpos;
+  static byte num,brightness;
+  static byte p,DPpos;
   
 if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
     //digitalWrite(digitEnablePins[pos],LOW); 
@@ -145,38 +145,32 @@ if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
   if ((brightness == 0) || (state == 3) || (num >9)) {  //blank digit
     state = 0; 
     for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],HIGH); }
-      //if (p<100) digitalWrite(p,LOW); //switch OFF old digit on 8266
-      //else sendBits(I2C_ADDR,0);      // or on PCF port  
-      digitalWrite(DpPin,LOW);
+      digitalWrite(DP_PIN,LOW);
     }
   else {
       if (p<100) digitalWrite(p,HIGH);      //switch ON new digit on 8266
       else sendBits(I2C_ADDR,1<<(p-100)) ;  // or on PCF port
       if (LEFTDECIMAL) DPpos = min(maxDigits-1,pos+1); else DPpos = pos;
-      if (digitDP[DPpos] && (brightness>0)) digitalWrite(DpPin,HIGH); //switch ON decimal point, if needed
+      if (digitDP[DPpos] && (brightness>0)) digitalWrite(DP_PIN,HIGH); //switch ON decimal point, if needed
       for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],num  & 1<<i); }
   }
     
-  if (COLON_PIN>=0) {
+  #if COLON_PIN >= 0
     if (num==10) digitalWrite(COLON_PIN,LOW);      // Colon pin OFF
     else digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
-  }
+  #endif
   
-  if (DECIMALPOINT_PIN>=0) {
-        if (num==10) {
-          digitalWrite(DECIMALPOINT_PIN,LOW);
-        }
-        else {
-          if (decimalpointON) digitalWrite(DECIMALPOINT_PIN,HIGH);
-        }
-  }
+  #if DECIMALPOINT_PIN >=0 
+        if (num==10) {digitalWrite(DECIMALPOINT_PIN,LOW);}
+        else digitalWrite(DECIMALPOINT_PIN,decimalpointON); }
+  #endif
+  
   if (timer<500) timer = 500;  //safety only...
- 
   timer1_write(timer); 
 }
 
 void ICACHE_RAM_ATTR clearTubes() {
-    digitalWrite(DpPin,LOW);
+    digitalWrite(DP_PIN,LOW);
     sendBits(I2C_ADDR,0);
     //for (int i=0;i<4;i++) digitalWrite(ABCDPins[i],HIGH); 
 }

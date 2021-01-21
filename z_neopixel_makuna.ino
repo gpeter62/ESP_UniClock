@@ -45,7 +45,7 @@ const int PixelCount = sizeof(tubePixels)+4;
 
 #if defined(ESP32)
   #ifndef NEOPIXEL_PIN 
-	#define NEOPIXEL_PIN 2
+	  #define NEOPIXEL_PIN 2
   #endif
   const byte PixelPin = NEOPIXEL_PIN;  //on ESP32 usable any pin below 32 
   NeoPixelBrightnessBus<NeoGrbFeature, NeoEsp32I2s1800KbpsMethod> strip(PixelCount+2,PixelPin);  //instead of NeoEsp32Rmt7Ws2812xMethod the  NeoEsp32I2s1800KbpsMethod is better!
