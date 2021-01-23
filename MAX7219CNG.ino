@@ -63,9 +63,9 @@ void setup_pins() {
 #endif
   
   DPRINTLN("MAX7219 - Setup pins...");
-  pinMode(PIN_LOAD,OUTPUT);  DPRINT("PIN_LOAD:"); DPRINTLN(PIN_LOAD);
-  pinMode(PIN_DIN, OUTPUT);  DPRINT("PIN_DIN:");  DPRINTLN(PIN_DIN);
-  pinMode(PIN_CLK, OUTPUT);  DPRINT("PIN_CLK:");  DPRINTLN(PIN_CLK);
+  pinMode(PIN_LOAD,OUTPUT);   regPin(PIN_LOAD,"PIN_LOAD");
+  pinMode(PIN_DIN, OUTPUT);   regPin(PIN_DIN,"PIN_DIN");
+  pinMode(PIN_CLK, OUTPUT);   regPin(PIN_CLK,"PIN_CLK");
   digitsOnly = false; 
   
   sendBits(REG_SHUTDOWN,1);              //Set to Normal (not Shutdown) mode
@@ -87,6 +87,7 @@ int bitBuffer;
 
 
   newBright = brightConvert[displayON ?  prm.dayBright : prm.nightBright];  //convert 0..10 brightness levels to 0..15
+  if (!radarON) newBright = 0;
   if (newBright != oldBright) {
     sendBits(REG_INTENSITY, newBright);    //Set Brightness
     oldBright = newBright;

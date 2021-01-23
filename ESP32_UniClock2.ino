@@ -37,7 +37,7 @@
   //#define USE_SHT21             //I2C Temperature + humidity, SDA+SCL I2C pins are used!   
   //#define USE_RTC               //DS3231 realtime clock, SDA+SCL I2C pins are used!   
   //#define USE_GPS               //use for standalone clock, without wifi internet access
-  //#define USE_NEOPIXEL_MAKUNA   //WS2812B led stripe, for tubes backlight. Don't forget to define tubePixels[] !
+  //#define USE_NEOPIXEL   //WS2812B led stripe, for tubes backlight. Don't forget to define tubePixels[] !
 
   //----- DRIVER SELECTION ------ Use only 1 driver from the following options in the clocks.h file!
   //#define MULTIPLEX74141_ESP32  //4..8 Nixie tubes generic driver for ESP32
@@ -46,7 +46,7 @@
   //-------------- 8266 clock drivers --------------------------------------------------
   //#define MULTIPLEX74141        //4..8 Nixie tubes generic driver for ESP8266
   //#define MAX6921               //4..8 VFD tubes (IV18) driver for ESP8266
-  //#define NO_MULTIPLEX74141     /4..6 Nixie tubes, serial latch driver, 74141 for each tube
+  //#define NO_MULTIPLEX74141     //4..6 Nixie tubes, serial latch driver, 74141 for each tube
   //#define MM5450                //6..8 LEDS
   //#define MAX7219CNG            //4..8 LED
   //#define Numitron_4511N        //Numitron 4x tube clock
@@ -55,11 +55,11 @@
   //#define PCF_74141             //PCF pin expander for tube selection
   //#define PT6355                //VFD clock - development in progress
 
-  //--------------------- PINOUT -----------------------------------------------------------
+  //--------------------- PINOUT & PIN PARAMETERS --------------------------------------------------------
   //#define PIN_SDA xx             // you can set the used SDA and SCL pins
   //#define PIN_SCL xx             // if it is not default value
   //#define COLON_PIN   -1        //Blinking Colon pin.  If not used, SET TO -1
-  //#define TEMP_DALLAS_PIN -1     //Dallas DS18B20 temp sensor pin.  If not used, SET TO -1
+  //#define TEMP_DALLAS_PIN -1    //Dallas DS18B20 temp sensor pin.  If not used, SET TO -1
   //#define TEMP_DHT_PIN -1       //DHT temp sensor pin.  If not used, SET TO -1
   //#define DHTTYPE DHT22         //DHT sensor type, if used...
   //#define LED_SWITCH_PIN -1     //external led backlight ON/OFF.  If not used, SET TO -1
@@ -67,11 +67,19 @@
   //#define ALARMSPEAKER_PIN -1   //Alarm buzzer pin
   //#define ALARMBUTTON_PIN -1    //Alarm switch off button pin
   //#define ALARM_ON HIGH         //HIGH or LOW level is needed to switch ON the buzzer?
-  //#define NEOPIXEL_PIN 2        //8266 Neopixel LEDstripe pin is always the RX pin!!!
+  //#define NEOPIXEL_PIN 3        //8266 Neopixel LEDstripe pin is always the RX pin!!!
+  //#define RGB_MIN_BRIGHTNESS 8   //Neopixel leds minimum brightness
+  //#define RGB_MAX_BRIGHTNESS 255 //Neopixel leds maximum brightness
   //#define RADAR_PIN 34          //Radar sensor pin
   //#define RADAR_TIMEOUT 300     //Automatic switch off tubes (without radar detecting somebody) after xxx sec
   //#define TUBE_POWER_PIN 23     //Filament or HV switch ON/OFF pin
   //#define TUBE_POWER_ON HIGH    //HIGH or LOW level is needed to switch ON the TUBE POWER?
+  
+  //#define LIGHT_SENSOR_PIN -1   //Environment light sensor, only ADC pins are usable! ESP32 for example: 34,35,36,39... 8266: only A0
+  //#define REF_RESISTANCE    10000.0         // Resistor value is 10k, between LDR sensor and GND
+  //#define MAXIMUM_LUX 150                   //Lux level for maximum tube brightness
+  //#define LUX_CALC_SCALAR   12518931 * 1.2  //Calibrate here the LDR sensor
+  //#define LUX_CALC_EXPONENT -1.405          //LDR sensor characteristic
 
   //#define MAXBRIGHTNESS 10      //Do not change this value!
 
@@ -98,9 +106,13 @@
 #define TIMESERVER_REFRESH 86400000     //7200000   Refresh time in millisec   86400000 = 24h
 unsigned long timeserverErrors = 0;        //timeserver refresh errors
 
-byte c_MinBrightness = 8;       //minimum LED brightness
-byte c_MaxBrightness = 255;     //maximum LED brightness
-unsigned long intCounter = 0;
+boolean autoBrightness = false; //Enable automatic brightness levels
+int LuxValue = MAXIMUM_LUX;         //Enviroment LUX value, set by Light Sensor
+int timerON,timerOFF;       //for debugging
+
+byte c_MinBrightness = RGB_MIN_BRIGHTNESS;       //minimum LED brightness
+byte c_MaxBrightness = RGB_MAX_BRIGHTNESS;     //maximum LED brightness
+unsigned long intCounter = 0;   //for testing only, interrupt counter
 //--------------------------------------------------------------------------------------------------
 
 #if defined(ESP8266)
@@ -155,7 +167,7 @@ DNSServer dnsServer;
 #include <EEPROM.h>
 #include "ArduinoJson.h"
 
-#ifdef USE_NEOPIXEL_MAKUNA
+#ifdef USE_NEOPIXEL
 #include <NeoPixelBrightnessBus.h>
 #endif
 
@@ -265,6 +277,30 @@ bool decimalpointON = false;
 bool alarmON = false;             //Alarm in progress
 unsigned long alarmStarted = 0;   //Start timestamp millis()
 
+char pinTxt[40][17];
+
+void regPin(byte p,char * txt) {  //register used pins
+  DPRINT("- "); DPRINT(txt); DPRINT(": GPIO"); DPRINTLN(p); 
+  if (strlen(pinTxt[p])>0) {
+    DPRINT("*** ERROR *** "); DPRINT(txt); DPRINT(" on PIN#"); DPRINT(p);  
+    DPRINT(" ALREADY DEFINED AS "); DPRINTLN(pinTxt[p]); 
+    strncpy(pinTxt[p],"ERROR! MULTI DEF",16);
+  }
+  else 
+    strncpy(pinTxt[p],txt,16);
+   
+}
+
+void listPins() {
+  DPRINTLN("_______________________");
+  DPRINTLN("___ USED CLOCK PINS ___");
+  for (int i=0;i<40;i++) {
+    if (strlen(pinTxt[i])>0) {
+      DPRINT(i); DPRINT(": ");  DPRINTLN(pinTxt[i]);
+    }
+  }
+  DPRINTLN("_______________________");
+}
 
 void startTimer() {   //ESP_INTR_FLAG_IRAM
 #if defined(ESP8266)
@@ -313,6 +349,7 @@ void Fdelay(unsigned long d) {
     dnsServer.processNextRequest();
     //MDNS.update();
     enableDisplay(2000);
+    getLightSensor();
     doAnimationMakuna();
     alarmSound();
     yield();
@@ -763,7 +800,7 @@ void handleSendConfig(AsyncWebServerRequest *request) {
   doc["alarmPeriod"] = prm.alarmPeriod;
 
   //RGB LED values
-#ifdef USE_NEOPIXEL_MAKUNA
+#ifdef USE_NEOPIXEL
   doc["rgbEffect"] = prm.rgbEffect;       // if 255, no RGB exist!
 #else
   doc["rgbEffect"] = 255;   //Not installed Neopixels!!!
@@ -807,43 +844,38 @@ void handleSendCurrentInfos(AsyncWebServerRequest *request) {
 
 void setup() {
   //WiFi.mode(WIFI_OFF);
+  memset(pinTxt,0,sizeof(pinTxt));
   delay(200);
   DPRINTBEGIN(115200); DPRINTLN(" ");
   DPRINT("Starting "); DPRINTLN(webName);
   clearDigits();
   #if ALARMSPEAKER_PIN >= 0
-    DPRINT("ALARMSPEAKER_PIN:"); DPRINTLN(ALARMSPEAKER_PIN);
-    pinMode(ALARMSPEAKER_PIN, OUTPUT);
-    digitalWrite(ALARMSPEAKER_PIN, !ALARM_ON);
+    pinMode(ALARMSPEAKER_PIN, OUTPUT); regPin(ALARMSPEAKER_PIN,"ALARMSPEAKER_PIN");
   #endif
   #if ALARMBUTTON_PIN >= 0
-    pinMode(ALARMBUTTON_PIN, INPUT_PULLUP);
-    DPRINT("ALARMBUTTON_PIN:"); DPRINTLN(ALARMBUTTON_PIN);
+    pinMode(ALARMBUTTON_PIN, INPUT_PULLUP); regPin(ALARMBUTTON_PIN,"ALARMBUTTON_PIN");
   #endif
   #if COLON_PIN >= 0
-    pinMode(COLON_PIN, OUTPUT);
-    DPRINT("COLON_PIN:");DPRINTLN(COLON_PIN);
+    pinMode(COLON_PIN, OUTPUT); regPin(COLON_PIN,"COLON_PIN");
   #endif
   #if LED_SWITCH_PIN >= 0
-    pinMode(LED_SWITCH_PIN, OUTPUT);
-    DPRINT("LED_SWITCH_PIN:");DPRINTLN(LED_SWITCH_PIN);
+    pinMode(LED_SWITCH_PIN, OUTPUT); regPin(LED_SWITCH_PIN,"LED_SWITCH_PIN");
   #endif
   #if DECIMALPOINT_PIN >= 0
-    pinMode(DECIMALPOINT_PIN, OUTPUT);
-    DPRINT("DECIMALPOINT_PIN:");DPRINTLN(DECIMALPOINT_PIN);
+    pinMode(DECIMALPOINT_PIN, OUTPUT); regPin(DECIMALPOINT_PIN,"DECIMALPOINT_PIN");
   #endif
   #if RADAR_PIN >= 0
-    pinMode(RADAR_PIN, INPUT);
-    DPRINT("RADAR_PIN:");DPRINTLN(RADAR_PIN);
+    pinMode(RADAR_PIN, INPUT); regPin(RADAR_PIN,"RADAR_PIN");
   #endif
   #if TUBE_POWER_PIN >= 0
-    pinMode(TUBE_POWER_PIN, OUTPUT);
-    DPRINT("TUBE_POWER_PIN:");DPRINTLN(TUBE_POWER_PIN);
+    pinMode(TUBE_POWER_PIN, OUTPUT); regPin(TUBE_POWER_PIN,"TUBE_POWER_PIN");
   #endif
-
-  decimalpointON = false;
-
-  #if TEMP_DALLAS_PIN >= 0
+  #if LIGHT_SENSOR_PIN >= 0
+    pinMode(LIGHT_SENSOR_PIN, INPUT); regPin(LIGHT_SENSOR_PIN,"LIGHT_SENSOR_PIN");
+    autoBrightness = true;
+  #endif
+  
+  #if TEMP_DALLAS_PIN >= 0 
     setupDallasTemp();
   #endif
   #if TEMP_DHT_PIN >= 0
@@ -860,15 +892,19 @@ void setup() {
   #ifdef USE_GPS
     setupGPS();
   #endif
-    
+  
+  decimalpointON = false;    
   setup_pins();
   
   DPRINT("Number of digits:"); DPRINTLN(maxDigits);
   loadEEPROM();
   if (prm.magic != MAGIC_VALUE) factoryReset();
 
-  setupNeopixelMakuna();
-
+  setupNeopixel();
+  listPins();
+  
+  getDHTemp();  //get the first DHT temp+humid measure
+    
   byte saveMode = prm.animMode;
   prm.animMode = 2;
   testTubes(300);
@@ -1561,17 +1597,20 @@ void printSensors() {
   
   if ((millis() - lastRun) < 30000) return;
   lastRun = millis();  
-  
-  DPRINT("Temperature ("); DPRINT(useTemp); DPRINT("): ");
-  for (int i=0;i<useTemp;i++) {
-    DPRINT(temperature[i]); DPRINT(", ");
+  if (useTemp>0) {
+    DPRINT("Temperature ("); DPRINT(useTemp); DPRINT("): ");
+    for (int i=0;i<useTemp;i++) {
+      DPRINT(temperature[i]); DPRINT(", ");
+    }
+    DPRINTLN(" ");
   }
-  DPRINTLN(" ");
-  DPRINT("Humidity    ("); DPRINT(useHumid); DPRINT("): ");
-  for (int i=0;i<useHumid;i++) {
-    DPRINT(humid[i]); DPRINT(", ");
+  if (useHumid>0) {  
+    DPRINT("Humidity    ("); DPRINT(useHumid); DPRINT("): ");
+    for (int i=0;i<useHumid;i++) {
+      DPRINT(humid[i]); DPRINT(", ");
+    }
+    DPRINTLN(" ");
   }
-  DPRINTLN(" ");
 }
 
 void printDigits(unsigned long timeout) {
@@ -1607,6 +1646,10 @@ void printDigits(unsigned long timeout) {
   */
   //DPRINT("INT:"); DPRINT(intCounter);   //show multiplex interrupt counter
   //DPRINT(" ESaving:"); DPRINT(EEPROMsaving);
+  #if LIGHT_SENSOR_PIN >=0
+    DPRINT("  Lux:"); DPRINT(LuxValue);
+    //DPRINT("  tON:"); DPRINT(timerON); DPRINT("  tOFF:"); DPRINT(timerOFF);   //Multiplex timing values for testing
+  #endif  
   DPRINTLN(" ");
   printSensors();
   #endif  
@@ -1614,8 +1657,7 @@ void printDigits(unsigned long timeout) {
 
 
 void checkTubePowerOnOff() {
-  
-  #if TUBE_POWER_PIN >=0
+
     static unsigned long lastRun = 0;
     static unsigned long lastON = 0;
     
@@ -1624,21 +1666,49 @@ void checkTubePowerOnOff() {
 
     #if RADAR_PIN >=0
       if (digitalRead(RADAR_PIN) == HIGH) lastON = millis(); 
-      radarON = ((millis()-lastON)<RADAR_TIMEOUT);
+      radarON = ((millis()-lastON)<1000*RADAR_TIMEOUT);
+      //DPRINT("RadarON:"); DPRINT(radarON);  DPRINT(":"); DPRINTLN((millis()-lastON));
     #else
       radarON = true;  //without radar sensor, always ON 
     #endif
+    #if TUBE_POWER_PIN >=0
+      if (((displayON ?  prm.dayBright : prm.nightBright) == 0) || !radarON) {
+        digitalWrite(TUBE_POWER_PIN,!TUBE_POWER_ON);  //Switch OFF
+        //DPRINTLN("OFF");
+      }
+      else   {
+        digitalWrite(TUBE_POWER_PIN,TUBE_POWER_ON);   //Switch ON
+        //DPRINTLN("ON");
+      }
+    #endif   
+}
 
-    if (((displayON ?  prm.dayBright : prm.nightBright) == 0) || !radarON) {
-      digitalWrite(TUBE_POWER_PIN,!TUBE_POWER_ON);  //Switch OFF
-      //DPRINTLN("OFF");
-    }
-    else   {
-       digitalWrite(TUBE_POWER_PIN,TUBE_POWER_ON);   //Switch ON
-       //DPRINTLN("ON");
-    }
+#if LIGHT_SENSOR_PIN >=0
+int luxmeter() {      //Calculation parameters are defined in clocks.h
+  float ADCdata;
+  float ldrResistance;
+  float ldrLux;
+  
+  ADCdata = analogRead(LIGHT_SENSOR_PIN); 
+  ldrResistance = (4096 - ADCdata) / ADCdata * REF_RESISTANCE;
+  ldrLux = LUX_CALC_SCALAR * pow(ldrResistance, LUX_CALC_EXPONENT);
+  return (int)ldrLux;
+}
+#endif
+
+void getLightSensor() {
+  #if LIGHT_SENSOR_PIN >=0
+    static unsigned long lastRun = 0;
+    
+    if ((millis()-lastRun)<500) return;
+    lastRun = millis();
+   
+    LuxValue = min(luxmeter(),MAXIMUM_LUX);   //Limited in 1000 lux
+  #else
+    LuxValue = MAXIMUM_LUX;
   #endif
 }
+
 
 void loop() {
   dnsServer.processNextRequest();
@@ -1649,6 +1719,7 @@ void loop() {
   doAnimationMakuna();
   alarmSound();
   checkTubePowerOnOff();
+  getLightSensor();
   checkWifiMode();
   if (clockWifiMode) { //Wifi Clock Mode
     if (WiFi.status() != WL_CONNECTED) {

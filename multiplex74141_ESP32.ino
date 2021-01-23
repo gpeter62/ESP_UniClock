@@ -12,6 +12,7 @@ int DRAM_ATTR maxDig = maxDigits;   //memory variable version
 int DRAM_ATTR PWMrefresh=11000;   //msec, Multiplex time period. Greater value => slower multiplex frequency
 #define MAXBRIGHT 10
 int DRAM_ATTR PWMtiming[MAXBRIGHT+1] = {0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000};
+int DRAM_ATTR PWMrange = PWMtiming[MAXBRIGHT] - PWMtiming[1];
 
   #if defined(ESP32) 
   #else
@@ -23,13 +24,13 @@ void setup_pins() {
   DPRINT("digitEnablePins: ");
   for (int i=0;i<maxDigits;i++) {
     pinMode(digitEnablePins[i], OUTPUT);
-    DPRINT(digitEnablePins[i]); DPRINT(",");
+    regPin(digitEnablePins[i],"DIGIT_ENABLE_PIN"); 
   }
   DPRINTLN(" ");
   DPRINT("ABCDPins: ");
   for (int i=0;i<4;i++) {
     pinMode(ABCDPins[i], OUTPUT);
-    DPRINT(ABCDPins[i]); DPRINT(",");
+    regPin(ABCDPins[i],"74141_ABCD_PIN"); 
   }
   DPRINTLN(" ");
   #if DP_PIN>=0
@@ -89,7 +90,7 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
  
    //  if ((pos>0) && (num<=9)) num = convert[num];   //tube character conversion, if needed... (maybe bad pin numbering)
 
-  if ((brightness == 0) || (state == 3) || (num >9)) {  //blank digit
+  if ((brightness == 0) || (state == 3) || (num >9) || (!radarON)) {  //blank digit
     state = 0; 
     digitalWrite(digitEnablePins[pos],LOW);  //switch off anode 
     #if DP_PIN >=0

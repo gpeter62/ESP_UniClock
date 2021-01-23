@@ -11,7 +11,8 @@ byte tubes[] = {3,2,1,0};         //4 tubes,   old clock...
 
 const int maxDigits = sizeof(tubes);
 const int PWMrefresh=12000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-const int PWMtiming[] = {2000,1000,2000,3000,4000,5000,6000,7000,8000,10000,12000};
+const int PWMtiming[MAXBRIGHT+1] = {1000,1000,2000,3000,4000,5000,6000,7000,8000,10000,12000};
+int PWMrange = PWMtiming[MAXBRIGHT] - PWMtiming[1];
 
 #define dataPin  14  //D5
 #define latchPin 12  //D6
@@ -21,9 +22,9 @@ void writeDisplaySingle() { }
 
 void setup_pins(){
   DPRINTLN("8266 NON-MULTIPLEX 4(or 6) x 74141: Setup tube driver pins...");
-  pinMode(dataPin, OUTPUT); DPRINT("dataPin:");   DPRINTLN(dataPin);
-  pinMode(latchPin,OUTPUT); DPRINT("latchPin:");  DPRINTLN(latchPin);
-  pinMode(clkPin,OUTPUT);   DPRINT("clkPin:");    DPRINTLN(clkPin);
+  pinMode(dataPin, OUTPUT); regPin(dataPin,"dataPin"); 
+  pinMode(latchPin,OUTPUT); regPin(latchPin,"latchPin"); 
+  pinMode(clkPin,OUTPUT);   regPin(clkPin,"clkPin"); 
   startTimer();
 }
 
@@ -61,10 +62,15 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
 
   if (brightness ==0) {
     for (int i=0;i<maxDigits;i++) writeBits(0xA);  //black display
-    if (DECIMALPOINT_PIN>=0) digitalWrite(DECIMALPOINT_PIN,LOW);
-  if (COLON_PIN>=0) digitalWrite(COLON_PIN,LOW);  // colon pin OFF
+    
+  #if DECIMALPOINT_PIN>=0 
+    digitalWrite(DECIMALPOINT_PIN,LOW);
+  #endif  
+  #if COLON_PIN >= 0 
+    digitalWrite(COLON_PIN,LOW);  // colon pin OFF
+  #endif
   digitalWrite(latchPin, HIGH);
-  timer1_write(100*timer);
+  timer1_write(100*PWMrefresh);
   return;
   }
   else {
@@ -81,8 +87,12 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   
   switch (state) {   //state machine...
     case 0:
-      if ((DECIMALPOINT_PIN>=0) && decimalpointON) digitalWrite(DECIMALPOINT_PIN,HIGH);
-      if (COLON_PIN>=0) digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
+      #if (DECIMALPOINT_PIN>=0
+        if (decimalpointON) digitalWrite(DECIMALPOINT_PIN,HIGH);
+      #endif  
+      #if COLON_PIN>=0
+        digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
+      #endif  
       if (animM > 0) { //Animation?
         timer =  (PWMtiming[brightness] * (10-animM))/10;
         state = 1;  //next state is: show newDigits
@@ -99,8 +109,12 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
       else state = 2;  //default next state is: BLANK display
       break;
     case 2:  //blank display
-      if (DECIMALPOINT_PIN>=0) digitalWrite(DECIMALPOINT_PIN,LOW);
-      if (COLON_PIN>=0) digitalWrite(COLON_PIN,LOW);  // colon pin OFF
+      #if DECIMALPOINT_PIN>=0 
+        digitalWrite(DECIMALPOINT_PIN,LOW);
+      #endif  
+      #if COLON_PIN>=0 
+        digitalWrite(COLON_PIN,LOW);  // colon pin OFF
+      #endif  
       state = 0;
       timer = PWMrefresh-PWMtiming[brightness];
       break;
@@ -109,8 +123,8 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
     
   digitalWrite(latchPin, HIGH);    
   
-  if (brightness == 0) {timer = PWMtiming[10]; state = 0;}  //no time sharing is needed
-  if (timer<2000) timer = 2000;  //safety only...
+  if ((brightness == 0) || (!radarON)) {timer = PWMtiming[10]; state = 0;}  //no time sharing is needed
+  if (timer<500) timer = 500;  //safety only...
   timer1_write(timer); 
 }
 

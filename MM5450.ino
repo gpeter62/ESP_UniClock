@@ -61,10 +61,10 @@ void setup_pins() {
 #endif
   
   DPRINTLN("MM5450 - Setup pins...");
-  pinMode(PIN_LE,  OUTPUT);  DPRINT("PIN_LE:");   DPRINTLN(PIN_LE);
-  pinMode(PIN_BR,  OUTPUT);  DPRINT("PIN_BR:");   DPRINTLN(PIN_BR);
-  pinMode(PIN_DATA,OUTPUT);  DPRINT("PIN_DATA:"); DPRINTLN(PIN_DATA);
-  pinMode(PIN_CLK, OUTPUT);  DPRINT("PIN_CLK:");  DPRINTLN(PIN_CLK);
+  pinMode(PIN_LE,  OUTPUT);  regPin(PIN_LE,"PIN_LE");
+  pinMode(PIN_BR,  OUTPUT);  regPin(PIN_BR,"PIN_BR");
+  pinMode(PIN_DATA,OUTPUT);  regPin(PIN_DATA,"PIN_DATA");
+  pinMode(PIN_CLK, OUTPUT);  regPin(PIN_CLK,"PIN_CLK");
   digitalWrite(PIN_BR,HIGH);  //brightness
   digitsOnly = false;
   startTimer();

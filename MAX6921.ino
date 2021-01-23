@@ -39,7 +39,7 @@ uint32_t digitEnableBits[10];
 
 int PWMrefresh=5500;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
 #define MAXBRIGHT 10
-int PWMtiming[MAXBRIGHT+1] = {0,250,500,1000,2000,2500,3000,3500,4000,4500,5000};
+int PWMtiming[MAXBRIGHT+1] = {0,500,800,1200,2000,2500,3000,3500,4000,4500,5000};
 //-----------------------------------------------------------------------------------------
 
 //https://sub.nanona.fi/esp8266/timing-and-ticks.html
@@ -61,16 +61,12 @@ void setup_pins() {
     #error "Board is not supported! For ESP32 use MAX6921_ESP32 !"  
   #endif
   
-  pinMode(PIN_LE,  OUTPUT);
-  pinMode(PIN_BL,  OUTPUT);   digitalWrite(PIN_BL,LOW);  //brightness
-  pinMode(PIN_DATA,OUTPUT);
-  pinMode(PIN_CLK, OUTPUT);
-    
   DPRINTLN("Setup MAX6921 pins for VFD Clock...");
-  DPRINT("- CLK   : GPIO"); DPRINTLN(PIN_CLK);
-  DPRINT("- DATAIN: GPIO"); DPRINTLN(PIN_DATA);
-  DPRINT("- LE    : GPIO"); DPRINTLN(PIN_LE);
-  DPRINT("- BLANK : GPIO"); DPRINTLN(PIN_BL);
+  pinMode(PIN_LE,  OUTPUT);  regPin(PIN_LE,"PIN_LE");
+  pinMode(PIN_BL,  OUTPUT);  regPin(PIN_BL,"PIN_BL");
+  digitalWrite(PIN_BL,LOW);  //brightness
+  pinMode(PIN_DATA,OUTPUT);  regPin(PIN_DATA,"PIN_DATA");
+  pinMode(PIN_CLK, OUTPUT);  regPin(PIN_CLK,"PIN_CLK");
   
   generateBitTable();
   digitsOnly = false;
@@ -93,15 +89,27 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   intCounter++;
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
-  if (brightness==MAXBRIGHT) state = true;
+  if ((!autoBrightness) && (brightness==MAXBRIGHT))  
+    state = true;
 
   if (state) {  //ON state
     pos++;  if (pos>maxDigits-1)  pos = 0;  //go to the first tube
-    timer = PWMtiming[brightness];
+    val = (digitEnableBits[pos] | charTable[digit[pos]]);  //the full bitmap to send to MAX chip
+    if (digitDP[pos]) val = val | charTable[12];    //Decimal Point
+    
+  if (autoBrightness && displayON)
+      timer = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * LuxValue / MAXIMUM_LUX);
+    else
+      timer = PWMtiming[brightness];
     //if (pos==2) timer = 3*timer;  //Weak IV11 tube#2 brightness compensation
+    timerON = timer;
   }
   else {  //OFF state
-    timer = PWMrefresh-PWMtiming[brightness];
+    if (autoBrightness && displayON)
+      timer = PWMrefresh - max(PWMtiming[1],PWMtiming[MAXBRIGHT] * LuxValue / MAXIMUM_LUX);
+    else  
+      timer = PWMrefresh-PWMtiming[brightness];
+    timerOFF = timer;  
   }
 
   if (timer<500) timer = 500;  //safety only...
@@ -110,28 +118,29 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
     digitalWrite(PIN_BL,HIGH);    //OFF
     }
   else {  //ON state
-    val = (digitEnableBits[pos] | charTable[digit[pos]]);  //the full bitmap to send to MAX chip
-    if (digitDP[pos]) val = val | charTable[12];    //Decimal Point
+
     if (animMask[pos]>0) val &= animationMaskBits[animMask[pos]-1];  //animationMode 6, mask characters from up to down and back
     for (int i=0; i<20; i++)  {
-      if (val & uint32_t(1 << (19 - i)))
-        {digitalWrite(PIN_DATA, HIGH);   asm volatile ("nop");}
-      else
-        {digitalWrite(PIN_DATA, LOW);    asm volatile ("nop");}
+      if (val & uint32_t(1 << (19 - i))) {
+        digitalWrite(PIN_DATA, HIGH);   
+        //asm volatile ("nop");
+        }
+      else {
+        digitalWrite(PIN_DATA, LOW);    
+        //asm volatile ("nop");
+        }
       
-      digitalWrite(PIN_CLK,HIGH);  asm volatile ("nop");  //delayMS(1);
-      digitalWrite(PIN_CLK,LOW);   asm volatile ("nop"); //delayMS(1);
+      digitalWrite(PIN_CLK,HIGH);  
+      //asm volatile ("nop");  //delayMS(1);
+      digitalWrite(PIN_CLK,LOW);   
+      //asm volatile ("nop"); //delayMS(1);
       } //end for      
  
     digitalWrite(PIN_LE,HIGH );  asm volatile ("nop");
     digitalWrite(PIN_LE,LOW);
     digitalWrite(PIN_BL,LOW );   //ON
   }  //end else
-    
-  #ifdef COLON_PIN >= 0
-    digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
-  #endif
-  
+
   state = !state;  
   timer1_write(timer);
 }

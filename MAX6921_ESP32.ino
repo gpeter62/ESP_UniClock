@@ -45,7 +45,8 @@ uint32_t DRAM_ATTR digitEnableBits[10];
 #define MAXBRIGHT 10
 
 int DRAM_ATTR PWMrefresh=5500;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-int DRAM_ATTR PWMtiming[MAXBRIGHT+1] = {0,250,500,1000,2000,2500,3000,3500,4000,4500,5000};
+int DRAM_ATTR PWMtiming[MAXBRIGHT+1] = {0,500,800,1200,2000,2500,3000,3500,4000,4500,5000};
+
 //-----------------------------------------------------------------------------------------
 
 //https://sub.nanona.fi/esp8266/timing-and-ticks.html
@@ -61,23 +62,18 @@ void inline delayMS(int d) {
 
 
 void setup_pins() {
-  
-  pinMode(PIN_LE,  OUTPUT);
-  pinMode(PIN_BL,  OUTPUT);   digitalWrite(PIN_BL,LOW);  //brightness
-  pinMode(PIN_DATA,OUTPUT);
-  pinMode(PIN_CLK, OUTPUT);
-    
   DPRINTLN("Setup MAX6921 pins for VFD Clock...");
-  DPRINT("- CLK   : GPIO"); DPRINTLN(PIN_CLK);
-  DPRINT("- DATAIN: GPIO"); DPRINTLN(PIN_DATA);
-  DPRINT("- LE    : GPIO"); DPRINTLN(PIN_LE);
-  DPRINT("- BLANK : GPIO"); DPRINTLN(PIN_BL);
+  pinMode(PIN_LE,  OUTPUT);  regPin(PIN_LE,"PIN_LE");
+  pinMode(PIN_BL,  OUTPUT);  regPin(PIN_BL,"PIN_BL");
+  digitalWrite(PIN_BL,LOW);  //brightness
+  pinMode(PIN_DATA,OUTPUT);  regPin(PIN_DATA,"PIN_DATA");
+  pinMode(PIN_CLK, OUTPUT);  regPin(PIN_CLK,"PIN_CLK");
+  
   maxDig = maxDigits;  //put const to memory var
   generateBitTable();
   digitsOnly = false;
   startTimer();
 }  
-
 
 void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
   static DRAM_ATTR int timer = PWMrefresh;
@@ -94,25 +90,35 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
   portENTER_CRITICAL_ISR(&timerMux);
   noInterrupts();
   intCounter++;
+
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
-  if (brightness==MAXBRIGHT) state = true;
-
+  if ((!autoBrightness) && (brightness==MAXBRIGHT))  
+    state = true;
+  
   if (state) {  //ON state
     pos++;  if (pos>maxDig-1)  pos = 0;  //go to the first tube
     val = (digitEnableBits[pos] | charTable[digit[pos]]);  //the full bitmap to send to MAX chip
     if (digitDP[pos]) val = val | charTable[12];    //Decimal Point
-    timer = PWMtiming[brightness];
+    
+    if (autoBrightness && displayON)
+      timer = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * LuxValue / MAXIMUM_LUX);
+    else
+      timer = PWMtiming[brightness];
     //if (pos==2) timer = 3*timer;  //Weak IV11 tube#2 brightness compensation
+    timerON = timer;
   }
   else {  //OFF state
-    timer = PWMrefresh-PWMtiming[brightness];
+    if (autoBrightness && displayON)
+      timer = PWMrefresh - max(PWMtiming[1],PWMtiming[MAXBRIGHT] * LuxValue / MAXIMUM_LUX);
+    else  
+      timer = PWMrefresh-PWMtiming[brightness];
+    timerOFF = timer;  
   }
-  portEXIT_CRITICAL_ISR(&timerMux);  
   
   if (timer<500) timer = 500;  //safety only...
 
-  if ( (brightness == 0) || (!state) ) {  //OFF state, blank digit
+  if ( (brightness == 0) || (!state) || (!radarON)) {  //OFF state, blank digit
     digitalWrite(PIN_BL,HIGH);    //OFF
   }
   else {  //ON state
@@ -133,13 +139,14 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
     digitalWrite(PIN_LE,LOW);
     digitalWrite(PIN_BL,LOW );   //ON
   }  //end else
-    
+  
+  portEXIT_CRITICAL_ISR(&timerMux);   
   state = !state;  
-    //ESP32timer = timerBegin(0, PRESCALER, true);  //set prescaler, true = edge generated signal
-    //timerAttachInterrupt(ESP32timer, &writeDisplay, true);   
-    timerAlarmWrite(ESP32timer, timer, true);   
-    timerAlarmEnable(ESP32timer);
-    interrupts();
+  //ESP32timer = timerBegin(0, PRESCALER, true);  //set prescaler, true = edge generated signal
+  //timerAttachInterrupt(ESP32timer, &writeDisplay, true);   
+  timerAlarmWrite(ESP32timer, timer, true);   
+  timerAlarmEnable(ESP32timer);
+  interrupts();
 }
 
 void generateBitTable() {

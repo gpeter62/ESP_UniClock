@@ -22,10 +22,16 @@ void setup_pins() {
   #endif
 
   DPRINTLN("Setup pins...");
-  pinMode(LTBIpin, OUTPUT);
+  pinMode(LTBIpin, OUTPUT);  regPin(LTBIpin,"LTBIpin");
   digitalWrite(LTBIpin,HIGH);
-  for (int i=0;i<maxDigits;i++) pinMode(digitEnablePins[i], OUTPUT);
-  for (int i=0;i<4;i++) pinMode(ABCDPins[i], OUTPUT);
+  for (int i=0;i<maxDigits;i++) {
+    pinMode(digitEnablePins[i], OUTPUT);
+    regPin(digitEnablePins[i],"digitEnablePins");
+  }
+  for (int i=0;i<4;i++) {
+    pinMode(ABCDPins[i], OUTPUT);
+    regPin(ABCDPins[i],"ABCDPins");
+  }
   startTimer();
 }
 

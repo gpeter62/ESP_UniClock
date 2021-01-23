@@ -52,17 +52,18 @@ int fld = 0;
 unsigned long LastModify = 0;
 
 void setupRTC() {
-  DPRINT("- MODE Switch : GPIO"); DPRINTLN(PIN_MODE_SWITCH);  
-  if (PIN_MODE_SWITCH>=0) 
+  #if PIN_MODE_SWITCH>=0
     pinMode(PIN_MODE_SWITCH,INPUT_PULLUP);   
-  
-  DPRINT("- FIELD Button: GPIO"); DPRINTLN(PIN_FLD_BUTTON);   
-  if (PIN_FLD_BUTTON>=0)  
-    pinMode(PIN_FLD_BUTTON,INPUT_PULLUP);   
-      
-  DPRINT("- SET   Button: GPIO"); DPRINTLN(PIN_SET_BUTTON);   
-  if (PIN_SET_BUTTON>=0)  
+    regPin(PIN_MODE_SWITCH,"PIN_MODE_SWITCH"); 
+  #endif
+  #if PIN_FLD_BUTTON>=0  
+    pinMode(PIN_FLD_BUTTON,INPUT_PULLUP);    
+    regPin(PIN_FLD_BUTTON,"PIN_FLD_BUTTON"); 
+  #endif    
+  #if PIN_SET_BUTTON>=0  
     pinMode(PIN_SET_BUTTON,INPUT_PULLUP);    
+    regPin(PIN_SET_BUTTON,"PIN_SET_BUTTON"); 
+  #endif    
 /*  
 while (true) {
   DPRINT(digitalRead(PIN_MODE_SWITCH)); DPRINT(" / "); 
@@ -74,9 +75,8 @@ while (true) {
 
   DPRINTLN("Starting RTC Clock...");    
   delay(2000);
-  DPRINT("- SDA: GPIO"); DPRINTLN(PIN_SDA); pinMode(PIN_SDA,OUTPUT); 
-  DPRINT("- SCL: GPIO"); DPRINTLN(PIN_SCL); pinMode(PIN_SCL,OUTPUT); 
-
+  pinMode(PIN_SDA,OUTPUT);  regPin(PIN_SDA,"PIN_SDA");
+  pinMode(PIN_SCL,OUTPUT);  regPin(PIN_SCL,"PIN_SCL"); 
   I2C_ClearBus();
   Wire.begin(PIN_SDA,PIN_SCL); 
   //Wire.begin();   

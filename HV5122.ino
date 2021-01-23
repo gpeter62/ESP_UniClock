@@ -9,6 +9,7 @@
 #define SHIFT_LSB_FIRST true  //true= LSB first, false= MSB first
 //chip0 DOUT pin is connected to chip1 DIN pin!
 
+/*
 const int maxDigits = 6;
 byte digitPins[maxDigits+1][10] = {
   {121,122,123,124,125,126,127,128,129,130},  //sec   1 , chip1
@@ -19,6 +20,7 @@ byte digitPins[maxDigits+1][10] = {
   {1,2,3,4,5,6,7,8,9,10},                     //hour 10 , chip0
   {31,32,131,132,0,0,0,0,0,0}                 //extra GL dots
   };    
+*/
 
 int PWMrefresh=10000;   //Brightness PWM period. Greater value => slower multiplex frequency
 
@@ -27,9 +29,9 @@ void setup_pins() {
   DPRINT("- CLK   : GPIO"); DPRINTLN(PIN_CLK);
   DPRINT("- DATAIN: GPIO"); DPRINTLN(PIN_DIN);
   DPRINT("- OUTPUT_ENABLE: GPIO"); DPRINTLN(PIN_OE);
-  pinMode(PIN_CLK,OUTPUT);
-  pinMode(PIN_DIN,OUTPUT);
-  pinMode(PIN_OE,OUTPUT);
+  pinMode(PIN_CLK,OUTPUT);  regPin(PIN_CLK,"PIN_CLK");
+  pinMode(PIN_DIN,OUTPUT);  regPin(PIN_DIN,"PIN_CLK");
+  pinMode(PIN_OE,OUTPUT);   regPin(PIN_OE,"PIN_CLK");
   digitalWrite(PIN_CLK,HIGH);
   digitalWrite(PIN_OE,LOW);
   clearTubes();

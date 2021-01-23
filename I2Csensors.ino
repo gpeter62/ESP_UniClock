@@ -53,8 +53,8 @@ boolean SHT21exist = false;
 void setupI2Csensors() {
   DPRINTLN("Starting I2Csensors sensors...");    
   
-  pinMode(PIN_SDA,OUTPUT); DPRINT("PIN_SDA: "); DPRINTLN(PIN_SDA);
-  pinMode(PIN_SCL,OUTPUT); DPRINT("PIN_SCL: "); DPRINTLN(PIN_SCL);
+  pinMode(PIN_SDA,OUTPUT);  regPin(PIN_SDA,"PIN_SDA");
+  pinMode(PIN_SCL,OUTPUT);  regPin(PIN_SCL,"PIN_SCL");
   Wire.begin(PIN_SDA,PIN_SCL); 
   delay(100);
   I2Cscanner();

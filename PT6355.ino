@@ -196,9 +196,9 @@ void ICACHE_RAM_ATTR sendCommand(byte val){    //for commands C1..C3
 
 void setup_pins() {
   DPRINTLN("PT6355 Clock - Setup pins...");
-  pinMode(PIN_CS,OUTPUT);
-  pinMode(PIN_SIN, OUTPUT);
-  pinMode(PIN_CLK, OUTPUT);
+  pinMode(PIN_CS,OUTPUT);     regPin(PIN_CS,"PIN_CS"); 
+  pinMode(PIN_SIN, OUTPUT);   regPin(PIN_SIN,"PIN_SIN"); 
+  pinMode(PIN_CLK, OUTPUT);   regPin(PIN_CLK,"PIN_CLK"); 
   digitalWrite(PIN_CS, HIGH);
   digitalWrite(PIN_CLK, HIGH);
   digitsOnly = false;

@@ -22,7 +22,7 @@ byte d1Ptr = 0;
 byte d2Ptr = 0;
 
 void setupDallasTemp() {
-  DPRINT("TEMP_DALLAS_PIN: ");  DPRINTLN(TEMP_DALLAS_PIN);
+  regPin(TEMP_DALLAS_PIN,"TEMP_DALLAS_PIN"); 
   //pinMode(TEMP_DALLAS_PIN,OUTPUT);
   //#if defined(ESP8266)
     oneWire.reset();
@@ -32,12 +32,16 @@ void setupDallasTemp() {
   tempSensors.setResolution(TEMPERATURE_PRECISION);
   tempSensors.setWaitForConversion(false); // Don't block the program while the temperature sensor is reading
   delay(100);  //100ms
-  
+  tempSensors.requestTemperatures();
+  delay(800);
   int counter = 0;
   while ((tempSensors.getDeviceCount() == 0) && (counter<10)) {
-    DPRINT("No DS18x20 temperature sensor found on GPIO"); DPRINTLN(TEMP_DALLAS_PIN); 
-    resetSensors();
+    if (counter>2) {
+      DPRINT("No DS18x20 temperature sensor found on GPIO"); DPRINTLN(TEMP_DALLAS_PIN); 
+     resetSensors();
+    }
     counter++;
+    delay(100);
   }  //end while
   
   useDallasTemp = tempSensors.getDeviceCount();

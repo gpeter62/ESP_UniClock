@@ -22,19 +22,19 @@
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
 
-//#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
+#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
 //#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
 
 //#define CLOCK_40  //ESP32 WEMOS D1 mini, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_41  //ESP32 WEMOS D1 mini, UNFI board, 6 x Z573M Nixie tubes
 
-#define CLOCK_50  //Wemos D1 mini ESP32, P.S. 2xHV5122 PCB 6xIN18 clock
+//#define CLOCK_50  //Wemos D1 mini ESP32, P.S. 2xHV5122 PCB 6xIN18 clock
 
 //______________________ESP8266 CLOCKS by UNFI and GP ______________________________________________________
 #ifdef CLOCK_1   //8266, UNFI PCB clock, 4x IN-16 tubes
   #define DEBUG 
-  #define USE_NEOPIXEL_MAKUNA 
+  #define USE_NEOPIXEL 
   byte tubePixels[] = {3,2,1,0};        //4 tubes, single leds, reverse direction
   //#define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN -1    //Dallas temp sensor pin.  If not used, SET TO -1    
@@ -50,7 +50,7 @@
 
 #ifdef CLOCK_2   //8266, UNFI PCB clock, 4x Z-570M tubes
   #define DEBUG 
-  //#define USE_NEOPIXEL_MAKUNA 
+  //#define USE_NEOPIXEL 
   //#define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN -1    //Dallas temp sensor pin.  
   #define MULTIPLEX74141
@@ -130,7 +130,7 @@
   #define DEBUG
   //#define USE_DALLAS_TEMP
   //#define TEMP_DALLAS_PIN -1
-  #define USE_NEOPIXEL_MAKUNA
+  #define USE_NEOPIXEL
   byte tubePixels[] = {0,0,1,1,2,2,3,3,3,3,2,2,1,1,0,0,0};  //4 tubes, double row, 17 leds (GP)  
   #define NO_MULTIPLEX74141
   #define TEMP_DALLAS_PIN -1
@@ -145,7 +145,7 @@
   #define DEBUG 
   #define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN 0
-  //#define USE_NEOPIXEL_MAKUNA
+  //#define USE_NEOPIXEL
   //byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   //byte tubePixels[] = {5,4,3,2,1,0};    //6 tubes, single leds, reverse direction 
   #define LEFTDECIMAL true   //set true (Z574M), false to Z573M
@@ -160,7 +160,7 @@
 #ifdef CLOCK_8   //8266 GP PCB v3 clock with 4x IV-16 Numitron tubes (plexi box)
   #define DEBUG 
   #define PCB_VERSION 3   //1,2 or 3
-  #define USE_NEOPIXEL_MAKUNA
+  #define USE_NEOPIXEL
   byte tubePixels[] = {3,2,6,1,0};    //Numitron 4 tubes, 4 x single leds + 1. The extra led in the middle is not used, is always dark!
   #define Numitron_4511N
   #define ALARMSPEAKER_PIN 1    //Alarm buzzer pin                                            
@@ -250,7 +250,7 @@
 
 #ifdef CLOCK_22   //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
   //#define DEBUG 
-  #define USE_NEOPIXEL_MAKUNA 
+  #define USE_NEOPIXEL 
   byte tubePixels[] = {0,1,2,3};        //4 tubes, single leds
   #define USE_DHT_TEMP
   #define DHTTYPE DHT22
@@ -274,7 +274,7 @@
 //______________________ESP-32 CLOCKS  (2x18pin ESP32 modul) ______________________________________________________
 #ifdef CLOCK_30   //ESP32, UNFI PCB clock, 6 x IV-11 VFD tubes
   #define DEBUG 
-  #define USE_NEOPIXEL_MAKUNA 
+  #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 2
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   #define USE_DALLAS_TEMP
@@ -289,8 +289,15 @@
     #define PIN_DATA  27  // Shift Register Data
     #define PIN_BL    12  // Shift Register Blank (1=display off     0=display on)
   #define ALARMSPEAKER_PIN 33   //Alarm buzzer pin                                            
-  #define ALARMBUTTON_PIN 32    //Alarm switch off button pin 
+  #define ALARMBUTTON_PIN -1  //32    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
+  #define RADAR_PIN 21
+  #define RADAR_TIMEOUT 300  //second (5min)
+  #define TUBE_POWER_PIN -1
+  #define TUBE_POWER_ON  LOW
+  #define LIGHT_SENSOR_PIN 35  //Only ADC pins are usable! for example: 34,35,36,39... 
+  #define MAXIMUM_LUX 130    //Lux level for maximum tube brightness
+  #define LUX_CALC_SCALAR   12518931 * 1.2 
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD ""  
   #define WEBNAME "ESP32 IN-11 UniClock 2.5"
@@ -298,7 +305,7 @@
 
 #ifdef CLOCK_31   //ESP32, UNFI board, 6 x Z573M Nixie tubes
   #define DEBUG 
-  #define USE_NEOPIXEL_MAKUNA 
+  #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 2
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   #define USE_DALLAS_TEMP
@@ -321,7 +328,7 @@
 
 #ifdef CLOCK_32   //ESP32, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
   #define DEBUG 
-  #define USE_NEOPIXEL_MAKUNA 
+  #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 2
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   #define USE_DHT_TEMP
@@ -346,10 +353,11 @@
 //______________________ESP-32 CLOCKS  (2x20pin Wemos D1 mini ESP32 modul) ______________________________________________________
 #ifdef CLOCK_40   //ESP32 WEMOS D1 mini, UNFI 6 x IV-11 VFD tubes clock
   #define DEBUG 
-  #define USE_NEOPIXEL_MAKUNA 
+  #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 22
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   //#define USE_DALLAS_TEMP
+  //#define TEMP_DALLAS_PIN -1    //Dallas temp sensor pin.  If not used, SET TO -1    
   #define USE_DHT_TEMP
   #define DHTTYPE DHT22
   #define TEMP_DHT_PIN 25    //DHT temp sensor pin.  If not used, SET TO -1     
@@ -372,7 +380,7 @@
 
 #ifdef CLOCK_41   //ESP32 WEMOS D1 mini, UNFI board, 6 x Z573M Nixie tubes
   #define DEBUG 
-  #define USE_NEOPIXEL_MAKUNA 
+  #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 22
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   #define USE_DALLAS_TEMP
@@ -398,14 +406,15 @@
 
 #ifdef CLOCK_50   //Wemos D1 mini ESP32, P.S. 2xHV5122 PCB 6xIN18 clock   PROTOTYPE TESTING!!!
   #define DEBUG 
-  #define USE_NEOPIXEL_MAKUNA 
+  #define USE_NEOPIXEL 
   byte tubePixels[] = {0,1,2,3,4,5};        //6 tubes, single leds
   //#define USE_RTC
+  #define LIGHT_SENSOR_PIN 23
   #define PIN_SDA 4             // you can set the used SDA and SCL pins
   #define PIN_SCL 32             // if it is not default value
-  #define USE_DHT_TEMP
+  //#define USE_DHT_TEMP
   #define DHTTYPE DHT11
-  #define TEMP_DHT_PIN  23
+  //#define TEMP_DHT_PIN  23
   #define USE_BME280            //I2C Temperature + humidity + pressure
   #define USE_BMP280            //I2C Temperature + barometric  pressure
   #define USE_AHTX0             //I2C Temperature + humidity
@@ -463,22 +472,35 @@
 #ifndef ALARMSPEAKER_PIN
   #define ALARMSPEAKER_PIN -1   //Alarm buzzer pin
 #endif
-  
 #ifndef ALARMBUTTON_PIN
   #define ALARMBUTTON_PIN -1    //Alarm switch off button pin 
 #endif
 
-  
+#ifdef USE_NEOPIXEL
+  #ifndef NEOPIXEL_PIN
+    #define NEOPIXEL_PIN 3
+  #endif 
+#endif
+#ifndef RGB_MIN_BRIGHTNESS
+  #define RGB_MIN_BRIGHTNESS 8   //Neopixel leds minimum brightness
+#endif
+#ifndef  RGB_MAX_BRIGHTNESS
+  #define RGB_MAX_BRIGHTNESS 255 //Neopixel leds maximum brightness
+#endif
+
 #ifndef TUBE_POWER_PIN
   #define TUBE_POWER_PIN -1    //Tube filament or HV ON/OFF
 #endif
-
 #ifndef TUBE_POWER_PIN
   #define TUBE_POWER_ON LOW    //Tube Power On is HIGH or LOW?
 #endif
   
 #ifndef RADAR_PIN
   #define RADAR_PIN -1    //Radar sensor for automatic ON/OFF the TUBE_POWER
+#endif
+
+#ifndef LIGHT_SENSOR_PIN
+  #define LIGHT_SENSOR_PIN -1    ///Environment light sensor, analog input pin
 #endif
 
 #ifndef RADAR_TIMEOUT
@@ -541,3 +563,27 @@
 #ifndef LEFTDECIMAL
   #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
 #endif
+
+//______________________________________________________________________________________
+//--------------- LDR LIGHT_SENSOR LUXMETER parameters ------------
+#ifndef LIGHT_SENSOR_PIN
+ #define LIGHT_SENSOR_PIN -1
+#endif 
+#if defined(ESP32) 
+  #define MAX_ADC_READING 4095    //ESP32 ADC_REF_VOLTAGE = 3.3V !!
+#else
+  #define MAX_ADC_READING 1023    //8266  ADC_REF_VOLTAGE = 1.0V !!
+#endif
+#ifndef REF_RESISTANCE
+  #define REF_RESISTANCE    10000.0   // Resistor value is 10k, between LDR sensor and GND
+#endif
+#ifndef LUX_CALC_SCALAR
+  #define LUX_CALC_SCALAR   12518931 * 1.2   //Calibrate here 
+#endif
+#ifndef LUX_CALC_EXPONENT
+  #define LUX_CALC_EXPONENT -1.405
+#endif
+#ifndef MAXIMUM_LUX
+  #define MAXIMUM_LUX 150
+#endif
+//______________________________________________________________________________________

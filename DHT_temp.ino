@@ -29,13 +29,12 @@ byte DHTtempPtr = 0;
 byte DHThumidPtr = 0;
 
 void setupDHTemp() {
-  DPRINT("TEMP_DHT_PIN: "); DPRINTLN(TEMP_DHT_PIN);
+  regPin(TEMP_DHT_PIN,"TEMP_DHT_PIN");
   dht.begin();
   DHTtempPtr = useTemp;  //remember my ID-s
   DHThumidPtr = useHumid;
   useTemp++;   //increase the number of sensors
   useHumid++;
-  getDHTemp();
 }
 
 void getDHTemp() {
@@ -63,9 +62,9 @@ float tempTMP, humidTMP;
   //float hic = dht.computeHeatIndex(t, h, false);  // Compute heat index in Celsius (isFahreheit = false)
   
   if (isnan(humidTMP) || isnan(tempTMP)) {  // Check if any reads failed and exit early (to try again).
-    DPRINTLN("No DHT sensor!");
-    temperature[DHTtempPtr] = 99.9f;
-    humid[DHThumidPtr] = 0;
+    DPRINTLN("DHT sensor reading error!");
+    //temperature[DHTtempPtr] = 99.9f;
+    //humid[DHThumidPtr] = 0;
   }
   else {
       DPRINT("DHTxx Temperature:"); DPRINT(temperature[DHTtempPtr]); DPRINT("C  Humidity:"); DPRINT(humid[DHThumidPtr]); DPRINTLN(" %");
