@@ -29,15 +29,15 @@
 /*_______________________________ USABLE PARAMETERS _______________________________________________________
   //#define DEBUG                 //Enable Serial Monitor, 115200baud (only, if TX pin is not used anywhere!!!)
   //---------------------------- CLOCK EXTRA OPTION PARAMETERS -------------------------------------------------
-  //#define USE_DALLAS_TEMP       //TEMP_DALLAS_PIN is used to connect DS18B20 temperature sensors
-  //#define USE_DHT_TEMP          //TEMP_DHT_PIN is sensor pin #define DHTTYPE DHTxx  temperature and humidity sensor
-  //#define USE_BME280            //I2C Temperature + humidity + pressure, SDA+SCL I2C pins are used!   
-  //#define USE_BMP280            //I2C Temperature + barometric pressure, SDA+SCL I2C pins are used!   
-  //#define USE_AHTX0             //I2C Temperature + humidity, SDA+SCL I2C pins are used!   
-  //#define USE_SHT21             //I2C Temperature + humidity, SDA+SCL I2C pins are used!   
-  //#define USE_RTC               //DS3231 realtime clock, SDA+SCL I2C pins are used!   
-  //#define USE_GPS               //use for standalone clock, without wifi internet access
-  //#define USE_NEOPIXEL   //WS2812B led stripe, for tubes backlight. Don't forget to define tubePixels[] !
+  //#define USE_DALLAS_TEMP //TEMP_DALLAS_PIN is used to connect DS18B20 temperature sensors
+  //#define USE_DHT_TEMP    //TEMP_DHT_PIN is sensor pin #define DHTTYPE DHTxx  temperature and humidity sensor
+  //#define USE_BME280      //I2C Temperature + humidity + pressure, SDA+SCL I2C pins are used!   
+  //#define USE_BMP280      //I2C Temperature + barometric pressure, SDA+SCL I2C pins are used!   
+  //#define USE_AHTX0       //I2C Temperature + humidity, SDA+SCL I2C pins are used!   
+  //#define USE_SHT21       //I2C Temperature + humidity, SDA+SCL I2C pins are used!   
+  //#define USE_RTC         //DS3231 realtime clock, SDA+SCL I2C pins are used!   
+  //#define USE_GPS         //use for standalone clock, without wifi internet access
+  //#define USE_NEOPIXEL    //WS2812B led stripe, for tubes backlight. Don't forget to define tubePixels[] !
 
   //----- DRIVER SELECTION ------ Use only 1 driver from the following options in the clocks.h file!
   //#define MULTIPLEX74141_ESP32  //4..8 Nixie tubes generic driver for ESP32

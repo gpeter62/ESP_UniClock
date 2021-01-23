@@ -28,9 +28,9 @@ TinyGPSPlus gps;                                        // Create an Instance of
 
 void setupGPS() { 
   Fdelay(1500);     
-  DPRINTLN("Starting GPS...");    
-  DPRINT("- RX: GPIO"); DPRINTLN(RXPin);
-  DPRINT("- TX: GPIO"); DPRINTLN(TXPin);
+  DPRINTLN("Starting GPS..."); 
+  regPin(RXPin,"RXPin");   
+  regPin(TXPin,"TXPin");
   clockWifiMode = false;
                          
   ss.begin(GPSBaud);                                    // Set Software Serial Comm Speed to 9600    
