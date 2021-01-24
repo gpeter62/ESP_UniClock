@@ -116,12 +116,12 @@ void setupI2Csensors() {
 
 #ifdef USE_SHT21
   int error1,error2;
-  Wire.beginTransmission(0x80);
+  Wire.beginTransmission(0x40);
   error1 = Wire.endTransmission();
-  Wire.beginTransmission(0x81);
+  Wire.beginTransmission(0x80);
   error2 = Wire.endTransmission();
   if ((error1 !=0) && (error2!=0)) {
-    DPRINTLN("Could not find a valid SHT21 sensor on 0x80 / 0x81, check wiring!");
+    DPRINTLN("Could not find a valid SHT21 sensor on 0x40 / 0x80, check wiring!");
   }
   else {
     SHT21exist = true;

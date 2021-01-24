@@ -28,6 +28,7 @@
 
 //#define CLOCK_40  //ESP32 WEMOS D1 mini, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_41  //ESP32 WEMOS D1 mini, UNFI board, 6 x Z573M Nixie tubes
+//#define CLOCK_42  //ESP32 WEMOS D1 mini, UNFI 6 x IV-11 VFD tubes clock
 
 //#define CLOCK_50  //Wemos D1 mini ESP32, P.S. 2xHV5122 PCB 6xIN18 clock
 
@@ -401,6 +402,37 @@
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD ""
   #define WEBNAME "ESP32 Z573M Nixie-Clock"
+#endif
+
+
+#ifdef CLOCK_42   //ESP32 WEMOS D1 mini, UNFI 6 x IV-11 VFD tubes clock, SHT21 & DHT22 sensor
+  #define DEBUG 
+  #define USE_NEOPIXEL 
+  #define NEOPIXEL_PIN 22
+  byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
+  //#define USE_DALLAS_TEMP
+  //#define TEMP_DALLAS_PIN -1    //Dallas temp sensor pin.  If not used, SET TO -1    
+  #define USE_DHT_TEMP
+  #define DHTTYPE DHT22
+  #define TEMP_DHT_PIN 25    //DHT temp sensor pin.  If not used, SET TO -1     
+  #define USE_SHT21             //I2C Temperature + humidity
+  #define PIN_SDA 26           // you can set the used SDA and SCL pins
+  #define PIN_SCL 27           // if it is not default value
+  #define MAX6921_ESP32
+  byte segmentEnablePins[] =  {19,17,15,12,13,16,18,14};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
+  byte digitEnablePins[] = {9,8,7,2,1,0};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
+  #define DOUBLE_BLINK  //both separator points are blinking 
+  //MAX6921 pins
+    #define PIN_LE    4  // Shift Register Latch Enable
+    #define PIN_CLK   17  // Shift Register Clock
+    #define PIN_DATA  16  // Shift Register Data
+    #define PIN_BL    32  // Shift Register Blank (1=display off     0=display on)
+  #define ALARMSPEAKER_PIN 2   //Alarm buzzer pin                                            
+  #define ALARMBUTTON_PIN 0    //Alarm switch off button pin 
+  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
+  #define AP_NAME "VFD-Óra"
+  #define AP_PASSWORD ""  
+  #define WEBNAME "VFD-Óra"
 #endif
 
 

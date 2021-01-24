@@ -26,11 +26,11 @@
 
 #include "clocks.h"  //DEFINE YOUR CLOCKS SETUP IN THIS FILE!!!
 
-/*_______________________________ USABLE PARAMETERS _______________________________________________________
-  //#define DEBUG                 //Enable Serial Monitor, 115200baud (only, if TX pin is not used anywhere!!!)
-  //---------------------------- CLOCK EXTRA OPTION PARAMETERS -------------------------------------------------
+/*_______________________________ USABLE PARAMETERS ____________________________________________
+  //#define DEBUG  //Enable Serial Monitor, 115200baud (only, if TX pin is not used anywhere!!!)
+  //---------------------------- CLOCK EXTRA OPTION PARAMETERS ---------------------------------
   //#define USE_DALLAS_TEMP //TEMP_DALLAS_PIN is used to connect DS18B20 temperature sensors
-  //#define USE_DHT_TEMP    //TEMP_DHT_PIN is sensor pin #define DHTTYPE DHTxx  temperature and humidity sensor
+  //#define USE_DHT_TEMP    //TEMP_DHT_PIN is sensor pin 
   //#define USE_BME280      //I2C Temperature + humidity + pressure, SDA+SCL I2C pins are used!   
   //#define USE_BMP280      //I2C Temperature + barometric pressure, SDA+SCL I2C pins are used!   
   //#define USE_AHTX0       //I2C Temperature + humidity, SDA+SCL I2C pins are used!   
@@ -55,7 +55,7 @@
   //#define PCF_74141             //PCF pin expander for tube selection
   //#define PT6355                //VFD clock - development in progress
 
-  //--------------------- PINOUT & PIN PARAMETERS --------------------------------------------------------
+  //--------------------- PINOUT & PIN PARAMETERS ---------------------------------------
   //#define PIN_SDA xx             // you can set the used SDA and SCL pins
   //#define PIN_SCL xx             // if it is not default value
   //#define COLON_PIN   -1        //Blinking Colon pin.  If not used, SET TO -1
@@ -279,7 +279,7 @@ unsigned long alarmStarted = 0;   //Start timestamp millis()
 
 char pinTxt[40][17];
 
-void regPin(byte p,char * txt) {  //register used pins
+void regPin(byte p,const char * txt) {  //register used pins
   DPRINT("- "); DPRINT(txt); DPRINT(": GPIO"); DPRINTLN(p); 
   if (strlen(pinTxt[p])>0) {
     DPRINT("*** ERROR *** "); DPRINT(txt); DPRINT(" on PIN#"); DPRINT(p);  
