@@ -20,7 +20,7 @@ int PWMrange = PWMtiming[MAXBRIGHT] - PWMtiming[1];
 
 
 void setup_pins() {
-  DPRINTLN("Setup pins -  Multiplex 74141 mode...");
+  DPRINTLN("Nixie clock - setup pins -  Multiplex 74141 mode...");
   DPRINT("digitEnablePins: ");
   for (int i=0;i<maxDigits;i++) {
     pinMode(digitEnablePins[i], OUTPUT); 

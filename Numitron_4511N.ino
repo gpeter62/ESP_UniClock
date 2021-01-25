@@ -18,10 +18,10 @@ int PWMrefresh=5000;   //Multiplex time period. Greater value => slower multiple
 void setup_pins() {
   #if defined(ESP8266) 
   #else
-    #error "Board is not supported!"  
+    #error "Only 8266 Board is supported!"  
   #endif
 
-  DPRINTLN("Setup pins...");
+  DPRINTLN("Numitron Clock - setup pins");
   pinMode(LTBIpin, OUTPUT);  regPin(LTBIpin,"LTBIpin");
   digitalWrite(LTBIpin,HIGH);
   for (int i=0;i<maxDigits;i++) {

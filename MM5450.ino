@@ -57,7 +57,7 @@ byte bitBuffer[36];
 void setup_pins() {
 #if defined(ESP8266) 
 #else
-  #error "Board is not supported!"  
+  #error "Only 8266 Board is supported!"  
 #endif
   
   DPRINTLN("MM5450 - Setup pins...");

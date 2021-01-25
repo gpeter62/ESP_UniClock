@@ -23,7 +23,7 @@ int PWMrange = PWMtiming[MAXBRIGHT] - PWMtiming[1];
 
 #if defined(ESP8266) 
 #else
-  #error "Board is not supported! This modul is for 8266 only!"  
+  #error "Only 8266 Board is supported!"  
 #endif
 
 void ICACHE_RAM_ATTR delayMS(int d) {        //Delay microsec
@@ -89,8 +89,8 @@ void setup_pins() {
     pinMode(ABCDPins[i], OUTPUT);
     regPin(ABCDPins[i],"74141_ABCD_PIN");
   }  
-  pinMode(PCF_SCL_PIN,OUTPUT); regPin(PCF_SCL_PIN,"PCF_SCL_PIN");
   pinMode(PCF_SDA_PIN,OUTPUT); regPin(PCF_SDA_PIN,"PCF_SDA_PIN");
+  pinMode(PCF_SCL_PIN,OUTPUT); regPin(PCF_SCL_PIN,"PCF_SCL_PIN");
   pinMode(DP_PIN,OUTPUT);  regPin(DP_PIN,"DP_PIN");
   digitalWrite(PCF_SDA_PIN,HIGH);
   digitalWrite(PCF_SCL_PIN,HIGH);

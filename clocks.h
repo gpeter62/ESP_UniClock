@@ -8,13 +8,13 @@
 //#define CLOCK_1   //8266, UNFI PCB clock, 4x IN-16 tubes
 //#define CLOCK_2   //8266, UNFI PCB clock, 4x Z-570M tubes
 //#define CLOCK_3   //8266, PCB less clock, IV-18 VFD tube   https://www.thingiverse.com/thing:3417955
-//#define CLOCK_4   //8266, custom clock, 4x IV-11 VFD tubes
+#define CLOCK_4   //8266, custom clock, 4x IV-11 VFD tubes
 //#define CLOCK_5   //8266, UNFI PCB clock IVL-2-5/7 tube with RTC
-//#define CLOCK_6   //8266, GP PCB clock, 4x IN-1 tubes and  4x74141  driver
+//#define CLOCK_6   //8266, GP PCB clock, 4x IN-1 tubes and  4x74141  driver (NON-MULTIPLEX)
 //#define CLOCK_7   //8266 UNFI PCB clock 6x Z574M/Z573M tubes, tube selection by PCF8574 chip
 //#define CLOCK_8   //8266 GP PCB v3 clock with 4x IV-16 Numitron tubes (plexi box)
 //#define CLOCK_9   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes (brown box)
-#define CLOCK_10  //8266 LED Clock with MAX7219 chip
+//#define CLOCK_10  //8266 LED Clock with MAX7219 chip
 //#define CLOCK_11  //8266 LED Clock with MM5450 chip
 //#define CLOCK_12  //8266 VFD Clock with PT6355 chip
 
@@ -95,9 +95,15 @@
     #define PIN_CLK   13  // D7 Shift Register Clock
     #define PIN_DATA  14  // D5 Shift Register Data
     #define PIN_BL    15  // D8 Shift Register Blank (1=display off     0=display on)
-  #define ALARMSPEAKER_PIN -1   //Alarm buzzer pin                                        
-  #define ALARMBUTTON_PIN -1    //Alarm switch off button pin 
-  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
+  #define USE_NEOPIXEL 
+  byte tubePixels[] = {3,2,6,1,0};    //Numitron 4 tubes, 4 x single leds + 1. The extra led in the middle is not used, is always dark!
+  #define RADAR_PIN 21
+  #define RADAR_TIMEOUT 300  //second (5min)
+  //#define TUBE_POWER_PIN 2
+  //#define TUBE_POWER_ON  LOW
+  //#define LIGHT_SENSOR_PIN A0  //Only ADC pins are usable! for example: 34,35,36,39... 
+  #define MAXIMUM_LUX 100    //Lux level for maximum tube brightness
+  #define LUX_CALC_SCALAR   12518931 * 1.2 
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "IV-11 VFD Clock"
@@ -127,7 +133,7 @@
   #define WEBNAME "IVL-2 VFD Clock"
 #endif
 
-#ifdef CLOCK_6   //8266, GP PCB clock, 4x IN-1 tubes and  4x74141  driver
+#ifdef CLOCK_6   //8266, GP PCB clock, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
   #define DEBUG
   //#define USE_DALLAS_TEMP
   //#define TEMP_DALLAS_PIN -1
@@ -153,7 +159,7 @@
   #define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
   //#define GRAD_CHARCODE -1   //disable char => shift display right with 1 digit
   #define LIGHT_SENSOR_PIN A0  //Only ADC pins are usable! for example: 34,35,36,39... 
-  #define MAXIMUM_LUX 130    //Lux level for maximum tube brightness
+  #define MAXIMUM_LUX 100    //Lux level for maximum tube brightness
   #define LUX_CALC_SCALAR   12518931 * 1.2 
   #define PCF_74141
   #define AP_NAME "UNICLOCK"
@@ -623,6 +629,6 @@
   #define LUX_CALC_EXPONENT -1.405
 #endif
 #ifndef MAXIMUM_LUX
-  #define MAXIMUM_LUX 150
+  #define MAXIMUM_LUX 100
 #endif
 //______________________________________________________________________________________

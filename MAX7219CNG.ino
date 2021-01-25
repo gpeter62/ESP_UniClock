@@ -59,10 +59,10 @@ void ICACHE_RAM_ATTR sendBits(byte address,byte val){
 void setup_pins() {
 #if defined(ESP8266) 
 #else
-  #error "Board is not supported!"  
+  #error "Only 8266 Board is supported!"
 #endif
   
-  DPRINTLN("MAX7219 - Setup pins...");
+  DPRINTLN("MAX7219 Clock - setup pins...");
   pinMode(PIN_LOAD,OUTPUT);   regPin(PIN_LOAD,"PIN_LOAD");
   pinMode(PIN_DIN, OUTPUT);   regPin(PIN_DIN,"PIN_DIN");
   pinMode(PIN_CLK, OUTPUT);   regPin(PIN_CLK,"PIN_CLK");

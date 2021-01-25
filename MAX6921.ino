@@ -61,7 +61,7 @@ void setup_pins() {
     #error "Board is not supported! For ESP32 use MAX6921_ESP32 !"  
   #endif
   
-  DPRINTLN("Setup MAX6921 pins for VFD Clock...");
+  DPRINTLN("VFD Clock - setup MAX6921 pins");
   pinMode(PIN_LE,  OUTPUT);  regPin(PIN_LE,"PIN_LE");
   pinMode(PIN_BL,  OUTPUT);  regPin(PIN_BL,"PIN_BL");
   digitalWrite(PIN_BL,LOW);  //brightness

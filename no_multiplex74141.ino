@@ -5,6 +5,11 @@
 
 #define MAXBRIGHT 10
 
+#if defined(ESP8266) 
+#else
+  #error "Only 8266 Board is supported!"  
+#endif
+
  //change it, if needed for the correct tube sequence
 byte tubes[] = {3,2,1,0};         //4 tubes,   old clock...     
 //byte tubes[] = {5,4,3,2,1,0};   //6 tubes, reverse order
@@ -21,7 +26,7 @@ int PWMrange = PWMtiming[MAXBRIGHT] - PWMtiming[1];
 void writeDisplaySingle() { }   
 
 void setup_pins(){
-  DPRINTLN("8266 NON-MULTIPLEX 4(or 6) x 74141: Setup tube driver pins...");
+  DPRINTLN("Nixie clock - setup pins NON-MULTIPLEX 4(or 6) x 74141");
   pinMode(dataPin, OUTPUT); regPin(dataPin,"dataPin"); 
   pinMode(latchPin,OUTPUT); regPin(latchPin,"latchPin"); 
   pinMode(clkPin,OUTPUT);   regPin(clkPin,"clkPin"); 

@@ -147,10 +147,10 @@ DPRINTLN("---- Generated Character / Pins table -----");
 void setup_pins() {
 #if defined(ESP8266) 
 #else
-  #error "Board is not supported!"  
+  #error "Only 8266 Board is supported!"  
 #endif
   
-  DPRINTLN("Setup pins...");
+  DPRINTLN("Clock with SN75512 - Setup pins...");
   pinMode(PIN_LE,  OUTPUT);   regPin(PIN_LE,"PIN_LE"); 
   pinMode(PIN_STROBE,OUTPUT); regPin(PIN_STROBE,"PIN_STROBE"); 
   pinMode(PIN_DATA,OUTPUT);   regPin(PIN_DATA,"PIN_DATA"); 

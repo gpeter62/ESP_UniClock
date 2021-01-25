@@ -70,14 +70,14 @@
   //#define NEOPIXEL_PIN 3        //8266 Neopixel LEDstripe pin is always the RX pin!!!
   //#define RGB_MIN_BRIGHTNESS 8   //Neopixel leds minimum brightness
   //#define RGB_MAX_BRIGHTNESS 255 //Neopixel leds maximum brightness
-  //#define RADAR_PIN 34          //Radar sensor pin
+  //#define RADAR_PIN -1          //Radar sensor pin
   //#define RADAR_TIMEOUT 300     //Automatic switch off tubes (without radar detecting somebody) after xxx sec
-  //#define TUBE_POWER_PIN 23     //Filament or HV switch ON/OFF pin
+  //#define TUBE_POWER_PIN -1     //Filament or HV switch ON/OFF pin
   //#define TUBE_POWER_ON HIGH    //HIGH or LOW level is needed to switch ON the TUBE POWER?
   
   //#define LIGHT_SENSOR_PIN -1   //Environment light sensor, only ADC pins are usable! ESP32 for example: 34,35,36,39... 8266: only A0
   //#define REF_RESISTANCE    10000.0         // Resistor value is 10k, between LDR sensor and GND
-  //#define MAXIMUM_LUX 150                   //Lux level for maximum tube brightness
+  //#define MAXIMUM_LUX 100                   //Lux level for maximum tube brightness
   //#define LUX_CALC_SCALAR   12518931 * 1.2  //Calibrate here the LDR sensor
   //#define LUX_CALC_EXPONENT -1.405          //LDR sensor characteristic
 
@@ -1759,8 +1759,8 @@ int luxmeter() {      //Calculation parameters are defined in clocks.h
   float ldrResistance;
   float ldrLux;
   
-  ADCdata = analogRead(LIGHT_SENSOR_PIN); 
-  ldrResistance = (4096 - ADCdata) / ADCdata * REF_RESISTANCE;
+  ADCdata = analogRead(LIGHT_SENSOR_PIN); //DPRINT("ADC:"); DPRINTLN(ADCdata);
+  ldrResistance = (MAX_ADC_READING - ADCdata) / ADCdata * REF_RESISTANCE;
   ldrLux = LUX_CALC_SCALAR * pow(ldrResistance, LUX_CALC_EXPONENT);
   return (int)ldrLux;
 }
