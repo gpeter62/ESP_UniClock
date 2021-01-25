@@ -1755,6 +1755,7 @@ void checkTubePowerOnOff() {
 
 #if LIGHT_SENSOR_PIN >=0
 int luxmeter() {      //Calculation parameters are defined in clocks.h
+  static float oldLux = MAXIMUM_LUX;
   float ADCdata;
   float ldrResistance;
   float ldrLux;
@@ -1762,7 +1763,8 @@ int luxmeter() {      //Calculation parameters are defined in clocks.h
   ADCdata = analogRead(LIGHT_SENSOR_PIN); //DPRINT("ADC:"); DPRINTLN(ADCdata);
   ldrResistance = (MAX_ADC_READING - ADCdata) / ADCdata * REF_RESISTANCE;
   ldrLux = LUX_CALC_SCALAR * pow(ldrResistance, LUX_CALC_EXPONENT);
-  return (int)ldrLux;
+  oldLux = oldLux + (ldrLux-oldLux)/10;   //slow down Lux change
+  return (int)oldLux;
 }
 #endif
 

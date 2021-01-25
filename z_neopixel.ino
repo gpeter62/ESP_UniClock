@@ -410,7 +410,7 @@ static unsigned long lastRun = 0;
   if ((millis()-lastRun)<max(FPS_MSEC,258-prm.rgbSpeed)) return;
   lastRun = millis();
 
-  if ((prm.rgbEffect == 0) || !displayON) {   //Night: no RGB backlight
+  if ((prm.rgbEffect == 0) || !displayON || !radarON) {   //switch RGB backlight OFF
     neoBrightness = 0;
     fixColor(-1);
     return;
