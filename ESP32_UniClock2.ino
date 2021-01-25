@@ -130,6 +130,7 @@ unsigned long intCounter = 0;   //for testing only, interrupt counter
   //#include <ESP8266mDNS.h>
   #include "ESPAsyncTCP.h"
   #include "FS.h"
+  const char ESPpinout[] = {"OOOOOO      OOOOOI"};   //GPIO 0..5, 12..16, A0)  usable pins
 
 #elif defined(ESP32)
   #ifndef WEBNAME
@@ -151,6 +152,8 @@ unsigned long intCounter = 0;   //for testing only, interrupt counter
   hw_timer_t * ESP32timer = NULL;
   portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
   #define PRESCALER 15   //multiplex timer prescaler, about 80Hz for 6 tubes
+  
+  const char ESPpinout[] = {"OOOOOO      OOOOOOOO OOO OOO    OOIII  I"};   //GPIO 0..5, 12..19, 21..23, 25..27, 32..33, Input:34..36, 39)  usable pins 
 #else
   #error "Board is not supported!"
 #endif
@@ -183,6 +186,9 @@ char webName[] = WEBNAME;
 AsyncWebServer server(80);
 DNSServer dns;
 #define CACHE_MAX_AGE "max-age=31536000" //maximum is: 31536000
+
+//#include <WiFiMulti.h>
+//WiFiMulti wifiMulti;
 
 #define BUFSIZE 12
 byte digit[BUFSIZE];
@@ -277,29 +283,42 @@ bool decimalpointON = false;
 bool alarmON = false;             //Alarm in progress
 unsigned long alarmStarted = 0;   //Start timestamp millis()
 
-char pinTxt[40][17];
+#define MAX_PIN sizeof(ESPpinout)-1
+#define PIN_TXT_LEN 16
+char pinTxt[MAX_PIN][PIN_TXT_LEN+1];
 
 void regPin(byte p,const char * txt) {  //register used pins
-  DPRINT("- "); DPRINT(txt); DPRINT(": GPIO"); DPRINTLN(p); 
+  
+  DPRINT("- "); DPRINT(txt); DPRINT(": GPIO"); DPRINT(p); 
+  if (p>MAX_PIN-1) {
+    DPRINT("  ERROR: PIN# DOESN'T EXIST.");
+  }
+  else if (ESPpinout[p]==' ') {
+    DPRINT("  ERROR: RESERVED PIN.");
+  }
+  else if (ESPpinout[p]=='I') {
+    DPRINT("  Warning: input only pin");
+  }
+  DPRINTLN(" ");
   if (strlen(pinTxt[p])>0) {
     DPRINT("*** ERROR *** "); DPRINT(txt); DPRINT(" on PIN#"); DPRINT(p);  
     DPRINT(" ALREADY DEFINED AS "); DPRINTLN(pinTxt[p]); 
-    strncpy(pinTxt[p],"ERROR! MULTI DEF",16);
+    strncpy(pinTxt[p],"ERROR! MULTI DEF",PIN_TXT_LEN);
   }
   else 
     strncpy(pinTxt[p],txt,16);
-   
 }
 
 void listPins() {
   DPRINTLN("_______________________");
   DPRINTLN("___ USED CLOCK PINS ___");
-  for (int i=0;i<40;i++) {
+  for (int i=0;i<=MAX_PIN;i++) {
     if (strlen(pinTxt[i])>0) {
       DPRINT(i); DPRINT(": ");  DPRINTLN(pinTxt[i]);
     }
   }
   DPRINTLN("_______________________");
+  //DPRINT("MAX_PIN"); DPRINTLN(MAX_PIN);
 }
 
 void startTimer() {   //ESP_INTR_FLAG_IRAM
@@ -430,6 +449,8 @@ void startWifiMode() {
   }  //end for
   ip = WiFi.localIP();
   WiFi.setAutoReconnect(true);
+  enableDisplay(100);
+  showMyIp();
   DPRINTLN("Connecting to Time Server...");
   timeClient.begin();
   timeClient.forceUpdate();
@@ -475,6 +496,7 @@ void startStandaloneMode() {
   //MDNS.addService("http", "tcp", 80);
   enableDisplay(0);
   Fdelay(1000);
+  showMyIp();
 }
 
 
@@ -851,6 +873,9 @@ void setup() {
   clearDigits();
   #if ALARMSPEAKER_PIN >= 0
     pinMode(ALARMSPEAKER_PIN, OUTPUT); regPin(ALARMSPEAKER_PIN,"ALARMSPEAKER_PIN");
+    DPRINT("  - ON state:");
+    if (ALARM_ON == HIGH) {DPRINTLN("HIGH"); }
+    else {DPRINTLN("LOW"); }
   #endif
   #if ALARMBUTTON_PIN >= 0
     pinMode(ALARMBUTTON_PIN, INPUT_PULLUP); regPin(ALARMBUTTON_PIN,"ALARMBUTTON_PIN");
@@ -865,13 +890,18 @@ void setup() {
     pinMode(DECIMALPOINT_PIN, OUTPUT); regPin(DECIMALPOINT_PIN,"DECIMALPOINT_PIN");
   #endif
   #if RADAR_PIN >= 0
-    pinMode(RADAR_PIN, INPUT); regPin(RADAR_PIN,"RADAR_PIN");
+    pinMode(RADAR_PIN, INPUT);  regPin(RADAR_PIN,"RADAR_PIN");
+    DPRINT("  - RADAR Timeout:");   DPRINTLN(RADAR_TIMEOUT);
   #endif
   #if TUBE_POWER_PIN >= 0
     pinMode(TUBE_POWER_PIN, OUTPUT); regPin(TUBE_POWER_PIN,"TUBE_POWER_PIN");
+    DPRINT("  - ON state:"); 
+    if (TUBE_POWER_ON == HIGH) {DPRINTLN("HIGH"); }
+    else {DPRINTLN("LOW"); }
   #endif
   #if LIGHT_SENSOR_PIN >= 0
     pinMode(LIGHT_SENSOR_PIN, INPUT); regPin(LIGHT_SENSOR_PIN,"LIGHT_SENSOR_PIN");
+    DPRINT("  - MAXIMUM_LUX for max.brightness:");  DPRINTLN(MAXIMUM_LUX);
     autoBrightness = true;
   #endif
   
@@ -934,7 +964,7 @@ void setup() {
   clearDigits();
   delay(200);
   enableDisplay(0);
-  showMyIp();
+  //showMyIp();
   prm.animMode = saveMode;
   calcTime();
   timeProgram();
@@ -1217,6 +1247,7 @@ void displayTime4() {
     if (prm.enableBlink && (second() % 2 == 0)) digitDP[2] = false;
   }
   changeDigit();
+  writeDisplaySingle();
 }
 
 void displayTime6() {
@@ -1254,6 +1285,7 @@ void displayTime6() {
     newDigit[0] = second() % 10;
   }
   changeDigit();
+  writeDisplaySingle();
 }
 
 void displayTime8() {
@@ -1301,6 +1333,7 @@ void displayTime8() {
     }
   }
   changeDigit();
+  writeDisplaySingle();
 }
 
 
@@ -1378,6 +1411,7 @@ void changeDigit() {
           for (int tube = j; tube < maxDigits; tube++) {
             if (oldDigit[tube] != newDigit[tube]) animMask[tube] = i;  //digit is changed
           }  //end for tube
+          writeDisplaySingle();
           Fdelay(ANIMSPEED);
         }  //end for i
 #else
@@ -1660,13 +1694,19 @@ void checkTubePowerOnOff() {
 
     static unsigned long lastRun = 0;
     static unsigned long lastON = 0;
+    static boolean oldRadarON = true;
     
     if ((millis()-lastRun)<1000) return;
     lastRun = millis();
 
     #if RADAR_PIN >=0
       if (digitalRead(RADAR_PIN) == HIGH) lastON = millis(); 
-      radarON = ((millis()-lastON)<1000*RADAR_TIMEOUT);
+      radarON = ((millis()-lastON)<long(1000*RADAR_TIMEOUT));
+      if (radarON != oldRadarON) {
+        oldRadarON = radarON;
+        if (radarON) DPRINTLN("RADAR: Switching ON tubes.");
+        else DPRINTLN("RADAR: Switching OFF tubes.");
+      }
       //DPRINT("RadarON:"); DPRINT(radarON);  DPRINT(":"); DPRINTLN((millis()-lastON));
     #else
       radarON = true;  //without radar sensor, always ON 

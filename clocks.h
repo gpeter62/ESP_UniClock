@@ -14,7 +14,7 @@
 //#define CLOCK_7   //8266 UNFI PCB clock 6x Z574M/Z573M tubes, tube selection by PCF8574 chip
 //#define CLOCK_8   //8266 GP PCB v3 clock with 4x IV-16 Numitron tubes (plexi box)
 //#define CLOCK_9   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes (brown box)
-//#define CLOCK_10  //8266 LED Clock with MAX7219 chip
+#define CLOCK_10  //8266 LED Clock with MAX7219 chip
 //#define CLOCK_11  //8266 LED Clock with MM5450 chip
 //#define CLOCK_12  //8266 VFD Clock with PT6355 chip
 
@@ -22,7 +22,7 @@
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
 
-#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
+//#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
 //#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
 
@@ -152,6 +152,9 @@
   #define LEFTDECIMAL true   //set true (Z574M), false to Z573M
   #define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
   //#define GRAD_CHARCODE -1   //disable char => shift display right with 1 digit
+  #define LIGHT_SENSOR_PIN A0  //Only ADC pins are usable! for example: 34,35,36,39... 
+  #define MAXIMUM_LUX 130    //Lux level for maximum tube brightness
+  #define LUX_CALC_SCALAR   12518931 * 1.2 
   #define PCF_74141
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
@@ -290,11 +293,11 @@
     #define PIN_DATA  27  // Shift Register Data
     #define PIN_BL    12  // Shift Register Blank (1=display off     0=display on)
   #define ALARMSPEAKER_PIN 33   //Alarm buzzer pin                                            
-  #define ALARMBUTTON_PIN -1  //32    //Alarm switch off button pin 
+  #define ALARMBUTTON_PIN 26  //32    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   #define RADAR_PIN 21
   #define RADAR_TIMEOUT 300  //second (5min)
-  #define TUBE_POWER_PIN -1
+  #define TUBE_POWER_PIN 25
   #define TUBE_POWER_ON  LOW
   #define LIGHT_SENSOR_PIN 35  //Only ADC pins are usable! for example: 34,35,36,39... 
   #define MAXIMUM_LUX 130    //Lux level for maximum tube brightness
@@ -439,6 +442,7 @@
 #ifdef CLOCK_50   //Wemos D1 mini ESP32, P.S. 2xHV5122 PCB 6xIN18 clock   PROTOTYPE TESTING!!!
   #define DEBUG 
   #define USE_NEOPIXEL 
+  #define NEOPIXEL_PIN 2
   byte tubePixels[] = {0,1,2,3,4,5};        //6 tubes, single leds
   //#define USE_RTC
   #define LIGHT_SENSOR_PIN 23
@@ -460,9 +464,12 @@
     #define PIN_BL    12  // Shift Register Blank (1=display off     0=display on)
   byte segmentEnablePins[] =  {19,17,15,12,13,16,18,14};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
   byte digitEnablePins[] = {9,8,7,2,1,0};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
+  #define ALARMSPEAKER_PIN 26   //Alarm buzzer pin                                            
+  #define ALARMBUTTON_PIN 0    //Alarm switch off button pin 
+  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   #define RADAR_PIN 4
   #define RADAR_TIMEOUT 300  //second (5min)
-  #define TUBE_POWER_PIN -1
+  #define TUBE_POWER_PIN 4
   #define TUBE_POWER_ON  LOW
   #define ENABLE_CLOCK_DISPLAY true  
   #define SHIFT_TUBES_LEFT_BY_1 //shift left by 1 tube the display, if a thermometer is used with spec tube

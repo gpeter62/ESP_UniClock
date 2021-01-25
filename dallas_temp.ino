@@ -36,9 +36,9 @@ void setupDallasTemp() {
   delay(800);
   int counter = 0;
   while ((tempSensors.getDeviceCount() == 0) && (counter<10)) {
-    if (counter>2) {
+    if (counter>5) {
       DPRINT("No DS18x20 temperature sensor found on GPIO"); DPRINTLN(TEMP_DALLAS_PIN); 
-     resetSensors();
+      resetSensors();
     }
     counter++;
     delay(100);
