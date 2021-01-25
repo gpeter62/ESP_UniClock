@@ -6,7 +6,9 @@ var configuration = {
     "currentDate": "2020.10.24",
     "currentTime": "15:01",
     "temperature": 0,
+	"temperature2": 0,
     "humidity": -1,
+	"humidity2": -1,
     "utc_offset": 1,
     "enableDST": true,
     "set12_24": true,
@@ -130,7 +132,9 @@ function Init(){
         }
     }
     $('.humidity-holder').toggleClass('hidden',configuration['humidity'] == 255);
+	$('.humidity-holder2').toggleClass('hidden',configuration['humidity2'] == 255);
     $('.temperature-holder').toggleClass('hidden',configuration['temperature'] == 255);
+	$('.temperature-holder2').toggleClass('hidden',configuration['temperature2'] == 255);
     $('.rgb-holder').toggleClass('hidden',configuration['rgbEffect'] == 255);
 
     //sets a possible good timezone, if not already set
@@ -165,7 +169,9 @@ function setCurrentInfos(){
     $.get('/getCurrentInfos/').done(function(data){
         $('#currentTime').html(data["currentDate"] + " " + data["currentTime"]);
         $('#humidity').html(data["humidity"]);
+		$('#humidity2').html(data["humidity2"]);
         $('#temperature').html(data["temperature"]);
+		$('#temperature2').html(data["temperature2"]);
         setTimeout(setCurrentInfos,20000);   //refreshes time every 20 second by calling itself
     }).always(function(){
         

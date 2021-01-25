@@ -785,15 +785,30 @@ void handleSendConfig(AsyncWebServerRequest *request) {
   sprintf(buf, "%02d:%02d", hour(), minute());
   doc["currentTime"] = buf;
 
-  if (useTemp > 0)
-    doc["temperature"] = temperature[0];
+  //useTemp = 2;  temperature[0] = 20; temperature[1] = 22;  //test only
+  //useHumid = 2; humid[0] = 41; humid[1] = 42;
+  
+  if (useTemp > 0) {
+    doc["temperature"] = temperature[0];  
+  }
   else
     doc["temperature"] = 255;
 
-  if (useHumid)
+if (useTemp > 1)
+    doc["temperature2"] = temperature[1];
+  else
+    doc["temperature2"] = 255;
+
+  if (useHumid>0) {
     doc["humidity"] = humid[0];
+  }
   else
     doc["humidity"] = 255;
+ 
+  if (useHumid>1)
+    doc["humidity2"] = humid[1];
+  else
+    doc["humidity2"] = 255;
 
   //Clock calculation and display parameters
   doc["utc_offset"] = prm.utc_offset;
@@ -850,15 +865,30 @@ void handleSendCurrentInfos(AsyncWebServerRequest *request) {
   sprintf(buf, "%02d:%02d", hour(), minute());
   doc["currentTime"] = buf;
 
-  if (useTemp > 0)
-    doc["temperature"] = temperature[0];
+  if (useTemp > 0) {
+    doc["temperature1"] = temperature[0];
+    doc["temperature"] = temperature[0];  //for compatibility with the old web page
+  }
   else
-    doc["temperature"] = 255;
+    doc["temperature1"] = 255;
 
-  if (useHumid)
-    doc["humidity"] = humid[0];
+if (useTemp > 1)
+    doc["temperature2"] = temperature[1];
   else
-    doc["humidity"] = 255;
+    doc["temperature2"] = 255;
+
+  if (useHumid>0) {
+    doc["humidity1"] = humid[0];
+    doc["humidity"] = humid[0];  //for compatibility with the old web page
+  }
+  else
+    doc["humidity1"] = 255;
+ 
+  if (useHumid>1)
+    doc["humidity2"] = humid[1];
+  else
+    doc["humidity2"] = 255;
+
   String json;
   serializeJson(doc, json);
   request->send(200, "application/json", json);
