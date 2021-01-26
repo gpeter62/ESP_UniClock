@@ -47,18 +47,24 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
   static DRAM_ATTR int timer = PWMrefresh;
   static DRAM_ATTR byte num,brightness;
   static DRAM_ATTR byte DPpos;
+  static DRAM_ATTR int PWMtimeBrightness;
   
-
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
     return;  
   }
   
-    portENTER_CRITICAL_ISR(&timerMux);
-    noInterrupts();
+  portENTER_CRITICAL_ISR(&timerMux);
+  noInterrupts();
   
   intCounter++;
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
+
+  if (autoBrightness && displayON)
+    PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * LuxValue / MAXIMUM_LUX);
+  else
+    PWMtimeBrightness = PWMtiming[brightness];
+  
   timer = PWMrefresh;
 
    switch (state) {   //state machine...
@@ -67,22 +73,22 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
       
       if (animMask[pos] > 0) { //Animation?
         num = oldDigit[pos];  //show old character
-        timer = (PWMtiming[brightness] * (10-animMask[pos]))/10;
+        timer = (PWMtimeBrightness * (10-animMask[pos]))/10;
         state = 1;  //next state is: show newDigit
       }
       else {
         num = digit[pos];  //show active character
-        timer = PWMtiming[brightness];  
+        timer = PWMtimeBrightness;  
         state = 2;  //next state is: BLANK display
       }
       break;
     case 1:  //show new character, if animation
       num =   newDigit[pos];
-      timer = (PWMtiming[brightness] * animMask[pos])/10;      
+      timer = (PWMtimeBrightness * animMask[pos])/10;      
       state = 2;  //default next state is: BLANK display
       break;
     case 2:  //blank display
-      timer = PWMrefresh-PWMtiming[brightness];
+      timer = PWMrefresh-PWMtimeBrightness;
       state = 3;
       break;
    }  //end switch

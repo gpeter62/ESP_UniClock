@@ -81,6 +81,7 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
   static DRAM_ATTR byte pos = 0;
   static DRAM_ATTR boolean state=true;
   static DRAM_ATTR byte brightness;
+  static DRAM_ATTR int PWMtimeBrightness;
 
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
       //digitalWrite(PIN_BL,HIGH);    //OFF
@@ -93,6 +94,12 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
 
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
+  
+  if (autoBrightness && displayON)
+    PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * LuxValue / MAXIMUM_LUX);
+  else
+    PWMtimeBrightness = PWMtiming[brightness];
+  
   if ((!autoBrightness) && (brightness==MAXBRIGHT))  
     state = true;
   
@@ -101,18 +108,12 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
     val = (digitEnableBits[pos] | charTable[digit[pos]]);  //the full bitmap to send to MAX chip
     if (digitDP[pos]) val = val | charTable[12];    //Decimal Point
     
-    if (autoBrightness && displayON)
-      timer = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * LuxValue / MAXIMUM_LUX);
-    else
-      timer = PWMtiming[brightness];
+    timer = PWMtimeBrightness;
     //if (pos==2) timer = 3*timer;  //Weak IV11 tube#2 brightness compensation
     timerON = timer;
   }
   else {  //OFF state
-    if (autoBrightness && displayON)
-      timer = PWMrefresh - max(PWMtiming[1],PWMtiming[MAXBRIGHT] * LuxValue / MAXIMUM_LUX);
-    else  
-      timer = PWMrefresh-PWMtiming[brightness];
+    timer = PWMrefresh-PWMtimeBrightness;
     timerOFF = timer;  
   }
   

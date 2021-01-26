@@ -15,7 +15,7 @@
 //#define CLOCK_8   //8266 GP PCB v3 clock with 4x IV-16 Numitron tubes (plexi box)
 //#define CLOCK_9   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes (brown box)
 //#define CLOCK_10  //8266 LED Clock with MAX7219 chip
-//#define CLOCK_11  //8266 LED Clock with MM5450 chip
+#define CLOCK_11  //8266 LED Clock with MM5450 chip
 //#define CLOCK_12  //8266 VFD Clock with PT6355 chip
 //#define CLOCK_13   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes + GPS timesync (white box)
 
@@ -23,7 +23,7 @@
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
 
-#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
+//#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
 //#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
 
@@ -203,6 +203,10 @@
   #define DEBUG 
   //#define USE_DALLAS_TEMP
   //#define TEMP_DALLAS_PIN 2
+  //#define RADAR_PIN 4
+  #define RADAR_TIMEOUT 300  //second (5min)
+  //#define LIGHT_SENSOR_PIN A0  //Only ADC pins are usable! for example: 34,35,36,39... 
+  #define MAXIMUM_LUX 100    //Lux level for maximum tube brightness
   #define MM5450
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""

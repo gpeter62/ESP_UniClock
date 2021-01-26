@@ -45,8 +45,8 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   static volatile byte state=0;
   static int timer = PWMrefresh;
   static byte num,brightness;
-  byte DPpos;
-  
+  static byte DPpos;
+  static int PWMtimeBrightness;
 
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
       digitalWrite(digitEnablePins[pos],LOW); 
@@ -57,6 +57,12 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   intCounter++;
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
+
+  if (autoBrightness && displayON)
+    PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * LuxValue / MAXIMUM_LUX);
+  else
+    PWMtimeBrightness = PWMtiming[brightness];
+  
   timer = PWMrefresh;
 
    switch (state) {   //state machine...
@@ -65,22 +71,22 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
       
       if (animMask[pos] > 0) { //Animation?
         num = oldDigit[pos];  //show old character
-        timer = (PWMtiming[brightness] * (10-animMask[pos]))/10;
+        timer = (PWMtimeBrightness * (10-animMask[pos]))/10;
         state = 1;  //next state is: show newDigit
       }
       else {
         num = digit[pos];  //show active character
-        timer = PWMtiming[brightness];  
+        timer = PWMtimeBrightness;  
         state = 2;  //next state is: BLANK display
       }
       break;
     case 1:  //show new character, if animation
       num =   newDigit[pos];
-      timer = (PWMtiming[brightness] * animMask[pos])/10;      
+      timer = (PWMtimeBrightness * animMask[pos])/10;      
       state = 2;  //default next state is: BLANK display
       break;
     case 2:  //blank display
-      timer = PWMrefresh-PWMtiming[brightness];
+      timer = PWMrefresh-PWMtimeBrightness;
       state = 3;
       break;
    }  //end switch

@@ -1685,17 +1685,17 @@ void printDigits(unsigned long timeout) {
   lastRun = millis();
   
   for (int i = maxDigits - 1; i >= 0; i--) {
-    if (digit[i] < 10)      DPRINT(digit[i]);
-    else if (digit[i]==10)  DPRINT(" ");
-    else if (digit[i]==TEMP_CHARCODE)    DPRINT("C");
-    else if (digit[i]==GRAD_CHARCODE)    DPRINT("°");
-    else if (digit[i]==18)    DPRINT(".");
-    else if (digit[i]==PERCENT_CHARCODE) DPRINT("%");    
-    else if (digit[i]==19) DPRINT("I");    
-    else if (digit[i]==14) DPRINT("P");    
+    if (digit[i] < 10)      {DPRINT(digit[i]);}
+    else if (digit[i]==10)  {DPRINT(" ");}
+    else if (digit[i]==TEMP_CHARCODE)    {DPRINT("C");}
+    else if (digit[i]==GRAD_CHARCODE)    {DPRINT("°");}
+    else if (digit[i]==18)    {DPRINT(".");}
+    else if (digit[i]==PERCENT_CHARCODE) {DPRINT("%"); }   
+    else if (digit[i]==19) {DPRINT("I");}    
+    else if (digit[i]==14) {DPRINT("P");}    
     else    DPRINT("-");
     
-    if (digitDP[i]) DPRINT(".");
+    if (digitDP[i]) {DPRINT(".");} else {DPRINT(" ");}
   }
 
   if (colonBlinkState) {DPRINT(" * ");}
@@ -1754,7 +1754,9 @@ void checkTubePowerOnOff() {
 }
 
 #if LIGHT_SENSOR_PIN >=0
-int luxmeter() {      //Calculation parameters are defined in clocks.h
+//Calculation parameters are defined in clocks.h
+//https://www.pcboard.ca/ldr-light-dependent-resistor
+int luxmeter() {      
   static float oldLux = MAXIMUM_LUX;
   float ADCdata;
   float ldrResistance;

@@ -49,8 +49,10 @@ byte charDefinition[] = {
 
 #define MAXCHARS sizeof(charDefinition)
 #define MAXSEGMENTS 8
+#define MAXBRIGHT 10
 
-#define VFDrefresh 3000   //msec, Multiplex time period. Greater value => slower multiplex frequency
+int PWMrefresh=5500;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+int PWMtiming[MAXBRIGHT+1] = {0,500,800,1200,2000,2500,3000,3500,4000,4500,5000};
 
 byte bitBuffer[36];
 
@@ -66,6 +68,7 @@ void setup_pins() {
   pinMode(PIN_DATA,OUTPUT);  regPin(PIN_DATA,"PIN_DATA");
   pinMode(PIN_CLK, OUTPUT);  regPin(PIN_CLK,"PIN_CLK");
   digitalWrite(PIN_BR,HIGH);  //brightness
+  
   digitsOnly = false;
   startTimer();
   
@@ -101,6 +104,79 @@ void ICACHE_RAM_ATTR writeBits() {
   //interrupts();
 }
 
+void ICACHE_RAM_ATTR writeDisplay(){        // Writes to the MM5450 driver for LEDS
+static volatile int timer = PWMrefresh;
+static volatile boolean state=true;
+static volatile byte brightness;
+static int PWMtimeBrightness;
+static volatile uint32_t val;
+static volatile byte pos = 0;
+static byte side = 0;
+byte num = 0;
+
+  if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
+    timer1_write(PWMrefresh);
+    return;  
+  }
+
+  intCounter++;
+  brightness = displayON ?  prm.dayBright : prm.nightBright;
+  if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
+
+  if (autoBrightness && displayON)
+    PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * LuxValue / MAXIMUM_LUX);
+  else
+    PWMtimeBrightness = PWMtiming[brightness];
+  
+  if ((!autoBrightness) && (brightness==MAXBRIGHT))  
+    state = true;
+  
+  if (state) {  //ON state
+    timer = PWMtimeBrightness;
+    timerON = timer;
+  }
+  else {  //OFF state
+    timer = PWMrefresh-PWMtimeBrightness;
+    timerOFF = timer;  
+  }
+  if (timer<500) timer = 500;  //safety only...
+  
+  if ( (brightness == 0) || (!state) || (!radarON)) {  //OFF state, blank digit
+    WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_BR_BIT );    //OFF
+    }
+  else {  //ON state
+    WRITE_PERI_REG( PIN_OUT_SET, PIN_BR_BIT );   //ON
+
+    memset(bitBuffer,0,sizeof(bitBuffer));   //clear array
+    bitBuffer[0] = 1;   //starting bit
+  
+    bitBuffer[sideEnablePins[side]] = 0;
+    writeBits();
+    for (int t=0; t<100;t++) asm volatile ("nop");   //clean display and wait between changing te two sides
+    bitBuffer[sideEnablePins[side]] = 0;   //disable old side..
+  
+    if (side == 0) side = 1; else side = 0;   //change side...
+  
+    for (int i=0;i<4;i++) {
+      pos = 7-(4*side+i);
+      num = digit[pos];
+      //if (animMask[pos]>0) val &= animationMaskBits[animMask[pos]-1];  //animationMode 6, mask characters from up to down and back
+      for (int j=0;j<=7;j++)   //from a to g
+        if ((charDefinition[num] & 1<<(7-j)) != 0) {
+          bitBuffer[segmentEnablePins[i][j]] = 1; 
+          }
+      if (digitDP[pos]) bitBuffer[segmentEnablePins[i][7]] = 1;   //Decimal Point    
+    }  //end for
+
+    bitBuffer[sideEnablePins[side]] = 1;   //enable new side
+    writeBits();  
+  }  //end else ON
+  
+  state = !state;  
+  timer1_write(PWMrefresh);
+}
+
+/*    OLD VERSION
 void ICACHE_RAM_ATTR writeDisplay(){        // Writes to the MM5450 driver for LEDS
 static volatile byte brightCounter = 0;
 static byte side = 0;
@@ -143,6 +219,7 @@ byte num = 0;
 
   timer1_write(VFDrefresh);
 }
+*/
 
 void clearTubes() {}
 void writeDisplaySingle() {}

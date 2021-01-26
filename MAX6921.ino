@@ -79,6 +79,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   static volatile byte pos = 0;
   static volatile boolean state=true;
   static volatile byte brightness;
+  static int PWMtimeBrightness;
 
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
       digitalWrite(PIN_BL,HIGH);    //OFF
@@ -89,6 +90,12 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   intCounter++;
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
+
+  if (autoBrightness && displayON)
+    PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * LuxValue / MAXIMUM_LUX);
+  else
+    PWMtimeBrightness = PWMtiming[brightness];
+  
   if ((!autoBrightness) && (brightness==MAXBRIGHT))  
     state = true;
 
@@ -97,24 +104,20 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
     val = (digitEnableBits[pos] | charTable[digit[pos]]);  //the full bitmap to send to MAX chip
     if (digitDP[pos]) val = val | charTable[12];    //Decimal Point
     
-  if (autoBrightness && displayON)
-      timer = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * LuxValue / MAXIMUM_LUX);
-    else
-      timer = PWMtiming[brightness];
-    //if (pos==2) timer = 3*timer;  //Weak IV11 tube#2 brightness compensation
+    timer = PWMtimeBrightness;
+    #ifdef CLOCK_4
+      if (pos==2) timer = 3*timer;  //Weak IV11 tube#2 brightness compensation, some hacking
+    #endif  
     timerON = timer;
   }
   else {  //OFF state
-    if (autoBrightness && displayON)
-      timer = PWMrefresh - max(PWMtiming[1],PWMtiming[MAXBRIGHT] * LuxValue / MAXIMUM_LUX);
-    else  
-      timer = PWMrefresh-PWMtiming[brightness];
+    timer = PWMrefresh-PWMtimeBrightness;
     timerOFF = timer;  
   }
 
   if (timer<500) timer = 500;  //safety only...
 
-  if ( (brightness == 0) || (!state) ) {  //OFF state, blank digit
+  if ( (brightness == 0) || (!state) || (!radarON)) {  //OFF state, blank digit
     digitalWrite(PIN_BL,HIGH);    //OFF
     }
   else {  //ON state
