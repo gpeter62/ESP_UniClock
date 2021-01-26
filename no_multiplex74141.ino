@@ -17,7 +17,6 @@ byte tubes[] = {3,2,1,0};         //4 tubes,   old clock...
 const int maxDigits = sizeof(tubes);
 const int PWMrefresh=12000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
 const int PWMtiming[MAXBRIGHT+1] = {1000,1000,2000,3000,4000,5000,6000,7000,8000,10000,12000};
-int PWMrange = PWMtiming[MAXBRIGHT] - PWMtiming[1];
 
 #define dataPin  14  //D5
 #define latchPin 12  //D6

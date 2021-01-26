@@ -19,7 +19,6 @@ const int maxDigits = sizeof(digitEnablePins);
 //const byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
 int PWMrefresh=15000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
 int PWMtiming[MAXBRIGHT+1] = {0,2000,3000,4000,5000,6000,7000,8000,10000,12000,14000};
-int PWMrange = PWMtiming[MAXBRIGHT] - PWMtiming[1];
 
 #if defined(ESP8266) 
 #else
@@ -109,12 +108,18 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   static int timer = PWMrefresh;
   static byte num,brightness;
   static byte p,DPpos;
+  static int PWMtimeBrightness;  
   
 if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
     //digitalWrite(digitEnablePins[pos],LOW); 
     timer1_write(PWMrefresh);
     return;  
   }
+
+  if (autoBrightness && displayON)
+    PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * LuxValue / MAXIMUM_LUX);
+  else
+    PWMtimeBrightness = PWMtiming[brightness];
   
   intCounter++;
   timer = PWMrefresh;
@@ -127,22 +132,22 @@ if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
 
       if (animMask[pos] > 0) { //Animation?
         num = oldDigit[pos];  //show old character
-        timer = (PWMtiming[brightness] * (10-animMask[pos]))/10;
+        timer = (PWMtimeBrightness * (10-animMask[pos]))/10;
         state = 1;  //next state is: show newDigit
       }
       else {
         num = digit[pos];  //show active character
-        timer = PWMtiming[brightness];  
+        timer = PWMtimeBrightness;  
         state = 2;  //next state is: BLANK display
       }
       break;
     case 1:  //show new character, if animation
       num =   newDigit[pos];
-      timer = (PWMtiming[brightness] * animMask[pos])/10;      
+      timer = (PWMtimeBrightness * animMask[pos])/10;      
       state = 2;  //default next state is: BLANK display
       break;
     case 2:  //blank display
-      timer = PWMrefresh-PWMtiming[brightness];
+      timer = PWMrefresh-PWMtimeBrightness;
       state = 3;
       break;
    }  //end switch

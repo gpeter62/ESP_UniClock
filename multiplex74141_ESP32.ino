@@ -12,7 +12,6 @@ int DRAM_ATTR maxDig = maxDigits;   //memory variable version
 int DRAM_ATTR PWMrefresh=11000;   //msec, Multiplex time period. Greater value => slower multiplex frequency
 #define MAXBRIGHT 10
 int DRAM_ATTR PWMtiming[MAXBRIGHT+1] = {0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000};
-int DRAM_ATTR PWMrange = PWMtiming[MAXBRIGHT] - PWMtiming[1];
 
   #if defined(ESP32) 
   #else

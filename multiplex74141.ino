@@ -16,8 +16,6 @@ int maxDig = maxDigits;   //memory variable version
 int PWMrefresh=11000;   //msec, Multiplex time period. Greater value => slower multiplex frequency
 #define MAXBRIGHT 10
 int PWMtiming[MAXBRIGHT+1] = {0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000};
-int PWMrange = PWMtiming[MAXBRIGHT] - PWMtiming[1];
-
 
 void setup_pins() {
   DPRINTLN("Nixie clock - setup pins -  Multiplex 74141 mode...");

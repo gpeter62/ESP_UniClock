@@ -11,11 +11,11 @@
 //#define CLOCK_4   //8266, custom clock, 4x IV-11 VFD tubes
 //#define CLOCK_5   //8266, UNFI PCB clock IVL-2-5/7 tube with RTC
 //#define CLOCK_6   //8266, GP PCB clock, 4x IN-1 tubes and  4x74141  driver (NON-MULTIPLEX)
-//#define CLOCK_7   //8266 UNFI PCB clock 6x Z574M/Z573M tubes, tube selection by PCF8574 chip
+#define CLOCK_7   //8266 UNFI PCB clock 6x Z574M/Z573M tubes, tube selection by PCF8574 chip
 //#define CLOCK_8   //8266 GP PCB v3 clock with 4x IV-16 Numitron tubes (plexi box)
 //#define CLOCK_9   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes (brown box)
 //#define CLOCK_10  //8266 LED Clock with MAX7219 chip
-#define CLOCK_11  //8266 LED Clock with MM5450 chip
+//#define CLOCK_11  //8266 LED Clock with MM5450 chip
 //#define CLOCK_12  //8266 VFD Clock with PT6355 chip
 //#define CLOCK_13   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes + GPS timesync (white box)
 
@@ -159,7 +159,7 @@
   #define LEFTDECIMAL true   //set true (Z574M), false to Z573M
   #define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
   //#define GRAD_CHARCODE -1   //disable char => shift display right with 1 digit
-  #define LIGHT_SENSOR_PIN A0  //Only ADC pins are usable! for example: 34,35,36,39... 
+  //#define LIGHT_SENSOR_PIN A0  //Only ADC pins are usable! for example: 34,35,36,39... 
   #define MAXIMUM_LUX 100    //Lux level for maximum tube brightness
   #define LUX_CALC_SCALAR   12518931 * 1.2 
   #define PCF_74141
