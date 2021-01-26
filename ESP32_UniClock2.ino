@@ -85,6 +85,7 @@
 
   //Display temperature and date in every minute between START..END seconds
   //#define ENABLE_CLOCK_DISPLAY true  //false, if no clock display is needed (for example: thermometer + humidity only)
+  //#define DATE_REPEAT_MIN   1     //show date only every xxx minute. If zero, datum is never displayed!
   //#define SHIFT_TUBES_LEFT_BY_1   //shift leftIP address by 1 tube the display, if a thermometer is used with spec tube
   //#define LEFTDECIMAL false      //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
   //#define TEMP_START  35        //Temperature display start..end
@@ -282,6 +283,12 @@ bool initProtectionTimer = false;  // Set true at the top of the hour to synchro
 bool decimalpointON = false;
 bool alarmON = false;             //Alarm in progress
 unsigned long alarmStarted = 0;   //Start timestamp millis()
+
+boolean showDate = false;
+boolean showTemp0 = false;
+boolean showTemp1 = false;
+boolean showHumid0 = false;
+boolean showHumid1 = false;
 
 #define MAX_PIN sizeof(ESPpinout)-1
 #define PIN_TXT_LEN 16
@@ -1074,7 +1081,18 @@ void timeProgram() {
     evalShutoffTime();     // Check whether display should be turned off (Auto shutoff mode)
     if (!displayON || !prm.enableBlink) colonBlinkState = false;
     else colonBlinkState = (bool)(second() % 2);
+    
+    showDate = ENABLE_CLOCK_DISPLAY && (second() >= DATE_START) && (second() < DATE_END);
+    #ifdef DATE_REPEAT_MIN
+      if ((DATE_REPEAT_MIN==0) || ((minute() % DATE_REPEAT_MIN) != 0))
+        showDate = false;
+    #endif
 
+    showTemp0 = (useTemp > 0) && (second() >= TEMP_START) && (second() < TEMP_END);
+    showTemp1 = (useTemp > 1) && (second() >= TEMP_START + (TEMP_END - TEMP_START) / 2) && (second() < TEMP_END);
+    showHumid0 = (useHumid > 0) && (second() >= HUMID_START) && (second() < HUMID_END);
+    showHumid1 = (useHumid >1) && (second() >= HUMID_START + (HUMID_END-HUMID_START)/2) && (second() < HUMID_END);
+    
     if (maxDigits >= 8)        displayTime8();
     else if (maxDigits == 6)   displayTime6();
     else displayTime4();
@@ -1256,11 +1274,11 @@ void displayTime4() {
   for (int i = 0; i < maxDigits; i++) digitDP[i] = false;
   digitDP[4] = true;   digitDP[2] = true;
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
-  if ((useTemp > 1) && (second() >= TEMP_START + (TEMP_END - TEMP_START) / 2) && (second() < TEMP_END)) displayTemp(1);
-  else if ((useTemp > 0) && (second() >= TEMP_START) && (second() < TEMP_END)) displayTemp(0);
-  else if ((useHumid >1) && (second() >= HUMID_START + (HUMID_END-HUMID_START)/2) && (second() < HUMID_END)) displayHumid(1);
-  else if ((useHumid > 0) && (second() >= HUMID_START) && (second() < HUMID_END)) displayHumid(0);
-  else if ((ENABLE_CLOCK_DISPLAY) && (second() >= DATE_START) && (second() < DATE_END)) {
+  if      (showTemp1) displayTemp(1);
+  else if (showTemp0) displayTemp(0);
+  else if (showHumid1) displayHumid(1);
+  else if (showHumid0) displayHumid(0);
+  else if (showDate) {
     newDigit[3] = month() / 10;
     newDigit[2] = month() % 10;
     digitDP[2] = true;
@@ -1284,11 +1302,11 @@ void displayTime6() {
   for (int i = 0; i < maxDigits; i++) digitDP[i] = false;
   digitDP[4] = true;   digitDP[2] = true;
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
-  if ((useTemp == 2) && (second() >= TEMP_START + (TEMP_END - TEMP_START) / 2) && (second() < TEMP_END)) displayTemp(1);
-  else if ((useTemp > 0) && (second() >= TEMP_START) && (second() < TEMP_END)) displayTemp(0);
-  else if ((useHumid >1) && (second() >= HUMID_START + (HUMID_END-HUMID_START)/2) && (second() < HUMID_END)) displayHumid(1);
-  else if ((useHumid > 0) && (second() >= HUMID_START) && (second() < HUMID_END)) displayHumid(0);
-  else if (ENABLE_CLOCK_DISPLAY && (second() >= DATE_START) && (second() < DATE_END)) {
+  if      (showTemp1) displayTemp(1);
+  else if (showTemp0) displayTemp(0);
+  else if (showHumid1) displayHumid(1);
+  else if (showHumid0) displayHumid(0);
+  else if (showDate) {
     newDigit[5] = (year() % 100) / 10;
     newDigit[4] = year() % 10;
     digitDP[4] = true;
@@ -1324,12 +1342,12 @@ void displayTime8() {
     newDigit[i] = 10;
   }
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
-  if ((useTemp == 2) && (second() >= TEMP_START + (TEMP_END - TEMP_START) / 2) && (second() < TEMP_END)) displayTemp(1);
-  else if ((useTemp > 0) && (second() >= TEMP_START) && (second() < TEMP_END)) displayTemp(0);
-  else if ((useHumid >1) && (second() >= HUMID_START + (HUMID_END-HUMID_START)/2) && (second() < HUMID_END)) displayHumid(1);
-  else if ((useHumid > 0) && (second() >= HUMID_START) && (second() < HUMID_END)) displayHumid(0);
+  if      (showTemp1) displayTemp(1);
+  else if (showTemp0) displayTemp(0);
+  else if (showHumid1) displayHumid(1);
+  else if (showHumid0) displayHumid(0);
   else {
-    if (ENABLE_CLOCK_DISPLAY && (second() >= DATE_START) && (second() < DATE_END)) {
+    if (showDate) {
       newDigit[7] = year() / 1000;
       newDigit[6] = (year() % 1000) / 100;
       newDigit[5] = (year() % 100) / 10;

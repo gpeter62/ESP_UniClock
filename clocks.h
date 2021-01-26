@@ -11,7 +11,7 @@
 //#define CLOCK_4   //8266, custom clock, 4x IV-11 VFD tubes
 //#define CLOCK_5   //8266, UNFI PCB clock IVL-2-5/7 tube with RTC
 //#define CLOCK_6   //8266, GP PCB clock, 4x IN-1 tubes and  4x74141  driver (NON-MULTIPLEX)
-#define CLOCK_7   //8266 UNFI PCB clock 6x Z574M/Z573M tubes, tube selection by PCF8574 chip
+//#define CLOCK_7   //8266 UNFI PCB clock 6x Z574M/Z573M tubes, tube selection by PCF8574 chip
 //#define CLOCK_8   //8266 GP PCB v3 clock with 4x IV-16 Numitron tubes (plexi box)
 //#define CLOCK_9   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes (brown box)
 //#define CLOCK_10  //8266 LED Clock with MAX7219 chip
@@ -23,7 +23,7 @@
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
 
-//#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
+#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
 //#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
 
@@ -241,6 +241,7 @@
   const byte ABCDPins[4] =  {2,4,5,0};
   #define DP_PIN  -1 // decimalPoint inside Nixie tube, set -1, if not used!
   #define ENABLE_CLOCK_DISPLAY true  //don't display date/time!!!
+  #define DATE_REPEAT_MIN 3       //show date only every xxx minute. If zero, datum is never displayed
   #define SHIFT_TUBES_LEFT_BY_1  //shift left IP address by 1 tube the display, if a thermometer is used with spec tube
   #define TEMP_CHARCODE 15
   #define GRAD_CHARCODE 16 
@@ -302,6 +303,7 @@
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 2
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
+  #define DATE_REPEAT_MIN 3     //show date only every 3 minutes. If zero, datum is never displayed
   #define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN 23    //Dallas temp sensor pin.  If not used, SET TO -1     
   #define MAX6921_ESP32
