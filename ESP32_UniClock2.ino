@@ -1798,6 +1798,7 @@ int luxmeter() {
   ADCdata = analogRead(LIGHT_SENSOR_PIN); //DPRINT("ADC:"); DPRINTLN(ADCdata);
   ldrResistance = (MAX_ADC_READING - ADCdata) / ADCdata * REF_RESISTANCE;
   ldrLux = LUX_CALC_SCALAR * pow(ldrResistance, LUX_CALC_EXPONENT);
+  if (ldrLux>MAXIMUM_LUX) ldrLux = MAXIMUM_LUX;   //Limited //Limit lux value to maximum
   oldLux = oldLux + (ldrLux-oldLux)/10;   //slow down Lux change
   return (int)oldLux;
 }
@@ -1806,11 +1807,9 @@ int luxmeter() {
 void getLightSensor() {
   #if LIGHT_SENSOR_PIN >=0
     static unsigned long lastRun = 0;
-    
     if ((millis()-lastRun)<500) return;
     lastRun = millis();
-   
-    LuxValue = min(luxmeter(),MAXIMUM_LUX);   //Limited in 1000 lux
+    LuxValue = luxmeter();
   #else
     LuxValue = MAXIMUM_LUX;
   #endif

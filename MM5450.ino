@@ -4,10 +4,10 @@ const int maxDigits = 6;
 
 //Fill this table with the pin numbers of MM5450 chip!
 byte segmentEnablePins[4][8] =  {
-                 {25,26,27,28,29,30,31,32},   //segment enable pins of MM5450 (a,b,c,d,e,f,g,DP)
+                 {16,15,14,13,12,11,10,9},   //segment enable pins of MM5450 (a,b,c,d,e,f,g,DP)
+                 {8,7,6,5,4,3,2,1},
                  {17,18,19,20,21,22,23,24},
-                 {9,10,11,12,13,14,15,16},
-                 {1,2,3,4,5,6,7,8}
+                 {25,26,27,28,29,30,31,32}
                  };
                  
 byte sideEnablePins[] = {34,33};  //segment enable pins of 2x4 LEDS  
@@ -17,6 +17,7 @@ byte sideEnablePins[] = {34,33};  //segment enable pins of 2x4 LEDS
 #define PIN_CLK   12  // D7 Shift Register Clock
 #define PIN_DATA  13  // D5 Shift Register Data
 #define PIN_BR    15  // D8 Shift Register Brightness 
+
 #define PIN_LE_BIT   1<<14  // D6 Shift Register Latch Enable
 #define PIN_CLK_BIT  1<<12  // D7 Shift Register Clock
 #define PIN_DATA_BIT 1<<13  // D5 Shift Register Data
@@ -51,8 +52,8 @@ byte charDefinition[] = {
 #define MAXSEGMENTS 8
 #define MAXBRIGHT 10
 
-int PWMrefresh=5500;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-int PWMtiming[MAXBRIGHT+1] = {0,500,800,1200,2000,2500,3000,3500,4000,4500,5000};
+int PWMrefresh=10000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+int PWMtiming[MAXBRIGHT+1] = {0,500,800,1200,2000,2500,3000,4500,6000,8000,10000};
 
 byte bitBuffer[36];
 
@@ -173,53 +174,9 @@ byte num = 0;
   }  //end else ON
   
   state = !state;  
-  timer1_write(PWMrefresh);
+  timer1_write(timer);
 }
 
-/*    OLD VERSION
-void ICACHE_RAM_ATTR writeDisplay(){        // Writes to the MM5450 driver for LEDS
-static volatile byte brightCounter = 0;
-static byte side = 0;
-byte num = 0;
-
-  if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
-    timer1_write(VFDrefresh);
-    return;  
-  }
-
-  if (brightCounter < (displayON ?  prm.dayBright : prm.nightBright))
-    WRITE_PERI_REG( PIN_OUT_SET, PIN_BR_BIT );   //ON
-  else 
-    WRITE_PERI_REG( PIN_OUT_CLEAR, PIN_BR_BIT );    //OFF
-
-  brightCounter++;  
-  if (brightCounter>MAXBRIGHTNESS) brightCounter = 0;
-
-  memset(bitBuffer,0,sizeof(bitBuffer));   //clear array
-  bitBuffer[0] = 1;   //starting bit
-  //
-  bitBuffer[sideEnablePins[side]] = 0;
-  writeBits();
-  for (int t=0; t<100;t++) asm volatile ("nop");   //clean display and wait between changing te two sides
-  bitBuffer[sideEnablePins[side]] = 0;   //disable old side..
-  
-  if (side == 0) side = 1; else side = 0;   //change side...
-  
-  for (int i=0;i<4;i++) {
-    num = digit[7-(4*side+i)];
-    for (int j=0;j<=7;j++)   //from a to g
-      if ((charDefinition[num] & 1<<(7-j)) != 0) {
-        bitBuffer[segmentEnablePins[i][j]] = 1; 
-        }
-    if (digitDP[7-(4*side+i)]) bitBuffer[segmentEnablePins[i][7]] = 1;   //Decimal Point    
-  }  //end for
-
-  bitBuffer[sideEnablePins[side]] = 1;   //enable new side
-  writeBits();  
-
-  timer1_write(VFDrefresh);
-}
-*/
 
 void clearTubes() {}
 void writeDisplaySingle() {}

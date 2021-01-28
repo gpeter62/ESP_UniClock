@@ -37,7 +37,7 @@ RgbColor black(0,0,0);
 //byte tubePixels[] = {0,0,1,1,2,2,3,3,3,3,2,2,1,1,0,0,0};  //4 tubes, double row, 17 leds (GP)
 //byte tubePixels[] = {0,0,0,1,1,2,2,3,3,3,3,  3,3,2,2,2,1,1,0,0};  //4 tubes, double row, 20 leds (Robi)
 
-const int PixelCount = sizeof(tubePixels)+4; 
+const int PixelCount = sizeof(tubePixels)+2; 
 
 //NeoGrbFeature give me BRGW (g and b swapped)
 //NeoRgbFeature give me RBGW (g and b swapped)
@@ -45,11 +45,11 @@ const int PixelCount = sizeof(tubePixels)+4;
 
 #if defined(ESP32)
   const byte PixelPin = NEOPIXEL_PIN;  //on ESP32 usable any pin below 32 
-  NeoPixelBrightnessBus<NeoGrbFeature, NeoEsp32I2s1800KbpsMethod> strip(PixelCount+2,PixelPin);  //instead of NeoEsp32Rmt7Ws2812xMethod the  NeoEsp32I2s1800KbpsMethod is better!
+  NeoPixelBrightnessBus<NeoGrbFeature, NeoEsp32I2s1800KbpsMethod> strip(PixelCount+4,PixelPin);  //instead of NeoEsp32Rmt7Ws2812xMethod the  NeoEsp32I2s1800KbpsMethod is better!
 #else
   #define NEOPIXEL_PIN 3
   const byte PixelPin = 3;  // on 8266 it MUST use GPIO3 (RX pin)    
-  NeoPixelBrightnessBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount+2);   
+  NeoPixelBrightnessBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount+4);   
 #endif
                                                                               
 NeoGamma<NeoGammaTableMethod> colorGamma;
