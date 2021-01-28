@@ -23,15 +23,15 @@
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
 
-#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
+//#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
 //#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
 
-//#define CLOCK_40  //ESP32 WEMOS D1 mini, UNFI 6 x IV-11 VFD tubes clock
-//#define CLOCK_41  //ESP32 WEMOS D1 mini, UNFI board, 6 x Z573M Nixie tubes
-//#define CLOCK_42  //ESP32 WEMOS D1 mini, UNFI 6 x IV-11 VFD tubes clock
+//#define CLOCK_40  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock
+//#define CLOCK_41  //ESP32 D1 mini, UNFI board, 6 x Z573M Nixie tubes
+#define CLOCK_42  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock
 
-//#define CLOCK_50  //Wemos D1 mini ESP32, P.S. 2xHV5122 PCB 6xIN18 clock - development version
+//#define CLOCK_50  //ESP32 D1 mini, P.S. 2xHV5122 PCB 6xIN18 clock - development version
 
 //______________________ESP8266 CLOCKS by UNFI and GP ______________________________________________________
 #ifdef CLOCK_1   //8266, UNFI PCB clock, 4x IN-16 tubes
@@ -377,8 +377,8 @@
   #define WEBNAME "ESP32UniClock 2.5"
 #endif
 
-//______________________ESP-32 CLOCKS  (2x20pin Wemos D1 mini ESP32 modul) ______________________________________________________
-#ifdef CLOCK_40   //ESP32 WEMOS D1 mini, UNFI 6 x IV-11 VFD tubes clock
+//______________________ESP-32 CLOCKS  (2x20pin ESP32 D1 mini modul) ______________________________________________________
+#ifdef CLOCK_40   //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock
   #define DEBUG 
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 22
@@ -405,7 +405,7 @@
   #define WEBNAME "ESP32 IV-11 VFD-Clock"
 #endif
 
-#ifdef CLOCK_41   //ESP32 WEMOS D1 mini, UNFI board, 6 x Z573M Nixie tubes
+#ifdef CLOCK_41   //ESP32 D1 mini, UNFI board, 6 x Z573M Nixie tubes
   #define DEBUG 
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 22
@@ -431,14 +431,51 @@
 #endif
 
 
-#ifdef CLOCK_42   //ESP32 WEMOS D1 mini, UNFI 6 x IV-11 VFD tubes clock, SHT21 & DHT22 sensor
+#ifdef CLOCK_42   //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock, SHT21
   #define DEBUG 
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 22
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   //#define USE_DALLAS_TEMP
   //#define TEMP_DALLAS_PIN -1    //Dallas temp sensor pin.  If not used, SET TO -1    
-  #define USE_DHT_TEMP
+  //#define USE_DHT_TEMP
+  //#define DHTTYPE DHT22
+  //#define TEMP_DHT_PIN 25    //DHT temp sensor pin.  If not used, SET TO -1     
+  #define USE_SHT21             //I2C Temperature + humidity
+  #define PIN_SDA 26           // you can set the used SDA and SCL pins
+  #define PIN_SCL 27           // if it is not default value
+  #define MAX6921_ESP32
+  byte segmentEnablePins[] =  {19,17,15,12,13,16,18,14};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
+  byte digitEnablePins[] = {9,8,7,2,1,0};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
+  #define DOUBLE_BLINK  //both separator points are blinking 
+  #define DATE_REPEAT_MIN 60       //show date only every xxx minute. If zero, datum is never displayed
+  #define DATE_START  07
+  #define DATE_END    12 
+  #define TEMP_START  25
+  #define TEMP_END    30 
+  #define HUMID_START 30 
+  #define HUMID_END   35 
+  //MAX6921 pins
+    #define PIN_LE    4  // Shift Register Latch Enable
+    #define PIN_CLK   17  // Shift Register Clock
+    #define PIN_DATA  16  // Shift Register Data
+    #define PIN_BL    32  // Shift Register Blank (1=display off     0=display on)
+  #define ALARMSPEAKER_PIN 2   //Alarm buzzer pin                                            
+  #define ALARMBUTTON_PIN 0    //Alarm switch off button pin 
+  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
+  #define AP_NAME "VFD-Ora"
+  #define AP_PASSWORD ""  
+  #define WEBNAME "VFD-Óra"
+#endif
+
+#ifdef CLOCK_43   //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock, SHT21 & DHT22 sensor
+  #define DEBUG 
+  #define USE_NEOPIXEL 
+  #define NEOPIXEL_PIN 22
+  byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
+  //#define USE_DALLAS_TEMP
+  //#define TEMP_DALLAS_PIN -1    //Dallas temp sensor pin.  If not used, SET TO -1    
+  //#define USE_DHT_TEMP
   #define DHTTYPE DHT22
   #define TEMP_DHT_PIN 25    //DHT temp sensor pin.  If not used, SET TO -1     
   #define USE_SHT21             //I2C Temperature + humidity
@@ -448,6 +485,11 @@
   byte segmentEnablePins[] =  {19,17,15,12,13,16,18,14};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
   byte digitEnablePins[] = {9,8,7,2,1,0};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
   #define DOUBLE_BLINK  //both separator points are blinking 
+  #define DATE_REPEAT_MIN 1       //show date only every xxx minute. If zero, datum is never displayed
+  #define DATE_START  00
+  #define TEMP_END    35 
+  #define HUMID_START 35 
+  #define HUMID_END   40 
   //MAX6921 pins
     #define PIN_LE    4  // Shift Register Latch Enable
     #define PIN_CLK   17  // Shift Register Clock
@@ -462,7 +504,7 @@
 #endif
 
 
-#ifdef CLOCK_50   //Wemos D1 mini ESP32, P.S. 2xHV5122 PCB 6xIN18 clock   PROTOTYPE TESTING!!!
+#ifdef CLOCK_50   //ESP32 D1 mini, P.S. 2xHV5122 PCB 6xIN18 clock   PROTOTYPE TESTING!!!
   #define DEBUG 
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 2
@@ -474,9 +516,9 @@
   //#define USE_DHT_TEMP
   #define DHTTYPE DHT11
   //#define TEMP_DHT_PIN  23
-  #define USE_BME280            //I2C Temperature + humidity + pressure
-  #define USE_BMP280            //I2C Temperature + barometric  pressure
-  #define USE_AHTX0             //I2C Temperature + humidity
+  //#define USE_BME280            //I2C Temperature + humidity + pressure
+  //#define USE_BMP280            //I2C Temperature + barometric  pressure
+  //#define USE_AHTX0             //I2C Temperature + humidity
   #define USE_SHT21             //I2C Temperature + humidity
   //#define HV5122
   #define MAX6921_ESP32
@@ -495,6 +537,11 @@
   #define TUBE_POWER_PIN 4
   #define TUBE_POWER_ON  LOW
   #define ENABLE_CLOCK_DISPLAY true  
+  #define DATE_REPEAT_MIN 1       //show date only every xxx minute. If zero, datum is never displayed
+  #define DATE_START  00
+  #define TEMP_END    35 
+  #define HUMID_START 35 
+  #define HUMID_END   40 
   #define SHIFT_TUBES_LEFT_BY_1 //shift left by 1 tube the display, if a thermometer is used with spec tube
   #define TEMP_CHARCODE 4
   #define GRAD_CHARCODE 16 

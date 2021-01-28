@@ -138,8 +138,8 @@ void setupI2Csensors() {
 
 void getBME280() {
 #ifdef USE_BME280  
-  temperature[BME280tempPtr] = bme.readTemperature();
-  humid[BME280humidPtr] = bme.readHumidity();
+  temperature[BME280tempPtr] = round1(bme.readTemperature());
+  humid[BME280humidPtr] = round1(bme.readHumidity());
   DPRINT("BME280: ");
   DPRINT("Temperature = ");
   DPRINT(temperature[BME280tempPtr]);
@@ -158,7 +158,7 @@ void getBME280() {
 
 void getBMP280() {
 #ifdef USE_BMP280  
-  temperature[BMP280tempPtr] = bmp.readTemperature();
+  temperature[BMP280tempPtr] = round1(bmp.readTemperature());
   DPRINT("BMP280: ");
   DPRINT(F("Temperature = "));
   DPRINT(temperature[BMP280tempPtr]);
@@ -177,14 +177,14 @@ void getAHTX0() {
   sensors_event_t temp;
   aht_humidity->getEvent(&humidity);
   aht_temp->getEvent(&temp);
-  temperature[AHTX0tempPtr] = temp.temperature;
+  temperature[AHTX0tempPtr] = round1(temp.temperature);
   DPRINT("AHT sensor:  ");
   DPRINT("  Temperature ");
   DPRINT(temperature[AHTX0tempPtr]);
   DPRINT(" deg C");
   
   DPRINT("  Humidity: ");  /* Display the results (humidity is measured in % relative humidity (% rH) */
-  humid[AHTX0humidPtr] = humidity.relative_humidity;
+  humid[AHTX0humidPtr] = round1(humidity.relative_humidity);
   DPRINT(humid[AHTX0humidPtr]);
   DPRINTLN(" % rH");
 #endif
@@ -192,14 +192,14 @@ void getAHTX0() {
 
 void getSHT21() {
 #ifdef USE_SHT21
-  temperature[SHT21tempPtr] = sht.getTemperature();
+  temperature[SHT21tempPtr] = round1(sht.getTemperature());
   DPRINT("SHT21 sensor:  ");
   DPRINT("  Temperature ");
   DPRINT(temperature[SHT21tempPtr]);
   DPRINT(" deg C");
   
   DPRINT("  Humidity: ");  /* Display the results (humidity is measured in % relative humidity (% rH) */
-  humid[SHT21humidPtr] = sht.getHumidity();
+  humid[SHT21humidPtr] = round1(sht.getHumidity());
   DPRINT(humid[SHT21humidPtr]);
   DPRINTLN(" % rH");
 #endif

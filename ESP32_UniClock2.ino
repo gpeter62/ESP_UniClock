@@ -289,6 +289,7 @@ boolean showTemp0 = false;
 boolean showTemp1 = false;
 boolean showHumid0 = false;
 boolean showHumid1 = false;
+int lastCathodeProt = -1;
 
 #define MAX_PIN sizeof(ESPpinout)-1
 #define PIN_TXT_LEN 16
@@ -380,6 +381,10 @@ void Fdelay(unsigned long d) {
     alarmSound();
     yield();
   }
+}
+
+float round1(float in) {
+  return round(10.0 * in)/10.0; 
 }
 
 //--------------------------------------------------------------------------------------------------------------------
@@ -1084,18 +1089,26 @@ void timeProgram() {
     
     showDate = ENABLE_CLOCK_DISPLAY && (second() >= DATE_START) && (second() < DATE_END);
     #ifdef DATE_REPEAT_MIN
-      if ((DATE_REPEAT_MIN==0) || ((minute() % DATE_REPEAT_MIN) != 0))
-        showDate = false;
+      if (showDate) {
+        int dateRepeatPush = 0;
+        if ((lastCathodeProt>=0) && (lastCathodeProt % DATE_REPEAT_MIN == 0)) {
+          dateRepeatPush = 1;  //shift date display by 1 minute
+          DPRINTLN("Shift Date display by 1 min");
+        }
+        if ((DATE_REPEAT_MIN==0) || ((minute() % DATE_REPEAT_MIN) != dateRepeatPush)) {
+          showDate = false;
+        }
+      }
     #endif
-
+   
     showTemp0 = (useTemp > 0) && (second() >= TEMP_START) && (second() < TEMP_END);
     showTemp1 = (useTemp > 1) && (second() >= TEMP_START + (TEMP_END - TEMP_START) / 2) && (second() < TEMP_END);
     showHumid0 = (useHumid > 0) && (second() >= HUMID_START) && (second() < HUMID_END);
     showHumid1 = (useHumid >1) && (second() >= HUMID_START + (HUMID_END-HUMID_START)/2) && (second() < HUMID_END);
     
-    if (maxDigits >= 8)        displayTime8();
-    else if (maxDigits == 6)   displayTime6();
-    else displayTime4();
+    if (maxDigits >= 8)      displayTime8();
+    else if (maxDigits == 6) displayTime6();
+    else                     displayTime4();
 
     //   if (COLON_PIN>=0) digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
     if ((LED_SWITCH_PIN >= 0) && displayON) //Switch on backlight LED only daytime
@@ -1166,6 +1179,7 @@ void cathodeProtect() {
   byte dm1 = (minShow / 10),  dm2 = (minShow % 10);
   byte ds1 = (secShow / 10),  ds2 = (secShow % 10);
 
+  DPRINTLN("Cathode Protect running!");
   // All four digits will increment up at 10 Hz.
   // At T=2 sec, individual digits will stop at
   // the correct time every second starting from
@@ -1207,6 +1221,7 @@ void cathodeProtect() {
     Fdelay(100);
   }
   memcpy(oldDigit, digit, sizeof(oldDigit));
+  lastCathodeProt = minute();
 }
 
 inline void incMod10(byte &x) {
