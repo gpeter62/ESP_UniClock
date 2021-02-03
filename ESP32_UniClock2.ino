@@ -38,6 +38,7 @@
   //#define USE_RTC         //DS3231 realtime clock, SDA+SCL I2C pins are used!   
   //#define USE_GPS         //use for standalone clock, without wifi internet access
   //#define USE_NEOPIXEL    //WS2812B led stripe, for tubes backlight. Don't forget to define tubePixels[] !
+  //#define USE_MQTT        //Home Assistant integration: https://www.home-assistant.io/
 
   //----- DRIVER SELECTION ------ Use only 1 driver from the following options in the clocks.h file!
   //#define MULTIPLEX74141_ESP32  //4..8 Nixie tubes generic driver for ESP32
@@ -127,7 +128,6 @@ unsigned long intCounter = 0;   //for testing only, interrupt counter
     #define AP_PASSWORD ""
   #endif
   #include <ESP8266WiFi.h>
-  #include <DNSServer.h>
   //#include <ESP8266mDNS.h>
   #include "ESPAsyncTCP.h"
   #include "FS.h"
@@ -143,6 +143,7 @@ unsigned long intCounter = 0;   //for testing only, interrupt counter
   #ifndef AP_PASSWORD
     #define AP_PASSWORD ""
   #endif
+  
   //#include <WiFi.h>
   #include <esp_wifi.h>
   #include <DNSServer.h>
@@ -242,7 +243,8 @@ byte useTemp = 0;         //Total number of any temperature sensors: 0..6
 float temperature[6] = {0,0,0,0,0,0};
 byte useHumid = 0;        //Total number of humidity sensors
 float humid[6] = {0,0,0,0,0,0};  
-
+byte usePress = 0;        //Total number of pressure sensors
+float pressur[6] = {0,0,0,0,0,0};  
 //----------------- EEPROM addresses -------------------------------------------------------------------
 const int EEPROM_addr = 0;
 
@@ -964,6 +966,11 @@ void setup() {
   #ifdef USE_GPS
     setupGPS();
   #endif
+
+  #ifdef USE_MQTT
+    setupMqtt();
+  #endif
+
   
   decimalpointON = false;    
   setup_pins();
@@ -1826,6 +1833,7 @@ void loop() {
   alarmSound();
   checkTubePowerOnOff();
   getLightSensor();
+  mqttSend();
   checkWifiMode();
   if (clockWifiMode) { //Wifi Clock Mode
     if (WiFi.status() != WL_CONNECTED) {

@@ -23,6 +23,7 @@ boolean SHT21exist = false;
   Adafruit_Sensor *bme_humidity = bme.getHumiditySensor();
   byte BME280tempPtr;
   byte BME280humidPtr;
+  byte BME280pressPtr;
 #endif
 
 #ifdef USE_BMP280
@@ -32,6 +33,7 @@ boolean SHT21exist = false;
   Adafruit_Sensor *bmp_pressure = bmp.getPressureSensor();
   byte BMP280tempPtr;
   byte BMP280humidPtr;
+  byte BMP280pressPtr;
 #endif
 
 #ifdef USE_AHTX0
@@ -71,8 +73,10 @@ void setupI2Csensors() {
     bme_humidity->printSensorDetails();
     BME280tempPtr = useTemp;  //remember my ID-s
     BME280humidPtr = useHumid;
+    BME280pressPtr = usePress;
     useTemp++;   //increase the number of sensors
     useHumid++;
+    usePress++;
   }
  #endif
 
@@ -91,7 +95,9 @@ void setupI2Csensors() {
     Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
     bmp_temp->printSensorDetails();
     BMP280tempPtr = useTemp;  //remember my ID-s
+    BMP280pressPtr = usePress;  //remember my ID-s
     useTemp++;   //increase the number of sensors
+    usePress++;   //increase the number of sensors
   }
 #endif
 
@@ -140,6 +146,7 @@ void getBME280() {
 #ifdef USE_BME280  
   temperature[BME280tempPtr] = round1(bme.readTemperature());
   humid[BME280humidPtr] = round1(bme.readHumidity());
+  pressur[BME280pressPtr] = round1(bme.readPressure()/100);
   DPRINT("BME280: ");
   DPRINT("Temperature = ");
   DPRINT(temperature[BME280tempPtr]);
@@ -150,7 +157,7 @@ void getBME280() {
   DPRINT(" %");
 
   DPRINT("  Pressure = ");
-  DPRINT(bme.readPressure()/100);
+  DPRINT(pressur[BME280pressPtr]);
   DPRINTLN(" hPa");
 #endif
 }
@@ -159,13 +166,14 @@ void getBME280() {
 void getBMP280() {
 #ifdef USE_BMP280  
   temperature[BMP280tempPtr] = round1(bmp.readTemperature());
+  pressur[BMP280pressPtr] = round1(bmp.readPressure()/100);
   DPRINT("BMP280: ");
   DPRINT(F("Temperature = "));
   DPRINT(temperature[BMP280tempPtr]);
   DPRINT(" *C");
   
   DPRINT(F("  Pressure = "));
-  DPRINT(bmp.readPressure()/100);
+  DPRINT(pressur[BMP280pressPtr]);
   DPRINTLN(" hPa");
 #endif
 }

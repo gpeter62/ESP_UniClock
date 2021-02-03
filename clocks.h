@@ -15,7 +15,7 @@
 //#define CLOCK_8   //8266 GP PCB v3 clock with 4x IV-16 Numitron tubes (plexi box)
 //#define CLOCK_9   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes (brown box)
 //#define CLOCK_10  //8266 LED Clock with MAX7219 chip
-#define CLOCK_11  //8266 LED Clock with MM5450 chip
+//#define CLOCK_11  //8266 LED Clock with MM5450 chip
 //#define CLOCK_12  //8266 VFD Clock with PT6355 chip
 //#define CLOCK_13   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes + GPS timesync (white box)
 
@@ -29,7 +29,7 @@
 
 //#define CLOCK_40  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_41  //ESP32 D1 mini, UNFI board, 6 x Z573M Nixie tubes
-//#define CLOCK_42  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock
+#define CLOCK_42  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock
 
 //#define CLOCK_50  //ESP32 D1 mini, P.S. 2xHV5122 PCB 6xIN18 clock - development version
 
@@ -436,14 +436,18 @@
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 22
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
-  //#define USE_DALLAS_TEMP
-  //#define TEMP_DALLAS_PIN -1    //Dallas temp sensor pin.  If not used, SET TO -1    
+  #define USE_DALLAS_TEMP
+  #define TEMP_DALLAS_PIN 25    //Dallas temp sensor pin.  If not used, SET TO -1    
   //#define USE_DHT_TEMP
   //#define DHTTYPE DHT22
   //#define TEMP_DHT_PIN 25    //DHT temp sensor pin.  If not used, SET TO -1     
+  #define USE_BME280            //I2C Temperature + humidity + pressure
+  #define USE_BMP280            //I2C Temperature + barometric  pressure
+  #define USE_AHTX0             //I2C Temperature + humidity
   #define USE_SHT21             //I2C Temperature + humidity
   #define PIN_SDA 26           // you can set the used SDA and SCL pins
   #define PIN_SCL 27           // if it is not default value
+  //#define USE_MQTT
   #define MAX6921_ESP32
   byte segmentEnablePins[] =  {19,17,15,12,13,16,18,14};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
   byte digitEnablePins[] = {9,8,7,2,1,0};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
