@@ -511,34 +511,27 @@
 #ifdef CLOCK_50   //ESP32 D1 mini, P.S. 2xHV5122 PCB 6xIN18 clock   PROTOTYPE TESTING!!!
   #define DEBUG 
   #define USE_NEOPIXEL 
-  #define NEOPIXEL_PIN 2
+  #define NEOPIXEL_PIN RX
   byte tubePixels[] = {0,1,2,3,4,5};        //6 tubes, single leds
-  //#define USE_RTC
-  #define LIGHT_SENSOR_PIN 23
-  #define PIN_SDA 4             // you can set the used SDA and SCL pins
-  #define PIN_SCL 32             // if it is not default value
+  #define USE_DALLAS_TEMP
+  #define TEMP_DALLAS_PIN 26    //Dallas temp sensor pin.  If not used, SET TO -1   
+  //#define LIGHT_SENSOR_PIN 23
+  //#define PIN_SDA 4             // you can set the used SDA and SCL pins
+  //#define PIN_SCL 32             // if it is not default value
   //#define USE_DHT_TEMP
-  #define DHTTYPE DHT11
+  //#define DHTTYPE DHT11
   //#define TEMP_DHT_PIN  23
   //#define USE_BME280            //I2C Temperature + humidity + pressure
   //#define USE_BMP280            //I2C Temperature + barometric  pressure
   //#define USE_AHTX0             //I2C Temperature + humidity
-  #define USE_SHT21             //I2C Temperature + humidity
-  //#define HV5122
-  #define MAX6921_ESP32
-    //MAX6921 pins
-    #define PIN_LE    14  // Shift Register Latch Enable
-    #define PIN_CLK   13  // Shift Register Clock
-    #define PIN_DATA  27  // Shift Register Data
-    #define PIN_BL    12  // Shift Register Blank (1=display off     0=display on)
-  byte segmentEnablePins[] =  {19,17,15,12,13,16,18,14};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
-  byte digitEnablePins[] = {9,8,7,2,1,0};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
-  #define ALARMSPEAKER_PIN 26   //Alarm buzzer pin                                            
-  #define ALARMBUTTON_PIN 0    //Alarm switch off button pin 
+  //#define USE_SHT21             //I2C Temperature + humidity
+  #define HV5122
+  #define ALARMSPEAKER_PIN 16   //Alarm buzzer pin                                            
+  #define ALARMBUTTON_PIN 23    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
-  #define RADAR_PIN 4
+  //#define RADAR_PIN 4
   #define RADAR_TIMEOUT 300  //second (5min)
-  #define TUBE_POWER_PIN 4
+  //#define TUBE_POWER_PIN 4
   #define TUBE_POWER_ON  LOW
   #define ENABLE_CLOCK_DISPLAY true  
   #define DATE_REPEAT_MIN 1       //show date only every xxx minute. If zero, datum is never displayed
@@ -547,12 +540,11 @@
   #define HUMID_START 35 
   #define HUMID_END   40 
   #define SHIFT_TUBES_LEFT_BY_1 //shift left by 1 tube the display, if a thermometer is used with spec tube
-  #define TEMP_CHARCODE 4
-  #define GRAD_CHARCODE 16 
-  #define PERCENT_CHARCODE 17
-  #define DECIMALPOINT_PIN  16  //Nixie decimal point between digits. If not used, SET TO -1 
-  #define AP_NAME "UNICLOCK"
-  #define AP_PASSWORD ""   //"q1w2e3r4"
+  #define TEMP_CHARCODE 10
+  #define GRAD_CHARCODE 10 
+  #define PERCENT_CHARCODE 10
+  #define AP_NAME "UNICLOCK32"
+  #define AP_PASSWORD "" 
   #define WEBNAME "Nixie Clock HV5122"
 #endif
 

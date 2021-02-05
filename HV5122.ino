@@ -2,25 +2,25 @@
 //P.S. 6x tubes PCB version
 
 //MAX7219CNG control pins
-#define PIN_DIN  12   // DataIn
-#define PIN_CLK  13   // Clock
-#define PIN_OE   14   // OutputEnable
+#define PIN_DIN  17   // DataIn
+#define PIN_CLK  22   // Clock
+#define PIN_OE   21   // OutputEnable
 
 #define SHIFT_LSB_FIRST true  //true= LSB first, false= MSB first
 //chip0 DOUT pin is connected to chip1 DIN pin!
 
-/*
+
 const int maxDigits = 6;
 byte digitPins[maxDigits+1][10] = {
-  {121,122,123,124,125,126,127,128,129,130},  //sec   1 , chip1
-  {111,112,113,114,115,116,117,118,119,120},  //sec  10 , chip1
-  {101,102,103,104,105,106,107,108,109,110},  //min   1 , chip1
-  {21,22,23,24,25,26,27,28,29,30},            //min  10 , chip0
-  {11,12,13,14,15,16,17,18,19,20},            //hour  1 , chip0
-  {1,2,3,4,5,6,7,8,9,10},                     //hour 10 , chip0
-  {31,32,131,132,0,0,0,0,0,0}                 //extra GL dots
+  {2,10,9,8,7,6,5,4,3,1},  //sec   1 , chip0
+  {11,32,20,19,18,17,16,15,14,13},  //sec  10 , chip
+  {22,31,29,30,27,28,25,26,23,24},  //min   1 , chip0
+  {101,131,110,109,108,107,106,105,104,103},            //min  10 , chip0
+  {111,132,120,119,118,117,116,115,114,113},            //hour  1 , chip0
+  {122,129,130,127,128,125,126,123,124,121},                     //hour 10 , chip0
+  {21,12,112,102,0,0,0,0,0,0}                 //extra GL dots
   };    
-*/
+
 
 int PWMrefresh=10000;   //Brightness PWM period. Greater value => slower multiplex frequency
 
