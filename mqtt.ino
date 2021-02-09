@@ -6,7 +6,7 @@
 #define BROKER_USERNAME     "mqtt" // replace with your credentials
 #define BROKER_PASSWORD     "mqtt"
 
-byte mac[6];
+byte mac[6] = {12,14,0,0,2,3};  //This is the unique ID - set it as you want or mac address of the clock (length: 6)
 WiFiClient client;
 HADevice device(mac, sizeof(mac));
 HAMqtt mqtt(client, device);

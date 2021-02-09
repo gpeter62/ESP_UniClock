@@ -1,26 +1,23 @@
 #ifdef HV5122  //Nixie driver
 //P.S. 6x tubes PCB version
 
-//MAX7219CNG control pins
-#define PIN_DIN  17   // DataIn
-#define PIN_CLK  22   // Clock
-#define PIN_OE   21   // OutputEnable
+//HV5122 control pins
+//#define PIN_DIN  17   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
+//#define PIN_CLK  22   // Clock
+//#define PIN_OE   21   // OutputEnable
+
+//const int maxDigits = 6;
+//byte digitPins[maxDigits+1][10] = {
+//  {2,10,9,8,7,6,5,4,3,1},  //sec   1 , chip0
+//  {11,32,20,19,18,17,16,15,14,13},  //sec  10 , chip
+//  {22,31,29,30,27,28,25,26,23,24},  //min   1 , chip0
+//  {101,131,110,109,108,107,106,105,104,103},            //min  10 , chip0
+//  {111,132,120,119,118,117,116,115,114,113},            //hour  1 , chip0
+//  {122,129,130,127,128,125,126,123,124,121},                     //hour 10 , chip0
+//  {21,12,112,102,0,0,0,0,0,0}                 //extra GL dots
+//  };    
 
 #define SHIFT_LSB_FIRST true  //true= LSB first, false= MSB first
-//chip0 DOUT pin is connected to chip1 DIN pin!
-
-
-const int maxDigits = 6;
-byte digitPins[maxDigits+1][10] = {
-  {2,10,9,8,7,6,5,4,3,1},  //sec   1 , chip0
-  {11,32,20,19,18,17,16,15,14,13},  //sec  10 , chip
-  {22,31,29,30,27,28,25,26,23,24},  //min   1 , chip0
-  {101,131,110,109,108,107,106,105,104,103},            //min  10 , chip0
-  {111,132,120,119,118,117,116,115,114,113},            //hour  1 , chip0
-  {122,129,130,127,128,125,126,123,124,121},                     //hour 10 , chip0
-  {21,12,112,102,0,0,0,0,0,0}                 //extra GL dots
-  };    
-
 
 int PWMrefresh=10000;   //Brightness PWM period. Greater value => slower multiplex frequency
 

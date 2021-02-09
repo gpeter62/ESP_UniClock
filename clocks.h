@@ -31,7 +31,8 @@
 //#define CLOCK_41  //ESP32 D1 mini, UNFI board, 6 x Z573M Nixie tubes
 #define CLOCK_42  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock
 
-//#define CLOCK_50  //ESP32 D1 mini, P.S. 2xHV5122 PCB 6xIN18 clock - development version
+//#define CLOCK_50   //ESP32 D1 mini,UNFI 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
+//#define CLOCK_51   //ESP32 D1 mini, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 
 //______________________ESP8266 CLOCKS by UNFI and GP ______________________________________________________
 #ifdef CLOCK_1   //8266, UNFI PCB clock, 4x IN-16 tubes
@@ -482,9 +483,9 @@
   //#define USE_DHT_TEMP
   #define DHTTYPE DHT22
   #define TEMP_DHT_PIN 25    //DHT temp sensor pin.  If not used, SET TO -1     
-  #define USE_SHT21             //I2C Temperature + humidity
-  #define PIN_SDA 26           // you can set the used SDA and SCL pins
-  #define PIN_SCL 27           // if it is not default value
+  #define USE_SHT21          //I2C Temperature + humidity
+  #define PIN_SDA 26         // you can set the used SDA and SCL pins
+  #define PIN_SCL 27         // if it is not default value
   #define MAX6921_ESP32
   byte segmentEnablePins[] =  {19,17,15,12,13,16,18,14};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
   byte digitEnablePins[] = {9,8,7,2,1,0};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
@@ -495,7 +496,7 @@
   #define HUMID_START 35 
   #define HUMID_END   40 
   //MAX6921 pins
-    #define PIN_LE    4  // Shift Register Latch Enable
+    #define PIN_LE    4   // Shift Register Latch Enable
     #define PIN_CLK   17  // Shift Register Clock
     #define PIN_DATA  16  // Shift Register Data
     #define PIN_BL    32  // Shift Register Blank (1=display off     0=display on)
@@ -508,7 +509,7 @@
 #endif
 
 
-#ifdef CLOCK_50   //ESP32 D1 mini, P.S. 2xHV5122 PCB 6xIN18 clock   PROTOTYPE TESTING!!!
+#ifdef CLOCK_50   //ESP32 D1 mini,UNFI 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
   #define DEBUG 
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN RX
@@ -526,6 +527,74 @@
   //#define USE_AHTX0             //I2C Temperature + humidity
   //#define USE_SHT21             //I2C Temperature + humidity
   #define HV5122
+  #define PIN_DIN  17   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
+  #define PIN_CLK  22   // Clock
+  #define PIN_OE   21   // OutputEnable
+  const int maxDigits = 6;
+  byte digitPins[maxDigits+1][10] = {
+    {2,10,9,8,7,6,5,4,3,1},  //sec   1 , chip0
+    {11,32,20,19,18,17,16,15,14,13},  //sec  10 , chip
+    {22,31,29,30,27,28,25,26,23,24},  //min   1 , chip0
+    {101,131,110,109,108,107,106,105,104,103},            //min  10 , chip0
+    {111,132,120,119,118,117,116,115,114,113},            //hour  1 , chip0
+    {122,129,130,127,128,125,126,123,124,121},                     //hour 10 , chip0
+    {21,12,112,102,0,0,0,0,0,0}                 //extra GL dots
+    };    
+
+  #define ALARMSPEAKER_PIN 16   //Alarm buzzer pin                                            
+  #define ALARMBUTTON_PIN 23    //Alarm switch off button pin 
+  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
+  //#define RADAR_PIN 4
+  #define RADAR_TIMEOUT 300  //second (5min)
+  //#define TUBE_POWER_PIN 4
+  #define TUBE_POWER_ON  LOW
+  #define ENABLE_CLOCK_DISPLAY true  
+  #define DATE_REPEAT_MIN 1       //show date only every xxx minute. If zero, datum is never displayed
+  #define DATE_START  00
+  #define TEMP_END    35 
+  #define HUMID_START 35 
+  #define HUMID_END   40 
+  #define SHIFT_TUBES_LEFT_BY_1 //shift left by 1 tube the display, if a thermometer is used with spec tube
+  #define TEMP_CHARCODE 10
+  #define GRAD_CHARCODE 10 
+  #define PERCENT_CHARCODE 10
+  #define AP_NAME "UNICLOCK32"
+  #define AP_PASSWORD "" 
+  #define WEBNAME "UNFI Nixie Clock HV5122"
+#endif
+
+#ifdef CLOCK_51   //ESP32 D1 mini, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
+  #define DEBUG 
+  #define USE_NEOPIXEL 
+  #define NEOPIXEL_PIN RX
+  byte tubePixels[] = {0,1,2,3,4,5};        //6 tubes, single leds
+  #define USE_DALLAS_TEMP
+  #define TEMP_DALLAS_PIN 26    //Dallas temp sensor pin.  If not used, SET TO -1   
+  //#define LIGHT_SENSOR_PIN 23
+  //#define PIN_SDA 4             // you can set the used SDA and SCL pins
+  //#define PIN_SCL 32             // if it is not default value
+  //#define USE_DHT_TEMP
+  //#define DHTTYPE DHT11
+  //#define TEMP_DHT_PIN  23
+  //#define USE_BME280            //I2C Temperature + humidity + pressure
+  //#define USE_BMP280            //I2C Temperature + barometric  pressure
+  //#define USE_AHTX0             //I2C Temperature + humidity
+  //#define USE_SHT21             //I2C Temperature + humidity
+  #define HV5122
+  #define PIN_DIN  12   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
+  #define PIN_CLK  13   // Clock
+  #define PIN_OE   14   // OutputEnable
+  const int maxDigits = 6;
+  byte digitPins[maxDigits+1][10] = {
+    {121,122,123,124,125,126,127,128,129,130},  //sec   1 , chip1
+    {111,112,113,114,115,116,117,118,119,120},  //sec  10 , chip1
+    {101,102,103,104,105,106,107,108,109,110},  //min   1 , chip1
+    {21,22,23,24,25,26,27,28,29,30},            //min  10 , chip0
+    {11,12,13,14,15,16,17,18,19,20},            //hour  1 , chip0
+    {1,2,3,4,5,6,7,8,9,10},                     //hour 10 , chip0
+    {31,32,131,132,0,0,0,0,0,0}                 //extra GL dots
+    };    
+
   #define ALARMSPEAKER_PIN 16   //Alarm buzzer pin                                            
   #define ALARMBUTTON_PIN 23    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
