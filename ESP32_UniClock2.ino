@@ -1098,10 +1098,10 @@ void timeProgram() {
     #ifdef DATE_REPEAT_MIN
       if (showDate) {
         int dateRepeatPush = 0;
-        if ((lastCathodeProt>=0) && (lastCathodeProt % DATE_REPEAT_MIN == 0)) {
-          dateRepeatPush = 1;  //shift date display by 1 minute
-          DPRINTLN("Shift Date display by 1 min");
-        }
+        //if ((lastCathodeProt>=0) && (lastCathodeProt % DATE_REPEAT_MIN == 0)) {
+        //  dateRepeatPush = 1;  //shift date display by 1 minute
+        //  DPRINTLN("Shift Date display by 1 min");
+        //}
         if ((DATE_REPEAT_MIN==0) || ((minute() % DATE_REPEAT_MIN) != dateRepeatPush)) {
           showDate = false;
         }
