@@ -105,7 +105,7 @@
   //#define AP_PASSWORD ""	   		//AP password
   //#define WEBNAME "LED UniClock"  //Clock's name on the web page
 */
-#define TIMESERVER_REFRESH 86400000     //7200000   Refresh time in millisec   86400000 = 24h
+#define TIMESERVER_REFRESH 7200000     //7200000   Refresh time in millisec   86400000 = 24h
 unsigned long timeserverErrors = 0;        //timeserver refresh errors
 
 boolean autoBrightness = false; //Enable automatic brightness levels

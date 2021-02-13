@@ -15,84 +15,113 @@
 //  {111,132,120,119,118,117,116,115,114,113},            //hour  1 , chip0
 //  {122,129,130,127,128,125,126,123,124,121},                     //hour 10 , chip0
 //  {21,12,112,102,0,0,0,0,0,0}                 //extra GL dots
-//  };    
+//  };
 
-#define SHIFT_LSB_FIRST true  //true= LSB first, false= MSB first
-
-int PWMrefresh=10000;   //Brightness PWM period. Greater value => slower multiplex frequency
+#define SHIFT_LSB_FIRST false  //true= LSB first, false= MSB first
+#define MAXBRIGHT 10
+int PWMrefresh = 10000; //Brightness PWM period. Greater value => slower brightness PWM frequency
+int PWMtiming[MAXBRIGHT+1] = {0,500,800,1200,2000,2500,3000,4500,6000,8000,10000};
 
 void setup_pins() {
   DPRINTLN("Setup pins -  HV5122 Nixie driver...");
   DPRINT("- CLK   : GPIO"); DPRINTLN(PIN_CLK);
   DPRINT("- DATAIN: GPIO"); DPRINTLN(PIN_DIN);
   DPRINT("- OUTPUT_ENABLE: GPIO"); DPRINTLN(PIN_OE);
-  pinMode(PIN_CLK,OUTPUT);  regPin(PIN_CLK,"PIN_CLK");
-  pinMode(PIN_DIN,OUTPUT);  regPin(PIN_DIN,"PIN_CLK");
-  pinMode(PIN_OE,OUTPUT);   regPin(PIN_OE,"PIN_CLK");
-  digitalWrite(PIN_CLK,HIGH);
-  digitalWrite(PIN_OE,LOW);
+  pinMode(PIN_CLK, OUTPUT);  regPin(PIN_CLK, "PIN_CLK");
+  pinMode(PIN_DIN, OUTPUT);  regPin(PIN_DIN, "PIN_DIN");
+  pinMode(PIN_OE, OUTPUT);   regPin(PIN_OE, "PIN_OE");
+  digitalWrite(PIN_CLK, HIGH);
+  digitalWrite(PIN_OE, LOW);
   clearTubes();
   startTimer();
 }
 
 
 #if defined(ESP32)
-void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
-#else 
-void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
+void IRAM_ATTR writeDisplay() { //void IRAM_ATTR  writeDisplay(){
+#else
+void ICACHE_RAM_ATTR writeDisplay() {       //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
 #endif
-
   static volatile int brightCounter = 1;
+  static volatile int timer = PWMrefresh;
+  static volatile boolean state=true;
+  static volatile byte brightness;
+  static int PWMtimeBrightness;
+
+  intCounter++;
+  if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
+    #if defined(ESP8266)
+      timer1_write(PWMrefresh);
+    #endif  
+    return;
+  }
   
   #if defined(ESP32)
     portENTER_CRITICAL_ISR(&timerMux);
+    noInterrupts();
   #endif
+
+  brightness = displayON ?  prm.dayBright : prm.nightBright;
+  if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
+
+  if (autoBrightness && displayON)
+    PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * LuxValue / MAXIMUM_LUX);
+  else
+    PWMtimeBrightness = PWMtiming[brightness];
   
-  intCounter++;
-  if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
-    #if defined(ESP8266)  
-      digitalWrite(digitEnablePins[pos],LOW); 
-      timer1_write(PWMrefresh);
-    #elif defined(ESP32)
-      portEXIT_CRITICAL(&timerMux);
-    #endif    
-    return;  
+  if ((!autoBrightness) && (brightness==MAXBRIGHT))  
+    state = true;
+  
+  if (state) {  //ON state
+    timer = PWMtimeBrightness;
+    timerON = timer;
+  }
+  else {  //OFF state
+    timer = PWMrefresh-PWMtimeBrightness;
+    timerOFF = timer;  
+  }
+  if (timer<500) timer = 500;  //safety only...
+  
+  if ( (brightness == 0) || (!state) || (!radarON)) {  //OFF state, blank digit
+    digitalWrite(PIN_OE, LOW); //OFF
+    }
+  else {  //ON state
+    digitalWrite(PIN_OE, HIGH);   //ON
   }
   
-  if ((displayON ?  prm.dayBright : prm.nightBright)<brightCounter)  digitalWrite(PIN_OE,HIGH);
-  else  digitalWrite(PIN_OE,LOW);
-  
-  brightCounter++;   if (brightCounter>MAXBRIGHTNESS) brightCounter = 1;
-  
-  #if defined(ESP8266)    
-    timer1_write(timer);
-  #elif defined(ESP32)     
-    ESP32timer = timerBegin(0, PRESCALER, true);  //set prescaler, true = edge generated signal
-    timerAttachInterrupt(ESP32timer, &writeDisplay, true);   
-    timerAlarmWrite(ESP32timer, PWMrefresh, false);   
-    timerAlarmEnable(ESP32timer);
-    portEXIT_CRITICAL_ISR(&timerMux);
-  #endif    
+  state = !state; 
+   
+#if defined(ESP8266)
+  timer1_write(timer);
+#elif defined(ESP32)
+  portEXIT_CRITICAL_ISR(&timerMux);
+  //ESP32timer = timerBegin(0, PRESCALER, true);  //set prescaler, true = edge generated signal
+  //timerAttachInterrupt(ESP32timer, &writeDisplay, true);   
+  timerAlarmWrite(ESP32timer, timer, true);   
+  timerAlarmEnable(ESP32timer);
+  interrupts();
+#endif
 }
 
 
+
 #if defined(ESP32)
-void IRAM_ATTR shift(uint32_t Data){  
-#else 
-void ICACHE_RAM_ATTR shift(uint32_t Data){      
+void IRAM_ATTR shift(uint32_t Data) {
+#else
+void ICACHE_RAM_ATTR shift(uint32_t Data) {
 #endif
   static boolean b;
 
-  for (uint32_t i=0;i<32;i++) {
-    digitalWrite(PIN_CLK,HIGH);
-    if (SHIFT_LSB_FIRST) 
-      b = ((Data & (uint32_t(1)<<i)))>0;      //LSB first
-    else                 
-      b = (Data & (uint32_t(1)<<(31-i)))>0;   //MSB first
+  for (uint32_t i = 0; i < 32; i++) {
+    digitalWrite(PIN_CLK, HIGH);
+    if (SHIFT_LSB_FIRST)
+      b = ((Data & (uint32_t(1) << i))) > 0;  //LSB first
+    else
+      b = (Data & (uint32_t(1) << (31 - i))) > 0; //MSB first
     digitalWrite(PIN_DIN, b);
-    digitalWrite(PIN_CLK,LOW);   //falling CLK  to store DIN
+    digitalWrite(PIN_CLK, LOW);  //falling CLK  to store DIN
   }
-  digitalWrite(PIN_CLK,HIGH);
+  digitalWrite(PIN_CLK, HIGH);
 }
 
 void clearTubes() {
@@ -102,37 +131,95 @@ void clearTubes() {
 
 void writeDisplaySingle() {
   static unsigned long lastRun = 0;
-  uint32_t bitBuffer0=0;
-  uint32_t bitBuffer1=0;
+  uint32_t bitBuffer0 = 0;
+  uint32_t bitBuffer1 = 0;
   byte num;
+  static uint32_t cnt = 0;
 
-  if ((millis()-lastRun)<500) return;   //for test only, to slow down!!!
+  if ((millis() - lastRun) < 100) return; //slow down!!!
   lastRun = millis();
-  
-  for (int i=0;i<maxDigits;i++) {  //Set the clock digits
-    num = digit[i]; 
-    if (num<10) {
-        if (digitPins[i][num] <100) bitBuffer0 |= (uint32_t)(1<<digitPins[i][num]);  //chip0
-        else                        bitBuffer1 |= (uint32_t)(1<<(digitPins[i][num]-100));  //chip1  
+ 
+  bitBuffer0 = 0; bitBuffer1 = 0;
+  for (int i = 0; i < maxDigits; i++) { //Set the clock digits
+    num = digit[i];
+    if (num < 10) {
+      if (digitPins[i][num] < 100) {
+        bitBuffer0 |= (uint32_t)(1 << (digitPins[i][num]-1)); 
+        //DPRINT(digitPins[i][num]); DPRINT(":");
+        } //chip0
+      else {
+        bitBuffer1 |= (uint32_t)(1 << (digitPins[i][num] - 101)); 
+        //DPRINT(digitPins[i][num]);DPRINT(":");} //chip1
       }
+    }
   }  //end for i
 
-  for (int i=0;i<4;i++) {   //Set the extra GL dots
-    if (colonBlinkState || i<2) {
-        if (digitPins[maxDigits][i] <100) bitBuffer0 |= (uint32_t)(1<<digitPins[maxDigits][i]); //chip0
-        else                              bitBuffer1 |= (uint32_t)(1<<(digitPins[maxDigits][i]-100)); //chip1  
-      }  
+  for (int i = 0; i < maxDigits-1; i++) { //Set the extra decimal point dots
+    if (digitDP[i] && digitPins[maxDigits][i]>0) {
+      if (digitPins[maxDigits][i] < 100) 
+        bitBuffer0 |= (uint32_t)(1 << (digitPins[maxDigits][i]-1)); //chip0
+      else
+        bitBuffer1 |= (uint32_t)(1 << (digitPins[maxDigits][i] - 101)); //chip1
+    }
   }  //end for i
-  
-  shift(bitBuffer1);   
+
+  //bitBuffer0 = 1<<cnt;  bitBuffer1 = 1<<cnt;  cnt++;  if (cnt>32) cnt = 0;  DPRINTLN(cnt);
+  shift(bitBuffer1);
   //delayMicroseconds(1);   //for testing on oscilloscope
-  shift(bitBuffer0);   
-  showBits(bitBuffer1);  showBits(bitBuffer0);   DPRINTLN(" "); 
+  shift(bitBuffer0);
+  //showBits(bitBuffer1);  showBits(bitBuffer0);   DPRINTLN(" ");
 }
-  
-void showBits(uint32_t bits) {  
-  for (uint32_t i=0;i<32;i++) 
-    if (bits & (1<<i)) DPRINT("1"); else DPRINT("0");
+
+//For testing -------------------
+/*
+void test() {
+  digitalWrite(PIN_OE, HIGH);
+  clearTubes();
+  for (int j=0;j<2;j++)
+    for (uint32_t i=0;i<32;i++) {
+      DPRINT("D"); DPRINT(i+1); DPRINT(": ");
+      shift((uint32_t)(1 << (i))); 
+      DPRINTLN((uint32_t)(1 << (i)),HEX);
+      delay(3000);
+    }
+}
+
+void testTubes2() {
+while (true) {
+   
+  DPRINTLN("Testing tubes: ");
+  for (int i = 0; i < 10; i++) {
+    DPRINT(i); DPRINT(" ");
+    for (int j = 0; j < maxDigits; j++) {
+      digit[j] = i;
+      digitDP[j] = i % 2;
+    }
+    //changeDigit();
+ 
+    writeDisplaySingle();
+    delay(3000);
+    yield();
+  }
+  }  //end while
+}
+
+void showBits(uint32_t bits) {
+  boolean b;
+
+  for (uint32_t i = 0; i < 32; i++) {
+     if (SHIFT_LSB_FIRST)
+      b = ((bits & (uint32_t(1) << i))) > 0;  //LSB first
+    else
+      b = (bits & (uint32_t(1) << (31 - i))) > 0; //MSB first
+    if (b) {
+      DPRINT("1");
+    }
+    else {
+      DPRINT("0");
+    }
+  }  //end for
   DPRINT("-");
 }
+
+*/
 #endif

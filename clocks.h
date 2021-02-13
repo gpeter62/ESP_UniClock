@@ -29,9 +29,9 @@
 
 //#define CLOCK_40  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_41  //ESP32 D1 mini, UNFI board, 6 x Z573M Nixie tubes
-#define CLOCK_42  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock
+//#define CLOCK_42  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock
 
-//#define CLOCK_50   //ESP32 D1 mini,UNFI 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
+#define CLOCK_50   //ESP32 D1 mini,UNFI 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_51   //ESP32 D1 mini, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 
 //______________________ESP8266 CLOCKS by UNFI and GP ______________________________________________________
@@ -512,9 +512,9 @@
 #ifdef CLOCK_50   //ESP32 D1 mini,UNFI 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
   #define DEBUG 
   #define USE_NEOPIXEL 
-  #define NEOPIXEL_PIN RX
+  #define NEOPIXEL_PIN 2
   byte tubePixels[] = {0,1,2,3,4,5};        //6 tubes, single leds
-  #define USE_DALLAS_TEMP
+  //#define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN 26    //Dallas temp sensor pin.  If not used, SET TO -1   
   //#define LIGHT_SENSOR_PIN 23
   //#define PIN_SDA 4             // you can set the used SDA and SCL pins
@@ -527,8 +527,8 @@
   //#define USE_AHTX0             //I2C Temperature + humidity
   //#define USE_SHT21             //I2C Temperature + humidity
   #define HV5122
-  #define PIN_DIN  17   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
-  #define PIN_CLK  22   // Clock
+  #define PIN_DIN  22   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
+  #define PIN_CLK  17   // Clock
   #define PIN_OE   21   // OutputEnable
   const int maxDigits = 6;
   byte digitPins[maxDigits+1][10] = {
@@ -537,10 +537,9 @@
     {22,31,29,30,27,28,25,26,23,24},  //min   1 , chip0
     {101,131,110,109,108,107,106,105,104,103},            //min  10 , chip0
     {111,132,120,119,118,117,116,115,114,113},            //hour  1 , chip0
-    {122,129,130,127,128,125,126,123,124,121},                     //hour 10 , chip0
-    {21,12,112,102,0,0,0,0,0,0}                 //extra GL dots
+    {122,129,130,127,128,125,126,123,124,121},            //hour 10 , chip0
+    {0,12,21,102,112,0,    0,0,0,0}                 //extra GL dots
     };    
-
   #define ALARMSPEAKER_PIN 16   //Alarm buzzer pin                                            
   #define ALARMBUTTON_PIN 23    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
@@ -550,10 +549,6 @@
   #define TUBE_POWER_ON  LOW
   #define ENABLE_CLOCK_DISPLAY true  
   #define DATE_REPEAT_MIN 1       //show date only every xxx minute. If zero, datum is never displayed
-  #define DATE_START  00
-  #define TEMP_END    35 
-  #define HUMID_START 35 
-  #define HUMID_END   40 
   #define SHIFT_TUBES_LEFT_BY_1 //shift left by 1 tube the display, if a thermometer is used with spec tube
   #define TEMP_CHARCODE 10
   #define GRAD_CHARCODE 10 
