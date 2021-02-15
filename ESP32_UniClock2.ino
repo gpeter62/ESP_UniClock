@@ -146,7 +146,6 @@ unsigned long intCounter = 0;   //for testing only, interrupt counter
   
   //#include <WiFi.h>
   #include <esp_wifi.h>
-  #include <DNSServer.h>
   //#include <ESPmDNS.h>
   #include "AsyncTCP.h"
   #include "SPIFFS.h"
@@ -160,6 +159,7 @@ unsigned long intCounter = 0;   //for testing only, interrupt counter
   #error "Board is not supported!"
 #endif
 
+#include <DNSServer.h>
 DNSServer dnsServer;
 #include "ESPAsyncWebServer.h"
 #include <NTPClient.h>
@@ -186,7 +186,7 @@ const char* ssid = AP_NAME;  // Enter SSID here
 const char* password = AP_PASSWORD;  //Enter Password here
 char webName[] = WEBNAME;
 AsyncWebServer server(80);
-DNSServer dns;
+//DNSServer dns;
 #define CACHE_MAX_AGE "max-age=31536000" //maximum is: 31536000
 
 //#include <WiFiMulti.h>
@@ -439,7 +439,7 @@ void startWifiMode() {
 #if defined(ESP32)
   esp_wifi_set_ps (WIFI_PS_NONE);
 #endif
-  AsyncWiFiManager MyWifiManager(&server, &dns);
+  AsyncWiFiManager MyWifiManager(&server, &dnsServer);
   MyWifiManager.setAPCallback(configModeCallback);
   //MyWifiManager.setConfigPortalTimeout(180);
   for (int i = 0; i < 5; i++) {
@@ -939,6 +939,7 @@ void setup() {
   #endif
   #if TUBE_POWER_PIN >= 0
     pinMode(TUBE_POWER_PIN, OUTPUT); regPin(TUBE_POWER_PIN,"TUBE_POWER_PIN");
+    digitalWrite(TUBE_POWER_PIN,TUBE_POWER_ON);
     DPRINT("  - ON state:"); 
     if (TUBE_POWER_ON == HIGH) {DPRINTLN("HIGH"); }
     else {DPRINTLN("LOW"); }
