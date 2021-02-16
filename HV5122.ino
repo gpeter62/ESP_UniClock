@@ -7,15 +7,19 @@
 //#define PIN_OE   21   // OutputEnable
 
 //const int maxDigits = 6;
-//byte digitPins[maxDigits+1][10] = {
-//  {2,10,9,8,7,6,5,4,3,1},  //sec   1 , chip0
-//  {11,32,20,19,18,17,16,15,14,13},  //sec  10 , chip
-//  {22,31,29,30,27,28,25,26,23,24},  //min   1 , chip0
-//  {101,131,110,109,108,107,106,105,104,103},            //min  10 , chip0
-//  {111,132,120,119,118,117,116,115,114,113},            //hour  1 , chip0
-//  {122,129,130,127,128,125,126,123,124,121},                     //hour 10 , chip0
-//  {21,12,112,102,0,0,0,0,0,0}                 //extra GL dots
-//  };
+
+//Data pin numbers 100+ means: chip1 pins are used. Chip0-s DOUT is connected to chip1's DIN
+/* Example:
+  byte digitPins[maxDigits+1][10] = {
+    {2,10,9,8,7,6,5,4,3,1},                      //sec  1 , chip0  (tube#0)
+    {11,32,20,19,18,17,16,15,14,13},             //sec  10 , chip0 (tube#1)
+    {22,31,29,30,27,28,25,26,23,24},             //min   1 , chip0 (tube#2)
+    {101,131,110,109,108,107,106,105,104,103},   //min  10 , chip1 (tube#3)
+    {111,132,120,119,118,117,116,115,114,113},   //hour  1 , chip1 (tube#4)
+    {122,129,130,127,128,125,126,123,124,121},   //hour 10 , chip1 (tube#5)
+    {0,12,21,102,112,0,    0,0,0,0}              //extra decimal point (tube0...tube6)
+    };   
+*/
 
 #define SHIFT_LSB_FIRST false  //true= LSB first, false= MSB first
 #define MAXBRIGHT 10
@@ -154,6 +158,11 @@ void writeDisplaySingle() {
     }
   }  //end for i
 
+  #ifdef  MAKE_BLINKING_DOTS //it means, the extra datapins are used as 4 blinking dot instead of decimal points!
+    digitDP[1] = digitDP[2]; //left two dots
+    digitDP[3] = digitDP[4]; //right two dots
+  #endif
+  
   for (int i = 0; i < maxDigits-1; i++) { //Set the extra decimal point dots
     if (digitDP[i] && digitPins[maxDigits][i]>0) {
       if (digitPins[maxDigits][i] < 100) 
