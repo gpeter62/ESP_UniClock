@@ -32,8 +32,9 @@
 //#define CLOCK_42  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock SHT21
 
 //#define CLOCK_50   //ESP32 D1 mini, UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
-#define CLOCK_51   //ESP32 D1 mini, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
+//#define CLOCK_51   //ESP32 D1 mini, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_52   //ESP8266 Wemos D1 mini,UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
+#define CLOCK_55   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
 
 //______________________ESP8266 CLOCKS by UNFI and GP ______________________________________________________
 #ifdef CLOCK_1   //8266, UNFI PCB clock, 4x IN-16 tubes
@@ -681,6 +682,55 @@
   #define AP_PASSWORD "" 
   #define WEBNAME "UNFI Nixie Clock HV5122"
 #endif
+
+#ifdef CLOCK_55   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
+  #define DEBUG
+  #define DOUBLE_BLINK 
+  //#define USE_NEOPIXEL 
+  //#define NEOPIXEL_PIN RX
+  byte tubePixels[] = {0,1,2,3,4,5};        //6 tubes, single leds
+  #define USE_DALLAS_TEMP
+  #define TEMP_DALLAS_PIN 14    //Dallas temp sensor pin.  If not used, SET TO -1   
+  //#define LIGHT_SENSOR_PIN 23
+  //#define PIN_SDA 4             // you can set the used SDA and SCL pins
+  //#define PIN_SCL 32             // if it is not default value
+  //#define USE_DHT_TEMP
+  //#define DHTTYPE DHT11
+  //#define TEMP_DHT_PIN  23
+  //#define USE_BME280            //I2C Temperature + humidity + pressure
+  //#define USE_BMP280            //I2C Temperature + barometric  pressure
+  //#define USE_AHTX0             //I2C Temperature + humidity
+  //#define USE_SHT21             //I2C Temperature + humidity
+  #define HV5122
+  #define PIN_DIN  23   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
+  #define PIN_CLK  18   // Clock
+  #define PIN_OE   5  // OutputEnable
+  const int maxDigits = 6;
+  byte digitPins[maxDigits+1][10] = {
+    {121,122,123,124,125,126,127,128,129,130},  //sec   1 , chip1
+    {111,112,113,114,115,116,117,118,119,120},  //sec  10 , chip1
+    {101,102,103,104,105,106,107,108,109,110},  //min   1 , chip1
+    {21,22,23,24,25,26,27,28,29,30},            //min  10 , chip0
+    {11,12,13,14,15,16,17,18,19,20},            //hour  1 , chip0
+    {1,2,3,4,5,6,7,8,9,10},                     //hour 10 , chip0
+    {0,31,32,131,132,0,0,0,0,0}                 //extra GL dots
+    };    
+  //#define ALARMSPEAKER_PIN 26   //Alarm buzzer pin                                            
+  //#define ALARMBUTTON_PIN 2    //Alarm switch off button pin 
+  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
+  //#define RADAR_PIN 4
+  //#define RADAR_TIMEOUT 300  //second (5min)
+  //#define TUBE_POWER_PIN 16
+  #define TUBE_POWER_ON  LOW
+  #define ENABLE_CLOCK_DISPLAY true  
+  #define TEMP_CHARCODE 10
+  #define GRAD_CHARCODE 10 
+  #define PERCENT_CHARCODE 10
+  #define AP_NAME "UNICLOCK32"
+  #define AP_PASSWORD "" 
+  #define WEBNAME "NCS312 Nixie Clock"
+#endif
+
 
 //__________________________________________________________________________________________________________________________
 //if not defined, here is defined as NOT USED
