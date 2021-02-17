@@ -6,6 +6,7 @@
 //#define USE_BMP280
 //#define USE_AHTX0
 //#define USE_SHT21
+//#define USE_BH1750
 
 #include <Wire.h>
 #include <SPI.h>
@@ -14,6 +15,7 @@ boolean BME280exist = false;
 boolean BMP280exist = false;
 boolean AHTX0exist = false;
 boolean SHT21exist = false;
+boolean BH1750exist = false;
 
 #ifdef USE_BME280
   #include <Adafruit_BME280.h>
@@ -50,6 +52,11 @@ boolean SHT21exist = false;
   float SHT21temp,SHT21humid =0;
   byte SHT21tempPtr;
   byte SHT21humidPtr;
+#endif
+
+#ifdef USE_BH1750
+  #include <BH1750.h>
+  BH1750 lightMeter(0x23);
 #endif
 
 void setupI2Csensors() {
@@ -138,8 +145,19 @@ void setupI2Csensors() {
     useHumid++;    
   }
 #endif  
+
+#ifdef USE_BH1750
+  if (lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE)) {
+    DPRINTLN("BH1750 luxmeter sensor found");
+    BH1750exist = true;
+  }
+  else {
+    DPRINTLN("Error initialising BH1750 on address 0x23");
+  }
+#endif
+
   DPRINTLN(" ");
-}
+} //end of SetupI2Csensors()
 
 
 void getBME280() {
@@ -213,6 +231,22 @@ void getSHT21() {
 #endif
 }
 
+int getBH1750() {
+#ifdef USE_BH1750
+
+  static float oldLux = MAXIMUM_LUX;
+  
+  if (lightMeter.measurementReady()) {
+    float lux = lightMeter.readLightLevel();
+    DPRINT("BH1750 Light: "); DPRINT(lux); DPRINTLN(" lx");
+    
+    if (lux>MAXIMUM_LUX) lux = MAXIMUM_LUX;   //Limited //Limit lux value to maximum
+    oldLux = oldLux + (lux-oldLux)/10;   //slow down Lux change
+  }
+  return (int)oldLux;
+#endif
+}
+
 void getI2Csensors() {
   static unsigned long lastRun = 0;
 
@@ -222,6 +256,7 @@ void getI2Csensors() {
   if (BMP280exist) getBMP280();
   if (AHTX0exist) getAHTX0();
   if (SHT21exist) getSHT21();
+  if (BH1750exist) getBH1750();
 }
 
 

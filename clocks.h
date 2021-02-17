@@ -31,10 +31,10 @@
 //#define CLOCK_41  //ESP32 D1 mini, UNFI board, 6 x Z573M Nixie tubes
 //#define CLOCK_42  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock SHT21
 
-//#define CLOCK_50   //ESP32 D1 mini, UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
+#define CLOCK_50   //ESP32 D1 mini, UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_51   //ESP32 D1 mini, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_52   //ESP8266 Wemos D1 mini,UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
-#define CLOCK_55   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
+//#define CLOCK_55   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
 
 //______________________ESP8266 CLOCKS by UNFI and GP ______________________________________________________
 #ifdef CLOCK_1   //8266, UNFI PCB clock, 4x IN-16 tubes
@@ -529,8 +529,8 @@
   //#define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN 26    //Dallas temp sensor pin.  If not used, SET TO -1   
   //#define LIGHT_SENSOR_PIN 23
-  //#define PIN_SDA 4             // you can set the used SDA and SCL pins
-  //#define PIN_SCL 32             // if it is not default value
+  #define PIN_SDA 4             // you can set the used SDA and SCL pins
+  #define PIN_SCL 32             // if it is not default value
   //#define USE_DHT_TEMP
   //#define DHTTYPE DHT11
   //#define TEMP_DHT_PIN  23
@@ -538,6 +538,7 @@
   //#define USE_BMP280            //I2C Temperature + barometric  pressure
   //#define USE_AHTX0             //I2C Temperature + humidity
   //#define USE_SHT21             //I2C Temperature + humidity
+  #define USE_BH1750            //I2C luxmeter sensor
 //_______________________________ HV5122 setup ____________________________________________________  
   #define HV5122
   #define PIN_DIN  22   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
@@ -687,7 +688,7 @@
   #define DEBUG
   #define DOUBLE_BLINK 
   //#define USE_NEOPIXEL 
-  //#define NEOPIXEL_PIN RX
+  #define NEOPIXEL_PIN 22
   byte tubePixels[] = {0,1,2,3,4,5};        //6 tubes, single leds
   #define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN 14    //Dallas temp sensor pin.  If not used, SET TO -1   
@@ -713,8 +714,13 @@
     {21,22,23,24,25,26,27,28,29,30},            //min  10 , chip0
     {11,12,13,14,15,16,17,18,19,20},            //hour  1 , chip0
     {1,2,3,4,5,6,7,8,9,10},                     //hour 10 , chip0
-    {0,31,32,131,132,0,0,0,0,0}                 //extra GL dots
+    {0,131,132,31,32,0,0,0,0,0}                 //extra GL dots
     };    
+  #define MAKE_BLINKING_DOTS 
+  #define USE_PWMLEDS
+  #define PWM1_PIN 27  //Uno: D6
+  #define PWM2_PIN 13  //Uno: D9
+  #define PWM3_PIN 25  //Uno: D3
   //#define ALARMSPEAKER_PIN 26   //Alarm buzzer pin                                            
   //#define ALARMBUTTON_PIN 2    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
@@ -746,7 +752,7 @@
   #define TEMP_DHT_PIN -1     //DHT temp sensor pin.
 #endif
 
-#if defined(USE_BME280) || defined(USE_BMP280) || defined(USE_AHTX0) || defined(USE_SHT21)
+#if defined(USE_BME280) || defined(USE_BMP280) || defined(USE_AHTX0) || defined(USE_SHT21) || defined(USE_BH1750)
   #define USE_I2CSENSORS
 #endif
 

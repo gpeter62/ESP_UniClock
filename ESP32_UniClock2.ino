@@ -35,9 +35,11 @@
   //#define USE_BMP280      //I2C Temperature + barometric pressure, SDA+SCL I2C pins are used!   
   //#define USE_AHTX0       //I2C Temperature + humidity, SDA+SCL I2C pins are used!   
   //#define USE_SHT21       //I2C Temperature + humidity, SDA+SCL I2C pins are used!   
+  //#define USE_BH1750      //I2C Luxmeter sensor, SDA+SCL I2C pins are used!   
   //#define USE_RTC         //DS3231 realtime clock, SDA+SCL I2C pins are used!   
   //#define USE_GPS         //use for standalone clock, without wifi internet access
   //#define USE_NEOPIXEL    //WS2812B led stripe, for tubes backlight. Don't forget to define tubePixels[] !
+  //#define USE_PWMLEDS     //WWM led driver on 3 pins for RG
   //#define USE_MQTT        //Home Assistant integration: https://www.home-assistant.io/
 
   //----- DRIVER SELECTION ------ Use only 1 driver from the following options in the clocks.h file!
@@ -75,13 +77,14 @@
   //#define RADAR_TIMEOUT 300     //Automatic switch off tubes (without radar detecting somebody) after xxx sec
   //#define TUBE_POWER_PIN -1     //Filament or HV switch ON/OFF pin
   //#define TUBE_POWER_ON HIGH    //HIGH or LOW level is needed to switch ON the TUBE POWER?
-  
   //#define LIGHT_SENSOR_PIN -1   //Environment light sensor, only ADC pins are usable! ESP32 for example: 34,35,36,39... 8266: only A0
   //#define REF_RESISTANCE    10000.0         // Resistor value is 10k, between LDR sensor and GND
   //#define MAXIMUM_LUX 100                   //Lux level for maximum tube brightness
   //#define LUX_CALC_SCALAR   12518931 * 1.2  //Calibrate here the LDR sensor
   //#define LUX_CALC_EXPONENT -1.405          //LDR sensor characteristic
-
+  //#define PWM1_PIN -1  //red   channel if USE_PWMLEDS is defined
+  //#define PWM2_PIN -1  //green channel if USE_PWMLEDS is defined
+  //#define PWM3_PIN -1  //blue  channel if USE_PWMLEDS is defined
   //#define MAXBRIGHTNESS 10      //Do not change this value!
 
   //Display temperature and date in every minute between START..END seconds
@@ -286,6 +289,7 @@ bool decimalpointON = false;
 bool alarmON = false;             //Alarm in progress
 unsigned long alarmStarted = 0;   //Start timestamp millis()
 
+boolean showClock = false;
 boolean showDate = false;
 boolean showTemp0 = false;
 boolean showTemp1 = false;
@@ -380,6 +384,7 @@ void Fdelay(unsigned long d) {
     enableDisplay(2000);
     getLightSensor();
     doAnimationMakuna();
+    doAnimationPWM();
     alarmSound();
     yield();
   }
@@ -851,7 +856,7 @@ if (useTemp > 1)
   doc["alarmPeriod"] = prm.alarmPeriod;
 
   //RGB LED values
-#ifdef USE_NEOPIXEL
+#if defined(USE_NEOPIXEL) || defined(USE_PWMLEDS)
   doc["rgbEffect"] = prm.rgbEffect;       // if 255, no RGB exist!
 #else
   doc["rgbEffect"] = 255;   //Not installed Neopixels!!!
@@ -950,6 +955,24 @@ void setup() {
     autoBrightness = true;
   #endif
   
+  #ifdef USE_PWMLEDS
+    #if PWM1_PIN >= 0
+      pinMode(PWM1_PIN, OUTPUT);  regPin(PWM1_PIN,"PWM1_PIN");
+      ledcAttachPin(PWM1_PIN, 0);
+      ledcSetup(0, 200, 8); // 12
+    #endif
+    #if PWM2_PIN >= 0
+      pinMode(PWM2_PIN, OUTPUT);  regPin(PWM2_PIN,"PWM2_PIN");
+      ledcAttachPin(PWM2_PIN, 1);
+      ledcSetup(1, 200, 8); // 12
+    #endif
+    #if PWM3_PIN >= 0
+      pinMode(PWM3_PIN, OUTPUT);  regPin(PWM3_PIN,"PWM3_PIN");
+      ledcAttachPin(PWM3_PIN, 2);
+      ledcSetup(2, 200, 8); // 12
+    #endif
+  #endif
+    
   #if TEMP_DALLAS_PIN >= 0 
     setupDallasTemp();
   #endif
@@ -987,6 +1010,7 @@ void setup() {
     
   byte saveMode = prm.animMode;
   prm.animMode = 2;
+  doAnimationPWM();
   testTubes(300);
 
   clearDigits();
@@ -1095,6 +1119,7 @@ void timeProgram() {
     if (!displayON || !prm.enableBlink) colonBlinkState = false;
     else colonBlinkState = (bool)(second() % 2);
     
+    showClock = false;
     showDate = ENABLE_CLOCK_DISPLAY && (second() >= DATE_START) && (second() < DATE_END);
     #ifdef DATE_REPEAT_MIN
       if (showDate) {
@@ -1226,6 +1251,7 @@ void cathodeProtect() {
     incMod10(dh1); incMod10(dh2);
     incMod10(dm1); incMod10(dm2);
     incMod10(ds1); incMod10(ds2);
+    writeDisplaySingle();
     Fdelay(100);
   }
   memcpy(oldDigit, digit, sizeof(oldDigit));
@@ -1310,6 +1336,7 @@ void displayTime4() {
     colonBlinkState = true;
   }
   else if (ENABLE_CLOCK_DISPLAY) {
+    showClock = true;
     newDigit[3] = hour12_24 / 10;
     if ((!prm.showZero)  && (newDigit[3] == 0)) newDigit[3] = 10;
     newDigit[2] = hour12_24 % 10;
@@ -1341,6 +1368,7 @@ void displayTime6() {
     colonBlinkState = true;
   }
   else if (ENABLE_CLOCK_DISPLAY) {
+    showClock = true;
     newDigit[5] = hour12_24 / 10;
     if ((!prm.showZero)  && (newDigit[5] == 0)) newDigit[5] = 10;
     newDigit[4] = hour12_24 % 10;
@@ -1385,6 +1413,7 @@ void displayTime8() {
       if (prm.animMode == 1)  memcpy(oldDigit, newDigit, sizeof(oldDigit)); //don't do animation
     }
     else if (ENABLE_CLOCK_DISPLAY) {
+      showClock = true;
       newDigit[8] = 10;  //sign digit = BLANK
       newDigit[7] = hour12_24 / 10;
       if ((!prm.showZero)  && (newDigit[7] == 0)) newDigit[7] = 10;
@@ -1558,14 +1587,14 @@ void alarmSound() {
 
   if (millis() > nextEvent) { //go to the next event
     if (count % 2 == 0) {
-      nextEvent += 150;
+      nextEvent += 500;
       if (ALARMSPEAKER_PIN >= 0) digitalWrite(ALARMSPEAKER_PIN, ALARM_ON);
-      //DPRINT(" Sound ON");  DPRINT("  Next:"); DPRINTLN(nextEvent);
+      DPRINT(" Sound ON");  DPRINT("  Next:"); DPRINTLN(nextEvent);
     }
     else {
       if (ALARMSPEAKER_PIN >= 0) digitalWrite(ALARMSPEAKER_PIN, !ALARM_ON);
-      nextEvent = (count / 2 < cMax) ? alarmStarted +  t[count / 2] : nextEvent + 200;
-      //DPRINT("   OFF"); DPRINT("  Next:"); DPRINTLN(nextEvent);
+      nextEvent = (count / 2 < cMax) ? alarmStarted +  t[count / 2] : nextEvent + 500;
+      DPRINT("   OFF"); DPRINT("  Next:"); DPRINTLN(nextEvent);
     }
     count++;
   }
@@ -1751,7 +1780,7 @@ void printDigits(unsigned long timeout) {
   */
   //DPRINT("INT:"); DPRINT(intCounter);   //show multiplex interrupt counter
   //DPRINT(" ESaving:"); DPRINT(EEPROMsaving);
-  #if LIGHT_SENSOR_PIN >=0
+  #if LIGHT_SENSOR_PIN >=0 || defined(USE_BH1750)
     DPRINT("  Lux:"); DPRINT(LuxValue);
     //DPRINT("  tON:"); DPRINT(timerON); DPRINT("  tOFF:"); DPRINT(timerOFF);   //Multiplex timing values for testing
   #endif  
@@ -1813,11 +1842,15 @@ int luxmeter() {
 #endif
 
 void getLightSensor() {
-  #if LIGHT_SENSOR_PIN >=0
-    static unsigned long lastRun = 0;
-    if ((millis()-lastRun)<500) return;
-    lastRun = millis();
-    LuxValue = luxmeter();
+  static unsigned long lastRun = 0;
+  if ((millis()-lastRun)<500) return;
+  lastRun = millis();
+  
+
+  #if defined(USE_BH1750)
+    LuxValue = getBH1750();
+  #elif LIGHT_SENSOR_PIN >=0
+    LuxValue = luxmeter();  
   #else
     LuxValue = MAXIMUM_LUX;
   #endif
@@ -1831,6 +1864,7 @@ void loop() {
   timeProgram();
   writeDisplaySingle();
   doAnimationMakuna();
+  doAnimationPWM();
   alarmSound();
   checkTubePowerOnOff();
   getLightSensor();

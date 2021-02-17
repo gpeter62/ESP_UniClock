@@ -87,12 +87,12 @@ void alarmLight() {
   static unsigned long lastRun = 0;   
   static byte counter;
   
-  if ((millis()-lastRun)<FPS_MSEC) return;
+  if ((millis()-lastRun)<500) return;
   lastRun = millis();
   counter++;
   strip.SetBrightness(200);
   for(volatile int i=0; i<PixelCount; i++) {
-    if ((counter%10<5) && tubePixels[i]<maxDigits)
+    if ((counter%2) && tubePixels[i]<maxDigits)
       strip.SetPixelColor(i, RgbColor(255,255,255));
     else  
       strip.SetPixelColor(i,black);

@@ -4,7 +4,7 @@
 
 //------ Mode Switch and Push Buttons ---------------------
 #ifndef PIN_MODE_SWITCH
-  #define PIN_MODE_SWITCH  -1  //Analog A0 port!!!  
+  #define PIN_MODE_SWITCH  -1  
 #endif
 
 #ifndef PIN_FLD_BUTTON
@@ -99,14 +99,16 @@ while (true) {
 void editor() {
   DS3231_get(&tim);
   LastModify = 0;
-  while (true) {
-    scanButFLD(100); if (fld == 0) break;
-    scanButSET(100);
-    showValue();
-    writeDisplaySingle();
-    printDigits(1000);
-    Fdelay(100);
-  }
+  #if PIN_FLD_BUTTON>=0 && PIN_SET_BUTTON>=0   //Are buttons installed?
+    while (true) {
+      scanButFLD(100); if (fld == 0) break;
+      scanButSET(100);
+      showValue();
+      writeDisplaySingle();
+      printDigits(1000);
+      Fdelay(100);
+    }
+  #endif
   if (LastModify != 0) saveRTC();
 }
 
