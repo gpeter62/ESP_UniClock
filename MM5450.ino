@@ -125,7 +125,7 @@ byte num = 0;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
 
   if (autoBrightness && displayON)
-    PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * LuxValue / MAXIMUM_LUX);
+    PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * lx / MAXIMUM_LUX);
   else
     PWMtimeBrightness = PWMtiming[brightness];
   

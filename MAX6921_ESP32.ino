@@ -95,8 +95,9 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
   
-  if (autoBrightness && displayON)
-    PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * LuxValue / MAXIMUM_LUX);
+  if (autoBrightness && displayON) {
+    PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT]*lx/MAXIMUM_LUX);
+  }
   else
     PWMtimeBrightness = PWMtiming[brightness];
   

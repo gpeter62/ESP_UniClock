@@ -1,3 +1,4 @@
+
 /*
       Universal Clock  (Nixie, VFD, LED, Numitron) for ESP8266 or ESP32
       with optional Dallas Thermometer and DS3231 RTC, Neopxels stripe, GPS and more...
@@ -111,13 +112,13 @@
 #define TIMESERVER_REFRESH 7200000     //7200000   Refresh time in millisec   86400000 = 24h
 unsigned long timeserverErrors = 0;        //timeserver refresh errors
 
-boolean autoBrightness = false; //Enable automatic brightness levels
-int LuxValue = MAXIMUM_LUX;         //Enviroment LUX value, set by Light Sensor
-int timerON,timerOFF;       //for debugging
-
-byte c_MinBrightness = RGB_MIN_BRIGHTNESS;       //minimum LED brightness
-byte c_MaxBrightness = RGB_MAX_BRIGHTNESS;     //maximum LED brightness
+int timerON=0;   //for debugging
+int timerOFF=0;      
 unsigned long intCounter = 0;   //for testing only, interrupt counter
+
+byte c_MinBrightness = RGB_MIN_BRIGHTNESS;     //minimum LED brightness
+byte c_MaxBrightness = RGB_MAX_BRIGHTNESS;     //maximum LED brightness
+
 //--------------------------------------------------------------------------------------------------
 
 #if defined(ESP8266)
@@ -185,6 +186,7 @@ extern void setup_pins();
 extern void clearTubes();
 extern const int maxDigits;
 
+
 const char* ssid = AP_NAME;  // Enter SSID here
 const char* password = AP_PASSWORD;  //Enter Password here
 char webName[] = WEBNAME;
@@ -241,6 +243,13 @@ Timezone myTZ(myDST, mySTD);
 boolean clockWifiMode = true;
 boolean radarON = true;
 
+boolean BME280exist = false;
+boolean BMP280exist = false;
+boolean AHTX0exist = false;
+boolean SHT21exist = false;
+boolean BH1750exist = false;
+boolean LDRexist = false;
+
 byte useDallasTemp = 0;   //number of Dallas temperature sensors: 0,1,2
 byte useTemp = 0;         //Total number of any temperature sensors: 0..6
 float temperature[6] = {0,0,0,0,0,0};
@@ -248,6 +257,8 @@ byte useHumid = 0;        //Total number of humidity sensors
 float humid[6] = {0,0,0,0,0,0};  
 byte usePress = 0;        //Total number of pressure sensors
 float pressur[6] = {0,0,0,0,0,0};  
+int lx = 0;               //Enviroment LUX value, set by Light Sensor
+boolean autoBrightness = false; //Enable automatic brightness levels
 //----------------- EEPROM addresses -------------------------------------------------------------------
 const int EEPROM_addr = 0;
 
@@ -953,6 +964,7 @@ void setup() {
     pinMode(LIGHT_SENSOR_PIN, INPUT); regPin(LIGHT_SENSOR_PIN,"LIGHT_SENSOR_PIN");
     DPRINT("  - MAXIMUM_LUX for max.brightness:");  DPRINTLN(MAXIMUM_LUX);
     autoBrightness = true;
+    LDRexist = true;
   #endif
   
   #ifdef USE_PWMLEDS
@@ -1541,7 +1553,7 @@ void changeDigit() {
 }
 
 
-void alarmSound() {
+void alarmSound(void) {
   static const unsigned int t[] = {0, 3000, 6000, 6200, 9000, 9200, 9400, 12000, 12200, 12400, 15000, 15200, 15400};
   static int count = 0;
   static unsigned long nextEvent;
@@ -1589,19 +1601,19 @@ void alarmSound() {
     if (count % 2 == 0) {
       nextEvent += 500;
       if (ALARMSPEAKER_PIN >= 0) digitalWrite(ALARMSPEAKER_PIN, ALARM_ON);
-      DPRINT(" Sound ON");  DPRINT("  Next:"); DPRINTLN(nextEvent);
+      //DPRINT(" Sound ON");  DPRINT("  Next:"); DPRINTLN(nextEvent);
     }
     else {
       if (ALARMSPEAKER_PIN >= 0) digitalWrite(ALARMSPEAKER_PIN, !ALARM_ON);
       nextEvent = (count / 2 < cMax) ? alarmStarted +  t[count / 2] : nextEvent + 500;
-      DPRINT("   OFF"); DPRINT("  Next:"); DPRINTLN(nextEvent);
+      //DPRINT("   OFF"); DPRINT("  Next:"); DPRINTLN(nextEvent);
     }
     count++;
   }
 }
 
 
-void evalShutoffTime() {  // Determine whether  tubes should be turned to NIGHT mode
+void evalShutoffTime(void) {  // Determine whether  tubes should be turned to NIGHT mode
 
   if (!prm.enableAutoShutoff) return;
 
@@ -1652,7 +1664,7 @@ void writeIpTag(byte iptag) {
   writeDisplaySingle();
 }
 
-void showMyIp() {   //at startup, show the web page internet address
+void showMyIp(void) {   //at startup, show the web page internet address
   //clearDigits();
 #define SPEED 1500
 
@@ -1677,7 +1689,7 @@ void fifteenMinToHM(int &hours, int &minutes, int fifteenMin)
   minutes = (fifteenMin % 4) * 15;
 }
 
-void resetWiFi() {
+void resetWiFi(void) {
   static unsigned long lastTest = millis();
   static unsigned int counter = 0;
 
@@ -1726,7 +1738,7 @@ void testTubes(int dely) {
 }
 
 
-void printSensors() {
+void printSensors(void) {
   static unsigned long lastRun = millis();
   
   if ((millis() - lastRun) < 30000) return;
@@ -1750,10 +1762,10 @@ void printSensors() {
 void printDigits(unsigned long timeout) {
   static unsigned long lastRun = millis();
 
-#ifdef DEBUG
   if ((millis() - lastRun) < timeout) return;
   lastRun = millis();
   
+  #ifdef DEBUG
   for (int i = maxDigits - 1; i >= 0; i--) {
     if (digit[i] < 10)      {DPRINT(digit[i]);}
     else if (digit[i]==10)  {DPRINT(" ");}
@@ -1782,16 +1794,16 @@ void printDigits(unsigned long timeout) {
   //DPRINT(" ESaving:"); DPRINT(EEPROMsaving);
   #if LIGHT_SENSOR_PIN >=0 || defined(USE_BH1750)
     DPRINT("  Lux:"); DPRINT(LuxValue);
-    //DPRINT("  tON:"); DPRINT(timerON); DPRINT("  tOFF:"); DPRINT(timerOFF);   //Multiplex timing values for testing
   #endif  
+  } 
+  //DPRINT("  tON:"); DPRINT(timerON); DPRINT("  tOFF:"); DPRINT(timerOFF);   //Multiplex timing values for testing
   DPRINTLN(" ");
   printSensors();
   #endif  
 }
 
 
-void checkTubePowerOnOff() {
-
+void checkTubePowerOnOff(void) {
     static unsigned long lastRun = 0;
     static unsigned long lastON = 0;
     static boolean oldRadarON = true;
@@ -1811,6 +1823,7 @@ void checkTubePowerOnOff() {
     #else
       radarON = true;  //without radar sensor, always ON 
     #endif
+    
     #if TUBE_POWER_PIN >=0
       if (((displayON ?  prm.dayBright : prm.nightBright) == 0) || !radarON) {
         digitalWrite(TUBE_POWER_PIN,!TUBE_POWER_ON);  //Switch OFF
@@ -1823,41 +1836,44 @@ void checkTubePowerOnOff() {
     #endif   
 }
 
-#if LIGHT_SENSOR_PIN >=0
+
 //Calculation parameters are defined in clocks.h
 //https://www.pcboard.ca/ldr-light-dependent-resistor
-int luxmeter() {      
+ 
+int luxMeter(void) {    
   static float oldLux = MAXIMUM_LUX;
   float ADCdata;
   float ldrResistance;
   float ldrLux;
   
+#if LIGHT_SENSOR_PIN >=0     
   ADCdata = analogRead(LIGHT_SENSOR_PIN); //DPRINT("ADC:"); DPRINTLN(ADCdata);
   ldrResistance = (MAX_ADC_READING - ADCdata) / ADCdata * REF_RESISTANCE;
   ldrLux = LUX_CALC_SCALAR * pow(ldrResistance, LUX_CALC_EXPONENT);
   if (ldrLux>MAXIMUM_LUX) ldrLux = MAXIMUM_LUX;   //Limited //Limit lux value to maximum
   oldLux = oldLux + (ldrLux-oldLux)/10;   //slow down Lux change
   return (int)oldLux;
-}
+#else
+  return (0);
 #endif
+}
 
-void getLightSensor() {
+void getLightSensor(void) {
   static unsigned long lastRun = 0;
   if ((millis()-lastRun)<500) return;
   lastRun = millis();
-  
 
-  #if defined(USE_BH1750)
-    LuxValue = getBH1750();
-  #elif LIGHT_SENSOR_PIN >=0
-    LuxValue = luxmeter();  
-  #else
-    LuxValue = MAXIMUM_LUX;
-  #endif
+  lx = MAXIMUM_LUX;
+
+  if (BH1750exist) {
+    lx=getBH1750();
+  }
+  else if (LDRexist) {
+    lx=luxMeter();  
+  }
 }
 
-
-void loop() {
+void loop(void) {
   dnsServer.processNextRequest();
   //MDNS.update();
   enableDisplay(3000);
@@ -1881,7 +1897,7 @@ void loop() {
   yield();
 }
 
-void restartClock() {
+void restartClock(void) {
 #if defined(ESP8266)
   WiFi.setOutputPower(0);
 #endif

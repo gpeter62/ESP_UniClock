@@ -368,8 +368,10 @@
 
 #ifdef CLOCK_32   //ESP32, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
   #define DEBUG 
+  #define USE_MQTT
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 2
+  #define LIGHT_SENSOR_PIN 23
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   #define USE_DHT_TEMP
   #define DHTTYPE DHT22
@@ -382,7 +384,7 @@
     #define PIN_CLK   13  // Shift Register Clock
     #define PIN_DATA  27  // Shift Register Data
     #define PIN_BL    12  // Shift Register Blank (1=display off     0=display on)
-  #define ALARMSPEAKER_PIN 33   //Alarm buzzer pin                                            
+  //#define ALARMSPEAKER_PIN 33   //Alarm buzzer pin                                            
   #define ALARMBUTTON_PIN 32    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   #define AP_NAME "UNICLOCK32"
@@ -539,6 +541,7 @@
   //#define USE_AHTX0             //I2C Temperature + humidity
   //#define USE_SHT21             //I2C Temperature + humidity
   #define USE_BH1750            //I2C luxmeter sensor
+  #define USE_MQTT
 //_______________________________ HV5122 setup ____________________________________________________  
   #define HV5122
   #define PIN_DIN  22   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!

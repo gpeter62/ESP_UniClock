@@ -90,7 +90,7 @@ static unsigned long lastRun = 0;
   pwmColorStep = max(1,prm.rgbSpeed/5);
   pwmBrightness = prm.rgbBrightness;
   if (autoBrightness) {
-    pwmBrightness = (pwmBrightness * LuxValue) /(long) MAXIMUM_LUX/2;
+    pwmBrightness = (pwmBrightness * lx) /(long) MAXIMUM_LUX/2;
     if (pwmBrightness< c_MinBrightness) 
             pwmBrightness = c_MinBrightness;
   }

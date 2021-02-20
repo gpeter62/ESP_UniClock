@@ -419,7 +419,7 @@ static unsigned long lastRun = 0;
   colorStep = max(1,prm.rgbSpeed/5);
   neoBrightness = prm.rgbBrightness;
   if (autoBrightness) {
-    neoBrightness = (neoBrightness * LuxValue) /(long) MAXIMUM_LUX/2;
+    neoBrightness = (neoBrightness*lx)/long(MAXIMUM_LUX/2);
     if (neoBrightness< c_MinBrightness) 
             neoBrightness = c_MinBrightness;
   }

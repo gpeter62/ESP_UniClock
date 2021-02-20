@@ -7,6 +7,7 @@
 #define BROKER_PASSWORD     "mqtt"
 
 byte mac[6] = {12,14,0,0,2,3};  //This is the unique ID - set it as you want or mac address of the clock (length: 6)
+
 WiFiClient client;
 HADevice device(mac, sizeof(mac));
 HAMqtt mqtt(client, device);
@@ -14,6 +15,7 @@ HAMqtt mqtt(client, device);
 HASensor<float> mqttTemp("temperature", 0, mqtt);
 HASensor<float> mqttHumid("humidity", 0, mqtt);
 HASensor<float> mqttPress("pressure", 0, mqtt);
+HASensor<float> mqttLux("lux", 0, mqtt);
 
 
 void setupMqtt() {
@@ -23,6 +25,7 @@ void setupMqtt() {
     mqttTemp.setUnitOfMeasurement("°C");
     mqttHumid.setUnitOfMeasurement("%");
     mqttPress.setUnitOfMeasurement("hPa");
+    mqttLux.setUnitOfMeasurement("lux");
     DPRINTLN("Attempting MQTT connection...");
     mqtt.begin(BROKER_ADDR, BROKER_USERNAME, BROKER_PASSWORD);
 }
@@ -38,8 +41,8 @@ void mqttSend() {
   DPRINT("MQTT send:");
   mqttTemp.setValue(temperature[0]);  DPRINT(temperature[0]); DPRINT(",");
   mqttHumid.setValue(humid[0]);  DPRINT(humid[0]); DPRINT(",");
-  mqttPress.setValue(pressur[0]);  DPRINT(pressur[0]); 
-  DPRINTLN(" ");
+  mqttPress.setValue(pressur[0]);  DPRINT(pressur[0]);  DPRINT(",");
+  mqttLux.setValue(lx);   DPRINT(lx);  DPRINTLN(" ");
 }
   
 #else

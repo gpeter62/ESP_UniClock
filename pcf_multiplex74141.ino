@@ -117,7 +117,7 @@ if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
   }
 
   if (autoBrightness && displayON)
-    PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * LuxValue / MAXIMUM_LUX);
+    PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * lx / MAXIMUM_LUX);
   else
     PWMtimeBrightness = PWMtiming[brightness];
   
