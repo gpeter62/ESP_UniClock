@@ -1793,9 +1793,8 @@ void printDigits(unsigned long timeout) {
   //DPRINT("INT:"); DPRINT(intCounter);   //show multiplex interrupt counter
   //DPRINT(" ESaving:"); DPRINT(EEPROMsaving);
   #if LIGHT_SENSOR_PIN >=0 || defined(USE_BH1750)
-    DPRINT("  Lux:"); DPRINT(LuxValue);
+    DPRINT("  Lux:"); DPRINT(lx);
   #endif  
-  } 
   //DPRINT("  tON:"); DPRINT(timerON); DPRINT("  tOFF:"); DPRINT(timerOFF);   //Multiplex timing values for testing
   DPRINTLN(" ");
   printSensors();
