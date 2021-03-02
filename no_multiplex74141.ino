@@ -91,7 +91,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   
   switch (state) {   //state machine...
     case 0:
-      #if (DECIMALPOINT_PIN>=0
+      #if DECIMALPOINT_PIN>=0
         if (decimalpointON) digitalWrite(DECIMALPOINT_PIN,HIGH);
       #endif  
       #if COLON_PIN>=0

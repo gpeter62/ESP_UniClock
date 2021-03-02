@@ -19,7 +19,7 @@
 //#define CLOCK_12  //8266 VFD Clock with PT6355 chip
 //#define CLOCK_13   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes + GPS timesync (white box)
 
-//#define CLOCK_20  //8266 D1-mini, P.S. PCB 4xIN14 clock-thermometer 
+#define CLOCK_20  //8266 D1-mini, P.S. PCB 4xIN14 clock-thermometer 
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
 
@@ -30,8 +30,10 @@
 //#define CLOCK_40  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_41  //ESP32 D1 mini, UNFI board, 6 x Z573M Nixie tubes
 //#define CLOCK_42  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock SHT21
+//#define CLOCK_42  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock SHT21
+//#define CLOCK_44  //ESP32 D1 mini, Numitron clock
 
-#define CLOCK_50   //ESP32 D1 mini, UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
+//#define CLOCK_50   //ESP32 D1 mini, UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_51   //ESP32 D1 mini, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_52   //ESP8266 Wemos D1 mini,UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_55   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
@@ -174,6 +176,9 @@
 #ifdef CLOCK_8   //8266 GP PCB v3 clock with 4x IV-16 Numitron tubes (plexi box)
   #define DEBUG 
   #define PCB_VERSION 3   //1,2 or 3
+  #define LTBIpin 5
+  byte digitEnablePins[] = {13,12,14,16};    //define here the digit enable pins from 4 to 8
+  byte ABCDPins[4] = {4,0,2,15};
   #define USE_NEOPIXEL
   byte tubePixels[] = {3,2,6,1,0};    //Numitron 4 tubes, 4 x single leds + 1. The extra led in the middle is not used, is always dark!
   #define Numitron_4511N
@@ -189,6 +194,9 @@
   #define DEBUG 
   #define PCB_VERSION 1   //1,2 or 3
   #define Numitron_4511N
+  #define LTBIpin 5
+  byte digitEnablePins[] = {13,12,14,16};    //define here the digit enable pins from 4 to 8
+  byte ABCDPins[4] = {4,0,2,15};
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "Numitron UniClock"
@@ -229,6 +237,9 @@
   #define USE_GPS
   #define PCB_VERSION 3   //1,2 or 3
   #define Numitron_4511N
+  #define LTBIpin 5
+  byte digitEnablePins[] = {13,12,14,16};    //define here the digit enable pins from 4 to 8
+  byte ABCDPins[4] = {4,0,2,15};
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "Numitron UniClock"
@@ -520,6 +531,36 @@
   #define AP_NAME "VFD-Óra"
   #define AP_PASSWORD ""  
   #define WEBNAME "VFD-Óra"
+#endif
+
+#ifdef CLOCK_44   //ESP32 D1 mini, UNFI board, 6 x IV-9 Numitron tubes
+  #define DEBUG 
+  #define USE_NEOPIXEL 
+  #define NEOPIXEL_PIN 22
+  byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
+  #define USE_DALLAS_TEMP
+  //#define USE_DHT_TEMP
+  //#define DHTTYPE DHT22
+  //#define TEMP_DHT_PIN 27
+  #define TEMP_DALLAS_PIN 27    //Dallas temp sensor pin.  If not used, SET TO -1    
+  //#define LIGHT_SENSOR_PIN 35
+  //#define PIN_SDA 2             // you can set the used SDA and SCL pins
+  //#define PIN_SCL 5             // if it is not default value
+  #define Numitron_4511N
+  #define PCB_VERSION 32
+  #define LTBIpin 5
+  const byte digitEnablePins[] = {25,21,32,17,16,4};   //ESP32 6x tube Clock
+  const byte ABCDPins[4] =  {19,18,26,33};   
+  #define DP_PIN 23             // decimalPoint inside Nixie tube, set -1, if not used!
+  #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
+  //#define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
+  //#define GRAD_CHARCODE -1   //disable char => shift display right with 1 digit
+  #define ALARMSPEAKER_PIN 2   //Alarm buzzer pin                                            
+  #define ALARMBUTTON_PIN 34    //Alarm switch off button pin 
+  #define ALARM_ON HIGH
+  #define AP_NAME "UNICLOCK32"
+  #define AP_PASSWORD ""
+  #define WEBNAME "ESP32 Numitron-Clock"
 #endif
 
 
@@ -883,5 +924,14 @@
 #endif
 #ifndef MAXIMUM_LUX
   #define MAXIMUM_LUX 100
+#endif
+#ifndef PWM1_PIN
+  #define PWM1_PIN -1
+#endif
+#ifndef PWM2_PIN
+  #define PWM2_PIN -1
+#endif
+#ifndef PWM3_PIN
+  #define PWM3_PIN -1
 #endif
 //______________________________________________________________________________________
