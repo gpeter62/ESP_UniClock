@@ -1057,6 +1057,9 @@ void setup() {
 }
 
 void calcTime() {
+  static unsigned long lastRun = 0;
+  if ((lastRun!=0) && ((millis()-lastRun)<60000)) return;
+  
   mySTD.offset = prm.utc_offset * 60;
   myDST.offset = mySTD.offset;
   if (prm.enableDST) {

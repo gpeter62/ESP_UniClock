@@ -19,7 +19,7 @@
 //#define CLOCK_12  //8266 VFD Clock with PT6355 chip
 //#define CLOCK_13   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes + GPS timesync (white box)
 
-#define CLOCK_20  //8266 D1-mini, P.S. PCB 4xIN14 clock-thermometer 
+//#define CLOCK_20  //8266 D1-mini, P.S. PCB 4xIN14 clock-thermometer 
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
 
@@ -31,7 +31,7 @@
 //#define CLOCK_41  //ESP32 D1 mini, UNFI board, 6 x Z573M Nixie tubes
 //#define CLOCK_42  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock SHT21
 //#define CLOCK_42  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock SHT21
-//#define CLOCK_44  //ESP32 D1 mini, Numitron clock
+#define CLOCK_44  //ESP32 D1 mini, Numitron clock
 
 //#define CLOCK_50   //ESP32 D1 mini, UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_51   //ESP32 D1 mini, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
@@ -173,7 +173,7 @@
   #define WEBNAME "Z574M Nixie Clock"
 #endif
 
-#ifdef CLOCK_8   //8266 GP PCB v3 clock with 4x IV-16 Numitron tubes (plexi box)
+#ifdef CLOCK_8   //8266 GP PCB v3 clock with 4x IV-16 Numitron tubes (plexi box) //Flash size: 1MB (FS:160k, OTA:422k)
   #define DEBUG 
   #define PCB_VERSION 3   //1,2 or 3
   #define LTBIpin 5
@@ -190,7 +190,7 @@
   #define WEBNAME "Numitron UniClock"
 #endif
 
-#ifdef CLOCK_9   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes (brown box)
+#ifdef CLOCK_9   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes (brown box) //Flash size: 1MB (FS:160k, OTA:422k)
   #define DEBUG 
   #define PCB_VERSION 1   //1,2 or 3
   #define Numitron_4511N
@@ -544,12 +544,13 @@
   //#define TEMP_DHT_PIN 27
   #define TEMP_DALLAS_PIN 27    //Dallas temp sensor pin.  If not used, SET TO -1    
   //#define LIGHT_SENSOR_PIN 35
-  //#define PIN_SDA 2             // you can set the used SDA and SCL pins
-  //#define PIN_SCL 5             // if it is not default value
+  #define PIN_SDA 5             // you can set the used SDA and SCL pins
+  #define PIN_SCL 0             // if it is not default value
+  #define USE_BH1750            //I2C luxmeter sensor
   #define Numitron_4511N
   #define PCB_VERSION 32
-  #define LTBIpin 5
-  const byte digitEnablePins[] = {25,21,32,17,16,4};   //ESP32 6x tube Clock
+  #define LTBIpin 23
+  const byte digitEnablePins[] = {4,16,17,32,21,25};   //ESP32 6x tube Clock
   const byte ABCDPins[4] =  {19,18,26,33};   
   #define DP_PIN 23             // decimalPoint inside Nixie tube, set -1, if not used!
   #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
