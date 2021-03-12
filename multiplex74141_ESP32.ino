@@ -46,7 +46,7 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
   static DRAM_ATTR int timer = PWMrefresh;
   static DRAM_ATTR byte num,brightness;
   static DRAM_ATTR byte DPpos;
-  static DRAM_ATTR int PWMtimeBrightness;
+  static DRAM_ATTR int PWMtimeBrightness=PWMtiming[1];
   
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
     return;  
@@ -59,17 +59,17 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
 
-  if (autoBrightness && displayON)
-    PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * lx / MAXIMUM_LUX);
-  else
-    PWMtimeBrightness = PWMtiming[brightness];
-  
   timer = PWMrefresh;
 
    switch (state) {   //state machine...
     case 0:
-      pos++;  if (pos>maxDig-1)  pos = 0;  //go to the first tube
-      
+      pos++;  if (pos>maxDig-1)  {
+        pos = 0;  //go to the first tube
+        if (autoBrightness && displayON)
+          PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * lx / MAXIMUM_LUX);
+        else
+          PWMtimeBrightness = PWMtiming[brightness];
+      }
       if (animMask[pos] > 0) { //Animation?
         num = oldDigit[pos];  //show old character
         timer = (PWMtimeBrightness * (10-animMask[pos]))/10;

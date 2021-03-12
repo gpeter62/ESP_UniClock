@@ -23,7 +23,7 @@
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
 
-//#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
+#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
 //#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
 
@@ -31,7 +31,7 @@
 //#define CLOCK_41  //ESP32 D1 mini, UNFI board, 6 x Z573M Nixie tubes
 //#define CLOCK_42  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock SHT21
 //#define CLOCK_42  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock SHT21
-#define CLOCK_44  //ESP32 D1 mini, Numitron clock
+//#define CLOCK_44  //ESP32 D1 mini, Numitron clock
 
 //#define CLOCK_50   //ESP32 D1 mini, UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_51   //ESP32 D1 mini, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
@@ -329,7 +329,7 @@
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   #define DATE_REPEAT_MIN 3     //show date only every 3 minutes. If zero, datum is never displayed
   #define USE_DALLAS_TEMP
-  #define TEMP_DALLAS_PIN 23    //Dallas temp sensor pin.  If not used, SET TO -1     
+  #define TEMP_DALLAS_PIN 15    //Dallas temp sensor pin.  If not used, SET TO -1     
   #define MAX6921_ESP32
   byte segmentEnablePins[] =  {19,17,15,12,13,16,18,14};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
   byte digitEnablePins[] = {9,8,7,2,1,0};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
@@ -738,8 +738,12 @@
   #define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN 14    //Dallas temp sensor pin.  If not used, SET TO -1   
   //#define LIGHT_SENSOR_PIN 23
-  //#define PIN_SDA 4             // you can set the used SDA and SCL pins
-  //#define PIN_SCL 32             // if it is not default value
+  #define PIN_SDA 26     //on ESP32 only below GPIO34 are digit pins! 36..39 are INPUT ONLY!            
+  #define PIN_SCL 27        
+  #define USE_RTC
+  #define PIN_MODE_SWITCH 2   ////Uno: A0 mode onNCS312 board
+  #define PIN_FLD_BUTTON  4   ////Uno: A1 down
+  #define PIN_SET_BUTTON 35   ////Uno: A2 up
   //#define USE_DHT_TEMP
   //#define DHTTYPE DHT11
   //#define TEMP_DHT_PIN  23
@@ -763,10 +767,10 @@
     };    
   #define MAKE_BLINKING_DOTS 
   #define USE_PWMLEDS
-  #define PWM1_PIN 27  //Uno: D6
-  #define PWM2_PIN 13  //Uno: D9
-  #define PWM3_PIN 25  //Uno: D3
-  //#define ALARMSPEAKER_PIN 26   //Alarm buzzer pin                                            
+  #define PWM1_PIN 13  //Uno: D9 Red
+  #define PWM2_PIN 27  //Uno: D6 Green
+  #define PWM3_PIN 25  //Uno: D3 Blue
+  //#define ALARMSPEAKER_PIN 17   //Alarm buzzer pin                                            
   //#define ALARMBUTTON_PIN 2    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   //#define RADAR_PIN 4

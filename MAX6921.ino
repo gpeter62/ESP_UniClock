@@ -79,7 +79,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   static volatile byte pos = 0;
   static volatile boolean state=true;
   static volatile byte brightness;
-  static int PWMtimeBrightness;
+  static int PWMtimeBrightness=PWMtiming[1];
 
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
       digitalWrite(PIN_BL,HIGH);    //OFF
@@ -91,16 +91,17 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   brightness = displayON ?  prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
 
-  if (autoBrightness && displayON)
-    PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * lx / MAXIMUM_LUX);
-  else
-    PWMtimeBrightness = PWMtiming[brightness];
-  
-  if ((!autoBrightness) && (brightness==MAXBRIGHT))  
-    state = true;
+  if ((!autoBrightness) && (brightness==MAXBRIGHT)) state = true;
 
   if (state) {  //ON state
-    pos++;  if (pos>maxDigits-1)  pos = 0;  //go to the first tube
+    pos++;  if (pos>maxDigits-1)  {   //go to the tube#0
+      pos = 0;  //go to the first tube
+      if (autoBrightness && displayON) {   //change brightness only on the tube#0
+        PWMtimeBrightness = max(PWMtiming[2],PWMtiming[MAXBRIGHT]*lx/MAXIMUM_LUX);
+        }
+      else
+        PWMtimeBrightness = PWMtiming[brightness];
+    }
     val = (digitEnableBits[pos] | charTable[digit[pos]]);  //the full bitmap to send to MAX chip
     if (digitDP[pos]) val = val | charTable[12];    //Decimal Point
     
@@ -109,10 +110,10 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
       if (pos==2) timer = 3*timer;  //Weak IV11 tube#2 brightness compensation, some hacking
     #endif  
     timerON = timer;
+    timerOFF = PWMrefresh-PWMtimeBrightness;  
   }
   else {  //OFF state
     timer = PWMrefresh-PWMtimeBrightness;
-    timerOFF = timer;  
   }
 
   if (timer<500) timer = 500;  //safety only...

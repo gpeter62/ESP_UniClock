@@ -1104,8 +1104,8 @@ void timeProgram() {
   static unsigned long lastRun = 0;
 
   if ((millis() - lastRun) < 300) return;
-
   lastRun = millis();
+
   calcTime();
   if (useDallasTemp > 0) {
     requestDallasTemp(false);
@@ -1815,7 +1815,7 @@ void checkTubePowerOnOff(void) {
 
     #if RADAR_PIN >=0
       if (digitalRead(RADAR_PIN) == HIGH) lastON = millis(); 
-      radarON = ((millis()-lastON)<long(1000*RADAR_TIMEOUT));
+      radarON = ((millis()-lastON)<1000l*RADAR_TIMEOUT);
       if (radarON != oldRadarON) {
         oldRadarON = radarON;
         if (radarON) DPRINTLN("RADAR: Switching ON tubes.");
@@ -1829,11 +1829,11 @@ void checkTubePowerOnOff(void) {
     #if TUBE_POWER_PIN >=0
       if (((displayON ?  prm.dayBright : prm.nightBright) == 0) || !radarON) {
         digitalWrite(TUBE_POWER_PIN,!TUBE_POWER_ON);  //Switch OFF
-        //DPRINTLN("OFF");
+        //DPRINTLN("POWER OFF");
       }
       else   {
         digitalWrite(TUBE_POWER_PIN,TUBE_POWER_ON);   //Switch ON
-        //DPRINTLN("ON");
+        //DPRINTLN("POWER ON");
       }
     #endif   
 }
@@ -1852,8 +1852,9 @@ int luxMeter(void) {
   ADCdata = analogRead(LIGHT_SENSOR_PIN); //DPRINT("ADC:"); DPRINTLN(ADCdata);
   ldrResistance = (MAX_ADC_READING - ADCdata) / ADCdata * REF_RESISTANCE;
   ldrLux = LUX_CALC_SCALAR * pow(ldrResistance, LUX_CALC_EXPONENT);
-  if (ldrLux>MAXIMUM_LUX) ldrLux = MAXIMUM_LUX;   //Limited //Limit lux value to maximum
+  if ((ldrLux>=MAXIMUM_LUX)||(ldrLux <0)) ldrLux = MAXIMUM_LUX;   //Limit lux value to maximum
   oldLux = oldLux + (ldrLux-oldLux)/10;   //slow down Lux change
+  if (oldLux>=MAXIMUM_LUX-2) oldLux = MAXIMUM_LUX;
   return (int)oldLux;
 #else
   return (0);
@@ -1862,17 +1863,20 @@ int luxMeter(void) {
 
 void getLightSensor(void) {
   static unsigned long lastRun = 0;
+  static int oldLx = 0;
+  int tmp;
   if ((millis()-lastRun)<500) return;
   lastRun = millis();
 
-  lx = MAXIMUM_LUX;
-
   if (BH1750exist) {
-    lx=getBH1750();
+    tmp = getBH1750();
+    if ((abs(tmp-oldLx)>1) || (tmp == MAXIMUM_LUX)) {lx=tmp; oldLx = lx;}
   }
   else if (LDRexist) {
-    lx=luxMeter();  
+    tmp = luxMeter();
+    if ((abs(tmp-oldLx)>1) || (tmp == MAXIMUM_LUX))  {lx=tmp;  oldLx = lx;}
   }
+  else lx = MAXIMUM_LUX;
 }
 
 void loop(void) {
