@@ -23,7 +23,7 @@
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
 
-#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
+//#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
 //#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
 
@@ -36,7 +36,7 @@
 //#define CLOCK_50   //ESP32 D1 mini, UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_51   //ESP32 D1 mini, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_52   //ESP8266 Wemos D1 mini,UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
-//#define CLOCK_55   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
+#define CLOCK_55   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
 
 //______________________ESP8266 CLOCKS by UNFI and GP ______________________________________________________
 #ifdef CLOCK_1   //8266, UNFI PCB clock, 4x IN-16 tubes
@@ -741,9 +741,9 @@
   #define PIN_SDA 26     //on ESP32 only below GPIO34 are digit pins! 36..39 are INPUT ONLY!            
   #define PIN_SCL 27        
   #define USE_RTC
-  #define PIN_MODE_SWITCH 2   ////Uno: A0 mode onNCS312 board
-  #define PIN_FLD_BUTTON  4   ////Uno: A1 down
-  #define PIN_SET_BUTTON 35   ////Uno: A2 up
+  //#define PIN_MODE_SWITCH 2   ////Uno: A0 mode onNCS312 board
+  //#define PIN_FLD_BUTTON  4   ////Uno: A1 down
+  //#define PIN_SET_BUTTON 35   ////Uno: A2 up
   //#define USE_DHT_TEMP
   //#define DHTTYPE DHT11
   //#define TEMP_DHT_PIN  23
@@ -768,7 +768,7 @@
   #define MAKE_BLINKING_DOTS 
   #define USE_PWMLEDS
   #define PWM1_PIN 13  //Uno: D9 Red
-  #define PWM2_PIN 27  //Uno: D6 Green
+  //#define PWM2_PIN 27  //Uno: D6 Green
   #define PWM3_PIN 25  //Uno: D3 Blue
   //#define ALARMSPEAKER_PIN 17   //Alarm buzzer pin                                            
   //#define ALARMBUTTON_PIN 2    //Alarm switch off button pin 
@@ -801,7 +801,7 @@
   #define TEMP_DHT_PIN -1     //DHT temp sensor pin.
 #endif
 
-#if defined(USE_BME280) || defined(USE_BMP280) || defined(USE_AHTX0) || defined(USE_SHT21) || defined(USE_BH1750)
+#if defined(USE_BME280) || defined(USE_BMP280) || defined(USE_AHTX0) || defined(USE_SHT21) || defined(USE_BH1750) || defined(USE_RTC)
   #define USE_I2CSENSORS
 #endif
 

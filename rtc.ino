@@ -1,7 +1,8 @@
 #ifdef USE_RTC
 //DS3231 realtime clock driver
 //with manual clock setup buttons
-
+#include <ds3231.h>    //https://github.com/rodan/ds3231
+  
 //------ Mode Switch and Push Buttons ---------------------
 #ifndef PIN_MODE_SWITCH
   #define PIN_MODE_SWITCH  -1  
@@ -18,11 +19,9 @@
 //#define PIN_SDA 4           //D2   original general setup for 8266
 //#define PIN_SCL 5           //D1
 
-
-
 #define MENU_UNSELECT_TIMEOUT 30000
 
-#include <ds3231.h>    //https://github.com/rodan/ds3231
+//#include <ds3231.h>    //https://github.com/rodan/ds3231
 struct ts tim;
 
 int monthdays[13] = {0,31,29,31,30,31,30,31,31,30,31,30,31};
@@ -64,6 +63,16 @@ void setupRTC() {
     pinMode(PIN_SET_BUTTON,INPUT_PULLUP);    
     regPin(PIN_SET_BUTTON,"PIN_SET_BUTTON"); 
   #endif    
+  
+  if (RTCexist) {
+    DS3231_init(DS3231_CONTROL_INTCN);
+    DS3231_get(&tim);
+    checkWifiMode();
+  }
+  else {
+    clockWifiMode = true;
+  }
+  
 /*  
 while (true) {
   DPRINT(digitalRead(PIN_MODE_SWITCH)); DPRINT(" / "); 
@@ -72,27 +81,6 @@ while (true) {
   delay(1000);
   }
 */  
-
-  DPRINTLN("Starting RTC Clock...");    
-  delay(2000);
-  pinMode(PIN_SDA,OUTPUT);  regPin(PIN_SDA,"PIN_SDA");
-  pinMode(PIN_SCL,OUTPUT);  regPin(PIN_SCL,"PIN_SCL"); 
-  I2C_ClearBus();
-  Wire.begin(PIN_SDA,PIN_SCL); 
-  //Wire.begin();   
-  delay(100);
-  Wire.beginTransmission(0x68);
-  byte error = Wire.endTransmission();
-  if (error == 0) {   //DS3231_get_addr(0x68)
-    DPRINTLN("RTC found on 0x68.");
-    DS3231_init(DS3231_CONTROL_INTCN);
-    DS3231_get(&tim);
-    checkWifiMode();
-  }
-  else { 
-    DPRINTLN("!!!No RTC found on 0x68!!!");
-    clockWifiMode = true;
-  }
 }
 
 
@@ -129,6 +117,7 @@ void showValue() {
 
 //------------------------------------- RTC Clock functions --------------------------------------------------------------------
 void updateRTC() {
+  if (!RTCexist) return;
   DS3231_get(&tim);
   if (abs(tim.sec - second())>1 || (tim.min != minute()) || (tim.hour != hour())  
       || (tim.mday != day()) || (tim.mon != month()) || (tim.year != year()) )   {
@@ -149,6 +138,7 @@ void updateRTC() {
 
 
 void getRTC() {
+  if (!RTCexist) return;
   DS3231_get(&tim);
   setTime(tim.hour,tim.min,tim.sec,tim.mday,tim.mon,tim.year);  //set the time (hr,min,sec,day,mnth,yr)
   mvar[1] = tim.year; mvar[2] = tim.mon; mvar[3] = tim.mday;
@@ -156,6 +146,7 @@ void getRTC() {
 }
 
 void saveRTC() {
+    if (!RTCexist) return;
     DPRINTLN("Updating RTC from Manual settings...");
     tim.sec = 0;
     tim.min = mvar[5];
@@ -173,7 +164,7 @@ boolean checkWifiMode() {     //output TRUE, if mode changed
 static unsigned long lastRun = millis(); 
 static byte oldMode = 2;  
 
-  if ((millis()-lastRun)<500) return false;
+  if (((millis()-lastRun)<500) || !RTCexist) return false;
   lastRun = millis();
   //DPRINT(digitalRead(PIN_FLD_BUTTON)); DPRINT(" / "); DPRINTLN(digitalRead(PIN_SET_BUTTON));
 
@@ -183,7 +174,7 @@ static byte oldMode = 2;
   else {
     clockWifiMode = digitalRead(PIN_MODE_SWITCH);
   }
-  
+  if (!RTCexist) clockWifiMode = true;  
   if (oldMode != clockWifiMode) {
     if (oldMode!=2) {
       DPRINT("Clock switched to ");

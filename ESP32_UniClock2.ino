@@ -243,6 +243,7 @@ Timezone myTZ(myDST, mySTD);
 boolean clockWifiMode = true;
 boolean radarON = true;
 
+boolean RTCexist = false;
 boolean BME280exist = false;
 boolean BMP280exist = false;
 boolean AHTX0exist = false;
