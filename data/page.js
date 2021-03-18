@@ -1,7 +1,8 @@
 //Example config that UI recieves
 var configuration = {
+	//Main screen	
     "version": "UniClock 2.0",
-    "maxDigits": 4,
+    "maxDigits": 6,
     "maxBrightness": 10,
     "currentDate": "2020.10.24",
     "currentTime": "15:01",
@@ -9,6 +10,12 @@ var configuration = {
 	"temperature2": 0,
     "humidity": -1,
 	"humidity2": -1,
+	"pressure": -1,
+    "alarmEnabled": 0,
+    "alarmTime": "6:30",
+	"alarmPeriod": 15,
+	
+	//Tube display settings
     "utc_offset": 1,
     "enableDST": true,
     "set12_24": true,
@@ -22,13 +29,36 @@ var configuration = {
     "nightBright": 3,
 	"manualOverride": true,
     "animMode": 6,
-    "alarmEnabled": 0,
-    "alarmTime": "6:30",
-	"alarmPeriod": 15,
+	"dateMode": 2,              // 0:dd/mm/yyyy 1:mm/dd/yyyy 2:yyyy/mm/dd
+	"tempCF": 'C',               //Temperature Celsius / Fahrenheit
+	"enableTimeDisplay": true,       
+	"dateStart": 45,                
+	"dateEnd": 50,    
+	"tempStart": 35,                  
+	"tempEnd": 40,  
+	"humidStart": 40,                 
+	"humidEnd": 45,
+	"dateRepeatMin": 3,            
+	"doubleBlink": true,             
+	"enableAutoDim": false,  
+	"enableRadar": false,   
+	"radarTimeout": 300,         
+
+//RGB settings	
     "rgbEffect": 1,
     "rgbBrightness": 100,
     "rgbFixColor": 150,
-    "rgbSpeed": 50
+    "rgbSpeed": 50,
+	
+//Wifi settings
+	"wifiSsid": "mywifi",
+	"wifiPsw": "mypsw",
+	"ApSsid": "UniClock",
+	"ApPsw": "uniclock",
+	"NtpServer": "pool.ntp.org",
+	"mqttBrokerAddr": "10.0.99.12", 
+	"mqttBrokerUser": "mqtt",
+	"mqttBrokerPsw": "mqtt"
 };
 
 //Runs, when HTML document is fully loaded
@@ -115,14 +145,20 @@ function Init(){
                 index == 'animMode' || index == 'rgbBrightness' ||
                 index == 'rgbFixColor' || index == 'rgbSpeed' ||
                 index == 'rgbEffect' || index == 'interval' ||
-				index == 'alarmPeriod'
+				index == 'alarmPeriod' || index == 'radarTimeout' ||
+				index == 'dateRepeatMin' || index == 'dateMode' ||
+				index == 'dateStart' || index == 'dateEnd' ||
+				index == 'timeStart' || index == 'timeEnd' ||
+				index == 'humidStart' || index == 'humidEnd'
             ){
             $('#'+index).val(value);
         }
         else if((index == 'enableDST' || index == 'set12_24' ||
                 index == 'showZero' || index == 'enableBlink' ||
                 index == 'enableAutoShutoff' || index == 'alarmEnable' ||
-                index == 'rgbDir' || index == 'manualOverride'
+                index == 'rgbDir' || index == 'manualOverride' ||
+				index == 'enableAutoDim' || index == 'enableRadar' ||
+				|| index == 'enableDoubleBlink' || index == 'enableTimeDisplay'
                 ) && !!value
             ){
             $('#'+index).prop('checked',true);
@@ -131,7 +167,8 @@ function Init(){
             //TODO
         }
     }
-    $('.humidity-holder').toggleClass('hidden',configuration['humidity'] == 255);
+    $('.pressure-holder').toggleClass('hidden',configuration['pressure'] == 255);
+	$('.humidity-holder').toggleClass('hidden',configuration['humidity'] == 255);
 	$('.humidity-holder2').toggleClass('hidden',configuration['humidity2'] == 255);
     $('.temperature-holder').toggleClass('hidden',configuration['temperature'] == 255);
 	$('.temperature-holder2').toggleClass('hidden',configuration['temperature2'] == 255);
@@ -168,6 +205,7 @@ function Init(){
 function setCurrentInfos(){
     $.get('/getCurrentInfos/').done(function(data){
         $('#currentTime').html(data["currentDate"] + " " + data["currentTime"]);
+		$('#pressure').html(data["pressure"]);
         $('#humidity').html(data["humidity"]);
 		$('#humidity2').html(data["humidity2"]);
         $('#temperature').html(data["temperature"]);
@@ -186,7 +224,7 @@ function getCurrentTime(){
     var yyyy = today.getFullYear();
     var hour = formatToTwoDigit(today.getHours());
     var minute = formatToTwoDigit(today.getMinutes());
-    return yyyy+"-"+mm+"-"+dd+" "+hour+":"+minute;
+    return yyyy+"-"+mm+"-"+dd+" "+hour+":"+minute;   //if dateMode?? // 0:dd/mm/yyyy 1:mm/dd/yyyy 2:yyyy/mm/dd
 }
 
 //if number is lower than 10, adds a zero
