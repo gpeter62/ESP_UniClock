@@ -42,8 +42,8 @@ static unsigned long lastRun = 0;
 float tempTMP, humidTMP;
 
   if (EEPROMsaving) return;
-  //if (((millis()-lastRun)<2500) || (second()!=TEMP_START)) return;
-  if ((((millis()-lastRun)<2500) || (second()!=TEMP_START)) && (lastRun !=0)) return;
+  //if (((millis()-lastRun)<2500) || (second()!=prm.tempStart)) return;
+  if ((((millis()-lastRun)<2500) || (second()!=prm.tempStart)) && (lastRun !=0)) return;
   lastRun = millis();  
 
   // Reading temperature or humidity takes about 250 milliseconds!

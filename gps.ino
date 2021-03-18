@@ -35,17 +35,22 @@ void setupGPS() {
                          
   ss.begin(GPSBaud);                                    // Set Software Serial Comm Speed to 9600    
   delay(200);
+  GPSexist = true;
   smartDelay(500);
   getGPS(); 
 }
 
-void getGPS(){ 
+boolean getGPS(){ 
 static unsigned long lastRun = 0;
+boolean res = false;
 
-   if ((millis() - lastRun) < 10000) return;   //refresh rate
+   if ((lastRun==0) || (millis() - lastRun) < 10000) 
+      return(res);   //refresh rate
+      
    lastRun = millis();
    smartDelay(500);
    if (gps.time.isValid() && gps.date.isValid() && gps.time.isUpdated())  {
+   lastTimeUpdate = millis();
    int hours = gps.time.hour() + prm.utc_offset; if (prm.enableDST) hours++;
     if (hours > 23) {
       hours = hours - 24; 
@@ -61,7 +66,10 @@ static unsigned long lastRun = 0;
     #endif
       
     setTime(hours,gps.time.minute(),gps.time.second(),gps.date.day(),gps.date.month(),gps.date.year());  //set the time (hr,min,sec,day,mnth,yr)
+    res = true;
    } //endif valid date&time
+   
+   return (res);
 }
 
 void printGPS() {
@@ -87,6 +95,6 @@ static void smartDelay(unsigned long ms)  {              // This custom version 
 //------------------------------------------------------------------------------------------
 
 #else
-void setupGPS() {}
-void getGPS() {}
+void setupGPS() {GPSexist = false;}
+boolean getGPS() {return(false);}
 #endif

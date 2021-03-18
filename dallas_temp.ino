@@ -65,7 +65,7 @@ void requestDallasTemp(boolean force) {
     if (EEPROMsaving) return;
     
     //if (force || (!requested && ((millis()-lastRequest) > intervalTemp))) {       //request a new reading
-    if (force || (!requested && (second()==TEMP_START-1))) {       //request a new reading
+    if (force || (!requested && (second()==prm.tempStart-1))) {       //request a new reading
       //disableDisplay();
       tempSensors.requestTemperatures(); // Request the temperature from the sensor (it takes some time to read it)
       //enableDisplay(0);

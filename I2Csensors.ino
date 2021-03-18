@@ -160,7 +160,7 @@ void setupI2Csensors() {
   if (lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE)) {
     DPRINTLN("BH1750 luxmeter sensor found");
     BH1750exist = true;
-    autoBrightness = true;
+    useLux++;
   }
   else {
     DPRINTLN("Error initialising BH1750 on address 0x23");
