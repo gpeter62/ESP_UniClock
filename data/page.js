@@ -158,7 +158,7 @@ function Init(){
                 index == 'enableAutoShutoff' || index == 'alarmEnable' ||
                 index == 'rgbDir' || index == 'manualOverride' ||
 				index == 'enableAutoDim' || index == 'enableRadar' ||
-				|| index == 'enableDoubleBlink' || index == 'enableTimeDisplay'
+				index == 'enableDoubleBlink' || index == 'enableTimeDisplay'
                 ) && !!value
             ){
             $('#'+index).prop('checked',true);
