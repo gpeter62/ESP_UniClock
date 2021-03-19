@@ -38,6 +38,10 @@
                     <label>Humidity-2</label>
                     <span id="humidity2" class="info big"></span>
                 </div>
+				<div class="control-holder humidity-holder2">
+                    <label>Pressure</label>
+                    <span id="pressure" class="info big"></span>
+                </div>
 			</div>	
 			
             <div class="control-holder">
@@ -62,7 +66,7 @@
                 <select id="alarmPeriod" class="number-select" min="0" max="240" step="1" prefix="" suffix=" sec"></select>
             </div>
 			
-			
+			<!-- Tube display settings -->	
 			<div class="control-holder">
                 <label>Manual Override</label>
                 <input id="manualOverride" type="checkbox" class="switch two-side">
@@ -155,8 +159,83 @@
                     <select id="nightTimeMinutes" class="number-select two-digit" min="0" max="59" step="5"></select>
                 </div>
             </div>
-			
-           <div class="control-holder rgb-holder">
+			<div class="control-holder">
+                <label for="dateMode">Date mode</label>
+                <select id="dateMode" class="number-select" min="0" max="2" step="1" prefix="DateMode" suffix=""></select>
+            </div>			
+            <label>Date repeat (min)</label>
+                <div class="multiple-input">
+                    <select id="dateRepeat" class="number-select two-digit" min="0" max="59"></select>
+                </div>
+            </div>			
+            <div class="control-holder">
+                <label>Temperature C/F</label>
+                <input id="tempCF" type="checkbox" class="switch two-side">
+                <span class="switcher-text left non-selectable" for="tempCF">C</span>
+                <span class="switcher non-selectable" for="tempCF"></span>
+                <span class="switcher-text right non-selectable" for="tempCF">F</span>
+            </div>
+            <div class="control-holder">
+                <label>Display Time</label>
+                <input id="enableTimeDisplay" type="checkbox" class="switch">
+                <span class="switcher-text left non-selectable" for="enableTimeDisplay">off</span>
+                <span class="switcher non-selectable" for="enableTimeDisplay"></span>
+                <span class="switcher-text right non-selectable" for="enableTimeDisplay">on</span>
+            </div>	
+            <div class="control-holder">
+                <label>Display Date</label>
+                <div class="multiple-input">
+                    <select id="dateStart" class="number-select two-digit" min="0" max="59"></select>
+                    <span>:</span>
+                    <select id="dateEnd" class="number-select two-digit" min="0" max="59" step="1"></select>
+                </div>
+            </div>	
+            <div class="control-holder">
+                <label>Display Temperature</label>
+                <div class="multiple-input">
+                    <select id="tempStart" class="number-select two-digit" min="0" max="59"></select>
+                    <span>:</span>
+                    <select id="tempEnd" class="number-select two-digit" min="0" max="59" step="1"></select>
+                </div>
+            </div>  
+            <div class="control-holder">
+                <label>Display Humidity</label>
+                <div class="multiple-input">
+                    <select id="humidStart" class="number-select two-digit" min="0" max="59"></select>
+                    <span>:</span>
+                    <select id="humidEnd" class="number-select two-digit" min="0" max="59" step="1"></select>
+                </div>
+            </div>  
+            <div class="control-holder">
+                <label>Double Blink</label>
+                <input id="doubleBlink" type="checkbox" class="switch">
+                <span class="switcher-text left non-selectable" for="doubleBlink">off</span>
+                <span class="switcher non-selectable" for="doubleBlink"></span>
+                <span class="switcher-text right non-selectable" for="doubleBlink">on</span>
+            </div>
+            <div class="control-holder">
+                <label>enableAutoDim</label>
+                <input id="enableAutoDim" type="checkbox" class="switch">
+                <span class="switcher-text left non-selectable" for="enableAutoDim">off</span>
+                <span class="switcher non-selectable" for="enableAutoDim"></span>
+                <span class="switcher-text right non-selectable" for="enableAutoDim">on</span>
+            </div>
+            <div class="control-holder">
+                <label>enableRadar</label>
+                <input id="enableRadar" type="checkbox" class="switch">
+                <span class="switcher-text left non-selectable" for="enableRadar">off</span>
+                <span class="switcher non-selectable" for="enableRadar"></span>
+                <span class="switcher-text right non-selectable" for="enableRadar">on</span>
+            </div>			
+            <div class="control-holder rgb-holder">
+                <label>Radar Timeout (sec)</label>
+                <div class="multiple-input">
+                    <select id="radarTimeout" class="number-select small" min="0" max="999" step="1"></select>
+                </div>
+            </div>       
+
+			<!-- RGB settings -->			
+			<div class="control-holder rgb-holder">
                 <label for="rgbEffect">RGB Effect</label>
                 <select id="rgbEffect">
                     <option value="0">OFF</option>
@@ -197,7 +276,41 @@
                 <label for="rgbSpeed">Speed</label>
                 <select class="number-select small" id="rgbSpeed" min="1" max="255" step="1"></select>
             </div>
-         </div>
+			
+			<!-- WiFi settings -->
+			<div class="control-holder">
+                <label>WiFi SSID</label>
+                <span id="wifiSsid" class="info medium"></span>
+            </div>
+			<div class="control-holder">
+                <label>WiFi PSW</label>
+                <span id="wifiPsw" class="info medium"></span>
+            </div>
+			<div class="control-holder">
+                <label>AP SSID</label>
+                <span id="ApSsid" class="info medium"></span>
+            </div>
+			<div class="control-holder">
+                <label>AP PSW</label>
+                <span id="ApPsw" class="info medium"></span>
+            </div>	
+			<div class="control-holder">
+                <label>NtpServer</label>
+                <span id="NtpServer" class="info medium"></span>
+            </div>			
+			<div class="control-holder">
+                <label>mqttBrokerAddr</label>
+                <span id="mqttBrokerAddr" class="info medium"></span>
+            </div>	
+			<div class="control-holder">
+                <label>mqttBrokerUser</label>
+                <span id="mqttBrokerUser" class="info medium"></span>
+            </div>	
+			<div class="control-holder">
+                <label>mqttBrokerPsw</label>
+                <span id="mqttBrokerPsw" class="info medium"></span>
+            </div>				
+        </div>
             
         <div class="separator"></div>
         <div class="footer">
