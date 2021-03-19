@@ -642,7 +642,7 @@ void startServer() {
   server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest * request) {
     disableDisplay();
     DPRINTLN("Webserver: /favicon.ico");
-    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/favicon.png", "image/png");
+    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/favicon.ico", "image/x-icon");
     response->addHeader("Cache-Control", CACHE_MAX_AGE);
     request->send(response);
   });

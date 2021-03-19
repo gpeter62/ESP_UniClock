@@ -68,7 +68,6 @@ body {
     vertical-align: top;
     line-height: 30px;
     position: relative;
-    z-index: 100;
     text-shadow: 1px 1px 0 black;
     margin-bottom: 5px;
 }
@@ -154,6 +153,47 @@ input:active, select:active{
 [type="checkbox"].switch:not(.two-side):checked ~ .switcher{
     background: #37bfb9;
     background-color: #c35;
+}
+[page]{
+    display: none;
+}
+[page].active{
+    display: block;
+}
+#menu-holder{
+    padding-bottom: 40px;
+}
+#menu-holder > .floating-menu{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 110;
+    background: #161616;
+}
+#menu{
+    width: 100%;
+}
+#menu td{
+    padding: 0 30px;
+}
+#menu td .menu-item{
+    cursor: pointer;
+    border-bottom: 2px solid gray;
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: bold;
+    line-height: 30px;
+    background-color: transparent;
+    transition: 0.3s border, 0.3s background, 0.3s color;
+}
+#menu td .menu-item:hover{
+    background-color: #4E4E4E;
+    border-color: #ddd;
+}
+#menu td .menu-item.active{
+    color: #ddd;
+    border-color: #c35;
 }
 .switcher-text{
     text-transform: uppercase;

@@ -1,3 +1,5 @@
+var isTest = (location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.href.indexOf("file://") != -1);
+
 //Example config that UI recieves
 var configuration = {
 	//Main screen	
@@ -62,12 +64,23 @@ var configuration = {
 };
 
 //Runs, when HTML document is fully loaded
-$(document).ready(function(){
-    getConfiguration(); 
-
-    //Set current infos, like time, humidity and temperature
-    setCurrentInfos();
+$(document).ready(function(){    
+    if(isTest){
+        Init();
+    }
+    else{
+        getConfiguration(); 
+        //Set current infos, like time, humidity and temperature
+        getCurrentInfos();
+    }
 });
+
+function setLocalPagination(){
+    $('[page]').each(function(){
+        var page = $(this).attr('page');
+        $('#menu tr').append('<td><div class="menu-item" pageMenu="'+page+'">'+page+'</div></td>');
+    });
+}
 
 function getConfiguration(){
     $.get('/getConfiguration/').done(function(data){
@@ -88,6 +101,15 @@ function Init(){
 
     document.title = configuration['version'];
     $('#versionHeader').html(configuration['version']);
+
+    setLocalPagination();
+    $('.menu-item').on('click',function(){
+        $('.menu-item.active').removeClass('active');
+        $('[page].active').removeClass('active');
+        $(this).addClass('active');
+        $('[page="'+$(this).attr('pagemenu')+'"]').addClass('active');
+    });
+    $('.menu-item').eq(0).trigger('click');
 
     //binds custom switch functionality
     $('.switcher').on('click',function(){
@@ -202,7 +224,7 @@ function Init(){
     },200);
 }
 
-function setCurrentInfos(){
+function getCurrentInfos(){
     $.get('/getCurrentInfos/').done(function(data){
         $('#currentTime').html(data["currentDate"] + " " + data["currentTime"]);
 		$('#pressure').html(data["pressure"]);
@@ -210,7 +232,7 @@ function setCurrentInfos(){
 		$('#humidity2').html(data["humidity2"]);
         $('#temperature').html(data["temperature"]);
 		$('#temperature2').html(data["temperature2"]);
-        setTimeout(setCurrentInfos,20000);   //refreshes time every 20 second by calling itself
+        setTimeout(getCurrentInfos,20000);   //refreshes time every 20 second by calling itself
     }).always(function(){
         
     });
