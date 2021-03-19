@@ -13,6 +13,7 @@ var configuration = {
     "humidity": -1,
 	"humidity2": -1,
 	"pressure": -1,
+	"lux": -1,
     "alarmEnabled": 0,
     "alarmTime": "6:30",
 	"alarmPeriod": 15,
@@ -60,7 +61,8 @@ var configuration = {
 	"NtpServer": "pool.ntp.org",
 	"mqttBrokerAddr": "10.0.99.12", 
 	"mqttBrokerUser": "mqtt",
-	"mqttBrokerPsw": "mqtt"
+	"mqttBrokerPsw": "mqtt",
+	"mqttBrokerRefresh": 30
 };
 
 //Runs, when HTML document is fully loaded
@@ -159,7 +161,12 @@ function Init(){
             $('#'+index+'Hours').val(formatToTwoDigit(value[0]));
             $('#'+index+'Minutes').val(formatToTwoDigit(value[1]));
         }
-        else if(index == 'version'){
+        else if(index == 'version' || index == 'NtpServer' ||
+				index == 'wifiSsid' || index == 'wifiPsw' || 
+				index == 'ApSsid' || index == 'ApPsw' || 
+				index == 'mqttBrokerAddr' || 
+				index == 'mqttBrokerUser' || index =='mqttBrokerPsw'
+		){
             $('#'+index).html(value);
         }
         else if(index == 'utc_offset' || index == 'maxBrightness' || 
@@ -171,7 +178,8 @@ function Init(){
 				index == 'dateRepeatMin' || index == 'dateMode' ||
 				index == 'dateStart' || index == 'dateEnd' ||
 				index == 'timeStart' || index == 'timeEnd' ||
-				index == 'humidStart' || index == 'humidEnd'
+				index == 'humidStart' || index == 'humidEnd' ||
+				index == 'mqttBrokerRefresh'
             ){
             $('#'+index).val(value);
         }
@@ -189,6 +197,7 @@ function Init(){
             //TODO
         }
     }
+	$('.lux-holder').toggleClass('hidden',configuration['lux'] == 255);
     $('.pressure-holder').toggleClass('hidden',configuration['pressure'] == 255);
 	$('.humidity-holder').toggleClass('hidden',configuration['humidity'] == 255);
 	$('.humidity-holder2').toggleClass('hidden',configuration['humidity2'] == 255);
@@ -227,6 +236,7 @@ function Init(){
 function getCurrentInfos(){
     $.get('/getCurrentInfos/').done(function(data){
         $('#currentTime').html(data["currentDate"] + " " + data["currentTime"]);
+		$('#lux').html(data["lux"]);
 		$('#pressure').html(data["pressure"]);
         $('#humidity').html(data["humidity"]);
 		$('#humidity2').html(data["humidity2"]);
