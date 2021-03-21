@@ -8,12 +8,12 @@ var configuration = {
     "maxBrightness": 10,
     "currentDate": "2020.10.24",
     "currentTime": "15:01",
-    "temperature": 0,
-	"temperature2": 0,
-    "humidity": -1,
-	"humidity2": -1,
-	"pressure": -1,
-	"lux": -1,
+    "temperature": 255,
+	"temperature2": 255,
+    "humidity": 255,
+	"humidity2": 255,
+	"pressure": 255,
+	"lux": 255,
     "alarmEnabled": 0,
     "alarmTime": "6:30",
 	"alarmPeriod": 15,
@@ -93,9 +93,14 @@ function getConfiguration(){
 }
 
 function sendMsgToArduino(key,value) {
-    $.post('/saveSetting/', {"key" : key ,"value" : value }).done(function(data){
-        console.log(data);
-    });
+    if(isTest){
+        console.log(key + " " + value);
+    }
+    else{
+        $.post('/saveSetting/', {"key" : key ,"value" : value }).done(function(data){
+            console.log(data);
+        });
+    }
 }
 
 //Contains the most important initializes
