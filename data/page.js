@@ -134,6 +134,7 @@ var configuration = {
 $(document).ready(function(){    
     if(isTest){
         Init();
+        setCurrentInfos();
     }
     else{
         getConfiguration(); 
@@ -193,6 +194,16 @@ function RgbColor(r, g, b){
 function setPreviewColor(){
     var color = getColorFrom($('#rgbFixColor').val());
     $('#selectedColor').css('background-color',color);
+}
+
+function setCurrentInfos(){
+    $('#currentTime').html(getCurrentDate(configuration["currentDate"]) + " " + configuration["currentTime"]);
+    $('#lux').html(configuration["lux"]);
+    $('#pressure').html(configuration["pressure"]);
+    $('#humidity').html(configuration["humidity"]);
+    $('#humidity2').html(configuration["humidity2"]);
+    $('#temperature').html(configuration["temperature"]);
+    $('#temperature2').html(configuration["temperature2"]);
 }
 
 function getControlInfo(index){
@@ -375,22 +386,43 @@ function Init(){
                 sendMsgToArduino(key, value);
             }
         });
+        $('#dateMode').on('change',function(){
+            configuration["dateMode"] = $(this).val();
+            setCurrentInfos();
+        });
     },200);
 }
 
 function getCurrentInfos(){
     $.get('/getCurrentInfos/').done(function(data){
-        $('#currentTime').html(data["currentDate"] + " " + data["currentTime"]);
-		$('#lux').html(data["lux"]);
-		$('#pressure').html(data["pressure"]);
-        $('#humidity').html(data["humidity"]);
-		$('#humidity2').html(data["humidity2"]);
-        $('#temperature').html(data["temperature"]);
-		$('#temperature2').html(data["temperature2"]);
+        for(var i in data){
+            configuration[i] = data[i];
+        }
+        setCurrentInfos();
         setTimeout(getCurrentInfos,20000);   //refreshes time every 20 second by calling itself
     }).always(function(){
         
     });
+}
+
+function getCurrentDate(date){
+    var splittedDate = date.split('.');
+    var yyyy = splittedDate[0];
+    var mm = splittedDate[1]; 
+    var dd = splittedDate[2];
+
+    if(configuration["dateMode"] == 0){
+        return dd+"/"+mm+"/"+yyyy;
+    }
+    else if(configuration["dateMode"] == 1){
+        return mm+"/"+dd+"/"+yyyy;
+    }
+    else if(configuration["dateMode"] == 2){
+        return yyyy+"/"+mm+"/"+dd;
+    }
+    else{
+        return yyyy+"/"+mm+"/"+dd;   //if dateMode?? // 0:dd/mm/yyyy 1:mm/dd/yyyy 2:yyyy/mm/dd
+    }
 }
 
 //Gets the current time from browser and gives back as readable format
@@ -401,7 +433,19 @@ function getCurrentTime(){
     var yyyy = today.getFullYear();
     var hour = formatToTwoDigit(today.getHours());
     var minute = formatToTwoDigit(today.getMinutes());
-    return yyyy+"-"+mm+"-"+dd+" "+hour+":"+minute;   //if dateMode?? // 0:dd/mm/yyyy 1:mm/dd/yyyy 2:yyyy/mm/dd
+
+    if(configuration["dateMode"] == 0){
+        return dd+"-"+mm+"-"+yyyy+" "+hour+":"+minute;
+    }
+    else if(configuration["dateMode"] == 1){
+        return mm+"-"+dd+"-"+yyyy+" "+hour+":"+minute;
+    }
+    else if(configuration["dateMode"] == 2){
+        return yyyy+"-"+mm+"-"+dd+" "+hour+":"+minute;
+    }
+    else{
+        return yyyy+"-"+mm+"-"+dd+" "+hour+":"+minute;   //if dateMode?? // 0:dd/mm/yyyy 1:mm/dd/yyyy 2:yyyy/mm/dd
+    }
 }
 
 //if number is lower than 10, adds a zero
