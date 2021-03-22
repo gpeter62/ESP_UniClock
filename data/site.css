@@ -52,12 +52,13 @@ body {
     float: left;
     padding: 5px;
     min-height: 80px;
-    overflow: auto;
+    position: relative;
 }
 .header{
     overflow: auto;
 }
 .form label {
+    cursor: help;
     width: 100%;
     display: inline-block;
     font-weight: bold;
@@ -266,6 +267,135 @@ input:active, select:active{
 #humidity:after{
     content: '%';
 }
+#color-select-holder > div{
+    float: left;
+}
+#color-select-holder > div:first-child{
+    width: calc(100% - 40px);
+}
+#color-select-holder > div:last-child{
+    width: 40px;
+}
+
+#info-popup{
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 9999;
+    background: rgba(0,0,0,0.6);
+}
+
+#popup-box{
+    padding: 12px;
+    border: 2px solid;
+    margin: auto;
+    width: 100%;
+    background: #161616;
+    margin-top: 50px;
+    border-radius: 12px;
+    position: relative;
+}
+#popup-box h2{
+    margin-top: 0;
+    color: #ddd;
+}
+#popup-close-btn{
+    position: absolute;
+    left: 100%;
+    top: 0;
+    background: #161616;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid;
+    line-height: 30px;
+    text-align: center;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: -15px;
+    margin-top: -15px;
+    transition: 0.3s background, 0.3s color;
+}
+#popup-close-btn:hover{
+    color: #ddd;
+}
+
+#selectedColor{
+    width: 30px;
+    height: 30px;
+    background-color: white;
+    border-radius: 50%;
+    margin: auto;
+}
+
+.slider-info{
+    display: none;
+    position: absolute;
+    padding: 3px;
+    font-weight: bold;
+    font-size: 24px;
+    background: #161616;
+    border: 2px solid #c35;
+    z-index: 3;
+    border-radius: 50%;
+    text-align: center;
+    color: #ddd;
+    min-width: 50px;
+    top: 0;
+    right: 10px;
+}
+
+/* slider control */
+
+.slidecontainer {
+    width: 100%; /* Width of the outside container */
+}
+
+/* The slider itself */
+.slider {
+    margin-top: 9px;
+    height: 10px;
+    min-height: auto;
+    -webkit-appearance: none;  /* Override default CSS styles */
+    appearance: none;
+    outline: none; /* Remove outline */
+    opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+    -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+    transition: opacity .2s;
+}
+
+/* Mouse-over effects */
+.slider:hover {
+    opacity: 1; /* Fully shown on mouse-over */
+}
+
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Override default look */
+    appearance: none;
+    width: 20px; /* Set a specific slider handle width */
+    height: 20px; /* Slider handle height */
+    background: #c35;
+    cursor: pointer; /* Cursor on hover */
+    border-radius: 50%;
+    border: 2px solid #ddd;
+}
+
+.slider::-moz-range-thumb {
+    width: 20px; /* Set a specific slider handle width */
+    height: 20px; /* Slider handle height */
+    background: #c35;
+    cursor: pointer; /* Cursor on hover */
+    border-radius: 50%;
+    border: 2px solid #ddd;
+}
+
+/* slider control end */
+
+
 /* width */
 ::-webkit-scrollbar {
     width: 10px;

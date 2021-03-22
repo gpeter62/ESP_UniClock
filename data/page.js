@@ -1,9 +1,7 @@
 var isTest = (location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.href.indexOf("file://") != -1);
 
-//Example config that UI recieves
-var configuration = {
-	//Main screen	
-    "version": "UniClock 2.0",
+var controlInfos = {
+    "version": "UniClock 3.0",
     "maxDigits": 6,
     "maxBrightness": 10,
     "currentDate": "2020.10.24",
@@ -23,7 +21,7 @@ var configuration = {
     "enableDST": true,
     "set12_24": true,
     "showZero": true,
-    "blinkEnabled": true,
+    "enableBlink": true,
     "interval": 15,
     "enableAutoShutoff": true,
     "dayTime": "7:00",
@@ -47,13 +45,14 @@ var configuration = {
 	"enableRadar": false,   
 	"radarTimeout": 300,         
 
-//RGB settings	
+    //RGB settings	
+    "rgbDir" : true,
     "rgbEffect": 1,
     "rgbBrightness": 100,
     "rgbFixColor": 150,
     "rgbSpeed": 50,
 	
-//Wifi settings
+    //Wifi settings
 	"wifiSsid": "mywifi",
 	"wifiPsw": "mypsw",
 	"ApSsid": "UniClock",
@@ -61,7 +60,73 @@ var configuration = {
 	"NtpServer": "pool.ntp.org",
 	"mqttBrokerAddr": "10.0.99.12", 
 	"mqttBrokerUser": "mqtt",
-	"mqttBrokerPsw": "mqtt",
+	"mqttBrokerPsw": "mqttPW",
+	"mqttBrokerRefresh": 30
+};
+
+//Example config that UI recieves
+var configuration = {
+	//Main screen	
+    "version": "UniClock 3.0",
+    "maxDigits": 6,
+    "maxBrightness": 10,
+    "currentDate": "2020.10.24",
+    "currentTime": "15:01",
+    "temperature": 255,
+	"temperature2": 255,
+    "humidity": 255,
+	"humidity2": 255,
+	"pressure": 255,
+	"lux": 255,
+    "alarmEnabled": 0,
+    "alarmTime": "6:30",
+	"alarmPeriod": 15,
+	
+	//Tube display settings
+    "utc_offset": 1,
+    "enableDST": true,
+    "set12_24": true,
+    "showZero": true,
+    "enableBlink": true,
+    "interval": 15,
+    "enableAutoShutoff": true,
+    "dayTime": "7:00",
+    "nightTime": "22:00",
+    "dayBright": 10,
+    "nightBright": 3,
+	"manualOverride": true,
+    "animMode": 6,
+	"dateMode": 2,              // 0:dd/mm/yyyy 1:mm/dd/yyyy 2:yyyy/mm/dd
+	"tempCF": 'C',               //Temperature Celsius / Fahrenheit
+	"enableTimeDisplay": true,       
+	"dateStart": 45,                
+	"dateEnd": 50,    
+	"tempStart": 35,                  
+	"tempEnd": 40,  
+	"humidStart": 40,                 
+	"humidEnd": 45,
+	"dateRepeatMin": 3,            
+	"doubleBlink": true,             
+	"enableAutoDim": false,  
+	"enableRadar": false,   
+	"radarTimeout": 300,         
+
+    //RGB settings	
+    "rgbDir" : true,
+    "rgbEffect": 1,
+    "rgbBrightness": 100,
+    "rgbFixColor": 150,
+    "rgbSpeed": 50,
+	
+    //Wifi settings
+	"wifiSsid": "mywifi",
+	"wifiPsw": "mypsw",
+	"ApSsid": "UniClock",
+	"ApPsw": "uniclock",
+	"NtpServer": "pool.ntp.org",
+	"mqttBrokerAddr": "10.0.99.12", 
+	"mqttBrokerUser": "mqtt",
+	"mqttBrokerPsw": "mqttPW",
 	"mqttBrokerRefresh": 30
 };
 
@@ -103,6 +168,37 @@ function sendMsgToArduino(key,value) {
     }
 }
 
+var COLORSATURATION = 255;
+var WHITE_INDEX = 192;
+function getColorFrom(WheelPos){
+    if (WheelPos == WHITE_INDEX) 
+        return RgbColor(COLORSATURATION/2, COLORSATURATION/2, COLORSATURATION/2);
+        
+    WheelPos = 255 - WheelPos;
+    if(WheelPos < 85)  {
+        return RgbColor(255 - WheelPos * 3, 0, WheelPos * 3);
+    } else if(WheelPos < 170) {
+        WheelPos -= 85;
+        return RgbColor(0, WheelPos * 3, 255 - WheelPos * 3);
+    } else  {
+        WheelPos -= 170;
+        return RgbColor(WheelPos * 3, 255 - WheelPos * 3, 0);
+    }
+}
+
+function RgbColor(r, g, b){
+    return 'rgb('+r+','+g+','+b+')';
+}
+
+function setPreviewColor(){
+    var color = getColorFrom($('#rgbFixColor').val());
+    $('#selectedColor').css('background-color',color);
+}
+
+function getControlInfo(index){
+    return controlInfos[index];
+}
+
 //Contains the most important initializes
 function Init(){
 
@@ -117,6 +213,49 @@ function Init(){
         $('[page="'+$(this).attr('pagemenu')+'"]').addClass('active');
     });
     $('.menu-item').eq(0).trigger('click');
+
+    $('#rgbFixColor').on('input',function(){
+        setPreviewColor();
+    });
+
+    var sliderFadeOutTimer;
+    $('input[type="range"]').on('input',function(){
+        clearTimeout(sliderFadeOutTimer);
+        var id = $(this).attr('id');
+        var parent = $(this).closest('.control-holder');
+        $('[sliderfor]:not(.fading)').each(function(){
+            if($(this).attr('sliderfor') != id && !$(this).hasClass('fading')){
+                $(this).addClass('fading').fadeOut('slow',function(){
+                    $(this).remove();
+                });
+            }
+        });
+        if($(parent).children('.slider-info').length == 0){
+            $(parent).append('<div class="slider-info" sliderfor="'+id+'"></div>');
+            $(parent).children('.slider-info').fadeIn(300);
+        }
+        var _this = $(parent).children('.slider-info').text($(this).val());
+        sliderFadeOutTimer = setTimeout(function(){
+            $(_this).addClass('fading').fadeOut('slow',function(){
+                $(this).remove();
+            });
+        },600);
+    });
+
+    $('.form label').on('click',function(){
+        var info = getControlInfo($(this).closest('.control-holder').find('input, select').eq(0).attr('id'));
+        if(!!info){
+            $('#popup-box h2').text($(this).text());
+            $('#popup-box .content').text(info);
+            $('#info-popup').fadeIn(450);
+        }        
+    });
+    $('#popup-close-btn, #info-popup').on('click',function(){
+        $('#info-popup').fadeOut(450);
+    });
+    $("#popup-box").click(function(event){
+        event.stopPropagation();
+    });
 
     //binds custom switch functionality
     $('.switcher').on('click',function(){
@@ -142,7 +281,7 @@ function Init(){
     $('.number-select').each(function(){
         let from = $(this).attr('min')*1;
         let to = $(this).attr('max')*1;
-        let step = !!$(this).attr('step') ? !!$(this).attr('step') : 1;
+        let step = !!$(this).attr('step') ? $(this).attr('step') : 1;
         
         for(let i = from; i < to+1; i){
             let value = $(this).hasClass('two-digit') ? formatToTwoDigit(i) : i;
@@ -154,7 +293,7 @@ function Init(){
                 text_value += $(this).attr('suffix')
             }
             $(this).append('<option value="'+value+'">'+text_value+'</option>');
-            i += step;
+            i += step*1;
         }        
     });
 
@@ -166,11 +305,7 @@ function Init(){
             $('#'+index+'Hours').val(formatToTwoDigit(value[0]));
             $('#'+index+'Minutes').val(formatToTwoDigit(value[1]));
         }
-        else if(index == 'version' || index == 'NtpServer' ||
-				index == 'wifiSsid' || index == 'wifiPsw' || 
-				index == 'ApSsid' || index == 'ApPsw' || 
-				index == 'mqttBrokerAddr' || 
-				index == 'mqttBrokerUser' || index =='mqttBrokerPsw'
+        else if(index == 'version'
 		){
             $('#'+index).html(value);
         }
@@ -184,7 +319,11 @@ function Init(){
 				index == 'dateStart' || index == 'dateEnd' ||
 				index == 'timeStart' || index == 'timeEnd' ||
 				index == 'humidStart' || index == 'humidEnd' ||
-				index == 'mqttBrokerRefresh'
+				index == 'mqttBrokerRefresh' ||
+				index == 'wifiSsid' || index == 'wifiPsw' || 
+				index == 'ApSsid' || index == 'ApPsw' || 
+				index == 'mqttBrokerAddr' || index == 'NtpServer' ||
+				index == 'mqttBrokerUser' || index =='mqttBrokerPsw'
             ){
             $('#'+index).val(value);
         }
@@ -209,6 +348,7 @@ function Init(){
     $('.temperature-holder').toggleClass('hidden',configuration['temperature'] == 255);
 	$('.temperature-holder2').toggleClass('hidden',configuration['temperature2'] == 255);
     $('.rgb-holder').toggleClass('hidden',configuration['rgbEffect'] == 255);
+    setPreviewColor();
 
     //sets a possible good timezone, if not already set
     if(!configuration['utc_offset']){
