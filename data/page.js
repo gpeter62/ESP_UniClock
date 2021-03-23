@@ -204,8 +204,17 @@ function setCurrentInfos(){
     $('#pressure').html(configuration["pressure"]);
     $('#humidity').html(configuration["humidity"]);
     $('#humidity2').html(configuration["humidity2"]);
-    $('#temperature').html(configuration["temperature"]);
-    $('#temperature2').html(configuration["temperature2"]);
+    $('#temperature').html(getTemperature(configuration["temperature"]));
+    $('#temperature2').html(getTemperature(configuration["temperature2"]));
+}
+
+function getTemperature(temperatureInC){
+    if(configuration["tempCF"]){        //Fahrenheit
+        return temperatureInC * 1.8 + 32;
+    }
+    else{
+        return temperatureInC;
+    }
 }
 
 function getControlInfo(index){
