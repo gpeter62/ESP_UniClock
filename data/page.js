@@ -1,67 +1,68 @@
 var isTest = (location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.href.indexOf("file://") != -1);
 
 var controlInfos = {
-    "version": "UniClock 3.0",
-    "maxDigits": 6,
-    "maxBrightness": 10,
-    "currentDate": "2020.10.24",
-    "currentTime": "15:01",
-    "temperature": 255,
-	"temperature2": 255,
-    "humidity": 255,
-	"humidity2": 255,
-	"pressure": 255,
-	"lux": 255,
-    "alarmEnabled": 0,
-    "alarmTime": "6:30",
-	"alarmPeriod": 15,
+    "version": "https://github.com/gpeter62/ESP_UniClock",
+    "maxDigits": "Number of tubes",
+    "maxBrightness": "MAX Brightness",
+    "currentDate": "Date",
+    "currentTime": "Time",
+    "temperature": "Temperature sensor #1",
+	"temperature2": "Temperature sensor #2",
+    "humidity": "Humidity sensor #1",
+	"humidity2": "Humidity sensor #2",
+	"pressure": "Pressure sensor #1",
+	"lux": "Lux sensor current value",
+    "alarmEnabled": "Switch ON/OFF alarm",
+    "alarmTime": "Alarm time (hour/minute)",
+	"alarmPeriod": "Alarm maximum length (sec)",
 	
 	//Tube display settings
-    "utc_offset": 1,
-    "enableDST": true,
-    "set12_24": true,
-    "showZero": true,
-    "enableBlink": true,
-    "interval": 15,
-    "enableAutoShutoff": true,
-    "dayTime": "7:00",
-    "nightTime": "22:00",
-    "dayBright": 10,
-    "nightBright": 3,
-	"manualOverride": true,
-    "animMode": 6,
-	"dateMode": 2,              // 0:dd/mm/yyyy 1:mm/dd/yyyy 2:yyyy/mm/dd
-	"tempCF": 'C',               //Temperature Celsius / Fahrenheit
-	"enableTimeDisplay": true,       
-	"dateStart": 45,                
-	"dateEnd": 50,    
-	"tempStart": 35,                  
-	"tempEnd": 40,  
-	"humidStart": 40,                 
-	"humidEnd": 45,
-	"dateRepeatMin": 3,            
-	"doubleBlink": true,             
-	"enableAutoDim": false,  
-	"enableRadar": false,   
-	"radarTimeout": 300,         
+    "utc_offset": "Timezone setting.   https://en.wikipedia.org/wiki/List_of_time_zones_by_country",
+    "enableDST": "Daylight Saving Time ON/OFF",
+    "set12_24": "Clock display 12 / 24 hours",
+    "showZero": "Show starting zero on hours",
+    "enableBlink": "ON / OFF",
+    "interval": "Cathode protect interval (minutes)",
+    "enableAutoShutoff": "Enable automatic day/night switch",
+    "dayTime": "Day starts (manual brightness control)",
+    "nightTime": "Night starts (manual brightness control)",
+    "dayBright": "Day brightness",
+    "nightBright": "Night brightness",
+	"manualOverride": "Manual Day/Night change",
+    "animMode": "Tube animation mode: 0=OFF, 1-5: Animations 6: Random",
+	"dateMode": "0:dd/mm/yyyy 1:mm/dd/yyyy 2:yyyy/mm/dd",
+	"tempCF": "Celsius / Fahrenheit display",              
+	"enableTimeDisplay": "Enable time&date display (Use OFF for thermometers)" ,
+	"dateStart": "Date dispaly start: Date is shown between Start/End seconds",
+	"dateEnd": "Date display end",    
+	"tempStart": "Temperature display time slice start",
+	"tempEnd": "Temperature display end",  
+	"humidStart": "Humidity display time slice start",
+	"humidEnd": "Humidity display end",
+	"dateRepeatMin": "Date is shown in every xx minutes. 0 = Disable date display",            
+	"doubleBlink": "Enable both blinking dots",             
+	"enableAutoDim": "Enable auto brightness controll (if sensor is installed)",  
+	"enableRadar": "Enable Radar/Pir tube switch (if sensor is installed)",   
+	"radarTimeout": "If Radar is used, automatic switch off after this timeout (sec)",         
 
     //RGB settings	
-    "rgbDir" : true,
-    "rgbEffect": 1,
-    "rgbBrightness": 100,
-    "rgbFixColor": 150,
-    "rgbSpeed": 50,
+    "rgbDir" : "RGB animation direction (left/right)",
+    "rgbEffect": "RGB animation#",
+    "rgbBrightness": "RGB leds brightness 0..255",
+    "rgbFixColor": "RGB color, if FixColor Effect is used",
+    "rgbSpeed": "RGB animation speed",
 	
     //Wifi settings
-	"wifiSsid": "mywifi",
-	"wifiPsw": "mypsw",
-	"ApSsid": "UniClock",
-	"ApPsw": "uniclock",
-	"NtpServer": "pool.ntp.org",
-	"mqttBrokerAddr": "10.0.99.12", 
-	"mqttBrokerUser": "mqtt",
-	"mqttBrokerPsw": "mqttPW",
-	"mqttBrokerRefresh": 30
+	"wifiSsid": "WiFi network SSID to connect",
+	"wifiPsw": "WiFI password",
+	"ApSsid": "AccessPoint name, if standalone mode is used",
+	"ApPsw": "AP password",
+	"NtpServer": "Timeserver name, using WiFi. (Default is: pool.ntp.org)",
+	"mqttBrokerAddr": "MQTT server address, if MQTT used", 
+	"mqttBrokerUser": "MQTT user",
+	"mqttBrokerPsw": "MQTT password",
+	"mqttBrokerRefresh": "MQTT send data in every xx sec",
+	"mqttEnable": "Enable/Disable MQTT refresh"
 };
 
 //Example config that UI recieves
@@ -97,7 +98,7 @@ var configuration = {
 	"manualOverride": true,
     "animMode": 6,
 	"dateMode": 2,              // 0:dd/mm/yyyy 1:mm/dd/yyyy 2:yyyy/mm/dd
-	"tempCF": 'C',               //Temperature Celsius / Fahrenheit
+	"tempCF": false,               //Temperature Celsius / Fahrenheit
 	"enableTimeDisplay": true,       
 	"dateStart": 45,                
 	"dateEnd": 50,    
@@ -127,7 +128,8 @@ var configuration = {
 	"mqttBrokerAddr": "10.0.99.12", 
 	"mqttBrokerUser": "mqtt",
 	"mqttBrokerPsw": "mqttPW",
-	"mqttBrokerRefresh": 30
+	"mqttBrokerRefresh": 30,
+	"mqttEnable": false
 };
 
 //Runs, when HTML document is fully loaded
@@ -329,6 +331,7 @@ function Init(){
 				index == 'dateRepeatMin' || index == 'dateMode' ||
 				index == 'dateStart' || index == 'dateEnd' ||
 				index == 'timeStart' || index == 'timeEnd' ||
+				index == 'tempStart' || index == 'tempEnd' ||
 				index == 'humidStart' || index == 'humidEnd' ||
 				index == 'mqttBrokerRefresh' ||
 				index == 'wifiSsid' || index == 'wifiPsw' || 
@@ -343,7 +346,8 @@ function Init(){
                 index == 'enableAutoShutoff' || index == 'alarmEnable' ||
                 index == 'rgbDir' || index == 'manualOverride' ||
 				index == 'enableAutoDim' || index == 'enableRadar' ||
-				index == 'enableDoubleBlink' || index == 'enableTimeDisplay'
+				index == 'enableDoubleBlink' || index == 'enableTimeDisplay' ||
+				index == 'mqttEnable' || index == 'tempCF'
                 ) && !!value
             ){
             $('#'+index).prop('checked',true);

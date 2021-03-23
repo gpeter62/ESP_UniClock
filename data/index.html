@@ -121,6 +121,13 @@
                     <span class="switcher-text right non-selectable" for="enableBlink">on</span>
                 </div>
                 <div class="control-holder">
+                    <label>Double Blink</label>
+                    <input id="doubleBlink" type="checkbox" class="switch">
+                    <span class="switcher-text left non-selectable" for="doubleBlink">off</span>
+                    <span class="switcher non-selectable" for="doubleBlink"></span>
+                    <span class="switcher-text right non-selectable" for="doubleBlink">on</span>
+                </div>				
+                <div class="control-holder">
                     <label>Time Zone</label>
                     <select id="utc_offset" class="number-select" min="-12" max="12" prefix="(UTC " suffix=":00)"></select>
                 </div>
@@ -197,7 +204,7 @@
                     <span class="switcher-text right non-selectable" for="tempCF">F</span>
                 </div>
                 <div class="control-holder">
-                    <label>Display Time</label>
+                    <label>Display Time&Date</label>
                     <input id="enableTimeDisplay" type="checkbox" class="switch">
                     <span class="switcher-text left non-selectable" for="enableTimeDisplay">off</span>
                     <span class="switcher non-selectable" for="enableTimeDisplay"></span>
@@ -227,13 +234,6 @@
                         <select id="humidEnd" class="number-select two-digit" min="0" max="59" step="1"></select>
                     </div>
                 </div>  
-                <div class="control-holder">
-                    <label>Double Blink</label>
-                    <input id="doubleBlink" type="checkbox" class="switch">
-                    <span class="switcher-text left non-selectable" for="doubleBlink">off</span>
-                    <span class="switcher non-selectable" for="doubleBlink"></span>
-                    <span class="switcher-text right non-selectable" for="doubleBlink">on</span>
-                </div>
                 <div class="control-holder">
                     <label>enableAutoDim</label>
                     <input id="enableAutoDim" type="checkbox" class="switch">
@@ -322,7 +322,14 @@
                 <div class="control-holder">
                     <label>NtpServer</label>
                     <input type="text" id="NtpServer">
-                </div>			
+                </div>
+                <div class="control-holder">
+                    <label>MQTT Enable</label>
+                    <input id="mqttEnable" type="checkbox" class="switch">
+                    <span class="switcher-text left non-selectable" for="mqttEnable">off</span>
+                    <span class="switcher non-selectable" for="mqttEnable"></span>
+                    <span class="switcher-text right non-selectable" for="mqttEnable">on</span>
+                </div>				
                 <div class="control-holder">
                     <label>mqttBrokerAddr</label>
                     <input type="text" id="mqttBrokerAddr">
