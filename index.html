@@ -11,13 +11,6 @@
 </head>
 
 <body>
-    <div id="info-popup">
-        <div id="popup-box" class="max-width">
-            <div id="popup-close-btn">X</div>
-            <h2>Random Input</h2>
-            <div class="content">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</div>
-        </div>
-    </div>
     <div id="menu-holder">
         <div class="floating-menu">
             <div class="max-width">
@@ -59,10 +52,6 @@
                         <label>Pressure</label>
                         <span id="pressure" class="info big"></span>
                     </div>
-                    <div class="control-holder humidity-holder2">
-                        <label>Lux</label>
-                        <span id="lux" class="info big"></span>
-                    </div>
                 </div>
                 <div class="control-holder">
                     <label>Alarm</label>
@@ -82,8 +71,8 @@
                 </div>
                 
                 <div class="control-holder">
-                    <label for="alarmPeriod">Alarm End (sec)</label>
-                    <input type="range" min="1" max="240" class="slider" id="alarmPeriod">
+                    <label for="alarmPeriod">Alarm End</label>
+                    <select id="alarmPeriod" class="number-select" min="0" max="240" step="1" prefix="" suffix=" sec"></select>
                 </div>
             </div>            
 			
@@ -140,7 +129,7 @@
             
                 <div class="control-holder">
                     <label for="interval">Cathode Protect</label>
-                    <input type="range" min="0" max="60" class="slider" id="interval">
+                    <select id="interval" class="number-select" min="0" max="60" step="1" prefix="" suffix=" minutes"></select>
                 </div>
                 
     
@@ -154,11 +143,15 @@
                             
                 <div class="control-holder">
                     <label>Day Brightness</label>
-                    <input type="range" min="1" max="10" class="slider" id="dayBright">
+                    <div class="multiple-input">
+                        <select id="dayBright" class="number-select small" min="1" max="10"></select>
+                    </div>
                 </div>
                 <div class="control-holder">
                     <label>Night Brightness</label>
-                    <input type="range" min="0" max="10" class="slider" id="nightBright">
+                    <div class="multiple-input">
+                        <select id="nightBright" class="number-select small" min="0" max="10"></select>
+                    </div>
                 </div>
                 
                 <div class="control-holder">
@@ -187,7 +180,9 @@
                 </div>	
                 <div class="control-holder">
                     <label>Date repeat (min)</label>
-                    <input type="range" min="0" max="59" class="slider" id="dateRepeat">
+                    <div class="multiple-input">
+                        <select id="dateRepeat" class="number-select two-digit" min="0" max="59"></select>
+                    </div>
                 </div>			
                 <div class="control-holder">
                     <label>Temperature</label>
@@ -207,7 +202,7 @@
                     <label>Display Date</label>
                     <div class="multiple-input">
                         <select id="dateStart" class="number-select two-digit" min="0" max="59"></select>
-                        <span>-</span>
+                        <span>:</span>
                         <select id="dateEnd" class="number-select two-digit" min="0" max="59" step="1"></select>
                     </div>
                 </div>	
@@ -215,7 +210,7 @@
                     <label>Display Temperature</label>
                     <div class="multiple-input">
                         <select id="tempStart" class="number-select two-digit" min="0" max="59"></select>
-                        <span>-</span>
+                        <span>:</span>
                         <select id="tempEnd" class="number-select two-digit" min="0" max="59" step="1"></select>
                     </div>
                 </div>  
@@ -223,7 +218,7 @@
                     <label>Display Humidity</label>
                     <div class="multiple-input">
                         <select id="humidStart" class="number-select two-digit" min="0" max="59"></select>
-                        <span>-</span>
+                        <span>:</span>
                         <select id="humidEnd" class="number-select two-digit" min="0" max="59" step="1"></select>
                     </div>
                 </div>  
@@ -250,7 +245,9 @@
                 </div>			
                 <div class="control-holder">
                     <label>Radar Timeout (sec)</label>
-                    <input type="range" min="0" max="999" class="slider" id="radarTimeout">
+                    <div class="multiple-input">
+                        <select id="radarTimeout" class="number-select small" min="0" max="999" step="1"></select>
+                    </div>
                 </div>
             </div>
 
@@ -274,18 +271,15 @@
                 </div>
                 <div class="control-holder">
                     <label>RGB Brightness</label>
-                    <input type="range" min="8" max="255" class="slider" id="rgbBrightness">
+                    <div class="multiple-input">
+                        <select id="rgbBrightness" class="number-select small" min="8" max="255" step="1"></select>
+                    </div>
                 </div>
                 <div class="control-holder">
                     <label>Fixed Color</label>
-                    <div id="color-select-holder">
-                        <div>
-                            <input type="range" min="1" max="255" class="slider" id="rgbFixColor">
-                        </div>
-                        <div>
-                            <div id="selectedColor"></div>
-                        </div>
-                    </div>                    
+                    <div class="multiple-input">
+                        <select id="rgbFixColor" class="number-select" min="0" max="255" step="1" prefix="Color_" suffix=""></select>
+                    </div>
                 </div>
             
                 <div class="control-holder">
@@ -298,46 +292,48 @@
                 
                 <div class="control-holder">
                     <label for="rgbSpeed">Speed</label>
-                    <input type="range" min="1" max="255" class="slider" id="rgbSpeed">
+                    <select class="number-select small" id="rgbSpeed" min="1" max="255" step="1"></select>
                 </div>
             </div>
 			<!-- WiFi settings -->			
 			<div page=wifi>
                 <div class="control-holder">
                     <label>WiFi SSID</label>
-                    <input type="text" id="wifiSsid">
+                    <span id="wifiSsid" class="info medium"></span>
                 </div>
                 <div class="control-holder">
                     <label>WiFi PSW</label>
-                    <input type="text" id="wifiPsw">
+                    <span id="wifiPsw" class="info medium"></span>
                 </div>
                 <div class="control-holder">
                     <label>AP SSID</label>
-                    <input type="text" id="ApSsid">
+                    <span id="ApSsid" class="info medium"></span>
                 </div>
                 <div class="control-holder">
                     <label>AP PSW</label>
-                    <input type="text" id="ApPsw">
+                    <span id="ApPsw" class="info medium"></span>
                 </div>	
                 <div class="control-holder">
                     <label>NtpServer</label>
-                    <input type="text" id="NtpServer">
+                    <span id="NtpServer" class="info medium"></span>
                 </div>			
                 <div class="control-holder">
                     <label>mqttBrokerAddr</label>
-                    <input type="text" id="mqttBrokerAddr">
+                    <span id="mqttBrokerAddr" class="info medium"></span>
                 </div>	
                 <div class="control-holder">
                     <label>mqttBrokerUser</label>
-                    <input type="text" id="mqttBrokerUser">
+                    <span id="mqttBrokerUser" class="info medium"></span>
                 </div>	
                 <div class="control-holder">
                     <label>mqttBrokerPsw</label>
-                    <input type="text" id="mqttBrokerPsw">
+                    <span id="mqttBrokerPsw" class="info medium"></span>
                 </div>
 				<div class="control-holder">
                     <label>MQTT Refresh (sec)</label>
-                    <input type="range" min="10" max="100" class="slider" id="mqttBrokerRefresh">
+                    <div class="multiple-input">
+                        <select id="mqttBrokerRefresh" class="number-select small" min="10" max="100" step="1"></select>
+                </div>
                 </div>
             </div>			
         </div>

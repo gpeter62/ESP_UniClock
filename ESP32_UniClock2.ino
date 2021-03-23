@@ -90,9 +90,10 @@
 
   //Display temperature and date in every minute between START..END seconds
   //#define ENABLE_CLOCK_DISPLAY true  //false, if no clock display is needed (for example: thermometer + humidity only)
-  //#define DATE_REPEAT_MIN   1     //show date only every xxx minute. If zero, datum is never displayed!
   //#define SHIFT_TUBES_LEFT_BY_1   //shift leftIP address by 1 tube the display, if a thermometer is used with spec tube
   //#define LEFTDECIMAL false      //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
+  //#define DATE_REPEAT_MIN   1    //show date only every xxx minute. If zero, datum is never displayed!  
+  //#define DOUBLE_BLINK          //both separator points are blinking (6 or 8 tubes VFD clock)
   //#define TEMP_START  35        //Temperature display start..end
   //#define TEMP_END    40
   //#define HUMID_START 40        //Humidity% display start..end
@@ -103,13 +104,11 @@
   //#define TEMP_CHARCODE 15      //Thermometer "C", set to -1 to disable
   //#define GRAD_CHARCODE 16      //Thermometer grad, set to -1 to disable
   //#define PERCENT_CHARCODE 17   //Humidity %
-  //#define DOUBLE_BLINK          //both separator points are blinking (6 or 8 tubes VFD clock)
-
   //#define AP_NAME "UNICLOCK"  	//Access Point name
   //#define AP_PASSWORD ""	   		//AP password
   //#define WEBNAME "LED UniClock"  //Clock's name on the web page
 */
-#define TIMESERVER_REFRESH 7200000     //7200000   Refresh time in millisec   86400000 = 24h
+#define TIMESERVER_REFRESH 7200000     //2h, Refresh time in millisec   86400000 = 24h
 unsigned long timeserverErrors = 0;        //timeserver refresh errors
 
 int timerON=0;   //for debugging
@@ -209,7 +208,7 @@ volatile boolean dState = false;
 volatile unsigned long lastDisable = 0;
 volatile boolean EEPROMsaving = false; //saving in progress - stop display refresh
 
-#define MAGIC_VALUE 200   //EEPROM version
+#define MAGIC_VALUE 210   //EEPROM version
 
 // 8266 internal pin registers
 // https://github.com/esp8266/esp8266-wiki/wiki/gpio-registers
@@ -230,20 +229,12 @@ volatile boolean EEPROMsaving = false; //saving in progress - stop display refre
 #define PIN_OUT_CLEAR PERIPHS_GPIO_BASEADDR + 8
 
 bool colonBlinkState = false;
-
-WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "pool.ntp.org", 0, TIMESERVER_REFRESH); // Refresh time in millisec
-IPAddress ip;
-
-// Set timezone rules.  Offsets set to zero, since they will be loaded from EEPROM
-TimeChangeRule myDST = {"DST", Last, Sun, Mar, 2, 0};
-TimeChangeRule mySTD = {"STD", First, Sun, Nov, 2, 0};
-Timezone myTZ(myDST, mySTD);
-
 boolean clockWifiMode = true;
 boolean radarON = true;
 
+unsigned long lastTimeUpdate = 0;  //last time refresh from GPS or internet timeserver
 boolean RTCexist = false;
+boolean GPSexist = false;
 boolean BME280exist = false;
 boolean BMP280exist = false;
 boolean AHTX0exist = false;
@@ -253,10 +244,11 @@ boolean LDRexist = false;
 
 byte useDallasTemp = 0;   //number of Dallas temperature sensors: 0,1,2
 byte useTemp = 0;         //Total number of any temperature sensors: 0..6
-float temperature[6] = {0,0,0,0,0,0};
-byte useHumid = 0;        //Total number of humidity sensors
-float humid[6] = {0,0,0,0,0,0};  
 byte usePress = 0;        //Total number of pressure sensors
+byte useHumid = 0;        //Total number of humidity sensors
+byte useLux = 0;
+float temperature[6] = {0,0,0,0,0,0};
+float humid[6] = {0,0,0,0,0,0};  
 float pressur[6] = {0,0,0,0,0,0};  
 int lx = 0;               //Enviroment LUX value, set by Light Sensor
 boolean autoBrightness = false; //Enable automatic brightness levels
@@ -264,6 +256,27 @@ boolean autoBrightness = false; //Enable automatic brightness levels
 const int EEPROM_addr = 0;
 
 struct {
+//Main screen settings _____________________________________________________________________________________ 
+  boolean alarmEnable = false;     //Yes or No
+  byte alarmHour = 7;              //Alarm time
+  byte alarmMin = 0;
+  byte alarmPeriod = 15;           //Alarm length, sec
+//RGB settings ____________________________________________________________________________________________
+  byte rgbEffect = 1;              //0=OFF, 1=FixColor
+  byte rgbBrightness = 100;        // 0..255
+  unsigned int rgbFixColor = 150;  //0..255
+  byte rgbSpeed = 50;              //0..255msec / step
+  boolean rgbDir = false;          //false = right, true = left
+//Wifi / ip settings _______________________________________________________________________________________  
+  char wifiSsid[20];
+  char wifiPsw[20];
+  char ApSsid[20];
+  char ApPsw[20];
+  char NtpServer[20];
+  char mqttBrokerAddr[20]; 
+  char mqttBrokerUser[20] = "mqtt";
+  char mqttBrokerPsw[20] = "mqtt";
+//Tube settings  ______________________________________________________________________________________
   int utc_offset = 1;
   bool enableDST = true;           // Flag to enable DST (summer time...)
   bool set12_24 = true;            // Flag indicating 12 vs 24 hour time (false = 12, true = 24);
@@ -278,20 +291,35 @@ struct {
   byte dayBright = MAXBRIGHTNESS;  // display daytime brightness
   byte nightBright = 5;            // display night brightness
   byte animMode = 2;               //0=no anim,  if 1 or 2 is used, animation, when a digit changes
-  boolean alarmEnable = false;     //Yes or No
-  byte alarmHour = 7;              //Alarm time
-  byte alarmMin = 0;
-  byte alarmPeriod = 15;           //Alarm length, sec
-  byte rgbEffect = 1;              //0=OFF, 1=FixColor
-  byte rgbBrightness = 100;        // 0..255
-  unsigned int  rgbFixColor = 150;          //0..255
-  byte rgbSpeed = 50;              //0..255msec / step
-  boolean rgbDir = false;          //false = right, true = left
+  byte dateMode = 1;               // 0:dd/mm/yyyy 1:mm/dd/yyyy 2:yyyy/mm/dd
+  char tempCF = 'C';               //Temperature Celsius / Fahrenheit
+  boolean enableTimeDisplay;       //ENABLE_CLOCK_DISPLAY
+  byte dateStart;                  //Date is displayed start..end
+  byte dateEnd;    
+  byte tempStart;                  //Temperature display start..end
+  byte tempEnd;  
+  byte humidStart;                 //Humidity% display start..end
+  byte humidEnd;
+  byte dateRepeatMin;              //show date only every xxx minute. If zero, datum is never displayed!  
+  boolean enableDoubleBlink;             //both separator points are blinking (6 or 8 tubes VFD clock)
+  boolean enableAutoDim = false;   //Automatic dimming by luxmeter
+  boolean enableRadar = false;     //Radar sensor
+  int radarTimeout = 300;          //sec
+//____________________________________________________________________________________________________  
   byte magic = MAGIC_VALUE;        //magic value, to check EEPROM version when starting the clock
 } prm;
 
 
 //-------------------------------------------------------------------------------------------------------
+
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, prm.NtpServer, 0, TIMESERVER_REFRESH); // Refresh time in millisec
+IPAddress ip;
+
+// Set timezone rules.  Offsets set to zero, since they will be loaded from EEPROM
+TimeChangeRule myDST = {"DST", Last, Sun, Mar, 2, 0};
+TimeChangeRule mySTD = {"STD", First, Sun, Nov, 2, 0};
+Timezone myTZ(myDST, mySTD);
 time_t prevTime = 0;
 time_t protectTimer = 0;
 bool displayON = true;
@@ -482,18 +510,36 @@ void startWifiMode() {
   WiFi.setAutoReconnect(true);
   enableDisplay(100);
   showMyIp();
-  DPRINTLN("Connecting to Time Server...");
-  timeClient.begin();
-  timeClient.forceUpdate();
-  while (true) {
-    delay(100);
-    enableDisplay(1000);
-    if (timeClient.update()) break;
-    DPRINT(" - Connecting to timeserver: "); DPRINTLN(count);
-    count ++; if (count > 30) restartClock(); //restart clock
-    writeIpTag(count);
-    Fdelay(500);
+  calcTime();
+  
+}
+
+boolean updateTimefromTimeserver() {  //true, if successful
+  boolean res = false;
+  int count = 1;
+  
+  if (((millis()-lastTimeUpdate)<TIMESERVER_REFRESH) && (lastTimeUpdate!=0))
+    return(res);
+
+  if (WiFi.status() == WL_CONNECTED) {
+    while (true) {
+      DPRINT("Connecting to timeserver: "); DPRINTLN(count);
+      enableDisplay(1000);
+      res = timeClient.forceUpdate();
+      if (res) {
+        setTime(myTZ.toLocal(timeClient.getEpochTime()));
+        lastTimeUpdate = millis();
+        DPRINT("Timeserver date:"); DPRINT(year()); DPRINT("/"); DPRINT(month()); DPRINT("/"); DPRINT(day());      
+        DPRINT(" time:");   DPRINT(hour()); DPRINT(":"); DPRINT(minute()); DPRINT(":"); DPRINTLN(second());  
+        DPRINTLN("Clock refreshed from timeserver.");
+      }
+      count ++; 
+      if (res || (count > 10)) break;
+      writeIpTag(count);
+      Fdelay(500);
+    } //end while
   }
+  return (res);
 }
 
 void startStandaloneMode() {
@@ -596,7 +642,7 @@ void startServer() {
   server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest * request) {
     disableDisplay();
     DPRINTLN("Webserver: /favicon.ico");
-    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/favicon.png", "image/png");
+    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/favicon.ico", "image/x-icon");
     response->addHeader("Cache-Control", CACHE_MAX_AGE);
     request->send(response);
   });
@@ -781,7 +827,12 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
     else if (key == "rgbMinBrightness") {
       c_MinBrightness = value.toInt();
     }
-
+    else if (key == "wifiSsid") {
+      value.toCharArray(prm.wifiSsid,sizeof(prm.wifiSsid));
+    }
+    else if (key == "wifiPsw") {
+      value.toCharArray(prm.wifiPsw,sizeof(prm.wifiPsw));
+    }
     else  {
       paramFound = false;
     }
@@ -841,6 +892,12 @@ if (useTemp > 1)
   else
     doc["humidity2"] = 255;
 
+  if (usePress>0) {
+    doc["pressure"] = pressur[0];
+  }
+  else
+    doc["pressure"] = 255;
+
   //Clock calculation and display parameters
   doc["utc_offset"] = prm.utc_offset;
   doc["enableDST"] = prm.enableDST;         // Flag to enable DST (summer time...)
@@ -858,7 +915,8 @@ if (useTemp > 1)
   doc["dayBright"] = prm.dayBright;
   doc["nightBright"] = prm.nightBright;
   doc["animMode"] = prm.animMode;  //Tube animation
-
+  doc["dateMode"] = prm.dateMode;           // 0:dd/mm/yyyy 1:mm/dd/yyyy 2:yyyy/mm/dd
+  doc["tempCF"] = prm.tempCF;               //Temperature Celsius / Fahrenheit
   doc["manualOverride"] = !displayON;
 
   //Alarm values
@@ -868,17 +926,28 @@ if (useTemp > 1)
   doc["alarmPeriod"] = prm.alarmPeriod;
 
   //RGB LED values
-#if defined(USE_NEOPIXEL) || defined(USE_PWMLEDS)
-  doc["rgbEffect"] = prm.rgbEffect;       // if 255, no RGB exist!
-#else
-  doc["rgbEffect"] = 255;   //Not installed Neopixels!!!
-#endif
+  #if defined(USE_NEOPIXEL) || defined(USE_PWMLEDS)
+    doc["rgbEffect"] = prm.rgbEffect;       // if 255, no RGB exist!
+  #else
+    doc["rgbEffect"] = 255;   //Not installed Neopixels!!!
+  #endif
+  
   doc["rgbBrightness"] = prm.rgbBrightness; // c_MinBrightness..255
   doc["rgbFixColor"] = prm.rgbFixColor;   // 0..256
   doc["rgbSpeed"] = prm.rgbSpeed;       // 1..255
   doc["rgbDir"] = prm.rgbDir;          // 0 = right direction, 1 = left direction
   doc["rgbMinBrightness"] = c_MinBrightness;  //minimum brightness for range check!!
+  doc["wifiSsid"] = prm.wifiSsid;
+  doc["wifiPsw"] = prm.wifiPsw;
+  doc["NtpServer"] = prm.NtpServer;
+  doc["mqttBrokerAddr"] = prm.mqttBrokerAddr;
+  doc["mqttBrokerUser"] = prm.mqttBrokerUser;
+  doc["mqttBrokerPsw"] = prm.mqttBrokerPsw;
 
+  doc["enableAutoDim"] = prm.enableAutoDim; 
+  doc["enableRadar"] = prm.enableRadar;     
+  doc["radarTimeout"] = prm.radarTimeout;   
+  
   String json;
   serializeJson(doc, json);
   request->send(200, "application/json", json);
@@ -919,7 +988,13 @@ if (useTemp > 1)
     doc["humidity2"] = humid[1];
   else
     doc["humidity2"] = 255;
-
+  
+  if (usePress>0) {
+    doc["pressure"] = pressur[0];
+  }
+  else
+    doc["pressure"] = 255;
+    
   String json;
   serializeJson(doc, json);
   request->send(200, "application/json", json);
@@ -964,7 +1039,7 @@ void setup() {
   #if LIGHT_SENSOR_PIN >= 0
     pinMode(LIGHT_SENSOR_PIN, INPUT); regPin(LIGHT_SENSOR_PIN,"LIGHT_SENSOR_PIN");
     DPRINT("  - MAXIMUM_LUX for max.brightness:");  DPRINTLN(MAXIMUM_LUX);
-    autoBrightness = true;
+    useLux++;
     LDRexist = true;
   #endif
   
@@ -1041,6 +1116,7 @@ void setup() {
   }
 
   checkWifiMode();
+  clockWifiMode = true;
   if (clockWifiMode)
     startWifiMode();
   else
@@ -1053,67 +1129,43 @@ void setup() {
   enableDisplay(0);
   //showMyIp();
   prm.animMode = saveMode;
+  timeClient.begin();
   calcTime();
   timeProgram();
 }
 
 void calcTime() {
-  static unsigned long lastRun = 0;
-  if ((lastRun!=0) && ((millis()-lastRun)<60000)) return;
-  
+  boolean res;
   mySTD.offset = prm.utc_offset * 60;
   myDST.offset = mySTD.offset;
   if (prm.enableDST) {
     myDST.offset += 60;
   }
   myTZ = Timezone(myDST, mySTD);
-
-  //if (clockWifiMode) DPRINTLN("clockWifiMode=true");
-
-  if (clockWifiMode) {
-    if (WiFi.status() == WL_CONNECTED) {
-      if (timeClient.update()) {
-        timeserverErrors = 0;
-        setTime(myTZ.toLocal(timeClient.getEpochTime()));
-        if (year() > 2019)
-          updateRTC();    //update RTC, if needed
-        else {
-          getRTC();
-          getGPS();
-        }
-      } //endif update?
-      else {
-        timeserverErrors++;
-        DPRINT("TS error. ");
-        //DPRINT(180-timeserverErrors); DPRINTLN(" seconds clock will restart.");
-        //  if (timeserverErrors>180) restartClock();  //restart clock
-      }
-    }  //endif Connected?
-    else {
-      getRTC();
-      getGPS();
-    }
-  }  //endif (clockWifiMode)
-  else {  //standalone mode!
+  
+  res = updateTimefromTimeserver();  //update time from wifi
+  if (GPSexist) res = res || getGPS();    //update time from GPS, if exist
+  if (RTCexist) {
+    if (res) updateRTC();    //update RTC, if needed
     getRTC();
-    getGPS();
   }
+ 
 }
 
 
 void timeProgram() {
   static unsigned long lastRun = 0;
 
-  if ((millis() - lastRun) < 300) return;
+  if ((millis() - lastRun) < 200) return;
   lastRun = millis();
 
   calcTime();
   if (useDallasTemp > 0) {
-    requestDallasTemp(false);
-    getTemp();
+    requestDallasTemp(false);  //start measure
+    getTemp();                 //get result, if ready
   }
   getDHTemp();
-  getI2Csensors();
+  getI2Csensors();             //check all existing I2C sensors
   if (prm.interval > 0) {  // protection is enabled
     // At the first top of the hour, initialize protection logic timer
     if (!initProtectionTimer && (minute() == 0)) {
@@ -1136,24 +1188,24 @@ void timeProgram() {
     else colonBlinkState = (bool)(second() % 2);
     
     showClock = false;
-    showDate = ENABLE_CLOCK_DISPLAY && (second() >= DATE_START) && (second() < DATE_END);
-    #ifdef DATE_REPEAT_MIN
+    showDate = prm.enableTimeDisplay && (second() >= prm.dateStart) && (second() < prm.dateEnd);
+    if (prm.dateRepeatMin!=1) {
       if (showDate) {
         int dateRepeatPush = 0;
-        //if ((lastCathodeProt>=0) && (lastCathodeProt % DATE_REPEAT_MIN == 0)) {
+        //if ((lastCathodeProt>=0) && (lastCathodeProt % prm.dateRepeatMin == 0)) {
         //  dateRepeatPush = 1;  //shift date display by 1 minute
         //  DPRINTLN("Shift Date display by 1 min");
         //}
-        if ((DATE_REPEAT_MIN==0) || ((minute() % DATE_REPEAT_MIN) != dateRepeatPush)) {
+        if ((prm.dateRepeatMin==0) || ((minute() % prm.dateRepeatMin) != dateRepeatPush)) {
           showDate = false;
         }
       }
-    #endif
+    }
    
-    showTemp0 = (useTemp > 0) && (second() >= TEMP_START) && (second() < TEMP_END);
-    showTemp1 = (useTemp > 1) && (second() >= TEMP_START + (TEMP_END - TEMP_START) / 2) && (second() < TEMP_END);
-    showHumid0 = (useHumid > 0) && (second() >= HUMID_START) && (second() < HUMID_END);
-    showHumid1 = (useHumid >1) && (second() >= HUMID_START + (HUMID_END-HUMID_START)/2) && (second() < HUMID_END);
+    showTemp0 = (useTemp > 0) && (second() >= prm.tempStart) && (second() < prm.tempEnd);
+    showTemp1 = (useTemp > 1) && (second() >= prm.tempStart + (prm.tempEnd - prm.tempStart) / 2) && (second() < prm.tempEnd);
+    showHumid0 = (useHumid > 0) && (second() >= prm.humidStart) && (second() < prm.humidEnd);
+    showHumid1 = (useHumid >1) && (second() >= prm.humidStart + (prm.humidEnd-prm.humidStart)/2) && (second() < prm.humidEnd);
     
     if (maxDigits >= 8)      displayTime8();
     else if (maxDigits == 6) displayTime6();
@@ -1190,6 +1242,24 @@ void saveEEPROM() {
 }
 
 void factoryReset() {
+  DPRINTLN("Factory Reset!!!");
+  prm.alarmEnable = false;
+  prm.alarmHour = 7;
+  prm.alarmMin = 0;
+  prm.alarmPeriod = 15;
+  prm.rgbEffect = 1;
+  prm.rgbBrightness = 100;
+  prm.rgbFixColor = 150;
+  prm.rgbSpeed = 50;
+  prm.rgbDir = 0;
+  strcpy(prm.wifiSsid,"");
+  strcpy(prm.wifiPsw,"");
+  strncpy(prm.ApSsid,AP_NAME,sizeof(prm.ApSsid));
+  strncpy(prm.ApPsw,AP_PASSWORD,sizeof(prm.ApPsw));
+  strncpy(prm.NtpServer,"pool.ntp.org",sizeof(prm.NtpServer));
+  strcpy(prm.mqttBrokerAddr,"10.10.0.202"); 
+  strcpy(prm.mqttBrokerUser,"mqtt");
+  strcpy(prm.mqttBrokerPsw,"mqtt");
   prm.utc_offset = 1;
   prm.enableDST = false;          // Flag to enable DST (summer time...)
   prm.set12_24 = true;           // Flag indicating 12 vs 24 hour time (false = 12, true = 24);
@@ -1203,20 +1273,28 @@ void factoryReset() {
   prm.nightMin = 0;
   prm.dayBright = MAXBRIGHTNESS;
   prm.nightBright = 3;
-  prm.animMode = 6;
-  prm.alarmEnable = false;
-  prm.alarmHour = 7;
-  prm.alarmMin = 0;
-  prm.alarmPeriod = 15;
-  prm.rgbEffect = 1;
-  prm.rgbBrightness = 100;
-  prm.rgbFixColor = 150;
-  prm.rgbSpeed = 50;
-  prm.rgbDir = 0;
+  prm.animMode = 6;  
+  prm.dateMode = 2;               // 0:dd/mm/yyyy 1:mm/dd/yyyy 2:yyyy/mm/dd
+  prm.tempCF = 'C';               //Temperature Celsius / Fahrenheit
+  prm.enableTimeDisplay = ENABLE_CLOCK_DISPLAY;
+  prm.dateStart = DATE_START;                  //Date is displayed start..end
+  prm.dateEnd = DATE_END;   
+  prm.tempStart = TEMP_START;                  //Temperature display start..end
+  prm.tempEnd = TEMP_END;  
+  prm.humidStart = HUMID_START;                //Humidity% display start..end
+  prm.humidEnd = HUMID_END;
+  prm.dateRepeatMin = DATE_REPEAT_MIN;         //show date only every xxx minute. If zero, datum is never displayed!  
+  #ifdef DOUBLE_BLINK
+    prm.enableDoubleBlink = true;              //both separator points are blinking (6 or 8 tubes VFD clock)
+  #else
+    prm.enableDoubleBlink = false; 
+  #endif  
+  prm.enableAutoDim = false;          //Automatic dimming by luxmeter
+  prm.enableRadar = false;            //Radar sensor
+  prm.radarTimeout = 300;             //sec
   prm.magic = MAGIC_VALUE;              //magic value to check the EEPROM version
   saveEEPROM();
   calcTime();
-  DPRINTLN("Factory Reset!!!");
 }
 
 void cathodeProtect() {
@@ -1392,9 +1470,9 @@ void displayTime6() {
     newDigit[2] = minute() % 10;
     if (prm.enableBlink && (second() % 2 == 0)){
       digitDP[2] = false;
-      #ifdef DOUBLE_BLINK
+      if (prm.enableDoubleBlink) {
         digitDP[4] = false;
-      #endif 
+      }
     }
     newDigit[1] = second() / 10;
     newDigit[0] = second() % 10;
@@ -1440,9 +1518,9 @@ void displayTime8() {
       newDigit[2] = 11;  //- sign
       if (prm.enableBlink && (second() % 2 == 0)) {
         digitDP[2] = 10; //BLANK
-        #ifdef DOUBLE_BLINK
+        if (prm.enableDoubleBlink) {
           digitDP[5] = 10; //BLANK
-        #endif 
+        } 
       }
       newDigit[1] = second() / 10;
       newDigit[0] = second() % 10;
@@ -1871,13 +1949,22 @@ void getLightSensor(void) {
 
   if (BH1750exist) {
     tmp = getBH1750();
-    if ((abs(tmp-oldLx)>1) || (tmp == MAXIMUM_LUX)) {lx=tmp; oldLx = lx;}
+    if ((abs(tmp-oldLx)>1) || (tmp == MAXIMUM_LUX)) {
+      lx=tmp; oldLx = lx; 
+      autoBrightness = prm.enableAutoDim;
+    }
   }
   else if (LDRexist) {
     tmp = luxMeter();
-    if ((abs(tmp-oldLx)>1) || (tmp == MAXIMUM_LUX))  {lx=tmp;  oldLx = lx;}
+    if ((abs(tmp-oldLx)>1) || (tmp == MAXIMUM_LUX))  {
+      lx=tmp;  oldLx = lx; 
+      autoBrightness = prm.enableAutoDim;
+    }
   }
-  else lx = MAXIMUM_LUX;
+  else {
+    lx = MAXIMUM_LUX;
+    autoBrightness = false;
+  }
 }
 
 void loop(void) {

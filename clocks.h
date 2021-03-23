@@ -467,10 +467,11 @@
   //#define USE_DHT_TEMP
   //#define DHTTYPE DHT22
   //#define TEMP_DHT_PIN 25    //DHT temp sensor pin.  If not used, SET TO -1     
-  #define USE_BME280            //I2C Temperature + humidity + pressure
-  #define USE_BMP280            //I2C Temperature + barometric  pressure
-  #define USE_AHTX0             //I2C Temperature + humidity
-  #define USE_SHT21             //I2C Temperature + humidity
+  //#define USE_BME280            //I2C Temperature + humidity + pressure
+  //#define USE_BMP280            //I2C Temperature + barometric  pressure
+  //#define USE_AHTX0             //I2C Temperature + humidity
+  //#define USE_SHT21             //I2C Temperature + humidity
+  #define USE_RTC
   #define PIN_SDA 26           // you can set the used SDA and SCL pins
   #define PIN_SCL 27           // if it is not default value
   //#define USE_MQTT
@@ -741,6 +742,7 @@
   #define PIN_SDA 26     //on ESP32 only below GPIO34 are digit pins! 36..39 are INPUT ONLY!            
   #define PIN_SCL 27        
   #define USE_RTC
+  #define USE_MQTT
   //#define PIN_MODE_SWITCH 2   ////Uno: A0 mode onNCS312 board
   //#define PIN_FLD_BUTTON  4   ////Uno: A1 down
   //#define PIN_SET_BUTTON 35   ////Uno: A2 up
@@ -939,4 +941,8 @@
 #ifndef PWM3_PIN
   #define PWM3_PIN -1
 #endif
+#ifndef DATE_REPEAT_MIN
+  #define DATE_REPEAT_MIN 1
+#endif
+
 //______________________________________________________________________________________

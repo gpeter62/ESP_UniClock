@@ -117,9 +117,10 @@ void showValue() {
 
 //------------------------------------- RTC Clock functions --------------------------------------------------------------------
 void updateRTC() {
-  if (!RTCexist) return;
+  DPRINTLN("Update RTC?");
+  if (!RTCexist && year()<2020) return;    //invalid system date??
   DS3231_get(&tim);
-  if (abs(tim.sec - second())>1 || (tim.min != minute()) || (tim.hour != hour())  
+  if (abs(tim.sec - second())>2 || (tim.min != minute()) || (tim.hour != hour())  
       || (tim.mday != day()) || (tim.mon != month()) || (tim.year != year()) )   {
       DPRINTLN("Updating RTC from TimeServer...");
       DPRINT("- DS3231  date:"); DPRINT(tim.year); DPRINT("/"); DPRINT(tim.mon); DPRINT("/"); DPRINT(tim.mday); 
@@ -164,16 +165,16 @@ boolean checkWifiMode() {     //output TRUE, if mode changed
 static unsigned long lastRun = millis(); 
 static byte oldMode = 2;  
 
+#if PIN_MODE_SWITCH >=0  //is switch is installed?
   if (((millis()-lastRun)<500) || !RTCexist) return false;
   lastRun = millis();
-  //DPRINT(digitalRead(PIN_FLD_BUTTON)); DPRINT(" / "); DPRINTLN(digitalRead(PIN_SET_BUTTON));
-
   if (PIN_MODE_SWITCH==A0) {
     clockWifiMode = (analogRead(PIN_MODE_SWITCH)>100);
   }
   else {
     clockWifiMode = digitalRead(PIN_MODE_SWITCH);
   }
+  //DPRINT(digitalRead(PIN_FLD_BUTTON)); DPRINT(" / "); DPRINTLN(digitalRead(PIN_SET_BUTTON));
   if (!RTCexist) clockWifiMode = true;  
   if (oldMode != clockWifiMode) {
     if (oldMode!=2) {
@@ -191,6 +192,7 @@ static byte oldMode = 2;
     oldMode = (byte)clockWifiMode;
     return true;  
   }
+#endif
   return false;
 }  
 
