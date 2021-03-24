@@ -1,7 +1,7 @@
 var isTest = (location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.href.indexOf("file://") != -1);
 
 var controlInfos = {
-    "version": "https://github.com/gpeter62/ESP_UniClock",
+    "version": '<a href="https://github.com/gpeter62/ESP_UniClock" target="_blank">https://github.com/gpeter62/ESP_UniClock</a>',
     "maxDigits": "Number of tubes",
     "maxBrightness": "MAX Brightness",
     "currentDate": "Date",
@@ -17,7 +17,7 @@ var controlInfos = {
 	"alarmPeriod": "Alarm maximum length (sec)",
 	
 	//Tube display settings
-    "utc_offset": "Timezone setting.   https://en.wikipedia.org/wiki/List_of_time_zones_by_country",
+    "utc_offset": 'Timezone setting. <a href="https://en.wikipedia.org/wiki/List_of_time_zones_by_country" target="_blank"></a>https://en.wikipedia.org/wiki/List_of_time_zones_by_country',
     "enableDST": "Daylight Saving Time ON/OFF",
     "set12_24": "Clock display 12 / 24 hours",
     "showZero": "Show starting zero on hours",
@@ -125,9 +125,9 @@ var configuration = {
 	"ApSsid": "UniClock",
 	"ApPsw": "uniclock",
 	"NtpServer": "pool.ntp.org",
-	"mqttBrokerAddr": "not installed", 
-	"mqttBrokerUser": "not installed",
-	"mqttBrokerPsw": "not installed",
+	"mqttBrokerAddr": "10.0.99.12", 
+	"mqttBrokerUser": "mqtt",
+	"mqttBrokerPsw": "mqttPW",
 	"mqttBrokerRefresh": 30,
 	"mqttEnable": false
 };
@@ -224,6 +224,7 @@ function getControlInfo(index){
 //Contains the most important initializes
 function Init(){
 
+    $('#dayBright, #nightBright').attr('max',configuration['maxBrightness']);
     document.title = configuration['version'];
     $('#versionHeader').html(configuration['version']);
 
@@ -265,10 +266,18 @@ function Init(){
     });
 
     $('.form label').on('click',function(){
-        var info = getControlInfo($(this).closest('.control-holder').find('input, select').eq(0).attr('id'));
+        var id = '';
+        if(!!$(this).attr('for')){
+            id = $(this).attr('for');
+        }
+        else{
+            id = $(this).closest('.control-holder').find('input, select, .info').eq(0).attr('id');
+        }
+        
+        var info = getControlInfo(id);
         if(!!info){
             $('#popup-box h2').text($(this).text());
-            $('#popup-box .content').text(info);
+            $('#popup-box .content').html(info);
             $('#info-popup').fadeIn(450);
         }        
     });
