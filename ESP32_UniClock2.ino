@@ -204,7 +204,7 @@ volatile boolean dState = false;
 volatile unsigned long lastDisable = 0;
 volatile boolean EEPROMsaving = false; //saving in progress - stop display refresh
 
-#define MAGIC_VALUE 300   //EEPROM version
+#define MAGIC_VALUE 301   //EEPROM version
 
 // 8266 internal pin registers
 // https://github.com/esp8266/esp8266-wiki/wiki/gpio-registers
@@ -469,34 +469,6 @@ void disableDisplay()  {
   lastDisable = millis();
 }
 
-/*
-void startWiFi(void) { // Start a Wi-Fi access point, and try to connect to some given access points. Then wait for either an AP or STA connection
-  if (wifiMulti.run() == WL_CONNECTED) return;
-  
-  WiFi.mode(WIFI_STA);
-  wifiMulti.addAP(prm.wifiSsid, prm.wifiPsw);
-  wifiMulti.addAP(DEFAULT_SSID, DEFAULT_WIFIPSW);
- //developer SSID-s 
-  wifiMulti.addAP("APX Galaxy S9", "apxapxAPX9");   // add Wi-Fi networks you want to connect to
-  wifiMulti.addAP("fugu", "Pajero2800TDI!");   // add Wi-Fi networks you want to connect to
-  wifiMulti.addAP("farm32", "birka12345");
-  DPRINTLN(" ");
-  DPRINT("Connecting to WiFi ");
-  int counter = 0;
-  while (wifiMulti.run() != WL_CONNECTED) {
-    DPRINT('.');
-    counter++;
-    delay(1000);
-    if (counter>60) doReset();
-  }
-  
-  DPRINTLN(" ");
-  DPRINT("Connected to ");     DPRINT(WiFi.SSID());   
-  DPRINT("    Local IP address:"); DPRINTLN(WiFi.localIP());       
-  delay(1000);    
-}
-*/
-
 void startWifiMode() {
   if (wifiMulti.run() == WL_CONNECTED) return;
   int count = 0;
@@ -513,16 +485,15 @@ void startWifiMode() {
   #endif
   wifiMulti.addAP(prm.wifiSsid, prm.wifiPsw);
   //wifiMulti.addAP(DEFAULT_SSID, DEFAULT_WIFIPSW);
- //developer SSID-s 
-  wifiMulti.addAP("fugu", "Pajero2800TDI!");   // add Wi-Fi networks you want to connect to
-  wifiMulti.addAP("farm32", "birka12345");
+  wifiMulti.addAP("farm32", "birka12345");  //for testing
   DPRINTLN(" ");
   DPRINT("Connecting to WiFi ");
   int counter = 0;
   while (wifiMulti.run() != WL_CONNECTED) {
     DPRINT('.');
     counter++;
-    delay(1000);
+    delay(300);
+    yield();
     if (counter>10) return;
   }
 
@@ -885,6 +856,7 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
     else if (key == "NtpServer") {
       value.toCharArray(prm.NtpServer,sizeof(prm.NtpServer));
     }
+    #ifdef USE_MQTT
     else if (key == "mqttBrokerAddr") {
       value.toCharArray(prm.mqttBrokerAddr,sizeof(prm.mqttBrokerAddr));
     }
@@ -900,6 +872,7 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
     else if (key == "mqttEnable") {
       prm.mqttEnable = (value == "true");
     }  
+    #endif
     else if (key == "dateMode") {
       prm.dateMode = value.toInt();
     }
@@ -1011,7 +984,7 @@ if (useTemp > 1)
     doc["lux"] = lx;
   }
   else
-    doc["lx"] = 255;
+    doc["lux"] = 255;
 
   //Clock calculation and display parameters
   doc["utc_offset"] = prm.utc_offset;
@@ -1061,6 +1034,8 @@ if (useTemp > 1)
     doc["mqttBrokerPsw"] = prm.mqttBrokerPsw;
     doc["mqttBrokerRefresh"] = prm.mqttBrokerRefresh;
     doc["mqttEnable"] = prm.mqttEnable;
+  #else
+    doc["mqttBrokerRefresh"] = 0;  
   #endif
   doc["dateMode"] = prm.dateMode; 
   doc["dateRepeatMin"] = prm.dateRepeatMin;   
@@ -1073,9 +1048,12 @@ if (useTemp > 1)
   doc["humidStart"] = prm.humidStart; 
   doc["humidEnd"] = prm.humidEnd; 
   doc["enableAutoDim"] = prm.enableAutoDim; 
-  doc["enableRadar"] = prm.enableRadar;     
-  doc["radarTimeout"] = prm.radarTimeout;   
-  
+  #if RADAR_PIN>=0
+    doc["enableRadar"] = prm.enableRadar;     
+    doc["radarTimeout"] = prm.radarTimeout;   
+  #else
+    doc["radarTimeout"] = 0;   
+  #endif
   String json;
   serializeJson(doc, json);
   request->send(200, "application/json", json);
@@ -2008,9 +1986,9 @@ void printDigits(unsigned long timeout) {
   */
   //DPRINT("INT:"); DPRINT(intCounter);   //show multiplex interrupt counter
   //DPRINT(" ESaving:"); DPRINT(EEPROMsaving);
-  #if LIGHT_SENSOR_PIN >=0 || defined(USE_BH1750)
+  if (useLux>0) {
     DPRINT("  Lux:"); DPRINT(lx);
-  #endif  
+  }
   //DPRINT("  tON:"); DPRINT(timerON); DPRINT("  tOFF:"); DPRINT(timerOFF);   //Multiplex timing values for testing
   DPRINTLN(" ");
   printSensors();

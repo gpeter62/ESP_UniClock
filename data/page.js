@@ -73,12 +73,12 @@ var configuration = {
     "maxBrightness": 10,
     "currentDate": "2020.10.24",
     "currentTime": "15:01",
-    "temperature": 255,
+    "temperature": 22.1,
 	"temperature2": 255,
-    "humidity": 255,
+    "humidity": 45,
 	"humidity2": 255,
 	"pressure": 255,
-	"lux": 255,
+	"lux": 100,
     "alarmEnabled": 0,
     "alarmTime": "6:30",
 	"alarmPeriod": 15,
@@ -125,9 +125,9 @@ var configuration = {
 	"ApSsid": "UniClock",
 	"ApPsw": "uniclock",
 	"NtpServer": "pool.ntp.org",
-	"mqttBrokerAddr": "10.0.99.12", 
-	"mqttBrokerUser": "mqtt",
-	"mqttBrokerPsw": "mqttPW",
+	"mqttBrokerAddr": "not installed", 
+	"mqttBrokerUser": "not installed",
+	"mqttBrokerPsw": "not installed",
 	"mqttBrokerRefresh": 30,
 	"mqttEnable": false
 };
@@ -365,6 +365,8 @@ function Init(){
             //TODO
         }
     }
+	$('.radar-holder').toggleClass('hidden',configuration['radarTimeout'] == 0);
+	$('.mqtt-holder').toggleClass('hidden',configuration['mqttBrokerRefresh'] == 0);
 	$('.lux-holder').toggleClass('hidden',configuration['lux'] == 255);
     $('.pressure-holder').toggleClass('hidden',configuration['pressure'] == 255);
 	$('.humidity-holder').toggleClass('hidden',configuration['humidity'] == 255);
