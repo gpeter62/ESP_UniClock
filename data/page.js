@@ -1,7 +1,7 @@
 var isTest = (location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.href.indexOf("file://") != -1);
 
 var controlInfos = {
-    "version": "https://github.com/gpeter62/ESP_UniClock",
+    "version": '<a href="https://github.com/gpeter62/ESP_UniClock" target="_blank">https://github.com/gpeter62/ESP_UniClock</a>',
     "maxDigits": "Number of tubes",
     "maxBrightness": "MAX Brightness",
     "currentDate": "Date",
@@ -12,12 +12,12 @@ var controlInfos = {
 	"humidity2": "Humidity sensor #2",
 	"pressure": "Pressure sensor #1",
 	"lux": "Lux sensor current value",
-    "alarmEnabled": "Switch ON/OFF alarm",
+    "alarmEnable": "Switch ON/OFF alarm",
     "alarmTime": "Alarm time (hour/minute)",
 	"alarmPeriod": "Alarm maximum length (sec)",
 	
 	//Tube display settings
-    "utc_offset": "Timezone setting.   https://en.wikipedia.org/wiki/List_of_time_zones_by_country",
+    "utc_offset": 'Timezone setting. <a href="https://en.wikipedia.org/wiki/List_of_time_zones_by_country" target="_blank"></a>https://en.wikipedia.org/wiki/List_of_time_zones_by_country',
     "enableDST": "Daylight Saving Time ON/OFF",
     "set12_24": "Clock display 12 / 24 hours",
     "showZero": "Show starting zero on hours",
@@ -79,7 +79,7 @@ var configuration = {
 	"humidity2": 255,
 	"pressure": 255,
 	"lux": 255,
-    "alarmEnabled": 0,
+    "alarmEnable": 0,
     "alarmTime": "6:30",
 	"alarmPeriod": 15,
 	
@@ -224,6 +224,8 @@ function getControlInfo(index){
 //Contains the most important initializes
 function Init(){
 
+    $('#dayBright, #nightBright').attr('max',configuration['maxBrightness']);
+
     document.title = configuration['version'];
     $('#versionHeader').html(configuration['version']);
 
@@ -265,10 +267,18 @@ function Init(){
     });
 
     $('.form label').on('click',function(){
-        var info = getControlInfo($(this).closest('.control-holder').find('input, select').eq(0).attr('id'));
+        var id = '';
+        if(!!$(this).attr('for')){
+            id = $(this).attr('for');
+        }
+        else{
+            id = $(this).closest('.control-holder').find('input, select, .info').eq(0).attr('id');
+        }
+        
+        var info = getControlInfo(id);
         if(!!info){
             $('#popup-box h2').text($(this).text());
-            $('#popup-box .content').text(info);
+            $('#popup-box .content').html(info);
             $('#info-popup').fadeIn(450);
         }        
     });
@@ -331,7 +341,7 @@ function Init(){
 		){
             $('#'+index).html(value);
         }
-        else if(index == 'utc_offset' || index == 'maxBrightness' || 
+        else if(index == 'utc_offset' || 
                 index == 'dayBright' || index == 'nightBright' || 
                 index == 'animMode' || index == 'rgbBrightness' ||
                 index == 'rgbFixColor' || index == 'rgbSpeed' ||
