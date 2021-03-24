@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Uniclock</title>
+    <title>Uniclock 3.0</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="site.css">
@@ -59,7 +59,7 @@
                         <label>Pressure</label>
                         <span id="pressure" class="info big"></span>
                     </div>
-                    <div class="control-holder humidity-holder2">
+                    <div class="control-holder lux-holder">
                         <label>Lux</label>
                         <span id="lux" class="info big"></span>
                     </div>
@@ -185,7 +185,14 @@
                     </div>
                 </div>
                 <div class="control-holder">
-                    <label for="dateMode">Date Mode</label>
+                    <label>Display Time/Date</label>
+                    <input id="enableTimeDisplay" type="checkbox" class="switch">
+                    <span class="switcher-text left non-selectable" for="enableTimeDisplay">off</span>
+                    <span class="switcher non-selectable" for="enableTimeDisplay"></span>
+                    <span class="switcher-text right non-selectable" for="enableTimeDisplay">on</span>
+                </div>	
+                <div class="control-holder">
+                    <label for="dateMode">Date Format</label>
                     <select id="dateMode">
                         <option value="0">dd/mm/yyyy</option>
                         <option value="1">mm/dd/yyyy</option>
@@ -193,64 +200,57 @@
                     </select>
                 </div>	
                 <div class="control-holder">
-                    <label>Date repeat (min)</label>
-                    <input type="range" min="0" max="59" class="slider" id="dateRepeat">
+                    <label>Date Repeat (min)</label>
+                    <input type="range" min="0" max="59" class="slider" id="dateRepeatMin">
                 </div>			
-                <div class="control-holder">
-                    <label>Temperature</label>
+                <div class="control-holder temperature-holder">
+                    <label>Temperature Format</label>
                     <input id="tempCF" type="checkbox" class="switch two-side">
                     <span class="switcher-text left non-selectable" for="tempCF">C</span>
                     <span class="switcher non-selectable" for="tempCF"></span>
                     <span class="switcher-text right non-selectable" for="tempCF">F</span>
                 </div>
                 <div class="control-holder">
-                    <label>Display Time&Date</label>
-                    <input id="enableTimeDisplay" type="checkbox" class="switch">
-                    <span class="switcher-text left non-selectable" for="enableTimeDisplay">off</span>
-                    <span class="switcher non-selectable" for="enableTimeDisplay"></span>
-                    <span class="switcher-text right non-selectable" for="enableTimeDisplay">on</span>
-                </div>	
-                <div class="control-holder">
-                    <label>Display Date</label>
+                    <label>Date seconds</label>
                     <div class="multiple-input">
                         <select id="dateStart" class="number-select two-digit" min="0" max="59"></select>
                         <span>-</span>
                         <select id="dateEnd" class="number-select two-digit" min="0" max="59" step="1"></select>
                     </div>
                 </div>	
-                <div class="control-holder">
-                    <label>Display Temperature</label>
+                <div class="control-holder temperature-holder">
+                    <label>Temperature seconds</label>
                     <div class="multiple-input">
                         <select id="tempStart" class="number-select two-digit" min="0" max="59"></select>
                         <span>-</span>
                         <select id="tempEnd" class="number-select two-digit" min="0" max="59" step="1"></select>
                     </div>
                 </div>  
-                <div class="control-holder">
-                    <label>Display Humidity</label>
+                <div class="control-holder humidity-holder">
+                    <label>Humidity seconds</label>
                     <div class="multiple-input">
                         <select id="humidStart" class="number-select two-digit" min="0" max="59"></select>
                         <span>-</span>
                         <select id="humidEnd" class="number-select two-digit" min="0" max="59" step="1"></select>
                     </div>
                 </div>  
-                <div class="control-holder">
-                    <label>enableAutoDim</label>
+                <div class="control-holder lux-holder">
+                    <label>AutoDimmer</label>
                     <input id="enableAutoDim" type="checkbox" class="switch">
                     <span class="switcher-text left non-selectable" for="enableAutoDim">off</span>
                     <span class="switcher non-selectable" for="enableAutoDim"></span>
                     <span class="switcher-text right non-selectable" for="enableAutoDim">on</span>
                 </div>
-                <div class="control-holder">
-                    <label>enableRadar</label>
+                <div class="control-holder radar-holder">
+                    <label>Radar</label>
                     <input id="enableRadar" type="checkbox" class="switch">
                     <span class="switcher-text left non-selectable" for="enableRadar">off</span>
                     <span class="switcher non-selectable" for="enableRadar"></span>
                     <span class="switcher-text right non-selectable" for="enableRadar">on</span>
                 </div>			
-                <div class="control-holder">
+                <div class="control-holder radar-holder">
                     <label>Radar Timeout (sec)</label>
-                    <input type="range" min="0" max="999" class="slider" id="radarTimeout">
+                    <input type="range" min="60" max="999" class="slider" id="radarTimeout">
                 </div>
             </div>
 
@@ -297,7 +297,7 @@
                 </div>
                 
                 <div class="control-holder">
-                    <label for="rgbSpeed">Speed</label>
+                    <label for="rgbSpeed">Animation Speed</label>
                     <input type="range" min="1" max="255" class="slider" id="rgbSpeed">
                 </div>
             </div>
@@ -308,7 +308,7 @@
                     <input type="text" id="wifiSsid">
                 </div>
                 <div class="control-holder">
-                    <label>WiFi PSW</label>
+                    <label>WiFi Password</label>
                     <input type="text" id="wifiPsw">
                 </div>
                 <div class="control-holder">
@@ -316,33 +316,33 @@
                     <input type="text" id="ApSsid">
                 </div>
                 <div class="control-holder">
-                    <label>AP PSW</label>
+                    <label>AP Password</label>
                     <input type="text" id="ApPsw">
                 </div>	
                 <div class="control-holder">
-                    <label>NtpServer</label>
+                    <label>Ntp Server</label>
                     <input type="text" id="NtpServer">
                 </div>
-                <div class="control-holder">
+                <div class="control-holder mqtt-holder">
                     <label>MQTT Enable</label>
                     <input id="mqttEnable" type="checkbox" class="switch">
                     <span class="switcher-text left non-selectable" for="mqttEnable">off</span>
                     <span class="switcher non-selectable" for="mqttEnable"></span>
                     <span class="switcher-text right non-selectable" for="mqttEnable">on</span>
                 </div>				
-                <div class="control-holder">
-                    <label>mqttBrokerAddr</label>
+                <div class="control-holder mqtt-holder">
+                    <label>MQTT Address</label>
                     <input type="text" id="mqttBrokerAddr">
                 </div>	
-                <div class="control-holder">
-                    <label>mqttBrokerUser</label>
+                <div class="control-holder mqtt-holder">
+                    <label>MQTT User</label>
                     <input type="text" id="mqttBrokerUser">
                 </div>	
-                <div class="control-holder">
-                    <label>mqttBrokerPsw</label>
+                <div class="control-holder mqtt-holder">
+                    <label>MQTT Password</label>
                     <input type="text" id="mqttBrokerPsw">
                 </div>
-				<div class="control-holder">
+				<div class="control-holder mqtt-holder">
                     <label>MQTT Refresh (sec)</label>
                     <input type="range" min="10" max="100" class="slider" id="mqttBrokerRefresh">
                 </div>

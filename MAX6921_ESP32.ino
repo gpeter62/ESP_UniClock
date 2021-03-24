@@ -42,10 +42,10 @@ uint32_t DRAM_ATTR charTable[MAXCHARS];              //generated pin table from 
 uint32_t DRAM_ATTR segmentEnableBits[MAXSEGMENTS];   //bitmaps, generated from EnablePins tables
 uint32_t DRAM_ATTR digitEnableBits[10];
 
-#define MAXBRIGHT 10
-
 int DRAM_ATTR PWMrefresh=5500;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-int DRAM_ATTR PWMtiming[MAXBRIGHT+1] = {0,500,800,1200,2000,2500,3000,3500,4000,4500,5000};
+int DRAM_ATTR PWM_min = 500;
+int DRAM_ATTR PWM_max = 5000;
+//int DRAM_ATTR PWMtiming[MAXBRIGHT+1] = {0,500,800,1200,2000,2500,3000,3500,4000,4500,5000};
 
 //-----------------------------------------------------------------------------------------
 
@@ -80,8 +80,8 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
   static DRAM_ATTR uint32_t val;
   static DRAM_ATTR byte pos = 0;
   static DRAM_ATTR boolean state=true;
-  static DRAM_ATTR byte brightness;
-  static DRAM_ATTR int PWMtimeBrightness=PWMtiming[1];
+  static DRAM_ATTR int brightness;
+  static DRAM_ATTR int PWMtimeBrightness=PWM_min;
 
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
       //digitalWrite(PIN_BL,HIGH);    //OFF
@@ -92,19 +92,19 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
   noInterrupts();
   intCounter++;
 
-  brightness = displayON ?  prm.dayBright : prm.nightBright;
-  if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
+  brightness = displayON ? prm.dayBright : prm.nightBright;
+  if (brightness>MAXBRIGHTNESS) brightness = MAXBRIGHTNESS;  //only for safety
   
-  if ((!autoBrightness) && (brightness==MAXBRIGHT)) state = true;
+  if ((!autoBrightness) && (brightness==MAXBRIGHTNESS)) state = true;
   
   if (state) {  //ON state
     pos++;  if (pos>maxDig-1)  {   //go to the tube#0
       pos = 0; 
       if (autoBrightness && displayON) {   //change brightness only on the tube#0
-        PWMtimeBrightness = max(PWMtiming[2],PWMtiming[MAXBRIGHT]*lx/MAXIMUM_LUX);
+        PWMtimeBrightness = max(PWM_min,PWM_max*lx/MAXIMUM_LUX);
         }
       else
-        PWMtimeBrightness = PWMtiming[brightness];
+        PWMtimeBrightness = max(PWM_min,PWM_max*brightness/MAXBRIGHTNESS);
     }  
     
     val = (digitEnableBits[pos] | charTable[digit[pos]]);  //the full bitmap to send to MAX chip

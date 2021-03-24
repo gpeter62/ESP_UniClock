@@ -12,7 +12,7 @@ var controlInfos = {
 	"humidity2": "Humidity sensor #2",
 	"pressure": "Pressure sensor #1",
 	"lux": "Lux sensor current value",
-    "alarmEnable": "Switch ON/OFF alarm",
+    "alarmEnabled": "Switch ON/OFF alarm",
     "alarmTime": "Alarm time (hour/minute)",
 	"alarmPeriod": "Alarm maximum length (sec)",
 	
@@ -33,7 +33,7 @@ var controlInfos = {
 	"dateMode": "0:dd/mm/yyyy 1:mm/dd/yyyy 2:yyyy/mm/dd",
 	"tempCF": "Celsius / Fahrenheit display",              
 	"enableTimeDisplay": "Enable time&date display (Use OFF for thermometers)" ,
-	"dateStart": "Date dispaly start: Date is shown between Start/End seconds",
+	"dateStart": "Date display start: Date is shown between Start/End seconds",
 	"dateEnd": "Date display end",    
 	"tempStart": "Temperature display time slice start",
 	"tempEnd": "Temperature display end",  
@@ -41,7 +41,7 @@ var controlInfos = {
 	"humidEnd": "Humidity display end",
 	"dateRepeatMin": "Date is shown in every xx minutes. 0 = Disable date display",            
 	"doubleBlink": "Enable both blinking dots",             
-	"enableAutoDim": "Enable auto brightness controll (if sensor is installed)",  
+	"enableAutoDim": "Enable auto brightness control (if sensor is installed)",  
 	"enableRadar": "Enable Radar/Pir tube switch (if sensor is installed)",   
 	"radarTimeout": "If Radar is used, automatic switch off after this timeout (sec)",         
 
@@ -73,13 +73,13 @@ var configuration = {
     "maxBrightness": 10,
     "currentDate": "2020.10.24",
     "currentTime": "15:01",
-    "temperature": 255,
+    "temperature": 22.1,
 	"temperature2": 255,
-    "humidity": 255,
+    "humidity": 45,
 	"humidity2": 255,
 	"pressure": 255,
-	"lux": 255,
-    "alarmEnable": 0,
+	"lux": 100,
+    "alarmEnabled": 0,
     "alarmTime": "6:30",
 	"alarmPeriod": 15,
 	
@@ -225,7 +225,6 @@ function getControlInfo(index){
 function Init(){
 
     $('#dayBright, #nightBright').attr('max',configuration['maxBrightness']);
-
     document.title = configuration['version'];
     $('#versionHeader').html(configuration['version']);
 
@@ -341,7 +340,7 @@ function Init(){
 		){
             $('#'+index).html(value);
         }
-        else if(index == 'utc_offset' || 
+        else if(index == 'utc_offset' || index == 'maxBrightness' || 
                 index == 'dayBright' || index == 'nightBright' || 
                 index == 'animMode' || index == 'rgbBrightness' ||
                 index == 'rgbFixColor' || index == 'rgbSpeed' ||
@@ -375,6 +374,8 @@ function Init(){
             //TODO
         }
     }
+	$('.radar-holder').toggleClass('hidden',configuration['radarTimeout'] == 0);
+	$('.mqtt-holder').toggleClass('hidden',configuration['mqttBrokerRefresh'] == 0);
 	$('.lux-holder').toggleClass('hidden',configuration['lux'] == 255);
     $('.pressure-holder').toggleClass('hidden',configuration['pressure'] == 255);
 	$('.humidity-holder').toggleClass('hidden',configuration['humidity'] == 255);
