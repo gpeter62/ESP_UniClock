@@ -6,7 +6,7 @@
 #define BROKER_USERNAME  "mqtt"        //moved to prm.mqttBrokerUser
 #define BROKER_PASSWORD  "mqtt"        //moved to mqttBrokerPsw
 
-byte mac[6];// = {12,14,0,0,2,3};  //This is the unique ID - set it as you want or mac address of the clock (length: 6)
+//byte mac[6] = {12,14,0,0,2,3};  //This is the unique ID - set it as you want or mac address of the clock (length: 6)
 
 WiFiClient client;
 HADevice device(mac, sizeof(mac));
@@ -18,9 +18,6 @@ HASensor<float> mqttPress("pressure", 0, mqtt);
 HASensor<float> mqttLux("lux", 0, mqtt);
 
 void setupMqtt() {
-    char s[30];
-    // set device's details (optional)
-    WiFi.macAddress(mac);   //get the ESP board's MAC address
     device.setName("UniClock32");
     device.setSoftwareVersion("3.0");
     if (useTemp>0) mqttTemp.setUnitOfMeasurement("°C");
@@ -30,9 +27,6 @@ void setupMqtt() {
 
     IPAddress tmp;
     tmp.fromString(String(prm.mqttBrokerAddr));
-    DPRINT("Attempting MQTT connection. IP:"); DPRINT(tmp);
-    sprintf(s,"  Clock's MAC:%02X:%02X:%02X:%02X:%02X:%02X",mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
-    DPRINTLN(s);
     mqtt.begin(tmp, prm.mqttBrokerUser, prm.mqttBrokerPsw);
     //mqtt.begin(BROKER_ADDR, BROKER_USERNAME, BROKER_PASSWORD);
 }

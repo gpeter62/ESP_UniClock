@@ -492,8 +492,7 @@ void startWifiMode() {
   while (wifiMulti.run() != WL_CONNECTED) {
     DPRINT('.');
     counter++;
-    delay(300);
-    yield();
+    delay(1000);
     if (counter>10) return;
   }
 
@@ -1116,9 +1115,10 @@ void setup() {
   //WiFi.mode(WIFI_OFF);
   EEPROM.begin(EEPROM_SIZE);
   memset(pinTxt,0,sizeof(pinTxt));
-  delay(200);
+  delay(1000);
   DPRINTBEGIN(115200); DPRINTLN(" ");
   DPRINT("Starting "); DPRINTLN(webName);
+  DPRINT("MAXBRIGHTNESS:"); DPRINTLN(MAXBRIGHTNESS);
   clearDigits();
   #if ALARMSPEAKER_PIN >= 0
     pinMode(ALARMSPEAKER_PIN, OUTPUT); regPin(ALARMSPEAKER_PIN,"ALARMSPEAKER_PIN");
@@ -1151,7 +1151,7 @@ void setup() {
   #endif
   #if LIGHT_SENSOR_PIN >= 0
     pinMode(LIGHT_SENSOR_PIN, INPUT); regPin(LIGHT_SENSOR_PIN,"LIGHT_SENSOR_PIN");
-    DPRINT("  - MAXIMUM_LUX for max.brightness:");  DPRINTLN(MAXIMUM_LUX);
+    DPRINT("  - MAXIMUM_LUX for MAXBRIGHTNESS:");  DPRINTLN(MAXIMUM_LUX);
     useLux++;
     LDRexist = true;
   #endif

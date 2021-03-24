@@ -23,7 +23,7 @@
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
 
-//#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
+#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
 //#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
 
@@ -32,7 +32,7 @@
 //#define CLOCK_42  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock SHT21
 //#define CLOCK_43  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock SHT21
 //#define CLOCK_44  //ESP32 D1 mini, Numitron clock
-#define CLOCK_45  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock (Ovidiu)
+//#define CLOCK_45  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock (Ovidiu)
 
 //#define CLOCK_50   //ESP32 D1 mini, UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_51   //ESP32 D1 mini, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
@@ -325,8 +325,11 @@
 //______________________ESP-32 CLOCKS  (2x18pin ESP32 modul) ______________________________________________________
 #ifdef CLOCK_30   //ESP32, UNFI PCB clock, 6 x IV-11 VFD tubes
   #define DEBUG 
+  #define MAXBRIGHTNESS 100
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 2
+  #define USE_MQTT
+  byte mac[6] = {12,14,0,0,2,3};  //Unique address
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   #define DATE_REPEAT_MIN 3     //show date only every 3 minutes. If zero, datum is never displayed
   #define USE_DALLAS_TEMP
@@ -345,14 +348,14 @@
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   #define RADAR_PIN 21
   #define RADAR_TIMEOUT 300  //second (5min)
-  #define TUBE_POWER_PIN 25
-  #define TUBE_POWER_ON  LOW
+  //#define TUBE_POWER_PIN 25
+  //#define TUBE_POWER_ON  LOW
   #define LIGHT_SENSOR_PIN 35  //Only ADC pins are usable! for example: 34,35,36,39... 
   #define MAXIMUM_LUX 100    //Lux level for maximum tube brightness
   #define LUX_CALC_SCALAR   12518931 * 1.2 
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD ""  
-  #define WEBNAME "ESP32 IN-11 UniClock 2.5"
+  #define WEBNAME "ESP32 IN-11 UniClock 3.0"
 #endif
 
 #ifdef CLOCK_31   //ESP32, UNFI board, 6 x Z573M Nixie tubes
@@ -572,7 +575,7 @@
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 22
   #define USE_MQTT
-  //byte mac[6] = {7,6,0,0,3,2};  //This is the unique ID - set it as you want or mac address of the clock (length: 6) VFD
+  byte mac[6] = {7,6,0,0,3,2};  //This is the unique ID - set it as you want or mac address of the clock (length: 6) VFD
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   //#define USE_DALLAS_TEMP
   //#define TEMP_DALLAS_PIN 25    //Dallas temp sensor pin.  If not used, SET TO -1    
@@ -635,7 +638,6 @@
   //#define USE_AHTX0             //I2C Temperature + humidity
   //#define USE_SHT21             //I2C Temperature + humidity
   #define USE_BH1750            //I2C luxmeter sensor
-  //#define USE_MQTT
 //_______________________________ HV5122 setup ____________________________________________________  
   #define HV5122
   #define PIN_DIN  22   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
