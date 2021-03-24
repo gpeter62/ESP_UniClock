@@ -159,10 +159,10 @@ void writeDisplaySingle() {
   }  //end for i
 
   #ifdef  MAKE_BLINKING_DOTS //it means, the extra datapins are used as 4 blinking dot instead of decimal points!
-  if (showClock) {
-    digitDP[1] = digitDP[2]; //left two dots
-    digitDP[3] = digitDP[4]; //right two dots
-  }
+    if (showClock) {
+      digitDP[1] = digitDP[2]; //left two dots
+      digitDP[3] = digitDP[4]; //right two dots
+    }
   #endif
   
   for (int i = 0; i < maxDigits-1; i++) { //Set the extra decimal point dots

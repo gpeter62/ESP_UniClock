@@ -1,4 +1,3 @@
-
 /*
       Universal Clock  (Nixie, VFD, LED, Numitron) for ESP8266 or ESP32
       with optional Dallas Thermometer and DS3231 RTC, Neopxels stripe, GPS and more...
@@ -131,6 +130,8 @@ byte c_MaxBrightness = RGB_MAX_BRIGHTNESS;     //maximum LED brightness
     #define AP_PASSWORD ""
   #endif
   #include <ESP8266WiFi.h>
+  #include <ESP8266WiFiMulti.h>
+  ESP8266WiFiMulti wifiMulti;
   //#include <ESP8266mDNS.h>
   #include "ESPAsyncTCP.h"
   #include "FS.h"
@@ -147,8 +148,9 @@ byte c_MaxBrightness = RGB_MAX_BRIGHTNESS;     //maximum LED brightness
     #define AP_PASSWORD ""
   #endif
   
-  //#include <WiFi.h>
   #include <esp_wifi.h>
+  #include <WiFiMulti.h>
+  WiFiMulti wifiMulti;
   //#include <ESPmDNS.h>
   #include "AsyncTCP.h"
   #include "SPIFFS.h"
@@ -185,16 +187,10 @@ extern void setup_pins();
 extern void clearTubes();
 extern const int maxDigits;
 
-
-const char* ssid = AP_NAME;  // Enter SSID here
-const char* password = AP_PASSWORD;  //Enter Password here
 char webName[] = WEBNAME;
 AsyncWebServer server(80);
 //DNSServer dns;
 #define CACHE_MAX_AGE "max-age=31536000" //maximum is: 31536000
-
-//#include <WiFiMulti.h>
-//WiFiMulti wifiMulti;
 
 #define BUFSIZE 12
 byte digit[BUFSIZE];
@@ -208,7 +204,7 @@ volatile boolean dState = false;
 volatile unsigned long lastDisable = 0;
 volatile boolean EEPROMsaving = false; //saving in progress - stop display refresh
 
-#define MAGIC_VALUE 210   //EEPROM version
+#define MAGIC_VALUE 300   //EEPROM version
 
 // 8266 internal pin registers
 // https://github.com/esp8266/esp8266-wiki/wiki/gpio-registers
@@ -276,6 +272,8 @@ struct {
   char mqttBrokerAddr[20]; 
   char mqttBrokerUser[20] = "mqtt";
   char mqttBrokerPsw[20] = "mqtt";
+  int mqttBrokerRefresh = 10;  //sec
+  boolean mqttEnable = false;
 //Tube settings  ______________________________________________________________________________________
   int utc_offset = 1;
   bool enableDST = true;           // Flag to enable DST (summer time...)
@@ -291,8 +289,8 @@ struct {
   byte dayBright = MAXBRIGHTNESS;  // display daytime brightness
   byte nightBright = 5;            // display night brightness
   byte animMode = 2;               //0=no anim,  if 1 or 2 is used, animation, when a digit changes
-  byte dateMode = 1;               // 0:dd/mm/yyyy 1:mm/dd/yyyy 2:yyyy/mm/dd
-  char tempCF = 'C';               //Temperature Celsius / Fahrenheit
+  byte dateMode = 2;               // 0:dd/mm/yyyy 1:mm/dd/yyyy 2:yyyy/mm/dd
+  boolean tempCF = false;          //Temperature Celsius=false / Fahrenheit=true
   boolean enableTimeDisplay;       //ENABLE_CLOCK_DISPLAY
   byte dateStart;                  //Date is displayed start..end
   byte dateEnd;    
@@ -301,14 +299,15 @@ struct {
   byte humidStart;                 //Humidity% display start..end
   byte humidEnd;
   byte dateRepeatMin;              //show date only every xxx minute. If zero, datum is never displayed!  
-  boolean enableDoubleBlink;             //both separator points are blinking (6 or 8 tubes VFD clock)
+  boolean enableDoubleBlink;       //both separator points are blinking (6 or 8 tubes VFD clock)
   boolean enableAutoDim = false;   //Automatic dimming by luxmeter
   boolean enableRadar = false;     //Radar sensor
   int radarTimeout = 300;          //sec
 //____________________________________________________________________________________________________  
-  byte magic = MAGIC_VALUE;        //magic value, to check EEPROM version when starting the clock
+  int magic = MAGIC_VALUE;        //magic value, to check EEPROM version when starting the clock
 } prm;
 
+#define EEPROM_SIZE sizeof(prm)
 
 //-------------------------------------------------------------------------------------------------------
 
@@ -403,7 +402,7 @@ void stopTimer() {
 void configModeCallback (AsyncWiFiManager *myWiFiManager) {
   DPRINTLN("Switch to AP config mode...");
   DPRINTLN("To configure Wifi,  ");
-  DPRINT("connect to Wifi network "); DPRINTLN(ssid);
+  DPRINT("connect to Wifi network "); DPRINTLN(prm.wifiSsid);
   DPRINTLN("and open 192.168.4.1 in web browser");
 }
 
@@ -470,20 +469,64 @@ void disableDisplay()  {
   lastDisable = millis();
 }
 
-void startWifiMode() {
-  int count = 0;
+/*
+void startWiFi(void) { // Start a Wi-Fi access point, and try to connect to some given access points. Then wait for either an AP or STA connection
+  if (wifiMulti.run() == WL_CONNECTED) return;
+  
+  WiFi.mode(WIFI_STA);
+  wifiMulti.addAP(prm.wifiSsid, prm.wifiPsw);
+  wifiMulti.addAP(DEFAULT_SSID, DEFAULT_WIFIPSW);
+ //developer SSID-s 
+  wifiMulti.addAP("APX Galaxy S9", "apxapxAPX9");   // add Wi-Fi networks you want to connect to
+  wifiMulti.addAP("fugu", "Pajero2800TDI!");   // add Wi-Fi networks you want to connect to
+  wifiMulti.addAP("farm32", "birka12345");
+  DPRINTLN(" ");
+  DPRINT("Connecting to WiFi ");
+  int counter = 0;
+  while (wifiMulti.run() != WL_CONNECTED) {
+    DPRINT('.');
+    counter++;
+    delay(1000);
+    if (counter>60) doReset();
+  }
+  
+  DPRINTLN(" ");
+  DPRINT("Connected to ");     DPRINT(WiFi.SSID());   
+  DPRINT("    Local IP address:"); DPRINTLN(WiFi.localIP());       
+  delay(1000);    
+}
+*/
 
+void startWifiMode() {
+  if (wifiMulti.run() == WL_CONNECTED) return;
+  int count = 0;
   disableDisplay();
   DPRINTLN("Starting Clock in WiFi Mode!");
   WiFi.mode(WIFI_STA);
-#if defined(ESP32)
-  WiFi.setHostname(webName);
-#else
-  WiFi.hostname(webName);
-#endif
-#if defined(ESP32)
-  esp_wifi_set_ps (WIFI_PS_NONE);
-#endif
+  #if defined(ESP32)
+    WiFi.setHostname(webName);
+  #else
+    WiFi.hostname(webName);
+  #endif
+  #if defined(ESP32)
+    esp_wifi_set_ps (WIFI_PS_NONE);
+  #endif
+  wifiMulti.addAP(prm.wifiSsid, prm.wifiPsw);
+  //wifiMulti.addAP(DEFAULT_SSID, DEFAULT_WIFIPSW);
+ //developer SSID-s 
+  wifiMulti.addAP("fugu", "Pajero2800TDI!");   // add Wi-Fi networks you want to connect to
+  wifiMulti.addAP("farm32", "birka12345");
+  DPRINTLN(" ");
+  DPRINT("Connecting to WiFi ");
+  int counter = 0;
+  while (wifiMulti.run() != WL_CONNECTED) {
+    DPRINT('.');
+    counter++;
+    delay(1000);
+    if (counter>10) return;
+  }
+
+/*
   AsyncWiFiManager MyWifiManager(&server, &dnsServer);
   MyWifiManager.setAPCallback(configModeCallback);
   //MyWifiManager.setConfigPortalTimeout(180);
@@ -494,11 +537,11 @@ void startWifiMode() {
       WiFi.mode(WIFI_OFF);
       delay(1000);
       WiFi.mode(WIFI_STA);
-#if defined(ESP32)
-      WiFi.setHostname(webName);
-#else
-      WiFi.hostname(webName);
-#endif
+      #if defined(ESP32)
+        WiFi.setHostname(webName);
+      #else
+        WiFi.hostname(webName);
+      #endif
       if (i == 4) {
         MyWifiManager.autoConnect(AP_NAME); // or autoConnect(AP_NAME,AP_PASSWORD))
       }
@@ -506,12 +549,12 @@ void startWifiMode() {
     else
       break;
   }  //end for
+  */
   ip = WiFi.localIP();
   WiFi.setAutoReconnect(true);
   enableDisplay(100);
   showMyIp();
   calcTime();
-  
 }
 
 boolean updateTimefromTimeserver() {  //true, if successful
@@ -544,7 +587,7 @@ boolean updateTimefromTimeserver() {  //true, if successful
 
 void startStandaloneMode() {
   DPRINTLN("Starting Clock in Standalone Mode!");
-  DPRINT("Clock's wifi SSID:"); DPRINTLN(ssid);
+  DPRINT("Clock's AP SSID:"); DPRINTLN(prm.ApSsid);
   DPRINTLN("IP: 192.168.4.1");
   IPAddress local_ip(192, 168, 4, 1);
   IPAddress gateway(192, 168, 4, 1);
@@ -552,11 +595,11 @@ void startStandaloneMode() {
   WiFi.mode(WIFI_AP);
 
   boolean nwState;
-  if (password != NULL) {
-    nwState =  WiFi.softAP(ssid, password);
+  if (strlen(prm.ApPsw)) {
+    nwState =  WiFi.softAP(prm.ApSsid, prm.ApPsw);
   }
   else {
-    nwState =  WiFi.softAP(ssid);
+    nwState =  WiFi.softAP(prm.ApSsid);
   }
   delay(2000);   //info: https://github.com/espressif/arduino-esp32/issues/2025
   WiFi.softAPConfig(local_ip, gateway, subnet);
@@ -642,7 +685,7 @@ void startServer() {
   server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest * request) {
     disableDisplay();
     DPRINTLN("Webserver: /favicon.ico");
-    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/favicon.ico", "image/x-icon");
+    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/favicon.ico", "image/png");
     response->addHeader("Cache-Control", CACHE_MAX_AGE);
     request->send(response);
   });
@@ -833,10 +876,76 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
     else if (key == "wifiPsw") {
       value.toCharArray(prm.wifiPsw,sizeof(prm.wifiPsw));
     }
+    else if (key == "ApSsid") {
+      value.toCharArray(prm.ApSsid,sizeof(prm.ApSsid));
+    }
+    else if (key == "ApPsw") {
+      value.toCharArray(prm.ApPsw,sizeof(prm.ApPsw));
+    }
+    else if (key == "NtpServer") {
+      value.toCharArray(prm.NtpServer,sizeof(prm.NtpServer));
+    }
+    else if (key == "mqttBrokerAddr") {
+      value.toCharArray(prm.mqttBrokerAddr,sizeof(prm.mqttBrokerAddr));
+    }
+    else if (key == "mqttBrokerUser") {
+      value.toCharArray(prm.mqttBrokerUser,sizeof(prm.mqttBrokerUser));
+    }
+    else if (key == "mqttBrokerPsw") {
+      value.toCharArray(prm.mqttBrokerPsw,sizeof(prm.mqttBrokerPsw));
+    }       
+    else if (key == "mqttBrokerRefresh") {
+      prm.mqttBrokerRefresh = value.toInt();
+    }     
+    else if (key == "mqttEnable") {
+      prm.mqttEnable = (value == "true");
+    }  
+    else if (key == "dateMode") {
+      prm.dateMode = value.toInt();
+    }
+    else if (key == "dateStart") {
+      prm.dateStart = value.toInt();
+    }
+    else if (key == "dateEnd") {
+      prm.dateEnd = value.toInt();
+    }
+    else if (key == "tempStart") {
+      prm.tempStart = value.toInt();
+    }
+    else if (key == "tempEnd") {
+      prm.tempEnd = value.toInt();
+    }                
+    else if (key == "humidStart") {
+      prm.humidStart = value.toInt();
+    }
+    else if (key == "humidEnd") {
+      prm.humidEnd = value.toInt();
+    }     
+    else if (key == "dateRepeatMin") {
+      prm.dateRepeatMin = value.toInt();
+    } 
+    else if (key == "enableDoubleBlink")  {
+      prm.enableDoubleBlink = (value == "true");
+    }
+    else if (key == "enableTimeDisplay") {
+      prm.enableTimeDisplay = (value == "true");
+    }    
+    else if (key == "enableAutoDim") {
+      prm.enableAutoDim = (value == "true");
+    }
+    else if (key == "enableRadar")  {
+      prm.enableRadar = (value == "true");
+    }
+    else if (key == "radarTimeout"){
+      prm.radarTimeout = value.toInt();
+    }  
+    else if (key == "tempCF") {
+      prm.tempCF = (value == "true");
+    }   
+
     else  {
       paramFound = false;
     }
-
     if (paramFound) {
       saveEEPROM();
       request->send(200, "text/plain", "Ok");
@@ -851,7 +960,7 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
 }
 
 void handleSendConfig(AsyncWebServerRequest *request) {
-  StaticJsonDocument<1024> doc;
+  StaticJsonDocument<2048> doc;
   char buf[20];  //conversion buffer
 
   DPRINTLN("Sending configuration to web client.");
@@ -897,6 +1006,12 @@ if (useTemp > 1)
   }
   else
     doc["pressure"] = 255;
+    
+  if (useLux>0) {
+    doc["lux"] = lx;
+  }
+  else
+    doc["lx"] = 255;
 
   //Clock calculation and display parameters
   doc["utc_offset"] = prm.utc_offset;
@@ -915,8 +1030,6 @@ if (useTemp > 1)
   doc["dayBright"] = prm.dayBright;
   doc["nightBright"] = prm.nightBright;
   doc["animMode"] = prm.animMode;  //Tube animation
-  doc["dateMode"] = prm.dateMode;           // 0:dd/mm/yyyy 1:mm/dd/yyyy 2:yyyy/mm/dd
-  doc["tempCF"] = prm.tempCF;               //Temperature Celsius / Fahrenheit
   doc["manualOverride"] = !displayON;
 
   //Alarm values
@@ -927,7 +1040,7 @@ if (useTemp > 1)
 
   //RGB LED values
   #if defined(USE_NEOPIXEL) || defined(USE_PWMLEDS)
-    doc["rgbEffect"] = prm.rgbEffect;       // if 255, no RGB exist!
+    doc["rgbEffect"] = prm.rgbEffect;   // if 255, no RGB exist!
   #else
     doc["rgbEffect"] = 255;   //Not installed Neopixels!!!
   #endif
@@ -939,11 +1052,26 @@ if (useTemp > 1)
   doc["rgbMinBrightness"] = c_MinBrightness;  //minimum brightness for range check!!
   doc["wifiSsid"] = prm.wifiSsid;
   doc["wifiPsw"] = prm.wifiPsw;
+  doc["ApSsid"] = prm.ApSsid;
+  doc["ApPsw"] = prm.ApPsw;  
   doc["NtpServer"] = prm.NtpServer;
-  doc["mqttBrokerAddr"] = prm.mqttBrokerAddr;
-  doc["mqttBrokerUser"] = prm.mqttBrokerUser;
-  doc["mqttBrokerPsw"] = prm.mqttBrokerPsw;
-
+  #if defined(USE_MQTT)
+    doc["mqttBrokerAddr"] = prm.mqttBrokerAddr;
+    doc["mqttBrokerUser"] = prm.mqttBrokerUser;
+    doc["mqttBrokerPsw"] = prm.mqttBrokerPsw;
+    doc["mqttBrokerRefresh"] = prm.mqttBrokerRefresh;
+    doc["mqttEnable"] = prm.mqttEnable;
+  #endif
+  doc["dateMode"] = prm.dateMode; 
+  doc["dateRepeatMin"] = prm.dateRepeatMin;   
+  doc["tempCF"] = prm.tempCF;   
+  doc["enableTimeDisplay"] = prm.enableTimeDisplay; 
+  doc["dateStart"] = prm.dateStart; 
+  doc["dateEnd"] = prm.dateEnd; 
+  doc["tempStart"] = prm.tempStart; 
+  doc["tempEnd"] = prm.tempEnd; 
+  doc["humidStart"] = prm.humidStart; 
+  doc["humidEnd"] = prm.humidEnd; 
   doc["enableAutoDim"] = prm.enableAutoDim; 
   doc["enableRadar"] = prm.enableRadar;     
   doc["radarTimeout"] = prm.radarTimeout;   
@@ -994,6 +1122,12 @@ if (useTemp > 1)
   }
   else
     doc["pressure"] = 255;
+
+  if (useLux>0) {
+    doc["lux"] = lx;
+  }
+  else
+    doc["lx"] = 255;
     
   String json;
   serializeJson(doc, json);
@@ -1002,6 +1136,7 @@ if (useTemp > 1)
 
 void setup() {
   //WiFi.mode(WIFI_OFF);
+  EEPROM.begin(EEPROM_SIZE);
   memset(pinTxt,0,sizeof(pinTxt));
   delay(200);
   DPRINTBEGIN(115200); DPRINTLN(" ");
@@ -1079,11 +1214,6 @@ void setup() {
     setupGPS();
   #endif
 
-  #ifdef USE_MQTT
-    setupMqtt();
-  #endif
-
-  
   decimalpointON = false;    
   setup_pins();
   
@@ -1115,15 +1245,16 @@ void setup() {
     DPRINTLN(" ");
   }
 
-  checkWifiMode();
   clockWifiMode = true;
-  if (clockWifiMode)
-    startWifiMode();
-  else
+  startWifiMode();
+  if (wifiMulti.run() != WL_CONNECTED) //failed to connect to wifi
     startStandaloneMode();
 
   delay(500);
   startServer();
+  #ifdef USE_MQTT
+    setupMqtt();
+  #endif
   clearDigits();
   delay(200);
   enableDisplay(0);
@@ -1188,20 +1319,13 @@ void timeProgram() {
     else colonBlinkState = (bool)(second() % 2);
     
     showClock = false;
-    showDate = prm.enableTimeDisplay && (second() >= prm.dateStart) && (second() < prm.dateEnd);
-    if (prm.dateRepeatMin!=1) {
-      if (showDate) {
-        int dateRepeatPush = 0;
-        //if ((lastCathodeProt>=0) && (lastCathodeProt % prm.dateRepeatMin == 0)) {
-        //  dateRepeatPush = 1;  //shift date display by 1 minute
-        //  DPRINTLN("Shift Date display by 1 min");
-        //}
-        if ((prm.dateRepeatMin==0) || ((minute() % prm.dateRepeatMin) != dateRepeatPush)) {
-          showDate = false;
-        }
+    showDate = (prm.enableTimeDisplay && (prm.dateRepeatMin>0) && ((second() >= prm.dateStart) && (second() < prm.dateEnd)));
+    if (showDate && (prm.dateRepeatMin>1)) {
+      if ((minute() % prm.dateRepeatMin) != 0) {
+        showDate = false;
       }
     }
-   
+
     showTemp0 = (useTemp > 0) && (second() >= prm.tempStart) && (second() < prm.tempEnd);
     showTemp1 = (useTemp > 1) && (second() >= prm.tempStart + (prm.tempEnd - prm.tempStart) / 2) && (second() < prm.tempEnd);
     showHumid0 = (useHumid > 0) && (second() >= prm.humidStart) && (second() < prm.humidEnd);
@@ -1223,20 +1347,18 @@ void timeProgram() {
 
 void loadEEPROM() {
   disableDisplay();
-  DPRINT("Loading setting from EEPROM. EEPROM ver:");
-  EEPROM.begin(sizeof(prm));
+  byte d;
+  DPRINTLN("Loading setting from EEPROM.");
+  DPRINT("Size:"); DPRINTLN(EEPROM_SIZE);
   EEPROM.get(EEPROM_addr, prm);
-  EEPROM.end();
-  DPRINTLN(prm.magic);
+  DPRINT("EEPROM ver:"); DPRINTLN(prm.magic);
   enableDisplay(0);
 }
 
 void saveEEPROM() {
   disableDisplay();
-  EEPROM.begin(sizeof(prm));
-  EEPROM.put(EEPROM_addr, prm);    //(mod(mySTD.offset/60,24)));
+  EEPROM.put(EEPROM_addr, prm);    
   EEPROM.commit();
-  EEPROM.end();
   DPRINTLN("Settings saved to EEPROM!");
   enableDisplay(0);
 }
@@ -1260,6 +1382,8 @@ void factoryReset() {
   strcpy(prm.mqttBrokerAddr,"10.10.0.202"); 
   strcpy(prm.mqttBrokerUser,"mqtt");
   strcpy(prm.mqttBrokerPsw,"mqtt");
+  prm.mqttEnable = false;
+  prm.mqttBrokerRefresh = 10; //sec
   prm.utc_offset = 1;
   prm.enableDST = false;          // Flag to enable DST (summer time...)
   prm.set12_24 = true;           // Flag indicating 12 vs 24 hour time (false = 12, true = 24);
@@ -1275,7 +1399,7 @@ void factoryReset() {
   prm.nightBright = 3;
   prm.animMode = 6;  
   prm.dateMode = 2;               // 0:dd/mm/yyyy 1:mm/dd/yyyy 2:yyyy/mm/dd
-  prm.tempCF = 'C';               //Temperature Celsius / Fahrenheit
+  prm.tempCF = false;               //Temperature Celsius / Fahrenheit
   prm.enableTimeDisplay = ENABLE_CLOCK_DISPLAY;
   prm.dateStart = DATE_START;                  //Date is displayed start..end
   prm.dateEnd = DATE_END;   
@@ -1358,17 +1482,21 @@ inline void incMod10(byte &x) {
 
 
 void displayTemp(byte ptr) {
+  int t = temperature[ptr];
+  if (prm.tempCF) {
+    t = (temperature[ptr] * 9/5)+32;
+  }
   int digPtr = maxDigits-1;
   for (int i = 0; i < maxDigits; i++) {
     digitDP[i] = false;
     newDigit[i] = 10;
   }
   
-  newDigit[digPtr] = int(temperature[ptr]) / 10;
+  newDigit[digPtr] = t / 10;
   if (newDigit[digPtr] == 0) newDigit[digPtr] = 10; //BLANK!!!
-  newDigit[--digPtr] = int(temperature[ptr]) % 10;
+  newDigit[--digPtr] = t % 10;
   digitDP[digPtr] = true;
-  newDigit[--digPtr] = int(temperature[ptr] * 10) % 10;
+  newDigit[--digPtr] = (t * 10) % 10;
   if ((maxDigits > 4) && (GRAD_CHARCODE >= 0)) {
     digPtr -=1;
     newDigit[digPtr] = GRAD_CHARCODE; //grad
@@ -1413,6 +1541,43 @@ void displayHumid(byte ptr) {
   decimalpointON = true;
 }
 
+void displayDate()  {
+  byte m = prm.dateMode;
+  if (m>2) m=2;
+  byte p[3][8] = 
+  {     //tube# 76543210    543210    3210
+    {2,1,0},  //ddmmyyyy    ddmmyy    ddmm
+    {2,0,1},  //mmddyyyy    mmddyy    mmdd
+    {0,1,2}   //yyyymmdd    yymmdd    mmdd
+  };  
+  
+  int t = 0;
+  for (int i=0;i<3;i++) {
+    if (p[m][i] == 2) {
+      if (maxDigits>6) {
+        newDigit[t++] = (year() % 1000) / 100;
+        newDigit[t++] = year() / 1000;
+      }
+      if (maxDigits>4) {
+        newDigit[t++] = year() % 10;
+        newDigit[t++] = (year() % 100) / 10;
+        digitDP[4] = true;
+      }
+    }
+    if (p[m][i] == 1) {
+      newDigit[t++] = month() % 10;
+      newDigit[t++] = month() / 10;
+    }
+    if (p[m][i] == 0) {
+      newDigit[t++] = day() % 10;
+      newDigit[t++] = day() / 10;
+    }
+  } //end for
+  digitDP[2] = true;
+  colonBlinkState = true;
+  if (prm.animMode == 1)  memcpy(oldDigit, newDigit, sizeof(oldDigit)); //don't do animation
+}
+
 void displayTime4() {
   for (int i = 0; i < maxDigits; i++) digitDP[i] = false;
   digitDP[4] = true;   digitDP[2] = true;
@@ -1421,15 +1586,8 @@ void displayTime4() {
   else if (showTemp0) displayTemp(0);
   else if (showHumid1) displayHumid(1);
   else if (showHumid0) displayHumid(0);
-  else if (showDate) {
-    newDigit[3] = month() / 10;
-    newDigit[2] = month() % 10;
-    digitDP[2] = true;
-    newDigit[1] = day() / 10;
-    newDigit[0] = day() % 10;
-    colonBlinkState = true;
-  }
-  else if (ENABLE_CLOCK_DISPLAY) {
+  else if (showDate) displayDate();
+  else if (prm.enableTimeDisplay) {
     showClock = true;
     newDigit[3] = hour12_24 / 10;
     if ((!prm.showZero)  && (newDigit[3] == 0)) newDigit[3] = 10;
@@ -1442,6 +1600,7 @@ void displayTime4() {
   writeDisplaySingle();
 }
 
+
 void displayTime6() {
   for (int i = 0; i < maxDigits; i++) digitDP[i] = false;
   digitDP[4] = true;   digitDP[2] = true;
@@ -1450,18 +1609,8 @@ void displayTime6() {
   else if (showTemp0) displayTemp(0);
   else if (showHumid1) displayHumid(1);
   else if (showHumid0) displayHumid(0);
-  else if (showDate) {
-    newDigit[5] = (year() % 100) / 10;
-    newDigit[4] = year() % 10;
-    digitDP[4] = true;
-    newDigit[3] = month() / 10;
-    newDigit[2] = month() % 10;
-    digitDP[2] = true;
-    newDigit[1] = day() / 10;
-    newDigit[0] = day() % 10;
-    colonBlinkState = true;
-  }
-  else if (ENABLE_CLOCK_DISPLAY) {
+  else if (showDate)  displayDate();
+  else if (prm.enableTimeDisplay) {
     showClock = true;
     newDigit[5] = hour12_24 / 10;
     if ((!prm.showZero)  && (newDigit[5] == 0)) newDigit[5] = 10;
@@ -1491,22 +1640,8 @@ void displayTime8() {
   else if (showTemp0) displayTemp(0);
   else if (showHumid1) displayHumid(1);
   else if (showHumid0) displayHumid(0);
-  else {
-    if (showDate) {
-      newDigit[7] = year() / 1000;
-      newDigit[6] = (year() % 1000) / 100;
-      newDigit[5] = (year() % 100) / 10;
-      newDigit[4] = year() % 10;
-      digitDP[4] = true;
-      newDigit[3] = month() / 10;
-      newDigit[2] = month() % 10;
-      digitDP[2] = true;
-      newDigit[1] = day() / 10;
-      newDigit[0] = day() % 10;
-      colonBlinkState = true;
-      if (prm.animMode == 1)  memcpy(oldDigit, newDigit, sizeof(oldDigit)); //don't do animation
-    }
-    else if (ENABLE_CLOCK_DISPLAY) {
+  else if (showDate) displayDate();
+  else if (prm.enableTimeDisplay) {
       showClock = true;
       newDigit[8] = 10;  //sign digit = BLANK
       newDigit[7] = hour12_24 / 10;
@@ -1524,7 +1659,6 @@ void displayTime8() {
       }
       newDigit[1] = second() / 10;
       newDigit[0] = second() % 10;
-    }
   }
   changeDigit();
   writeDisplaySingle();
@@ -1905,6 +2039,7 @@ void checkTubePowerOnOff(void) {
       radarON = true;  //without radar sensor, always ON 
     #endif
     
+    if (!prm.enableRadar) radarON = true;  //If Radar is disabled, always ON !
     #if TUBE_POWER_PIN >=0
       if (((displayON ?  prm.dayBright : prm.nightBright) == 0) || !radarON) {
         digitalWrite(TUBE_POWER_PIN,!TUBE_POWER_ON);  //Switch OFF
@@ -1978,7 +2113,7 @@ void loop(void) {
   alarmSound();
   checkTubePowerOnOff();
   getLightSensor();
-  mqttSend();
+  if (prm.mqttEnable) mqttSend();
   checkWifiMode();
   if (clockWifiMode) { //Wifi Clock Mode
     if (WiFi.status() != WL_CONNECTED) {

@@ -18,6 +18,7 @@ HASensor<float> mqttPress("pressure", 0, mqtt);
 HASensor<float> mqttLux("lux", 0, mqtt);
 
 void setupMqtt() {
+    char s[30];
     // set device's details (optional)
     WiFi.macAddress(mac);   //get the ESP board's MAC address
     device.setName("UniClock32");
@@ -26,9 +27,12 @@ void setupMqtt() {
     if (useHumid>0) mqttHumid.setUnitOfMeasurement("%");
     if (usePress>0) mqttPress.setUnitOfMeasurement("hPa");
     if (useLux>0) mqttLux.setUnitOfMeasurement("lux");
-    DPRINTLN("Attempting MQTT connection...");
+
     IPAddress tmp;
-    tmp.fromString(prm.mqttBrokerAddr);
+    tmp.fromString(String(prm.mqttBrokerAddr));
+    DPRINT("Attempting MQTT connection. IP:"); DPRINT(tmp);
+    sprintf(s,"  Clock's MAC:%02X:%02X:%02X:%02X:%02X:%02X",mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
+    DPRINTLN(s);
     mqtt.begin(tmp, prm.mqttBrokerUser, prm.mqttBrokerPsw);
     //mqtt.begin(BROKER_ADDR, BROKER_USERNAME, BROKER_PASSWORD);
 }
@@ -38,7 +42,7 @@ void mqttSend() {
   
   mqtt.loop();
     
-  if ((millis() - lastRun) < 30000) return;
+  if ((millis() - lastRun) < prm.mqttBrokerRefresh*1000) return;
   lastRun = millis();  
   
   DPRINT("MQTT send:");
@@ -49,5 +53,5 @@ void mqttSend() {
 }
   
 #else
-//  void mqttSend() {}
+  void mqttSend() {}
 #endif
