@@ -524,7 +524,6 @@ void startWifiMode() {
   WiFi.setAutoReconnect(true);
   enableDisplay(100);
   showMyIp();
-  calcTime();
 }
 
 boolean updateTimefromTimeserver() {  //true, if successful
@@ -547,9 +546,9 @@ boolean updateTimefromTimeserver() {  //true, if successful
         DPRINTLN("Clock refreshed from timeserver.");
       }
       count ++; 
-      if (res || (count > 10)) break;
+      if (res || (count > 5)) break;
       writeIpTag(count);
-      Fdelay(500);
+      Fdelay(1000);
     } //end while
   }
   return (res);
