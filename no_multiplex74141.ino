@@ -3,8 +3,6 @@
 
 #ifdef NO_MULTIPLEX74141
 
-#define MAXBRIGHT 10
-
 #if defined(ESP8266) 
 #else
   #error "Only 8266 Board is supported!"  
@@ -15,8 +13,10 @@ byte tubes[] = {3,2,1,0};         //4 tubes,   old clock...
 //byte tubes[] = {5,4,3,2,1,0};   //6 tubes, reverse order
 
 const int maxDigits = sizeof(tubes);
-const int PWMrefresh=12000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-const int PWMtiming[MAXBRIGHT+1] = {1000,1000,2000,3000,4000,5000,6000,7000,8000,10000,12000};
+int PWMrefresh=12000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+int PWM_min = 1000;
+int PWM_max = 12000;
+//int PWMtiming[11] = {1000,1000,2000,3000,4000,5000,6000,7000,8000,10000,12000};
 
 #define dataPin  14  //D5
 #define latchPin 12  //D6
@@ -46,7 +46,8 @@ void ICACHE_RAM_ATTR writeBits(byte num) {   //shift out 4 bits
 void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
   static volatile byte state=0;
   static int timer = PWMrefresh;
-  static byte brightness;
+  static int brightness;
+  static int PWMtimeBrightness=PWM_min;
   byte animM;
   
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
@@ -60,7 +61,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   }
 
   brightness = displayON ?  prm.dayBright : prm.nightBright;
-  if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
+  if (brightness>MAXBRIGHTNESS) brightness = MAXBRIGHTNESS;  //only for safety
   
   digitalWrite(latchPin, LOW);
 
@@ -97,19 +98,25 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
       #if COLON_PIN>=0
         digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
       #endif  
+      if (autoBrightness && displayON) {
+          PWMtimeBrightness = max(PWM_min,PWM_max*lx/MAXIMUM_LUX);
+      }
+      else {
+        PWMtimeBrightness = max(PWM_min,PWM_max*brightness/MAXBRIGHTNESS);
+      }      
       if (animM > 0) { //Animation?
-        timer =  (PWMtiming[brightness] * (10-animM))/10;
+        timer =  (PWMtimeBrightness * (10-animM))/10;
         state = 1;  //next state is: show newDigits
       }
       else {
-        timer = PWMtiming[brightness];  
-        if (brightness>=MAXBRIGHT) state = 0;
+        timer = PWMtimeBrightness;  
+        if (brightness>=MAXBRIGHTNESS) state = 0;
         else state = 2;  //default next state is: BLANK display
       }
       break;
     case 1:  //show new character, if animation
-      timer = (PWMtiming[brightness] * animM)/10;      
-      if (brightness>=MAXBRIGHT) state = 0;
+      timer = (PWMtimeBrightness * animM)/10;      
+      if (brightness>=MAXBRIGHTNESS) state = 0;
       else state = 2;  //default next state is: BLANK display
       break;
     case 2:  //blank display
@@ -120,14 +127,14 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
         digitalWrite(COLON_PIN,LOW);  // colon pin OFF
       #endif  
       state = 0;
-      timer = PWMrefresh-PWMtiming[brightness];
+      timer = PWMrefresh-PWMtimeBrightness;
       break;
   }  //end switch
   } //end else
     
   digitalWrite(latchPin, HIGH);    
   
-  if ((brightness == 0) || (!radarON)) {timer = PWMtiming[10]; state = 0;}  //no time sharing is needed
+  if ((brightness == 0) || (!radarON)) {timer = PWM_max; state = 0;}  //no time sharing is needed
   if (timer<500) timer = 500;  //safety only...
   timer1_write(timer); 
 }

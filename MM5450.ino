@@ -50,10 +50,11 @@ byte charDefinition[] = {
 
 #define MAXCHARS sizeof(charDefinition)
 #define MAXSEGMENTS 8
-#define MAXBRIGHT 10
 
 int PWMrefresh=10000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-int PWMtiming[MAXBRIGHT+1] = {0,500,800,1200,2000,2500,3000,4500,6000,8000,10000};
+int PWM_min = 500;
+int PWM_max = 10000;
+//int PWMtiming[11] = {0,500,800,1200,2000,2500,3000,4500,6000,8000,10000};
 
 byte bitBuffer[36];
 
@@ -108,7 +109,7 @@ void ICACHE_RAM_ATTR writeBits() {
 void ICACHE_RAM_ATTR writeDisplay(){        // Writes to the MM5450 driver for LEDS
 static volatile int timer = PWMrefresh;
 static volatile boolean state=true;
-static volatile byte brightness;
+static volatile int brightness;
 static int PWMtimeBrightness;
 static volatile uint32_t val;
 static volatile byte pos = 0;
@@ -122,23 +123,24 @@ byte num = 0;
 
   intCounter++;
   brightness = displayON ?  prm.dayBright : prm.nightBright;
-  if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
+  if (brightness>MAXBRIGHTNESS) brightness = MAXBRIGHTNESS;  //only for safety
 
-  if (autoBrightness && displayON)
-    PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * lx / MAXIMUM_LUX);
-  else
-    PWMtimeBrightness = PWMtiming[brightness];
+  if (autoBrightness && displayON) {
+        PWMtimeBrightness = max(PWM_min,PWM_max*lx/MAXIMUM_LUX);
+        }
+      else
+        PWMtimeBrightness = max(PWM_min,PWM_max*brightness/MAXBRIGHTNESS);
   
-  if ((!autoBrightness) && (brightness==MAXBRIGHT))  
+  if ((!autoBrightness) && (brightness==MAXBRIGHTNESS))  
     state = true;
   
   if (state) {  //ON state
     timer = PWMtimeBrightness;
     timerON = timer;
+    timerOFF = PWMrefresh-PWMtimeBrightness;     
   }
   else {  //OFF state
     timer = PWMrefresh-PWMtimeBrightness;
-    timerOFF = timer;  
   }
   if (timer<500) timer = 500;  //safety only...
   

@@ -38,8 +38,10 @@ uint32_t segmentEnableBits[MAXSEGMENTS];   //bitmaps, generated from EnablePins 
 uint32_t digitEnableBits[10];
 
 int PWMrefresh=5500;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-#define MAXBRIGHT 10
-int PWMtiming[MAXBRIGHT+1] = {0,500,800,1200,2000,2500,3000,3500,4000,4500,5000};
+int PWM_min = 500;
+int PWM_max = 5000;
+
+//int PWMtiming[11] = {0,500,800,1200,2000,2500,3000,3500,4000,4500,5000};
 //-----------------------------------------------------------------------------------------
 
 //https://sub.nanona.fi/esp8266/timing-and-ticks.html
@@ -78,8 +80,8 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   static volatile uint32_t val;
   static volatile byte pos = 0;
   static volatile boolean state=true;
-  static volatile byte brightness;
-  static int PWMtimeBrightness=PWMtiming[1];
+  static volatile int brightness;
+  static int PWMtimeBrightness=PWM_min;
 
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
       digitalWrite(PIN_BL,HIGH);    //OFF
@@ -89,18 +91,18 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   
   intCounter++;
   brightness = displayON ?  prm.dayBright : prm.nightBright;
-  if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
+  if (brightness>MAXBRIGHTNESS) brightness = MAXBRIGHTNESS;  //only for safety
 
-  if ((!autoBrightness) && (brightness==MAXBRIGHT)) state = true;
+  if ((!autoBrightness) && (brightness==MAXBRIGHTNESS)) state = true;
 
   if (state) {  //ON state
     pos++;  if (pos>maxDigits-1)  {   //go to the tube#0
       pos = 0;  //go to the first tube
       if (autoBrightness && displayON) {   //change brightness only on the tube#0
-        PWMtimeBrightness = max(PWMtiming[2],PWMtiming[MAXBRIGHT]*lx/MAXIMUM_LUX);
+        PWMtimeBrightness = max(PWM_min,PWM_max*lx/MAXIMUM_LUX);
         }
       else
-        PWMtimeBrightness = PWMtiming[brightness];
+        PWMtimeBrightness = max(PWM_min,PWM_max*brightness/MAXBRIGHTNESS);
     }
     val = (digitEnableBits[pos] | charTable[digit[pos]]);  //the full bitmap to send to MAX chip
     if (digitDP[pos]) val = val | charTable[12];    //Decimal Point

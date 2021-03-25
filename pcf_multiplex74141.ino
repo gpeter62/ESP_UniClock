@@ -18,7 +18,9 @@ const int maxDigits = sizeof(digitEnablePins);
 
 //const byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
 int PWMrefresh=15000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-int PWMtiming[MAXBRIGHT+1] = {0,2000,3000,4000,5000,6000,7000,8000,10000,12000,14000};
+int PWM_min = 2000;
+int PWM_max = 14000;
+//int PWMtiming[MAXBRIGHT+1] = {0,2000,3000,4000,5000,6000,7000,8000,10000,12000,14000};
 
 #if defined(ESP8266) 
 #else
@@ -102,13 +104,12 @@ void setup_pins() {
   }
 
 void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
-  
   static byte pos = 0;
   static byte state=0;
   static int timer = PWMrefresh;
   static byte num,brightness;
   static byte p,DPpos;
-  static int PWMtimeBrightness;  
+  static int PWMtimeBrightness = PWM_min;  
   
 if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
     //digitalWrite(digitEnablePins[pos],LOW); 
@@ -116,10 +117,11 @@ if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
     return;  
   }
 
-  if (autoBrightness && displayON)
-    PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * lx / MAXIMUM_LUX);
+  if (autoBrightness && displayON) {
+    PWMtimeBrightness = max(PWM_min,PWM_max*lx/MAXIMUM_LUX);
+  }
   else
-    PWMtimeBrightness = PWMtiming[brightness];
+    PWMtimeBrightness = max(PWM_min,PWM_max*brightness/MAXBRIGHTNESS);
   
   intCounter++;
   timer = PWMrefresh;

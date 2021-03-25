@@ -10,13 +10,17 @@ const int maxDigits = sizeof(digitEnablePins);
   uint32_t DRAM_ATTR digitEnableBits[10];
   #define MAXBRIGHT 10
   int DRAM_ATTR PWMrefresh=5500;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-  int DRAM_ATTR PWMtiming[MAXBRIGHT+1] = {0,500,800,1200,2000,2500,3000,3500,4000,4500,5000};
+  //int DRAM_ATTR PWMtiming[11] = {0,500,800,1200,2000,2500,3000,3500,4000,4500,5000};
   int DRAM_ATTR maxDig;
+  int DRAM_ATTR PWM_min = 500;
+  int DRAM_ATTR PWM_max = 5000;  
 #else
   uint32_t digitEnableBits[10];
   #define MAXBRIGHT 10
   int PWMrefresh=5500;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-  int PWMtiming[MAXBRIGHT+1] = {0,500,800,1200,2000,2500,3000,3500,4000,4500,5000};
+  int PWM_min = 500;
+  int PWM_max = 5000;
+  //int PWMtiming[11] = {0,500,800,1200,2000,2500,3000,3500,4000,4500,5000};
   int maxDig;
 #endif
 
@@ -54,23 +58,24 @@ void IRAM_ATTR writeDisplay() { //void IRAM_ATTR  writeDisplay(){
   noInterrupts();
   intCounter++;
   brightness = displayON ?  prm.dayBright : prm.nightBright;
-  if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
+  if (brightness>MAXBRIGHTNESS) brightness = MAXBRIGHTNESS;  //only for safety
 
-  if (autoBrightness && (displayON || ((brightness==1) && (lx>20))))    //if nightBrightness is 1 and room light is switched on, use autobrightness to increase closk bright
-    PWMtimeBrightness = max(PWMtiming[3],PWMtiming[MAXBRIGHT] * lx / MAXIMUM_LUX);
+  if (autoBrightness && (displayON )) {   
+    PWMtimeBrightness = max(PWM_min,PWM_max*lx/MAXIMUM_LUX);
+    }
   else
-    PWMtimeBrightness = PWMtiming[brightness];
+    PWMtimeBrightness = max(PWM_min,PWM_max*brightness/MAXBRIGHTNESS);
   
-  if ((!autoBrightness) && (brightness==MAXBRIGHT))  
+  if ((!autoBrightness) && (brightness==MAXBRIGHTNESS))  
     state = true;
   
   if (state) {  //ON state
     timer = PWMtimeBrightness;
     timerON = timer;
+    timerOFF = PWMrefresh-PWMtimeBrightness; 
   }
   else {  //OFF state
     timer = PWMrefresh-PWMtimeBrightness;
-    timerOFF = timer;  
   }
   if (timer<500) timer = 500;  //safety only...
   if ( (brightness == 0) || (!state) || (!radarON)) {  //OFF state, blank digit
@@ -138,7 +143,7 @@ void ICACHE_RAM_ATTR writeDisplay() {       //https://circuits4you.com/2018/01/0
   brightCounter++;   if (brightCounter>MAXBRIGHTNESS) brightCounter = 1;
   if (brightCounter == 1) {
     dpCounter++;   if (dpCounter>maxDig) dpCounter = 0;
-    #if DP_PIN>=0
+    #if defined(DP_PIN) && (DP_PIN>=0)
       digitalWrite(DP_PIN,digitDP[dpCounter]); 
     #endif
   } 

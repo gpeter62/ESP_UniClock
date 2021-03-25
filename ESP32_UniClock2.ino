@@ -470,7 +470,7 @@ void disableDisplay()  {
 }
 
 void startWifiMode() {
-  if (wifiMulti.run() == WL_CONNECTED) return;
+  //if (wifiMulti.run() != WL_CONNECTED) return;
   int count = 0;
   disableDisplay();
   DPRINTLN("Starting Clock in WiFi Mode!");
@@ -495,7 +495,7 @@ void startWifiMode() {
     delay(1000);
     if (counter>10) return;
   }
-
+  DPRINTLN(" ");
 /*
   AsyncWiFiManager MyWifiManager(&server, &dnsServer);
   MyWifiManager.setAPCallback(configModeCallback);
@@ -1220,7 +1220,7 @@ void setup() {
     DPRINT("SPIFFS Total bytes:    "); DPRINTLN(SPIFFS.totalBytes());
     DPRINT("SPIFFS Used bytes:     "); DPRINTLN(SPIFFS.usedBytes());
 #endif
-    DPRINTLN(" ");
+    DPRINTLN("SPIFFS started.");
   }
 
   clockWifiMode = true;
@@ -1889,12 +1889,12 @@ void resetWiFi(void) {
 
   if ((millis() - lastTest) < 600000) return; //check in every 10 min  
   lastTest = millis();
-  //disableDisplay();
-  #if defined(ESP8266)  
-    WiFi.reconnect();
-  #endif  
-  //enableDisplay(5000);
   DPRINTLN("Lost WiFi. Reconnect.");
+  //disableDisplay();
+  //#if defined(ESP8266)  
+    WiFi.reconnect();
+  //#endif  
+  //enableDisplay(5000);
   return;
 
   counter++;

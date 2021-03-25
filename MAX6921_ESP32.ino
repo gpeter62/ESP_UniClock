@@ -45,7 +45,7 @@ uint32_t DRAM_ATTR digitEnableBits[10];
 int DRAM_ATTR PWMrefresh=5500;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
 int DRAM_ATTR PWM_min = 500;
 int DRAM_ATTR PWM_max = 5000;
-//int DRAM_ATTR PWMtiming[MAXBRIGHT+1] = {0,500,800,1200,2000,2500,3000,3500,4000,4500,5000};
+//int DRAM_ATTR PWMtiming[11] = {0,500,800,1200,2000,2500,3000,3500,4000,4500,5000};
 
 //-----------------------------------------------------------------------------------------
 

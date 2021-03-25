@@ -14,8 +14,9 @@ int maxDig = maxDigits;   //memory variable version
 
 //const byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
 int PWMrefresh=11000;   //msec, Multiplex time period. Greater value => slower multiplex frequency
-#define MAXBRIGHT 10
-int PWMtiming[MAXBRIGHT+1] = {0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000};
+int PWM_min = 1000;
+int PWM_max = 10000;
+//int PWMtiming[11] = {0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000};
 
 void setup_pins() {
   DPRINTLN("Nixie clock - setup pins -  Multiplex 74141 mode...");
@@ -42,9 +43,9 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   static byte pos = 0;
   static volatile byte state=0;
   static int timer = PWMrefresh;
-  static byte num,brightness;
+  static int num,brightness;
   static byte DPpos;
-  static int PWMtimeBrightness=PWMtiming[1];
+  static int PWMtimeBrightness=PWM_min;
 
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
       digitalWrite(digitEnablePins[pos],LOW); 
@@ -54,7 +55,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   
   intCounter++;
   brightness = displayON ?  prm.dayBright : prm.nightBright;
-  if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
+  if (brightness>MAXBRIGHTNESS) brightness = MAXBRIGHTNESS;  //only for safety
 
   timer = PWMrefresh;
 
@@ -62,10 +63,11 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
     case 0:
       pos++;  if (pos>maxDig-1)  {
         pos = 0;  //go to the first tube
-        if (autoBrightness && displayON)
-          PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * lx / MAXIMUM_LUX);
+        if (autoBrightness && displayON) {
+          PWMtimeBrightness = max(PWM_min,PWM_max*lx/MAXIMUM_LUX);
+        }
         else
-          PWMtimeBrightness = PWMtiming[brightness];
+          PWMtimeBrightness = max(PWM_min,PWM_max*brightness/MAXBRIGHTNESS);
         }
       
       if (animMask[pos] > 0) { //Animation?

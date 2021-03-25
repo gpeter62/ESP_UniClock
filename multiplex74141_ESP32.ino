@@ -10,8 +10,9 @@ int DRAM_ATTR maxDig = maxDigits;   //memory variable version
 
 //const byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
 int DRAM_ATTR PWMrefresh=11000;   //msec, Multiplex time period. Greater value => slower multiplex frequency
-#define MAXBRIGHT 10
-int DRAM_ATTR PWMtiming[MAXBRIGHT+1] = {0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000};
+int DRAM_ATTR PWM_min = 1000;
+int DRAM_ATTR PWM_max = 10000;
+//int DRAM_ATTR PWMtiming[11] = {0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000};
 
   #if defined(ESP32) 
   #else
@@ -44,9 +45,9 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
   static DRAM_ATTR byte pos = 0;
   static DRAM_ATTR byte state=0;
   static DRAM_ATTR int timer = PWMrefresh;
-  static DRAM_ATTR byte num,brightness;
+  static DRAM_ATTR int num,brightness;
   static DRAM_ATTR byte DPpos;
-  static DRAM_ATTR int PWMtimeBrightness=PWMtiming[1];
+  static DRAM_ATTR int PWMtimeBrightness=PWM_min;
   
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
     return;  
@@ -57,7 +58,7 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
   
   intCounter++;
   brightness = displayON ?  prm.dayBright : prm.nightBright;
-  if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
+  if (brightness>MAXBRIGHTNESS) brightness = MAXBRIGHTNESS;  //only for safety
 
   timer = PWMrefresh;
 
@@ -65,10 +66,11 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
     case 0:
       pos++;  if (pos>maxDig-1)  {
         pos = 0;  //go to the first tube
-        if (autoBrightness && displayON)
-          PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * lx / MAXIMUM_LUX);
+        if (autoBrightness && displayON) {
+          PWMtimeBrightness = max(PWM_min,PWM_max*lx/MAXIMUM_LUX);
+        }
         else
-          PWMtimeBrightness = PWMtiming[brightness];
+          PWMtimeBrightness = max(PWM_min,PWM_max*brightness/MAXBRIGHTNESS);
       }
       if (animMask[pos] > 0) { //Animation?
         num = oldDigit[pos];  //show old character
