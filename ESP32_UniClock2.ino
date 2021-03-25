@@ -1039,6 +1039,7 @@ if (useTemp > 1)
   doc["dateRepeatMin"] = prm.dateRepeatMin;   
   doc["tempCF"] = prm.tempCF;   
   doc["enableTimeDisplay"] = prm.enableTimeDisplay; 
+  doc["enableDoubleBlink"] = prm.enableDoubleBlink;
   doc["dateStart"] = prm.dateStart; 
   doc["dateEnd"] = prm.dateEnd; 
   doc["tempStart"] = prm.tempStart; 
@@ -1459,9 +1460,9 @@ inline void incMod10(byte &x) {
 
 
 void displayTemp(byte ptr) {
-  int t = temperature[ptr];
+  float t = temperature[ptr];
   if (prm.tempCF) {
-    t = (temperature[ptr] * 9/5)+32;
+    t = round1((temperature[ptr] * 9/5)+32);
   }
   int digPtr = maxDigits-1;
   for (int i = 0; i < maxDigits; i++) {
@@ -1471,15 +1472,17 @@ void displayTemp(byte ptr) {
   
   newDigit[digPtr] = t / 10;
   if (newDigit[digPtr] == 0) newDigit[digPtr] = 10; //BLANK!!!
-  newDigit[--digPtr] = t % 10;
+  newDigit[--digPtr] = int(t) % 10;
   digitDP[digPtr] = true;
-  newDigit[--digPtr] = (t * 10) % 10;
+  newDigit[--digPtr] = int(t * 10) % 10;
   if ((maxDigits > 4) && (GRAD_CHARCODE >= 0)) {
     digPtr -=1;
     newDigit[digPtr] = GRAD_CHARCODE; //grad
   }
-  if (TEMP_CHARCODE >= 0) newDigit[--digPtr] = TEMP_CHARCODE; //  "C"
-
+  if (TEMP_CHARCODE >= 0) {
+    if (prm.tempCF) newDigit[--digPtr] = TEMP_CHARCODE+5; //  'F'
+    else            newDigit[--digPtr] = TEMP_CHARCODE;   //  'C'
+  }
 
   if (prm.animMode == 0)  memcpy(oldDigit, newDigit, sizeof(oldDigit)); //don't do animation
   colonBlinkState = true;
@@ -1563,7 +1566,7 @@ void displayTime4() {
   else if (showTemp0) displayTemp(0);
   else if (showHumid1) displayHumid(1);
   else if (showHumid0) displayHumid(0);
-  else if (showDate) displayDate();
+  else if (showDate && prm.enableTimeDisplay) displayDate();
   else if (prm.enableTimeDisplay) {
     showClock = true;
     newDigit[3] = hour12_24 / 10;
@@ -1586,7 +1589,7 @@ void displayTime6() {
   else if (showTemp0) displayTemp(0);
   else if (showHumid1) displayHumid(1);
   else if (showHumid0) displayHumid(0);
-  else if (showDate)  displayDate();
+  else if (showDate && prm.enableTimeDisplay)  displayDate();
   else if (prm.enableTimeDisplay) {
     showClock = true;
     newDigit[5] = hour12_24 / 10;
@@ -1617,7 +1620,7 @@ void displayTime8() {
   else if (showTemp0) displayTemp(0);
   else if (showHumid1) displayHumid(1);
   else if (showHumid0) displayHumid(0);
-  else if (showDate) displayDate();
+  else if (showDate && prm.enableTimeDisplay) displayDate();
   else if (prm.enableTimeDisplay) {
       showClock = true;
       newDigit[8] = 10;  //sign digit = BLANK
@@ -1629,9 +1632,9 @@ void displayTime8() {
       newDigit[3] = minute() % 10;
       newDigit[2] = 11;  //- sign
       if (prm.enableBlink && (second() % 2 == 0)) {
-        digitDP[2] = 10; //BLANK
+        newDigit[2] = 10; //BLANK
         if (prm.enableDoubleBlink) {
-          digitDP[5] = 10; //BLANK
+          newDigit[5] = 10; //BLANK
         } 
       }
       newDigit[1] = second() / 10;
@@ -2070,8 +2073,8 @@ void getLightSensor(void) {
     tmp = luxMeter();
     if ((abs(tmp-oldLx)>1) || (tmp == MAXIMUM_LUX))  {
       lx=tmp;  oldLx = lx; 
-      autoBrightness = prm.enableAutoDim;
     }
+    autoBrightness = prm.enableAutoDim;
   }
   else {
     lx = MAXIMUM_LUX;

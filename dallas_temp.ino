@@ -123,7 +123,7 @@ float tmp_temp;
 }
 
 void resetSensors() {
-   if (EEPROMsaving) return;
+  if (EEPROMsaving) return;
   DPRINTLN("Reset sensors...");
   //#if defined(ESP8266)
     oneWire.reset();

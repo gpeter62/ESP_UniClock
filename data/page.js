@@ -40,7 +40,7 @@ var controlInfos = {
 	"humidStart": "Humidity display time slice start",
 	"humidEnd": "Humidity display end",
 	"dateRepeatMin": "Date is shown in every xx minutes. 0 = Disable date display",            
-	"doubleBlink": "Enable both blinking dots",             
+	"enableDoubleBlink": "Enable both blinking dots",             
 	"enableAutoDim": "Enable auto brightness control (if sensor is installed)",  
 	"enableRadar": "Enable Radar/Pir tube switch (if sensor is installed)",   
 	"radarTimeout": "If Radar is used, automatic switch off after this timeout (sec)",         
@@ -107,7 +107,7 @@ var configuration = {
 	"humidStart": 40,                 
 	"humidEnd": 45,
 	"dateRepeatMin": 3,            
-	"doubleBlink": true,             
+	"enableDoubleBlink": true,             
 	"enableAutoDim": false,  
 	"enableRadar": false,   
 	"radarTimeout": 300,         
@@ -208,12 +208,16 @@ function setCurrentInfos(){
     $('#temperature2').html(getTemperature(configuration["temperature2"]));
 }
 
+function round(value, decimals) {
+  return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
+}
+
 function getTemperature(temperatureInC){
     if(configuration["tempCF"]){        //Fahrenheit
-        return temperatureInC * 1.8 + 32;
+        return round(temperatureInC * 1.8 + 32,1);
     }
     else{
-        return temperatureInC;
+        return round(temperatureInC,1);
     }
 }
 

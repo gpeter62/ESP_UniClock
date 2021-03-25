@@ -267,6 +267,12 @@ input:active, select:active{
 #humidity:after{
     content: '%';
 }
+#pressure:after{
+    content: ' hPa';	
+}
+#lux:after{
+    content: ' lux';	
+}
 #color-select-holder > div{
     float: left;
 }

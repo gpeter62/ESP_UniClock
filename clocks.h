@@ -23,7 +23,7 @@
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
 
-//#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
+#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
 //#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
 
@@ -31,7 +31,7 @@
 //#define CLOCK_41  //ESP32 D1 mini, UNFI board, 6 x Z573M Nixie tubes
 //#define CLOCK_42  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock SHT21
 //#define CLOCK_43  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock SHT21
-#define CLOCK_44  //ESP32 D1 mini, Numitron clock
+//#define CLOCK_44  //ESP32 D1 mini, Numitron clock
 //#define CLOCK_45  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock (Ovidiu)
 
 //#define CLOCK_50   //ESP32 D1 mini, UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
@@ -347,7 +347,7 @@
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   #define DATE_REPEAT_MIN 3     //show date only every 3 minutes. If zero, datum is never displayed
   #define USE_DALLAS_TEMP
-  #define TEMP_DALLAS_PIN 15    //Dallas temp sensor pin.  If not used, SET TO -1     
+  #define TEMP_DALLAS_PIN 23  //15    //Dallas temp sensor pin.  If not used, SET TO -1     
   #define MAX6921_ESP32
   byte segmentEnablePins[] =  {19,17,15,12,13,16,18,14};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
   byte digitEnablePins[] = {9,8,7,2,1,0};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
@@ -357,8 +357,10 @@
     #define PIN_CLK   13  // Shift Register Clock
     #define PIN_DATA  27  // Shift Register Data
     #define PIN_BL    12  // Shift Register Blank (1=display off     0=display on)
+  //#define PIN_SDA 26           // you can set the used SDA and SCL pins
+  //#define PIN_SCL 27           // if it is not default value    
   #define ALARMSPEAKER_PIN 33   //Alarm buzzer pin                                            
-  #define ALARMBUTTON_PIN 26  //32    //Alarm switch off button pin 
+  #define ALARMBUTTON_PIN -1  //32    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   #define RADAR_PIN 21
   #define RADAR_TIMEOUT 300  //second (5min)
