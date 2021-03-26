@@ -1,6 +1,6 @@
 #ifdef SN75512   
 // 2 x SN75512
-#define TUBEDRIVER SN75512
+char tubeDriver[] = "SN75512";
 #define VFDrefresh 1200    //msec, Multiplex time period. Greater value => slower multiplex frequency
 
 #define DATABITS 24        //total length of the shift registers

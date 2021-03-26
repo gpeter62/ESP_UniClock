@@ -152,6 +152,7 @@ byte c_MaxBrightness = RGB_MAX_BRIGHTNESS;     //maximum LED brightness
   #endif
   
   #include <esp_wifi.h>
+  #include <WiFi.h>
   #include <WiFiMulti.h>
   WiFiMulti wifiMulti;
   #include <WiFiClient.h>
@@ -192,6 +193,7 @@ extern void writeDisplaySingle();
 extern void setup_pins();
 extern void clearTubes();
 extern const int maxDigits;
+extern char tubeDriver[];
 
 char webName[] = WEBNAME;
 AsyncWebServer server(80);
@@ -210,7 +212,7 @@ volatile boolean dState = false;
 volatile unsigned long lastDisable = 0;
 volatile boolean EEPROMsaving = false; //saving in progress - stop display refresh
 
-#define MAGIC_VALUE 301   //EEPROM version
+#define MAGIC_VALUE 302   //EEPROM version
 
 // 8266 internal pin registers
 // https://github.com/esp8266/esp8266-wiki/wiki/gpio-registers
@@ -235,7 +237,7 @@ volatile boolean EEPROMsaving = false; //saving in progress - stop display refre
 bool colonBlinkState = false;
 boolean clockWifiMode = true;
 boolean radarON = true;
-
+boolean makeFirmwareUpdate = false;
 unsigned long lastTimeUpdate = 0;  //last time refresh from GPS or internet timeserver
 boolean RTCexist = false;
 boolean GPSexist = false;
@@ -598,14 +600,44 @@ void startStandaloneMode() {
 }
 
 void doFirmwareUpdate(){
-     DPRINTLN("Checking firmware update...");
-    DPRINT("Firmware name: "); DPRINTLN(prm.firmware);
+    if (wifiMulti.run() != WL_CONNECTED) {
+      DPRINTLN("Wifi disconnected. FirmwareUpdate failed.");
+      return;
+    }
+    delay(2000);
+    disableDisplay();
+    yield();
+    String fname = String(prm.firmware)+"/ESP32_UniClock2.spiffs.bin";
+    DPRINT("Update SPIFFS: "); DPRINTLN(fname);
     ESPhttpUpdate.rebootOnUpdate(false);
-    t_httpUpdate_return ret = ESPhttpUpdate.update(prm.firmware);
+    t_httpUpdate_return ret;
+
+    ret = ESPhttpUpdate.updateSpiffs(fname);
+      if(ret == HTTP_UPDATE_OK) {
+
+            switch(ret) {
+                case HTTP_UPDATE_FAILED:
+                    DPRINTF("HTTP_UPDATE_FAILED Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+                    break;
+
+                case HTTP_UPDATE_NO_UPDATES:
+                    DPRINTLN("HTTP_UPDATE_NO_UPDATES");
+                    break;
+
+                case HTTP_UPDATE_OK:
+                    DPRINTLN("HTTP_UPDATE_OK");
+                    break;
+            }
+        }
+    
+    fname = String(prm.firmware)+"/"+String(FW)+".bin";
+    DPRINT("Update firmware: "); DPRINTLN(fname);
+    
+    ret = ESPhttpUpdate.update(fname);
 
     switch(ret) {
             case HTTP_UPDATE_FAILED:
-                DPRINTF("HTTP_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+                DPRINTF("HTTP_UPDATE_FAILED Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
                 break;
 
             case HTTP_UPDATE_NO_UPDATES:
@@ -750,7 +782,7 @@ void startServer() {
 
 //____________________________________________________________________________
   server.on("/firmwareupdate", HTTP_GET, [](AsyncWebServerRequest * request) {
-    doFirmwareUpdate();
+    makeFirmwareUpdate = true;
   });
 
   server.on("/saveSetting", HTTP_POST, handleConfigChanged);
@@ -910,7 +942,7 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
     }
     else if (key == "firmware") {
       value.toCharArray(prm.firmware,sizeof(prm.firmware));
-      doFirmwareUpdate();  //for testing only
+      makeFirmwareUpdate = true; //for testing only
     }
     #ifdef USE_MQTT
       else if (key == "mqttBrokerAddr") {
@@ -1177,8 +1209,11 @@ void setup() {
   memset(pinTxt,0,sizeof(pinTxt));
   delay(1000);
   DPRINTBEGIN(115200); DPRINTLN(" ");
+  DPRINTLN(F("================================================="));
   DPRINT("Starting "); DPRINTLN(webName);
+  DPRINT("Firmware code:"); DPRINT(FW); DPRINT("   Tube driver:"); DPRINTLN(tubeDriver);
   DPRINT("MAXBRIGHTNESS:"); DPRINTLN(MAXBRIGHTNESS);
+  DPRINTLN(F("================================================="));
   clearDigits();
   #if ALARMSPEAKER_PIN >= 0
     pinMode(ALARMSPEAKER_PIN, OUTPUT); regPin(ALARMSPEAKER_PIN,"ALARMSPEAKER_PIN");
@@ -1420,7 +1455,7 @@ void factoryReset() {
   strcpy(prm.mqttBrokerAddr,"10.10.0.202"); 
   strcpy(prm.mqttBrokerUser,"mqtt");
   strcpy(prm.mqttBrokerPsw,"mqtt");
-  strncpy(prm.firmware,"https://github.com/gpeter62/ESP_UniClock/blob/master/fw/fw3.bin",sizeof(prm.firmware));
+  strncpy(prm.firmware,"http://c.landventure.hu/store/CLOCK_xx.bin",sizeof(prm.firmware));
   prm.mqttEnable = false;
   prm.mqttBrokerRefresh = 10; //sec
   prm.utc_offset = 1;
@@ -2053,6 +2088,7 @@ void printDigits(unsigned long timeout) {
     DPRINT("  Lux:"); DPRINT(lx);
   }
   //DPRINT("  tON:"); DPRINT(timerON); DPRINT("  tOFF:"); DPRINT(timerOFF);   //Multiplex timing values for testing
+  if (wifiMulti.run() != WL_CONNECTED) DPRINT("  no WIFI");
   DPRINTLN(" ");
   printSensors();
   #endif  
@@ -2164,6 +2200,10 @@ void loop(void) {
   else {   //Manual Clock Mode
     editor();
   } //endelse
+  if (makeFirmwareUpdate) {
+    makeFirmwareUpdate = false;
+    doFirmwareUpdate();
+  }
   yield();
 }
 

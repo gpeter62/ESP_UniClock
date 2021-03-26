@@ -1,5 +1,5 @@
 #ifdef MM5450
-#define TUBEDRIVER MM5450
+char tubeDriver[] = "MM5450";
 const int maxDigits = 6;
 
 //Fill this table with the pin numbers of MM5450 chip!

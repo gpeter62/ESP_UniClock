@@ -1,7 +1,7 @@
 #ifdef HV5122  //Nixie driver
 //P.S. 6x tubes PCB version
 
-#define TUBEDRIVER HV5122
+char tubeDriver[] = "HV5122";
 //HV5122 control pins
 //#define PIN_DIN  17   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
 //#define PIN_CLK  22   // Clock
@@ -23,9 +23,10 @@
 */
 
 #define SHIFT_LSB_FIRST false  //true= LSB first, false= MSB first
-#define MAXBRIGHT 10
 int PWMrefresh = 10000; //Brightness PWM period. Greater value => slower brightness PWM frequency
-int PWMtiming[MAXBRIGHT+1] = {0,500,800,1200,2000,2500,3000,4500,6000,8000,10000};
+//int PWMtiming[11] = {0,500,800,1200,2000,2500,3000,4500,6000,8000,10000};
+int PWM_min = 500;
+int PWM_max = 10000;
 
 void setup_pins() {
   DPRINTLN("Setup pins -  HV5122 Nixie driver...");
@@ -50,8 +51,8 @@ void ICACHE_RAM_ATTR writeDisplay() {       //https://circuits4you.com/2018/01/0
   static volatile int brightCounter = 1;
   static volatile int timer = PWMrefresh;
   static volatile boolean state=true;
-  static volatile byte brightness;
-  static int PWMtimeBrightness;
+  static volatile int brightness;
+  static int PWMtimeBrightness=PWM_min;
 
   intCounter++;
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
@@ -67,14 +68,15 @@ void ICACHE_RAM_ATTR writeDisplay() {       //https://circuits4you.com/2018/01/0
   #endif
 
   brightness = displayON ?  prm.dayBright : prm.nightBright;
-  if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
+  if (brightness>MAXBRIGHTNESS) brightness = MAXBRIGHTNESS;  //only for safety
 
-  if (autoBrightness && displayON)
-    PWMtimeBrightness = max(PWMtiming[1],PWMtiming[MAXBRIGHT] * lx / MAXIMUM_LUX);
+  if (autoBrightness && displayON) {
+    PWMtimeBrightness = max(PWM_min,PWM_max*lx/MAXIMUM_LUX);
+  }
   else
-    PWMtimeBrightness = PWMtiming[brightness];
+    PWMtimeBrightness = max(PWM_min,PWM_max*brightness/MAXBRIGHTNESS);
   
-  if ((!autoBrightness) && (brightness==MAXBRIGHT))  
+  if ((!autoBrightness) && (brightness==MAXBRIGHTNESS))  
     state = true;
   
   if (state) {  //ON state

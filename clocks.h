@@ -23,7 +23,7 @@
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
 
-#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
+//#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
 //#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
 
@@ -34,7 +34,7 @@
 //#define CLOCK_44  //ESP32 D1 mini, Numitron clock
 //#define CLOCK_45  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock (Ovidiu)
 
-//#define CLOCK_50   //ESP32 D1 mini, UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
+#define CLOCK_50   //ESP32 D1 mini, UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_51   //ESP32 D1 mini, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_52   //ESP8266 Wemos D1 mini,UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_55   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
@@ -42,6 +42,7 @@
 //______________________ESP8266 CLOCKS by UNFI and GP ______________________________________________________
 #ifdef CLOCK_1   //8266, UNFI PCB clock, 4x IN-16 tubes
   #define DEBUG 
+  #define FW "fw1"  //firmware name
   #define MAXBRIGHTNESS 100  
   #define USE_NEOPIXEL 
   byte tubePixels[] = {3,2,1,0};        //4 tubes, single leds, reverse direction
@@ -59,6 +60,7 @@
 
 #ifdef CLOCK_2   //8266, UNFI PCB clock, 4x Z-570M tubes
   #define DEBUG 
+  #define FW "fw2"  //firmware name
   #define MAXBRIGHTNESS 100  
   //#define USE_NEOPIXEL 
   //#define USE_DALLAS_TEMP
@@ -78,6 +80,7 @@
 
 #ifdef CLOCK_3   //8266, PCB less clock, IV-18 VFD tube   https://www.thingiverse.com/thing:3417955
   #define DEBUG 
+  #define FW "fw3"  //firmware name
   #define MAXBRIGHTNESS 100  
   #define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN 4    //Dallas temp sensor pin.  If not used, SET TO -1
@@ -97,6 +100,7 @@
 
 #ifdef CLOCK_4   //8266, custom clock, 4x IV-11 VFD tubes
   #define DEBUG 
+  #define FW "fw4"  //firmware name
   #define MAXBRIGHTNESS 100
   #define MAX6921
   byte segmentEnablePins[] =  {7,5,1,0,2,4,6,3};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
@@ -121,7 +125,8 @@
 #endif
 
 #ifdef CLOCK_5   //8266, UNFI PCB clock IVL-2-5/7 tube with RTC
-  //#define DEBUG 
+  //#define DEBUG
+  #define FW "fw5"  //firmware name 
   #define USE_DALLAS_TEMP
   #define MAXBRIGHTNESS 100
   #define TEMP_DALLAS_PIN 3
@@ -147,6 +152,7 @@
 
 #ifdef CLOCK_6   //8266, GP PCB clock, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
   #define DEBUG
+  #define FW "fw6"  //firmware name
   #define MAXBRIGHTNESS 100
   //#define USE_DALLAS_TEMP
   //#define TEMP_DALLAS_PIN -1
@@ -162,7 +168,8 @@
 
 
 #ifdef CLOCK_7   //8266 UNFI PCB clock 6x Z574M/Z573M tubes, tube selection by PCF8574 chip
-  #define DEBUG 
+  #define DEBUG
+  #define FW "fw7"  //firmware name 
   #define MAXBRIGHTNESS 100
   #define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN 0
@@ -182,7 +189,8 @@
 #endif
 
 #ifdef CLOCK_8   //8266 GP PCB v3 clock with 4x IV-16 Numitron tubes (plexi box) //Flash size: 1MB (FS:160k, OTA:422k)
-  #define DEBUG 
+  #define DEBUG
+  #define FW "fw8"  //firmware name 
   #define MAXBRIGHTNESS 10  
   #define PCB_VERSION 3   //1,2 or 3
   #define LTBIpin 5
@@ -200,7 +208,8 @@
 #endif
 
 #ifdef CLOCK_9   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes (brown box) //Flash size: 1MB (FS:160k, OTA:422k)
-  #define DEBUG 
+  #define DEBUG
+  #define FW "fw9"  //firmware name 
   #define MAXBRIGHTNESS 10
   #define PCB_VERSION 1   //1,2 or 3
   #define Numitron_4511N
@@ -213,7 +222,8 @@
 #endif
 
 #ifdef CLOCK_10   //8266 LED Clock with MAX7219 chip
-  #define DEBUG 
+  #define DEBUG
+  #define FW "fw10"  //firmware name 
   #define MAX7219CNG
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
@@ -221,7 +231,8 @@
 #endif
 
 #ifdef CLOCK_11   //8266 LED Clock with MM5450 chip
-  #define DEBUG 
+  #define DEBUG
+  #define FW "fw11"  //firmware name 
   #define MAXBRIGHTNESS 100  
   //#define USE_DALLAS_TEMP
   //#define TEMP_DALLAS_PIN 2
@@ -236,7 +247,8 @@
 #endif
 
 #ifdef CLOCK_12   //8266 VFD Clock with PT6355 chip
-  #define DEBUG 
+  #define DEBUG
+  #define FW "fw12"  //firmware name 
   #define PT6355
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
@@ -244,7 +256,8 @@
 #endif
 
 #ifdef CLOCK_13   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes + GPS timesync (white box)
-  #define DEBUG 
+  #define DEBUG
+  #define FW "fw13"  //firmware name 
   #define MAXBRIGHTNESS 10
   #define USE_GPS
   #define PCB_VERSION 3   //1,2 or 3
@@ -260,6 +273,7 @@
 //____________ P.S. clocks / thermometers ____________________________________________
 #ifdef CLOCK_20   //8266 D1-mini, P.S. PCB 4xIN14 clock-thermometer 
   //#define DEBUG 
+  #define FW "fw20"  //firmware name
   #define MAXBRIGHTNESS 100    
   #define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN 3 //RX
@@ -281,7 +295,8 @@
 #endif
 
 #ifdef CLOCK_21   //8266 D1-mini, P.S. PCB 3xIN14 1xIN-19A thermometer / humidity 
-  //#define DEBUG 
+  //#define DEBUG
+  #define FW "fw21"  //firmware name 
   #define MAXBRIGHTNESS 100    
   #define USE_DHT_TEMP
   #define DHTTYPE DHT22
@@ -308,7 +323,8 @@
 #endif
 
 #ifdef CLOCK_22   //8266 NODEMCU, P.S. PCB 3xIN14 1xIN-19A thermometer / humidity
-  //#define DEBUG 
+  //#define DEBUG
+  #define FW "fw22"  //firmware name 
   #define MAXBRIGHTNESS 100    
   #define USE_NEOPIXEL 
   byte tubePixels[] = {0,1,2,3};        //4 tubes, single leds
@@ -338,7 +354,8 @@
 
 //______________________ESP-32 CLOCKS  (2x18pin ESP32 modul) ______________________________________________________
 #ifdef CLOCK_30   //ESP32, UNFI PCB clock, 6 x IV-11 VFD tubes
-  #define DEBUG 
+  #define DEBUG
+  #define FW "fw30"  //firmware name 
   #define MAXBRIGHTNESS 100
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 2
@@ -375,7 +392,8 @@
 #endif
 
 #ifdef CLOCK_31   //ESP32, UNFI board, 6 x Z573M Nixie tubes
-  #define DEBUG 
+  #define DEBUG
+  #define FW "fw31"  //firmware name 
   #define MAXBRIGHTNESS 100    
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 2
@@ -399,7 +417,8 @@
 
 
 #ifdef CLOCK_32   //ESP32, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
-  #define DEBUG 
+  #define DEBUG
+  #define FW "fw32"  //firmware name 
   #define MAXBRIGHTNESS 100  
   #define USE_MQTT
   #define USE_NEOPIXEL 
@@ -427,7 +446,8 @@
 
 //______________________ESP-32 CLOCKS  (2x20pin ESP32 D1 mini modul) ______________________________________________________
 #ifdef CLOCK_40   //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock
-  #define DEBUG 
+  #define DEBUG
+  #define FW "fw40"  //firmware name 
   #define MAXBRIGHTNESS 100
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 22
@@ -455,7 +475,8 @@
 #endif
 
 #ifdef CLOCK_41   //ESP32 D1 mini, UNFI board, 6 x Z573M Nixie tubes
-  #define DEBUG 
+  #define DEBUG
+  #define FW "fw41"  //firmware name 
   #define MAXBRIGHTNESS 100    
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 22
@@ -482,7 +503,8 @@
 
 
 #ifdef CLOCK_42   //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock, SHT21
-  #define DEBUG 
+  #define DEBUG
+  #define FW "fw42"  //firmware name 
   #define MAXBRIGHTNESS 100
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 22
@@ -525,7 +547,8 @@
 #endif
 
 #ifdef CLOCK_43   //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock, SHT21 & DHT22 sensor
-  #define DEBUG 
+  #define DEBUG
+  #define FW "fw43"  //firmware name 
   #define MAXBRIGHTNESS 100
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 22
@@ -561,7 +584,8 @@
 #endif
 
 #ifdef CLOCK_44   //ESP32 D1 mini, UNFI board, 6 x IV-9 Numitron tubes
-  #define DEBUG 
+  #define DEBUG
+  #define FW "fw44"  //firmware name 
   #define MAXBRIGHTNESS 100    
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 22
@@ -594,6 +618,7 @@
 
 #ifdef CLOCK_45   //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock, (Ovidiu)
   #define DEBUG
+  #define FW "fw45"  //firmware name
   #define MAXBRIGHTNESS 100
   #define USE_RTC 
   #define USE_NEOPIXEL 
@@ -645,7 +670,9 @@
 #endif
 
 #ifdef CLOCK_50   //ESP32 D1 mini,UNFI 2xHV5122 PCB version, 6xIN18 clock   Example clock!!!
-  #define DEBUG 
+  #define DEBUG
+  #define FW "fw50"  //firmware name 
+  #define MAXBRIGHTNESS 100
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 27
   byte tubePixels[] = {0,1,2,3,4,5};        //6 tubes, single leds
@@ -694,11 +721,12 @@
   #define PERCENT_CHARCODE 10
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD "" 
-  #define WEBNAME "UNFI Nixie Clock HV5122"
+  #define WEBNAME "Nixie Clock HV5122"
 #endif
 
 #ifdef CLOCK_51   //ESP32 D1 mini, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
-  #define DEBUG 
+  #define DEBUG
+  #define FW "fw51"  //firmware name 
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 22
   byte tubePixels[] = {0,1,2,3,4,5};        //6 tubes, single leds
@@ -756,7 +784,8 @@
 #endif
 
 #ifdef CLOCK_52   //ESP8266 Wemos D1 mini,UNFI 2xHV5122 PCB version, 6xIN18 clock  
-  #define DEBUG 
+  #define DEBUG
+  #define FW "fw52"  //firmware name 
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 3
   byte tubePixels[] = {0,1,2,3,4,5};        //6 tubes, single leds
@@ -809,6 +838,7 @@
 
 #ifdef CLOCK_55   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
   #define DEBUG
+  #define FW "fw55"  //firmware name
   #define DOUBLE_BLINK 
   //#define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 22

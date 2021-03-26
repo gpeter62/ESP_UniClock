@@ -1,6 +1,6 @@
 #ifdef MAX6921_ESP32   
 //VFD driver driver for ESP32
-  #define TUBEDRIVER MAX6921_ESP32
+  char tubeDriver[] = "MAX6921_ESP32";
   #if defined(ESP32) 
   #else
     #error "Only ESP32 board is supported by this driver!"  
