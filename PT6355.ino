@@ -1,5 +1,5 @@
 #ifdef PT6355
-
+#define TUBEDRIVER PT6355
 const int maxDigits = 10;
 const int wt = 5;   //Serial timing
 

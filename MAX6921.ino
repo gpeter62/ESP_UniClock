@@ -1,6 +1,6 @@
 #ifdef MAX6921   
 //VFD driver driver for ESP8266
-
+#define TUBEDRIVER MAX6921
 //------------------abcdefgDP----------------   definition of different characters
 byte charDefinition[] = {
                    B11111100,   //0: abcdef

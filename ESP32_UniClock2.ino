@@ -121,7 +121,7 @@ byte c_MaxBrightness = RGB_MAX_BRIGHTNESS;     //maximum LED brightness
 
 #if defined(ESP8266)
   #ifndef WEBNAME
-    #define WEBNAME "ESP32_UniClock 2.5"
+    #define WEBNAME "ESP32_UniClock 3.0"
   #endif
   #ifndef AP_NAME
     #define AP_NAME "UNICLOCK"
@@ -132,6 +132,9 @@ byte c_MaxBrightness = RGB_MAX_BRIGHTNESS;     //maximum LED brightness
   #include <ESP8266WiFi.h>
   #include <ESP8266WiFiMulti.h>
   ESP8266WiFiMulti wifiMulti;
+  #include <ESP8266HTTPClient.h>
+  #include <WiFiClient.h>
+  #include <ESP8266httpUpdate.h>
   //#include <ESP8266mDNS.h>
   #include "ESPAsyncTCP.h"
   #include "FS.h"
@@ -139,7 +142,7 @@ byte c_MaxBrightness = RGB_MAX_BRIGHTNESS;     //maximum LED brightness
 
 #elif defined(ESP32)
   #ifndef WEBNAME
-    #define WEBNAME "ESP32UniClock 2.5"
+    #define WEBNAME "ESP32UniClock 3.0"
   #endif
   #ifndef AP_NAME
     #define AP_NAME "UNICLOCK32"
@@ -151,6 +154,9 @@ byte c_MaxBrightness = RGB_MAX_BRIGHTNESS;     //maximum LED brightness
   #include <esp_wifi.h>
   #include <WiFiMulti.h>
   WiFiMulti wifiMulti;
+  #include <WiFiClient.h>
+  #include <HTTPClient.h>
+  #include <ESP32httpUpdate.h>
   //#include <ESPmDNS.h>
   #include "AsyncTCP.h"
   #include "SPIFFS.h"
@@ -214,10 +220,12 @@ volatile boolean EEPROMsaving = false; //saving in progress - stop display refre
 #ifdef DEBUG    //Macros are usually in all capital letters.
 #define DPRINT(...)       Serial.print(__VA_ARGS__)     //DPRINT is a macro, debug print
 #define DPRINTLN(...)     Serial.println(__VA_ARGS__)   //DPRINT is a macro, debug print
+#define DPRINTF(...)      Serial.printf(__VA_ARGS__)    //DPRINT is a macro, debug print
 #define DPRINTBEGIN(...)  Serial.begin(__VA_ARGS__)     //DPRINTLN is a macro, debug print with new line
 #else
 #define DPRINT(...)     //now defines a blank line
 #define DPRINTLN(...)   //now defines a blank line
+#define DPRINTF(...)     //now defines a blank line
 #define DPRINTBEGIN(...)   //now defines a blank line
 #endif
 
@@ -268,12 +276,13 @@ struct {
   char wifiPsw[20];
   char ApSsid[20];
   char ApPsw[20];
-  char NtpServer[20];
-  char mqttBrokerAddr[20]; 
+  char NtpServer[30];
+  char mqttBrokerAddr[30]; 
   char mqttBrokerUser[20] = "mqtt";
   char mqttBrokerPsw[20] = "mqtt";
   int mqttBrokerRefresh = 10;  //sec
   boolean mqttEnable = false;
+  char firmware[80];
 //Tube settings  ______________________________________________________________________________________
   int utc_offset = 1;
   bool enableDST = true;           // Flag to enable DST (summer time...)
@@ -588,6 +597,29 @@ void startStandaloneMode() {
   showMyIp();
 }
 
+void doFirmwareUpdate(){
+     DPRINTLN("Checking firmware update...");
+    DPRINT("Firmware name: "); DPRINTLN(prm.firmware);
+    ESPhttpUpdate.rebootOnUpdate(false);
+    t_httpUpdate_return ret = ESPhttpUpdate.update(prm.firmware);
+
+    switch(ret) {
+            case HTTP_UPDATE_FAILED:
+                DPRINTF("HTTP_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+                break;
+
+            case HTTP_UPDATE_NO_UPDATES:
+                DPRINTLN("HTTP_UPDATE_NO_UPDATES");
+                break;
+
+            case HTTP_UPDATE_OK:
+                DPRINTLN("HTTP_UPDATE_OK");
+                delay(1000);
+                doReset();
+                break;
+    }
+    DPRINTLN(" ");
+}
 
 void startServer() {
   DPRINTLN("Starting Async Webserver...");
@@ -678,7 +710,7 @@ void startServer() {
     */
   });
 
-
+//____________________________________________________________________________
   server.on("/site.css", HTTP_GET, [](AsyncWebServerRequest * request) {
     String filenam;
     boolean gzip;
@@ -697,6 +729,28 @@ void startServer() {
       response->addHeader("Content-Encoding", "gzip");
     response->addHeader("Cache-Control", CACHE_MAX_AGE);
     request->send(response);
+  });
+//____________________________________________________________________________
+  server.on("/reset", HTTP_POST, [] (AsyncWebServerRequest *request) {
+    DPRINTLN("/reset:");
+    
+    request->send(200, "text/plain", "Reset: Restarting the Box!");
+    delay(200);
+    doReset();
+  });
+//____________________________________________________________________________
+  server.on("/factoryreset", HTTP_POST, [] (AsyncWebServerRequest *request) {
+    DPRINTLN("/factoryreset:");
+
+    request->send(200, "text/plain", "Factory Reset!");
+    delay(200);
+    factoryReset();
+    doReset();
+  });
+
+//____________________________________________________________________________
+  server.on("/firmwareupdate", HTTP_GET, [](AsyncWebServerRequest * request) {
+    doFirmwareUpdate();
   });
 
   server.on("/saveSetting", HTTP_POST, handleConfigChanged);
@@ -854,23 +908,28 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
     else if (key == "NtpServer") {
       value.toCharArray(prm.NtpServer,sizeof(prm.NtpServer));
     }
+    else if (key == "firmware") {
+      value.toCharArray(prm.firmware,sizeof(prm.firmware));
+      doFirmwareUpdate();  //for testing only
+    }
     #ifdef USE_MQTT
-    else if (key == "mqttBrokerAddr") {
-      value.toCharArray(prm.mqttBrokerAddr,sizeof(prm.mqttBrokerAddr));
-    }
-    else if (key == "mqttBrokerUser") {
-      value.toCharArray(prm.mqttBrokerUser,sizeof(prm.mqttBrokerUser));
-    }
-    else if (key == "mqttBrokerPsw") {
-      value.toCharArray(prm.mqttBrokerPsw,sizeof(prm.mqttBrokerPsw));
-    }       
-    else if (key == "mqttBrokerRefresh") {
-      prm.mqttBrokerRefresh = value.toInt();
-    }     
-    else if (key == "mqttEnable") {
-      prm.mqttEnable = (value == "true");
-    }  
+      else if (key == "mqttBrokerAddr") {
+        value.toCharArray(prm.mqttBrokerAddr,sizeof(prm.mqttBrokerAddr));
+      }
+      else if (key == "mqttBrokerUser") {
+        value.toCharArray(prm.mqttBrokerUser,sizeof(prm.mqttBrokerUser));
+      }
+      else if (key == "mqttBrokerPsw") {
+        value.toCharArray(prm.mqttBrokerPsw,sizeof(prm.mqttBrokerPsw));
+      }         
+      else if (key == "mqttBrokerRefresh") {
+        prm.mqttBrokerRefresh = value.toInt();
+      }     
+      else if (key == "mqttEnable") {
+        prm.mqttEnable = (value == "true");
+      }  
     #endif
+    
     else if (key == "dateMode") {
       prm.dateMode = value.toInt();
     }
@@ -1026,6 +1085,7 @@ if (useTemp > 1)
   doc["ApSsid"] = prm.ApSsid;
   doc["ApPsw"] = prm.ApPsw;  
   doc["NtpServer"] = prm.NtpServer;
+  doc["firmware"] = prm.firmware;
   #if defined(USE_MQTT)
     doc["mqttBrokerAddr"] = prm.mqttBrokerAddr;
     doc["mqttBrokerUser"] = prm.mqttBrokerUser;
@@ -1360,6 +1420,7 @@ void factoryReset() {
   strcpy(prm.mqttBrokerAddr,"10.10.0.202"); 
   strcpy(prm.mqttBrokerUser,"mqtt");
   strcpy(prm.mqttBrokerPsw,"mqtt");
+  strncpy(prm.firmware,"https://github.com/gpeter62/ESP_UniClock/blob/master/fw/fw3.bin",sizeof(prm.firmware));
   prm.mqttEnable = false;
   prm.mqttBrokerRefresh = 10; //sec
   prm.utc_offset = 1;
@@ -1906,7 +1967,7 @@ void resetWiFi(void) {
   //MyWifiManager.resetSettings();    //reset all AP and wifi passwords...
   DPRINTLN("Restart Clock...");
   delay(1000);
-  restartClock();
+  doReset();
 }
 
 inline int mod(int a, int b) {
@@ -2106,10 +2167,11 @@ void loop(void) {
   yield();
 }
 
-void restartClock(void) {
-#if defined(ESP8266)
-  WiFi.setOutputPower(0);
-#endif
+void doReset(void) {
+  DPRINTLN("Restart Clock...");
+  #if defined(ESP8266)
+    WiFi.setOutputPower(0);
+  #endif
 
   WiFi.disconnect();
   delay(1000);

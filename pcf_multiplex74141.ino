@@ -1,4 +1,5 @@
 #ifdef PCF_74141
+#define TUBEDRIVER PCF_74141
 //PCF8574 I/O expander version, 4..8 tube Nixie Clock, driven by 74141
 //define here the digit enable pins from 4 to 8 tubes
 

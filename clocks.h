@@ -357,12 +357,12 @@
     #define PIN_CLK   13  // Shift Register Clock
     #define PIN_DATA  27  // Shift Register Data
     #define PIN_BL    12  // Shift Register Blank (1=display off     0=display on)
-  //#define PIN_SDA 26           // you can set the used SDA and SCL pins
-  //#define PIN_SCL 27           // if it is not default value    
+  //#define PIN_SDA 21          // you can set the used SDA and SCL pins
+  //#define PIN_SCL 22           // if it is not default value    
   #define ALARMSPEAKER_PIN 33   //Alarm buzzer pin                                            
   #define ALARMBUTTON_PIN -1  //32    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
-  #define RADAR_PIN 21
+  #define RADAR_PIN -1
   #define RADAR_TIMEOUT 300  //second (5min)
   //#define TUBE_POWER_PIN 25
   //#define TUBE_POWER_ON  LOW
@@ -371,7 +371,7 @@
   #define LUX_CALC_SCALAR   12518931 * 1.2 
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD ""  
-  #define WEBNAME "ESP32 IN-11 UniClock 3.0"
+  #define WEBNAME "GP IV-11"
 #endif
 
 #ifdef CLOCK_31   //ESP32, UNFI board, 6 x Z573M Nixie tubes
@@ -394,7 +394,7 @@
   #define ALARM_ON HIGH
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD ""
-  #define WEBNAME "ESP32UniClock 2.5"
+  #define WEBNAME "ESP32UniClock 3.0"
 #endif
 
 
@@ -422,7 +422,7 @@
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD ""  
-  #define WEBNAME "ESP32UniClock 2.5"
+  #define WEBNAME "ESP32UniClock 3.0"
 #endif
 
 //______________________ESP-32 CLOCKS  (2x20pin ESP32 D1 mini modul) ______________________________________________________

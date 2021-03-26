@@ -1,6 +1,7 @@
 #ifdef HV5122  //Nixie driver
 //P.S. 6x tubes PCB version
 
+#define TUBEDRIVER HV5122
 //HV5122 control pins
 //#define PIN_DIN  17   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
 //#define PIN_CLK  22   // Clock

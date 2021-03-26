@@ -1,5 +1,5 @@
 #ifdef MAX7219CNG
-
+#define TUBEDRIVER MAX7219CNG
 const int maxDigits = 6;
 byte tubes[] = {0,1,2,3,4,5};    //change it, if needed for the correct tube sequence
 byte brightConvert[] = {0,1,2,3,4,6,8,10,12,14,15};   //convert brightness from 0..10 to 0..15

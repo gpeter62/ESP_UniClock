@@ -1,4 +1,6 @@
 #ifdef MULTIPLEX74141_ESP32
+#define TUBEDRIVER MULTIPLEX74141_ESP32
+
 //define here the digit enable pins from 4 to 8
 
 //const byte digitEnablePins[] = {15,13,12,14};   //fox example... But SET in clocks.h !!!

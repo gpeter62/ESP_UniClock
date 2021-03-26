@@ -1,4 +1,5 @@
 #ifdef Numitron_4511N
+#define TUBEDRIVER Numitron_4511N
 //used by GP Numitron v3 panel
 
 //#define LTBIpin 5

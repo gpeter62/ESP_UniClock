@@ -62,7 +62,8 @@ var controlInfos = {
 	"mqttBrokerUser": "MQTT user",
 	"mqttBrokerPsw": "MQTT password",
 	"mqttBrokerRefresh": "MQTT send data in every xx sec",
-	"mqttEnable": "Enable/Disable MQTT refresh"
+	"mqttEnable": "Enable/Disable MQTT refresh",
+	"firmware": "http server + firmware name to download new firmware"
 };
 
 //Example config that UI recieves
@@ -129,7 +130,8 @@ var configuration = {
 	"mqttBrokerUser": "mqtt",
 	"mqttBrokerPsw": "mqttPW",
 	"mqttBrokerRefresh": 30,
-	"mqttEnable": false
+	"mqttEnable": false,
+	"firmware": "http://server/fw.bin"
 };
 
 //Runs, when HTML document is fully loaded
@@ -359,7 +361,8 @@ function Init(){
 				index == 'wifiSsid' || index == 'wifiPsw' || 
 				index == 'ApSsid' || index == 'ApPsw' || 
 				index == 'mqttBrokerAddr' || index == 'NtpServer' ||
-				index == 'mqttBrokerUser' || index =='mqttBrokerPsw'
+				index == 'mqttBrokerUser' || index =='mqttBrokerPsw' ||
+				index == 'firmware'
             ){
             $('#'+index).val(value);
         }

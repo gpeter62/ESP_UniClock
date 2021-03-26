@@ -3,6 +3,7 @@
 
 #ifdef NO_MULTIPLEX74141
 
+#define TUBEDRIVER NO_MULTIPLEX74141
 #if defined(ESP8266) 
 #else
   #error "Only 8266 Board is supported!"  
