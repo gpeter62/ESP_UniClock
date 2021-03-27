@@ -38,6 +38,13 @@ void setup_pins() {
   pinMode(PIN_OE, OUTPUT);   regPin(PIN_OE, "PIN_OE");
   digitalWrite(PIN_CLK, HIGH);
   digitalWrite(PIN_OE, LOW);
+  driverSetupStr = "<br>HV5122 pin settings:<br>";
+  for (int i=0;i<maxDigits+1;i++) {
+    for (int j=0;j<10;j++) {
+      driverSetupStr += String(digitPins[i][j]) + ",";
+    }
+    driverSetupStr += String("<br>");
+  }
   clearTubes();
   startTimer();
 }

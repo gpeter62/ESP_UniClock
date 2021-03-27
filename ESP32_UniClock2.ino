@@ -118,6 +118,9 @@ byte c_MinBrightness = RGB_MIN_BRIGHTNESS;     //minimum LED brightness
 byte c_MaxBrightness = RGB_MAX_BRIGHTNESS;     //maximum LED brightness
 
 //--------------------------------------------------------------------------------------------------
+#define FIRMWARE_SERVER "http://c.landventure.hu/store"
+String usedPinsStr;
+String driverSetupStr;
 
 #if defined(ESP8266)
   #ifndef WEBNAME
@@ -284,7 +287,7 @@ struct {
   char mqttBrokerPsw[20] = "mqtt";
   int mqttBrokerRefresh = 10;  //sec
   boolean mqttEnable = false;
-  char firmware[80];
+  char firmwareServer[80];
 //Tube settings  ______________________________________________________________________________________
   int utc_offset = 1;
   bool enableDST = true;           // Flag to enable DST (summer time...)
@@ -376,8 +379,14 @@ void regPin(byte p,const char * txt) {  //register used pins
 void listPins() {
   DPRINTLN("_______________________");
   DPRINTLN("___ USED CLOCK PINS ___");
+  #if defined(ESP32)
+    usedPinsStr = String("ESP32 used pins:<br>");
+  #else
+    usedPinsStr = String("ESP8266 used pins:<br>");
+  #endif  
   for (int i=0;i<=MAX_PIN;i++) {
     if (strlen(pinTxt[i])>0) {
+      usedPinsStr += String(i) + ": " + String(pinTxt[i]) + "<br>";
       DPRINT(i); DPRINT(": ");  DPRINTLN(pinTxt[i]);
     }
   }
@@ -607,7 +616,7 @@ void doFirmwareUpdate(){
     delay(2000);
     disableDisplay();
     yield();
-    String fname = String(prm.firmware)+"/ESP32_UniClock2.spiffs.bin";
+    String fname = String(prm.firmwareServer)+"/ESP32_UniClock2.spiffs.bin";
     DPRINT("Update SPIFFS: "); DPRINTLN(fname);
     ESPhttpUpdate.rebootOnUpdate(false);
     t_httpUpdate_return ret;
@@ -630,7 +639,7 @@ void doFirmwareUpdate(){
             }
         }
     
-    fname = String(prm.firmware)+"/"+String(FW)+".bin";
+    fname = String(prm.firmwareServer)+"/"+String(FW)+".bin";
     DPRINT("Update firmware: "); DPRINTLN(fname);
     
     ret = ESPhttpUpdate.update(fname);
@@ -781,13 +790,14 @@ void startServer() {
   });
 
 //____________________________________________________________________________
-  server.on("/firmwareupdate", HTTP_GET, [](AsyncWebServerRequest * request) {
+  server.on("/firmwareupdate", HTTP_POST, [](AsyncWebServerRequest * request) {
     makeFirmwareUpdate = true;
   });
 
   server.on("/saveSetting", HTTP_POST, handleConfigChanged);
   server.on("/getConfiguration", HTTP_GET, handleSendConfig);
   server.on("/getCurrentInfos", HTTP_GET, handleSendCurrentInfos);
+  server.on("/getClockDetails", HTTP_GET, handleSendClockDetails);
   server.onNotFound(handleNotFound);
 
   server.begin();
@@ -941,7 +951,7 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
       value.toCharArray(prm.NtpServer,sizeof(prm.NtpServer));
     }
     else if (key == "firmware") {
-      value.toCharArray(prm.firmware,sizeof(prm.firmware));
+      value.toCharArray(prm.firmwareServer,sizeof(prm.firmwareServer));
       makeFirmwareUpdate = true; //for testing only
     }
     #ifdef USE_MQTT
@@ -1117,7 +1127,7 @@ if (useTemp > 1)
   doc["ApSsid"] = prm.ApSsid;
   doc["ApPsw"] = prm.ApPsw;  
   doc["NtpServer"] = prm.NtpServer;
-  doc["firmware"] = prm.firmware;
+  doc["firmware"] = prm.firmwareServer;
   #if defined(USE_MQTT)
     doc["mqttBrokerAddr"] = prm.mqttBrokerAddr;
     doc["mqttBrokerUser"] = prm.mqttBrokerUser;
@@ -1148,6 +1158,21 @@ if (useTemp > 1)
   String json;
   serializeJson(doc, json);
   request->send(200, "application/json", json);
+}
+
+void handleSendClockDetails(AsyncWebServerRequest *request) {
+  StaticJsonDocument<200> doc;
+  //StaticJsonDocument<512> doc;
+  String dat;
+
+  DPRINTLN("SendClockDetails");
+  dat = String("<br>Firmware:") + FW;
+  dat += String("  Tube driver:") + tubeDriver + "<br>";
+  dat += String("MAXBRIGHTNESS:") + String(MAXBRIGHTNESS) + "<br>";
+  dat += usedPinsStr + "<br>";
+  dat += driverSetupStr + "<br>";
+  DPRINTLN(dat);
+  request->send(200, "text/html", dat);
 }
 
 void handleSendCurrentInfos(AsyncWebServerRequest *request) {
@@ -1455,7 +1480,8 @@ void factoryReset() {
   strcpy(prm.mqttBrokerAddr,"10.10.0.202"); 
   strcpy(prm.mqttBrokerUser,"mqtt");
   strcpy(prm.mqttBrokerPsw,"mqtt");
-  strncpy(prm.firmware,"http://c.landventure.hu/store/CLOCK_xx.bin",sizeof(prm.firmware));
+  char tmp[100];
+  strncpy(prm.firmwareServer,FIRMWARE_SERVER,sizeof(prm.firmwareServer));
   prm.mqttEnable = false;
   prm.mqttBrokerRefresh = 10; //sec
   prm.utc_offset = 1;
