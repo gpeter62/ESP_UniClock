@@ -148,7 +148,7 @@ $(document).ready(function(){
 });
 
 function setLocalPagination(){
-    $('[page]').each(function(){
+    $('[page]').not('[hidden]').each(function(){
         var page = $(this).attr('page');
         $('#menu tr').append('<td><div class="menu-item" pageMenu="'+page+'">'+page+'</div></td>');
     });
@@ -208,10 +208,12 @@ function setCurrentInfos(){
     $('#humidity2').html(configuration["humidity2"]);
     $('#temperature').html(getTemperature(configuration["temperature"]));
     $('#temperature2').html(getTemperature(configuration["temperature2"]));
+    $('#temperature, #temperature2').toggleClass('fahrenheit',configuration["tempCF"]);
 }
 
 function round(value, decimals) {
-  return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
+    return parseFloat(value).toFixed(decimals);
+    //return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
 }
 
 function getTemperature(temperatureInC){
@@ -235,11 +237,14 @@ function Init(){
     $('#versionHeader').html(configuration['version']);
 
     setLocalPagination();
-    $('.menu-item').on('click',function(){
+    $('[pagemenu]').on('click',function(){
         $('.menu-item.active').removeClass('active');
         $('[page].active').removeClass('active');
         $(this).addClass('active');
         $('[page="'+$(this).attr('pagemenu')+'"]').addClass('active');
+        if($(this).attr('pagemenu') == 'settings'){
+            getClockDetails();
+        }
     });
     $('.menu-item').eq(0).trigger('click');
 
@@ -282,13 +287,16 @@ function Init(){
         
         var info = getControlInfo(id);
         if(!!info){
-            $('#popup-box h2').text($(this).text());
-            $('#popup-box .content').html(info);
-            $('#info-popup').fadeIn(450);
+            showPopUp($(this).text(), info, 450, true);
         }        
     });
     $('#popup-close-btn, #info-popup').on('click',function(){
-        $('#info-popup').fadeOut(450);
+        if($('#info-popup').hasClass('cantClose')){
+            return;
+        }
+        else{
+            $('#info-popup').fadeOut(450);
+        }
     });
     $("#popup-box").click(function(event){
         event.stopPropagation();
@@ -424,10 +432,74 @@ function Init(){
     },200);
 }
 
+function showPopUp(header, content, timeout, canClose){
+    $('#popup-box h2').text(header);
+    $('#popup-box .content').html(content);
+    $('#info-popup').toggleClass('cantClose',!canClose);
+    $('#info-popup').fadeIn(timeout);
+}
+
+function areYouSure(fn){
+    if (confirm("Are you sure to run " + fn + "?")) {
+        if(fn == "reset"){
+            callReset();
+        }
+        else if(fn == "factoryreset"){
+            callFactoryReset();
+        }
+        else if(fn == "firmwareupdate"){
+            callFirmwareUpdate();
+        }
+    }
+}
+
+function callReset(){
+    if(isTest){return;}
+    $.post('/reset/', {}).done(function(data){
+        location.reload();
+    }).always(function(){
+        
+    });
+}
+
+function callFactoryReset(){
+    if(isTest){return;}
+    $.post('/factoryreset/', {}).done(function(data){
+        location.reload();
+    }).always(function(){
+        
+    });
+}
+
+function callFirmwareUpdate(){
+    if(isTest){return;}
+    showPopUp("Firmware is updating", "Please do not turn off the clock", 300, false);
+    $.post('/firmwareupdate/', {}).done(function(data){
+        if(!!data.header){
+            showPopUp(data.header, data.content, 300, data.canClose);
+        }
+    }).always(function(){
+        
+    });
+}
+
+function getClockDetails(){
+    if(isTest){return;}
+    $.get('/getClockDetails/').done(function(data){
+        $('#clock-details').html(data);
+    }).always(function(){
+        
+    });
+}
+
 function getCurrentInfos(){
+    if(isTest){return;}
     $.get('/getCurrentInfos/').done(function(data){
         for(var i in data){
             configuration[i] = data[i];
+        }
+        if(!!data["popupMsg"] && data["popupMsg"].length > 0){
+            showPopUp("Info", data["popupMsg"], 300, true);
         }
         setCurrentInfos();
         setTimeout(getCurrentInfos,20000);   //refreshes time every 20 second by calling itself

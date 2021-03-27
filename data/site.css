@@ -72,7 +72,7 @@ body {
     text-shadow: 1px 1px 0 black;
     margin-bottom: 5px;
 }
-input, select{
+input, select, button{
     margin: 0;
     font: inherit;
     line-height: normal;
@@ -89,19 +89,28 @@ input, select{
     border: 1px solid #666;
     transition: 0.15s background;    
 }
-input:not(:disabled),select:not(:disabled){
+input:not([type="text"]):not(:disabled),select:not(:disabled),button:not(:disabled){
     cursor: pointer;
 }
-input:hover, select:hover{
+input:hover, select:hover, button:hover{
     background: #333;
 }
-input:focus, select:focus{    
+input:focus, select:focus, button:focus{    
     background: #4E4E4E;
     border-color: #888;
 }
-input:active, select:active{    
+input:active, select:active, button:active{    
     background: #5E5E5E;
     border-color: #aaa;
+}
+button{
+    border: 2px solid #c35;
+    color: #c35;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+button:hover{
+    color: #ddd;
 }
 .multiple-input span{
     color: white;
@@ -109,6 +118,10 @@ input:active, select:active{
 }
 .two-digit, .small{
     max-width: 60px;
+}
+[pagemenu="settings"]:hover{
+    cursor: pointer;
+    text-decoration: underline;
 }
 [type="checkbox"].switch{    
     position: fixed;
@@ -264,6 +277,15 @@ input:active, select:active{
 #temperature:after{
     content: ' °C';
 }
+#temperature.fahrenheit:after{
+    content: ' °F';
+}
+#temperature2:after{
+    content: ' °C';
+}
+#temperature2.fahrenheit:after{
+    content: ' °F';
+}
 #humidity:after{
     content: '%';
 }
@@ -327,6 +349,9 @@ input:active, select:active{
 }
 #popup-close-btn:hover{
     color: #ddd;
+}
+#info-popup.cantClose #popup-close-btn{
+    display: none;
 }
 
 #selectedColor{
