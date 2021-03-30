@@ -70,6 +70,16 @@ void setup_pins() {
   pinMode(PIN_DATA,OUTPUT);  regPin(PIN_DATA,"PIN_DATA");
   pinMode(PIN_CLK, OUTPUT);  regPin(PIN_CLK,"PIN_CLK");
   
+  driverSetupStr = "MAX6921 segmentEnablePins:";
+  for (int j=0;j<sizeof(segmentEnablePins);j++) {
+    driverSetupStr += String(segmentEnablePins[j]) + ",";
+  }
+  driverSetupStr += "<br>MAX6921 digitEnablePins:";
+  for (int j=0;j<sizeof(digitEnablePins);j++) {
+    driverSetupStr += String(digitEnablePins[j]) + ",";
+  }
+  driverSetupStr += String("<br>");
+  
   generateBitTable();
   digitsOnly = false;
   startTimer();

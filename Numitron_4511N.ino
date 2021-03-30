@@ -26,13 +26,16 @@ const int maxDigits = sizeof(digitEnablePins);
 #endif
 
 void setup_pins() {
+  char tmp[30];
+    
   DPRINTLN("Numitron Clock - setup pins");
   maxDig = maxDigits;  //put const to memory var
   pinMode(LTBIpin, OUTPUT);  regPin(LTBIpin,"LTBIpin");
   digitalWrite(LTBIpin,HIGH);
   for (int i=0;i<maxDig;i++) {
     pinMode(digitEnablePins[i], OUTPUT);
-    regPin(digitEnablePins[i],"digitEnablePins");
+    sprintf(tmp,"digitEnablePins[%d]",i);
+    regPin(digitEnablePins[i],tmp); 
   }
   for (int i=0;i<4;i++) {
     pinMode(ABCDPins[i], OUTPUT);

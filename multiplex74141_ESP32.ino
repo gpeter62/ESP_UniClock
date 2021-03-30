@@ -22,17 +22,21 @@ int DRAM_ATTR PWM_max = 10000;
   #endif
 
 void setup_pins() {
+  char tmp[30];
+    
   DPRINTLN("Nixie clock - setup pins -  Multiplex 74141 mode...");
-  DPRINT("digitEnablePins: ");
+  DPRINTLN("digitEnablePins: ");
   for (int i=0;i<maxDigits;i++) {
     pinMode(digitEnablePins[i], OUTPUT);
-    regPin(digitEnablePins[i],"DIGIT_ENABLE_PIN"); 
+    sprintf(tmp,"digitEnPin[%d]",i);
+    regPin(digitEnablePins[i],tmp); 
   }
   DPRINTLN(" ");
-  DPRINT("ABCDPins: ");
+  DPRINTLN("ABCDPins: ");
   for (int i=0;i<4;i++) {
     pinMode(ABCDPins[i], OUTPUT);
-    regPin(ABCDPins[i],"74141_ABCD_PIN"); 
+    sprintf(tmp,"Pin[%c]",char('A'+i));
+    regPin(ABCDPins[i],tmp); 
   }
   DPRINTLN(" ");
   #if DP_PIN>=0

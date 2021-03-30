@@ -128,12 +128,12 @@ void resetSensors() {
   //#if defined(ESP8266)
     oneWire.reset();
   //#endif
-  delay(200);  //200ms
+  delay(500);  //200ms
 
   tempSensors.begin(); //try to restart sensor
   tempSensors.setWaitForConversion(false);
   tempSensors.getDeviceCount();
-  delay(200);  //200ms
+  delay(500);  //200ms
 }
 //-----------------------------------------------------------------------------------------------------
 #else

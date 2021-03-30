@@ -80,16 +80,20 @@ void ICACHE_RAM_ATTR sendBits(byte address,byte val){
 
 
 void setup_pins() {
+  char tmp[30];
+    
   DPRINTLN("PCF8574 MULTIPLEX driver");
   for (int i=0;i<maxDigits;i++)  {
     if (digitEnablePins[i]<100) {
       pinMode(digitEnablePins[i], OUTPUT);   //8266 pins setup, if needed
-      regPin(digitEnablePins[i],"DIGIT_ENABLE_PIN");
-    }
+      sprintf(tmp,"digitEnPin[%d]",i);
+      regPin(digitEnablePins[i],tmp); 
+      }
   }
   for (int i=0;i<4;i++)  {
     pinMode(ABCDPins[i], OUTPUT);
-    regPin(ABCDPins[i],"74141_ABCD_PIN");
+    sprintf(tmp,"Pin[%c]",char('A'+i));
+    regPin(ABCDPins[i],tmp); 
   }  
   pinMode(PCF_SDA_PIN,OUTPUT); regPin(PCF_SDA_PIN,"PCF_SDA_PIN");
   pinMode(PCF_SCL_PIN,OUTPUT); regPin(PCF_SCL_PIN,"PCF_SCL_PIN");

@@ -11,7 +11,7 @@
 //#define CLOCK_4   //8266, custom clock, 4x IV-11 VFD tubes
 //#define CLOCK_5   //8266, UNFI PCB clock IVL-2-5/7 tube with RTC
 //#define CLOCK_6   //8266, GP PCB clock, 4x IN-1 tubes and  4x74141  driver (NON-MULTIPLEX)
-//#define CLOCK_7   //8266 UNFI PCB clock 6x Z574M/Z573M tubes, tube selection by PCF8574 chip
+#define CLOCK_7   //8266 UNFI PCB clock 6x Z574M/Z573M tubes, tube selection by PCF8574 chip
 //#define CLOCK_8   //8266 GP PCB v3 clock with 4x IV-16 Numitron tubes (plexi box)
 //#define CLOCK_9   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes (brown box)
 //#define CLOCK_10  //8266 LED Clock with MAX7219 chip
@@ -34,7 +34,7 @@
 //#define CLOCK_44  //ESP32 D1 mini, Numitron clock
 //#define CLOCK_45  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock (Ovidiu)
 
-#define CLOCK_50   //ESP32 D1 mini, UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
+//#define CLOCK_50   //ESP32 D1 mini, UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_51   //ESP32 D1 mini, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_52   //ESP8266 Wemos D1 mini,UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_55   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!

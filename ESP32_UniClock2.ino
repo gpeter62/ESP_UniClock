@@ -502,6 +502,7 @@ void startWifiMode() {
   #endif
   #if defined(ESP32)
     esp_wifi_set_ps (WIFI_PS_NONE);
+    esp_wifi_set_max_tx_power(78);
   #endif
   wifiMulti.addAP(prm.wifiSsid, prm.wifiPsw);
   //wifiMulti.addAP(DEFAULT_SSID, DEFAULT_WIFIPSW);
@@ -616,10 +617,31 @@ void doFirmwareUpdate(){
     delay(2000);
     disableDisplay();
     yield();
-    String fname = String(prm.firmwareServer)+"/ESP32_UniClock2.spiffs.bin";
-    DPRINT("Update SPIFFS: "); DPRINTLN(fname);
-    ESPhttpUpdate.rebootOnUpdate(false);
+    String fname = String(prm.firmwareServer)+"/"+String(FW)+".bin";
+    DPRINT("Update firmware: "); DPRINTLN(fname);
     t_httpUpdate_return ret;
+    boolean succ = false;
+    ESPhttpUpdate.rebootOnUpdate(false);
+    ret = ESPhttpUpdate.update(fname);
+
+    switch(ret) {
+            case HTTP_UPDATE_FAILED:
+                DPRINTF("HTTP_UPDATE_FAILED Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+                break;
+
+            case HTTP_UPDATE_NO_UPDATES:
+                DPRINTLN("HTTP_UPDATE_NO_UPDATES");
+                break;
+
+            case HTTP_UPDATE_OK:
+                DPRINTLN("HTTP_UPDATE_OK");
+                delay(1000);
+                succ = true;
+                break;
+    }
+        
+    fname = String(prm.firmwareServer)+"/"+String(FW)+".spiffs.bin";
+    DPRINT("Update SPIFFS: "); DPRINTLN(fname);
 
     ret = ESPhttpUpdate.updateSpiffs(fname);
       if(ret == HTTP_UPDATE_OK) {
@@ -635,30 +657,11 @@ void doFirmwareUpdate(){
 
                 case HTTP_UPDATE_OK:
                     DPRINTLN("HTTP_UPDATE_OK");
+                    succ = true;
                     break;
             }
         }
-    
-    fname = String(prm.firmwareServer)+"/"+String(FW)+".bin";
-    DPRINT("Update firmware: "); DPRINTLN(fname);
-    
-    ret = ESPhttpUpdate.update(fname);
-
-    switch(ret) {
-            case HTTP_UPDATE_FAILED:
-                DPRINTF("HTTP_UPDATE_FAILED Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
-                break;
-
-            case HTTP_UPDATE_NO_UPDATES:
-                DPRINTLN("HTTP_UPDATE_NO_UPDATES");
-                break;
-
-            case HTTP_UPDATE_OK:
-                DPRINTLN("HTTP_UPDATE_OK");
-                delay(1000);
-                doReset();
-                break;
-    }
+    if (succ) doReset();
     DPRINTLN(" ");
 }
 
@@ -942,6 +945,9 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
       value.toCharArray(prm.wifiPsw,sizeof(prm.wifiPsw));
     }
     else if (key == "ApSsid") {
+      for (int i=0;i<strlen(prm.ApSsid);i++) {  //repair bad chars in AP SSID
+        if ((prm.ApSsid[i]<32) || (prm.ApSsid[i]>126)) prm.ApSsid[i]='_';
+      }
       value.toCharArray(prm.ApSsid,sizeof(prm.ApSsid));
     }
     else if (key == "ApPsw") {
@@ -1166,8 +1172,9 @@ void handleSendClockDetails(AsyncWebServerRequest *request) {
   String dat;
 
   DPRINTLN("SendClockDetails");
-  dat = String("<br>Firmware:") + FW;
+  dat = String("<br>Firmware:") + FW + "<br>";
   dat += String("  Tube driver:") + tubeDriver + "<br>";
+  dat += String("  Mac:") + String(WiFi.macAddress()) + "<br>";
   dat += String("MAXBRIGHTNESS:") + String(MAXBRIGHTNESS) + "<br>";
   dat += usedPinsStr + "<br>";
   dat += driverSetupStr + "<br>";
@@ -1176,7 +1183,7 @@ void handleSendClockDetails(AsyncWebServerRequest *request) {
 }
 
 void handleSendCurrentInfos(AsyncWebServerRequest *request) {
-  StaticJsonDocument<200> doc;
+  StaticJsonDocument<400> doc;
   //StaticJsonDocument<512> doc;
   char buf[20];  //conversion buffer
 
@@ -1474,6 +1481,9 @@ void factoryReset() {
   prm.rgbDir = 0;
   strcpy(prm.wifiSsid,"");
   strcpy(prm.wifiPsw,"");
+  for (int i=0;i<strlen(prm.ApSsid);i++) {  //repair bad chars in AP SSID
+    if ((prm.ApSsid[i]<32) || (prm.ApSsid[i]>126)) prm.ApSsid[i]='_';
+  }
   strncpy(prm.ApSsid,AP_NAME,sizeof(prm.ApSsid));
   strncpy(prm.ApPsw,AP_PASSWORD,sizeof(prm.ApPsw));
   strncpy(prm.NtpServer,"pool.ntp.org",sizeof(prm.NtpServer));
@@ -2114,7 +2124,8 @@ void printDigits(unsigned long timeout) {
     DPRINT("  Lux:"); DPRINT(lx);
   }
   //DPRINT("  tON:"); DPRINT(timerON); DPRINT("  tOFF:"); DPRINT(timerOFF);   //Multiplex timing values for testing
-  if (wifiMulti.run() != WL_CONNECTED) DPRINT("  no WIFI");
+  //if (wifiMulti.run() != WL_CONNECTED) DPRINT("  no WIFI");
+  if (WiFi.status() != WL_CONNECTED) DPRINT("  no WIFI");
   DPRINTLN(" ");
   printSensors();
   #endif  
