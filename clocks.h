@@ -11,8 +11,8 @@
 //#define CLOCK_4   //8266, custom clock, 4x IV-11 VFD tubes
 //#define CLOCK_5   //8266, UNFI PCB clock IVL-2-5/7 tube with RTC
 //#define CLOCK_6   //8266, GP PCB clock, 4x IN-1 tubes and  4x74141  driver (NON-MULTIPLEX)
-#define CLOCK_7   //8266 UNFI PCB clock 6x Z574M/Z573M tubes, tube selection by PCF8574 chip
-//#define CLOCK_8   //8266 GP PCB v3 clock with 4x IV-16 Numitron tubes (plexi box)
+//#define CLOCK_7   //8266 UNFI PCB clock 6x Z574M/Z573M tubes, tube selection by PCF8574 chip
+#define CLOCK_8   //8266 GP PCB v3 clock with 4x IV-16 Numitron tubes (plexi box)
 //#define CLOCK_9   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes (brown box)
 //#define CLOCK_10  //8266 LED Clock with MAX7219 chip
 //#define CLOCK_11  //8266 LED Clock with MM5450 chip
@@ -189,9 +189,9 @@
 #endif
 
 #ifdef CLOCK_8   //8266 GP PCB v3 clock with 4x IV-16 Numitron tubes (plexi box) //Flash size: 1MB (FS:160k, OTA:422k)
-  #define DEBUG
+  //#define DEBUG
   #define FW "fw8"  //firmware name 
-  #define MAXBRIGHTNESS 10  
+  #define MAXBRIGHTNESS 100  
   #define PCB_VERSION 3   //1,2 or 3
   #define LTBIpin 5
   byte digitEnablePins[] = {13,12,14,16};    //define here the digit enable pins from 4 to 8
@@ -199,7 +199,7 @@
   #define USE_NEOPIXEL
   byte tubePixels[] = {3,2,6,1,0};    //Numitron 4 tubes, 4 x single leds + 1. The extra led in the middle is not used, is always dark!
   #define Numitron_4511N
-  #define ALARMSPEAKER_PIN 1    //Alarm buzzer pin                                            
+  #define ALARMSPEAKER_PIN -1    //Alarm buzzer pin                                            
   #define ALARMBUTTON_PIN -1    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   #define AP_NAME "UNICLOCK"
@@ -210,7 +210,7 @@
 #ifdef CLOCK_9   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes (brown box) //Flash size: 1MB (FS:160k, OTA:422k)
   #define DEBUG
   #define FW "fw9"  //firmware name 
-  #define MAXBRIGHTNESS 10
+  #define MAXBRIGHTNESS 100
   #define PCB_VERSION 1   //1,2 or 3
   #define Numitron_4511N
   #define LTBIpin 5

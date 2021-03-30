@@ -7,29 +7,26 @@ char tubeDriver[] = "Numitron_4511N";
 //byte ABCDPins[4] = {4,0,2,15};
 
 const int maxDigits = sizeof(digitEnablePins);
+
 #if defined(ESP32)
-  uint32_t DRAM_ATTR digitEnableBits[10];
-  #define MAXBRIGHT 10
   int DRAM_ATTR PWMrefresh=5500;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
   //int DRAM_ATTR PWMtiming[11] = {0,500,800,1200,2000,2500,3000,3500,4000,4500,5000};
-  int DRAM_ATTR maxDig;
   int DRAM_ATTR PWM_min = 500;
   int DRAM_ATTR PWM_max = 5000;  
+  int DRAM_ATTR maxDig=maxDigits;
 #else
-  uint32_t digitEnableBits[10];
-  #define MAXBRIGHT 10
   int PWMrefresh=5500;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
   int PWM_min = 500;
   int PWM_max = 5000;
+  int maxDig=maxDigits;
   //int PWMtiming[11] = {0,500,800,1200,2000,2500,3000,3500,4000,4500,5000};
-  int maxDig;
 #endif
 
 void setup_pins() {
   char tmp[30];
     
   DPRINTLN("Numitron Clock - setup pins");
-  maxDig = maxDigits;  //put const to memory var
+  delay(1000);
   pinMode(LTBIpin, OUTPUT);  regPin(LTBIpin,"LTBIpin");
   digitalWrite(LTBIpin,HIGH);
   for (int i=0;i<maxDig;i++) {
@@ -39,7 +36,8 @@ void setup_pins() {
   }
   for (int i=0;i<4;i++) {
     pinMode(ABCDPins[i], OUTPUT);
-    regPin(ABCDPins[i],"ABCDPins");
+    sprintf(tmp,"Pin[%c]",char('A'+i));
+    regPin(ABCDPins[i],tmp); 
   }
   startTimer();
 }
@@ -47,7 +45,6 @@ void setup_pins() {
 #if defined(ESP32)
 void IRAM_ATTR writeDisplay() { //void IRAM_ATTR  writeDisplay(){
   static DRAM_ATTR volatile int timer = PWMrefresh;
-  static DRAM_ATTR volatile int brightCounter = 1;
   static DRAM_ATTR volatile int dpCounter = 0; //decimal point stepper
   static DRAM_ATTR boolean state=true;
   int PWMtimeBrightness;
@@ -120,9 +117,10 @@ void IRAM_ATTR writeDisplaySingle() {
 #endif
 
 void ICACHE_RAM_ATTR writeDisplay() {       //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
-  static volatile int timer = PWMrefresh;
-  static volatile int brightCounter = 1;
-  static volatile int dpCounter = 0; //decimal point stepper
+  static int timer = PWMrefresh;
+  static int brightness;
+  static int PWMtimeBrightness = PWM_min;
+  static boolean state = true;
   int num;
 
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
@@ -131,6 +129,7 @@ void ICACHE_RAM_ATTR writeDisplay() {       //https://circuits4you.com/2018/01/0
   }
   
   intCounter++;
+/*  
   if (((panelVersion>=3) && ((displayON ?  prm.dayBright : prm.nightBright)<brightCounter)) || (!radarON)) {
     digitalWrite(LTBIpin,LOW);   //Blank display
   }
@@ -154,11 +153,55 @@ void ICACHE_RAM_ATTR writeDisplay() {       //https://circuits4you.com/2018/01/0
   #if COLON_PIN >=0  
     digitalWrite(COLON_PIN,!colonBlinkState);  // Blink colon pin
   #endif  
+*/
+
+  brightness = displayON ?  prm.dayBright : prm.nightBright;
+  if (brightness>MAXBRIGHTNESS) brightness = MAXBRIGHTNESS;  //only for safety
+
+  if (autoBrightness && (displayON )) {   
+    PWMtimeBrightness = max(PWM_min,PWM_max*lx/MAXIMUM_LUX);
+    }
+  else
+    PWMtimeBrightness = max(PWM_min,PWM_max*brightness/MAXBRIGHTNESS);
+  
+  if ((!autoBrightness) && (brightness==MAXBRIGHTNESS))  
+    state = true;
+  
+  if (state) {  //ON state
+    timer = PWMtimeBrightness;
+    timerON = timer;
+    timerOFF = PWMrefresh-PWMtimeBrightness; 
+  }
+  else {  //OFF state
+    timer = PWMrefresh-PWMtimeBrightness;
+  }
+  if (timer<500) timer = 500;  //safety only...
+  if ( (brightness == 0) || (!state) || (!radarON)) {  //OFF state, blank digit
+        digitalWrite(LTBIpin,LOW); //disable display
+        #if COLON_PIN >=0  
+          digitalWrite(COLON_PIN,!colonBlinkState);  // Blink colon pin
+        #endif
+  }
+  else {  //ON state
+        digitalWrite(LTBIpin,HIGH); //enable display
+        #if COLON_PIN >=0  
+          digitalWrite(COLON_PIN,LOW);
+        #endif
+  }
+  state = !state;  
   
   timer1_write(timer);
 }
 
-void writeDisplaySingle() {}
+void writeDisplaySingle() {
+  int num;
+  for (int pos=0; pos<=maxDig; pos++) {
+    num = digit[pos]; 
+    digitalWrite(digitEnablePins[pos],LOW);   //latch enable 
+    for (int j=0;j<4;j++) {digitalWrite(ABCDPins[j],num  & (1<<j)); }
+    digitalWrite(digitEnablePins[pos],HIGH);    
+  } //end for}}
+}
 #endif  //esp8266 end
 
 void clearTubes() {

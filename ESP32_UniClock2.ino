@@ -810,6 +810,7 @@ void startServer() {
 void handleNotFound(AsyncWebServerRequest *request) {
   int params = request->params();
   for (int i = 0; i < params; i++) {
+    #ifdef DEBUG
     AsyncWebParameter* p = request->getParam(i);
     if (p->isFile()) { //p->isPost() is also true
       Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
@@ -818,6 +819,7 @@ void handleNotFound(AsyncWebServerRequest *request) {
     } else {
       Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
     }
+    #endif
   }
 
   String message = "File Not Found\n\n";
@@ -1258,8 +1260,10 @@ void setup() {
   DPRINT("MAXBRIGHTNESS:"); DPRINTLN(MAXBRIGHTNESS);
   DPRINTLN(F("================================================="));
   clearDigits();
+  setup_pins();
   #if ALARMSPEAKER_PIN >= 0
     pinMode(ALARMSPEAKER_PIN, OUTPUT); regPin(ALARMSPEAKER_PIN,"ALARMSPEAKER_PIN");
+    digitalWrite(ALARMSPEAKER_PIN,!ALARM_ON);
     DPRINT("  - ON state:");
     if (ALARM_ON == HIGH) {DPRINTLN("HIGH"); }
     else {DPRINTLN("LOW"); }
@@ -1293,7 +1297,7 @@ void setup() {
     useLux++;
     LDRexist = true;
   #endif
-  
+
   #ifdef USE_PWMLEDS
     #if PWM1_PIN >= 0
       pinMode(PWM1_PIN, OUTPUT);  regPin(PWM1_PIN,"PWM1_PIN");
@@ -1330,16 +1334,15 @@ void setup() {
     setupGPS();
   #endif
 
-  decimalpointON = false;    
-  setup_pins();
-  
-  DPRINT("Number of digits:"); DPRINTLN(maxDigits);
+  decimalpointON = false;   
+  DPRINT("Number of digits:"); DPRINTLN(maxDigits); 
+
   loadEEPROM();
   if (prm.magic != MAGIC_VALUE) factoryReset();
 
   setupNeopixel();
   listPins();
-  
+  writeAlarmPin(ALARM_ON); writeAlarmPin(!ALARM_ON);
   getDHTemp();  //get the first DHT temp+humid measure
     
   byte saveMode = prm.animMode;
@@ -1891,6 +1894,16 @@ void changeDigit() {
   memcpy(oldDigit, newDigit, sizeof(oldDigit));
 }
 
+void writeAlarmPin(boolean newState) {
+  static boolean oldState = !ALARM_ON;  
+  #if ALARMSPEAKER_PIN>=0
+    if (oldState != newState) {
+      oldState = newState;
+      //if (newState == ALARM_ON) DPRINTLN("Alarm ON"); else DPRINTLN("Alarm OFF");
+      digitalWrite(ALARMSPEAKER_PIN, newState);
+    }
+  #endif
+}
 
 void alarmSound(void) {
   static const unsigned int t[] = {0, 3000, 6000, 6200, 9000, 9200, 9400, 12000, 12200, 12400, 15000, 15200, 15400};
@@ -1912,7 +1925,7 @@ void alarmSound(void) {
   }
 
   if (!alarmON) {
-    if (ALARMSPEAKER_PIN >= 0) digitalWrite(ALARMSPEAKER_PIN, !ALARM_ON);
+    writeAlarmPin(!ALARM_ON);
     return;  //nothing to do
   }
 
@@ -1930,7 +1943,7 @@ void alarmSound(void) {
   }
 
   if (!prm.alarmEnable || !alarmON) {  //no alarm, switch off
-    if (ALARMSPEAKER_PIN >= 0) digitalWrite(ALARMSPEAKER_PIN, !ALARM_ON);
+    writeAlarmPin(!ALARM_ON);
     return;
   }
 
@@ -1939,11 +1952,11 @@ void alarmSound(void) {
   if (millis() > nextEvent) { //go to the next event
     if (count % 2 == 0) {
       nextEvent += 500;
-      if (ALARMSPEAKER_PIN >= 0) digitalWrite(ALARMSPEAKER_PIN, ALARM_ON);
+      writeAlarmPin(ALARM_ON);
       //DPRINT(" Sound ON");  DPRINT("  Next:"); DPRINTLN(nextEvent);
     }
     else {
-      if (ALARMSPEAKER_PIN >= 0) digitalWrite(ALARMSPEAKER_PIN, !ALARM_ON);
+      writeAlarmPin(!ALARM_ON);
       nextEvent = (count / 2 < cMax) ? alarmStarted +  t[count / 2] : nextEvent + 500;
       //DPRINT("   OFF"); DPRINT("  Next:"); DPRINTLN(nextEvent);
     }
