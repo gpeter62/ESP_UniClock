@@ -15,13 +15,12 @@ byte ABCDPins[4] = {14,12,13,2};  //D5,D6,D7,D4 on 8266
 #define DP_PIN  16 // decimalPoint on 8266's D0
 
 const int maxDigits = sizeof(digitEnablePins);
-#define MAXBRIGHT 10
 
 //const byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
 int PWMrefresh=15000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
 int PWM_min = 2000;
 int PWM_max = 14000;
-//int PWMtiming[MAXBRIGHT+1] = {0,2000,3000,4000,5000,6000,7000,8000,10000,12000,14000};
+//int PWMtiming[11] = {0,2000,3000,4000,5000,6000,7000,8000,10000,12000,14000};
 
 #if defined(ESP8266) 
 #else
@@ -131,7 +130,7 @@ if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
   intCounter++;
   timer = PWMrefresh;
   brightness = displayON ?  prm.dayBright : prm.nightBright;
-  if (brightness>MAXBRIGHT) brightness = MAXBRIGHT;  //only for safety
+  if (brightness>MAXBRIGHTNESS) brightness = MAXBRIGHTNESS;  //only for safety
 
    switch (state) {   //state machine...
     case 0:

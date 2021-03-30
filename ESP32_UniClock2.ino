@@ -845,7 +845,9 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
     //for(int i=0;i<args;i++){
     //  Serial.printf("ARG[%s]: %s\n", request->argName(i).c_str(), request->arg(i).c_str());
     //}
-
+    boolean oldDST = prm.enableDST;
+    int old_utc_offset = prm.utc_offset;
+    
     String key = request->getParam("key", true)->value();
     String value = request->getParam("value", true)->value();
     DPRINT(key); DPRINT(" = "); DPRINTLN(value);
@@ -854,6 +856,9 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
 
     if (key == "utc_offset")    {
       prm.utc_offset = value.toInt();
+      if (!old_utc_offset != prm.utc_offset) {   //Change time zone
+        setTime(now()+(prm.utc_offset-old_utc_offset)*3600);
+      }
     }
     else if (key == "set12_24") {
       prm.set12_24 = (value == "true");
@@ -870,6 +875,12 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
     }
     else if (key == "enableDST")  {
       prm.enableDST = (value == "true");
+      if (oldDST && !prm.enableDST) {   //Switching off DST
+        setTime(now()-3600);
+      }
+      if (!oldDST && prm.enableDST) {   //Switching on DST
+        setTime(now()+3600);
+      }
     }
     else if (key == "interval")   {
       prm.interval = value.toInt();
@@ -1385,7 +1396,7 @@ void calcTime() {
     if (res) updateRTC();    //update RTC, if needed
     getRTC();
   }
- 
+  setTime(myTZ.toLocal(timeClient.getEpochTime()));
 }
 
 

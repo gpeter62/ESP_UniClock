@@ -401,11 +401,11 @@ function Init(){
     setPreviewColor();
 
     //sets a possible good timezone, if not already set
-    if(!configuration['utc_offset']){
-        //Intl.DateTimeFormat().resolvedOptions().timeZone <- I am in this Zone
-        var tryToFindCurrentZone = -(new Date().getTimezoneOffset() / 60);
-        $('#utc_offset').val(tryToFindCurrentZone);
-    }
+    //if(!configuration['utc_offset']){
+    //    //Intl.DateTimeFormat().resolvedOptions().timeZone <- I am in this Zone
+    //    var tryToFindCurrentZone = -(new Date().getTimezoneOffset() / 60);
+    //    $('#utc_offset').val(tryToFindCurrentZone);
+    //}
 
     setTimeout(function(){
         $('input, select').on('change',function(){
