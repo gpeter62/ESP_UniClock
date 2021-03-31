@@ -33,13 +33,13 @@
 //#define CLOCK_43  //V1  ESP32, UNFI 6 x Z573M Nixie tubes
 //#define CLOCK_44  //V2  ESP32, UNFI 6 x Z573M Nixie tubes (átkötés)
 //#define CLOCK_45  //V3  ESP32, UNFI 6 x Z573M Nixie tubes
-//#define CLOCK_46  //V1  ESP32, UNFI 6 x IV-9 Numitron clock
+#define CLOCK_46  //V1  ESP32, UNFI 6 x IV-9 Numitron clock
 //#define CLOCK_47  //V3  ESP32, UNFI board, 6 x Z573M Nixie tubes
 //--------------------------------------------------------------------------------------------------------------
 //#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_51   //V2  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_52   //ESP32,        P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
-#define CLOCK_53   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
+//#define CLOCK_53   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_54   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
 //#define CLOCK_55   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock
 
@@ -484,7 +484,7 @@
   #define WEBNAME "ESP32 IV-11 VFD-Clock"
 #endif
 
-#ifdef CLOCK_41   //V2  ESP32, UNFI 6 x IV-11 VFD tubes clock (átkötés)
+#ifdef CLOCK_41   //V2  ESP32, UNFI 6 x IV-11 VFD tubes clock (jumper wire)
   #define DEBUG 
   #define FW "fw41"  //firmware name
   #define MAXBRIGHTNESS 100    
@@ -632,24 +632,28 @@
   #define DEBUG 
   #define FW "fw46"  //firmware name
   #define MAXBRIGHTNESS 100    
-  //#define USE_NEOPIXEL 
-  //#define NEOPIXEL_PIN 22
+  #define USE_NEOPIXEL 
+  #define NEOPIXEL_PIN 22
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   #define USE_DALLAS_TEMP
   //#define USE_DHT_TEMP
   //#define DHTTYPE DHT22
-  //#define TEMP_DHT_PIN 25
-  #define TEMP_DALLAS_PIN 25    //Dallas temp sensor pin.  If not used, SET TO -1    
+  //#define TEMP_DHT_PIN 27
+  #define TEMP_DALLAS_PIN 27    //Dallas temp sensor pin.  If not used, SET TO -1    
   //#define LIGHT_SENSOR_PIN 35
-  //#define PIN_SDA 5             // you can set the used SDA and SCL pins
-  //#define PIN_SCL 0             // if it is not default value
-  //#define USE_BH1750            //I2C luxmeter sensor
+  #define PIN_SDA 5             // you can set the used SDA and SCL pins
+  #define PIN_SCL 0             // if it is not default value
+  #define USE_BH1750            //I2C luxmeter sensor
+  #define USE_BME280            //I2C Temperature + humidity + pressure
+  #define USE_BMP280            //I2C Temperature + barometric  pressure
+  #define USE_AHTX0             //I2C Temperature + humidity
+  #define USE_SHT21             //I2C Temperature + humidity
   #define Numitron_4511N
   #define PCB_VERSION 32
   #define LTBIpin 23
   const byte digitEnablePins[] = {4,16,17,32,21,25};   //ESP32 6x tube Clock
   const byte ABCDPins[4] =  {19,18,26,33};   
-  #define DP_PIN 23             // decimalPoint inside Nixie tube, set -1, if not used!
+  #define DP_PIN -1             // decimalPoint inside Nixie tube, set -1, if not used!
   #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
   //#define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
   //#define GRAD_CHARCODE -1   //disable char => shift display right with 1 digit

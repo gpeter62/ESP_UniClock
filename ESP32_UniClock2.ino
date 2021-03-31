@@ -858,7 +858,7 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
 
     if (key == "utc_offset")    {
       prm.utc_offset = value.toInt();
-      if (!old_utc_offset != prm.utc_offset) {   //Change time zone
+      if (old_utc_offset != prm.utc_offset) {   //Change time zone
         setTime(now()+(prm.utc_offset-old_utc_offset)*3600);
       }
     }
@@ -2050,8 +2050,11 @@ void resetWiFi(void) {
   DPRINTLN("Lost WiFi. Reconnect.");
   //disableDisplay();
   //#if defined(ESP8266)  
+    WiFi.disconnect();
     WiFi.reconnect();
   //#endif  
+  delay(3000);
+  //if (WiFi.status() == WL_CONNECTED) lastTest = 
   //enableDisplay(5000);
   return;
 
