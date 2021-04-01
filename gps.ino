@@ -51,6 +51,7 @@ boolean res = false;
    smartDelay(500);
    if (gps.time.isValid() && gps.date.isValid() && gps.time.isUpdated())  {
    lastTimeUpdate = millis();
+   /*
    int hours = gps.time.hour() + prm.utc_offset; if (prm.enableDST) hours++;
     if (hours > 23) {
       hours = hours - 24; 
@@ -60,12 +61,14 @@ boolean res = false;
         hours = hours + 24;
       }
     }
-    
+    */
+      
+    setTime(gps.time.hour(),gps.time.minute(),gps.time.second(),gps.date.day(),gps.date.month(),gps.date.year());  //set the time (hr,min,sec,day,mnth,yr)
+    setTime(now()+(prm.utc_offset + prm.enableDST ? 1 : 0) * 3600);
     #ifdef DEBUG
       printGPS();
     #endif
-      
-    setTime(hours,gps.time.minute(),gps.time.second(),gps.date.day(),gps.date.month(),gps.date.year());  //set the time (hr,min,sec,day,mnth,yr)
+    
     res = true;
    } //endif valid date&time
    
