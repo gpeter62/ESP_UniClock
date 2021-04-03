@@ -669,70 +669,59 @@ void startServer() {
   DPRINTLN("Starting Async Webserver...");
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
-    String filenam;
-    boolean gzip;
-
     disableDisplay();
     DPRINTLN("Webserver: /  -> index.html");
-    gzip = SPIFFS.exists("/index.html.gz");
-    if (gzip)
-      filenam = "/index.html.gz";
-    else
-      filenam = "/index.html";
-
-    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, filenam, "text/html");   //gzip compressed file sending
-    if (gzip)
-      response->addHeader("Content-Encoding", "gzip");
-
-    //response->addHeader("Cache-Control", CACHE_MAX_AGE);
-    request->send(response);
+    if(SPIFFS.exists("/index.html")) {
+      AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/index.html", "text/html"); 
+      request->send(response);
+    }
+    else {
+    request->send( 204, "text/html", "File Not Found" );
+    DPRINTLN("/index.html not found");
+    }
   });
 
   server.on("/jquery_351.js", HTTP_GET, [](AsyncWebServerRequest * request) {
-    String filenam;
-    boolean gzip;
-
     disableDisplay();
     DPRINTLN("Webserver: /jquery_351.js");
-    gzip = SPIFFS.exists("/jquery_351.js.gz");
-    if (gzip)
-      filenam = "/jquery_351.js.gz";
-    else
-      filenam = "/jquery_351.js";
-
-    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, filenam, "text/js");   //gzip compressed file sending
-    if (gzip)
-      response->addHeader("Content-Encoding", "gzip");
-    response->addHeader("Cache-Control", CACHE_MAX_AGE);
-    request->send(response);
+    if (SPIFFS.exists("/jquery_351.js")) {
+      AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/jquery_351.js", "text/js");   
+      response->addHeader("Cache-Control", CACHE_MAX_AGE);
+      request->send(response);
+    }
+    else {
+      request->send( 204, "text/html", "File Not Found" );
+      DPRINTLN("/jquery_351.js not found");
+    }
   });
 
   server.on("/page.js", HTTP_GET, [](AsyncWebServerRequest * request) {
-    String filenam;
-    boolean gzip;
 
     disableDisplay();
     DPRINTLN("Webserver: /page.js");
-    gzip = SPIFFS.exists("/page.js.gz");
-    if (gzip)
-      filenam = "/page.js.gz";
-    else
-      filenam = "/page.js";
-
-    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, filenam, "text/js");   //gzip compressed file sending
-    if (gzip)
-      response->addHeader("Content-Encoding", "gzip");
-
-    response->addHeader("Cache-Control", CACHE_MAX_AGE);
-    request->send(response);
+    if (SPIFFS.exists("/page.js")) {
+      AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/page.js", "text/js");   
+      response->addHeader("Cache-Control", CACHE_MAX_AGE);
+      request->send(response);
+    }
+    else {
+      request->send( 204, "text/html", "File Not Found" );
+      DPRINTLN("/page.js not found");
+    }
   });
 
   server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest * request) {
     disableDisplay();
     DPRINTLN("Webserver: /favicon.ico");
-    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/favicon.ico", "image/png");
-    response->addHeader("Cache-Control", CACHE_MAX_AGE);
-    request->send(response);
+    if (SPIFFS.exists("/favicon.ico")){
+      AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/favicon.ico", "image/png");
+      response->addHeader("Cache-Control", CACHE_MAX_AGE);
+      request->send(response);
+    }
+    else {
+      request->send( 204, "text/html", "File Not Found" );
+      DPRINTLN("/favicon.ico not found");
+    }    
   });
 
   server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest * request) {
@@ -756,23 +745,17 @@ void startServer() {
 
 //____________________________________________________________________________
   server.on("/site.css", HTTP_GET, [](AsyncWebServerRequest * request) {
-    String filenam;
-    boolean gzip;
-
     disableDisplay();
     DPRINTLN("Webserver: /site.css");
-    gzip = SPIFFS.exists("/site.css.gz");
-
-    if (gzip)
-      filenam = "/site.css.gz";
-    else
-      filenam = "/site.css";
-
-    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, filenam, "text/css");   //gzip compressed file sending
-    if (gzip)
-      response->addHeader("Content-Encoding", "gzip");
-    response->addHeader("Cache-Control", CACHE_MAX_AGE);
-    request->send(response);
+    if (SPIFFS.exists("/site.css")) {
+      AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/site.css", "text/css");   
+      response->addHeader("Cache-Control", CACHE_MAX_AGE);
+      request->send(response);
+    }
+    else {
+      request->send( 204, "text/html", "File Not Found" );
+      DPRINTLN("/site.css not found");
+    }     
   });
 //____________________________________________________________________________
   server.on("/reset", HTTP_POST, [] (AsyncWebServerRequest *request) {
@@ -1282,7 +1265,7 @@ void setup() {
   #endif
   #if RADAR_PIN >= 0
     pinMode(RADAR_PIN, INPUT);  regPin(RADAR_PIN,"RADAR_PIN");
-    DPRINT("  - RADAR Timeout:");   DPRINTLN(RADAR_TIMEOUT);
+    DPRINT("  - RADAR Timeout:");   DPRINTLN(prm.radarTimeout);
   #endif
   #if TUBE_POWER_PIN >= 0
     pinMode(TUBE_POWER_PIN, OUTPUT); regPin(TUBE_POWER_PIN,"TUBE_POWER_PIN");
@@ -1488,8 +1471,8 @@ void factoryReset() {
   prm.alarmHour = 7;
   prm.alarmMin = 0;
   prm.alarmPeriod = 15;
-  prm.rgbEffect = 1;
-  prm.rgbBrightness = 100;
+  prm.rgbEffect = 2;
+  prm.rgbBrightness = 80;
   prm.rgbFixColor = 150;
   prm.rgbSpeed = 50;
   prm.rgbDir = 0;
@@ -1517,7 +1500,7 @@ void factoryReset() {
   prm.enableAutoShutoff = true;  // Flag to enable/disable nighttime shut off
   prm.dayHour = 7;
   prm.dayMin = 0;
-  prm.nightHour = 22;
+  prm.nightHour = 20;
   prm.nightMin = 0;
   prm.dayBright = MAXBRIGHTNESS;
   prm.nightBright = 3;
@@ -2169,7 +2152,7 @@ void checkTubePowerOnOff(void) {
 
     #if RADAR_PIN >=0
       if (digitalRead(RADAR_PIN) == HIGH) lastON = millis(); 
-      radarON = ((millis()-lastON)<1000l*RADAR_TIMEOUT);
+      radarON = ((millis()-lastON)<1000l*prm.radarTimeout);
       if (radarON != oldRadarON) {
         oldRadarON = radarON;
         if (radarON) DPRINTLN("RADAR: Switching ON tubes.");

@@ -133,7 +133,9 @@ void ICACHE_RAM_ATTR shift(uint32_t Data) {
     else
       b = (Data & (uint32_t(1) << (31 - i))) > 0; //MSB first
     digitalWrite(PIN_DIN, b);
+    for (int t=0;t<7;t++) asm volatile ("nop");
     digitalWrite(PIN_CLK, LOW);  //falling CLK  to store DIN
+    for (int t=0;t<7;t++) asm volatile ("nop");
   }
   digitalWrite(PIN_CLK, HIGH);
 }
