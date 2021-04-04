@@ -215,7 +215,7 @@ volatile boolean dState = false;
 volatile unsigned long lastDisable = 0;
 volatile boolean EEPROMsaving = false; //saving in progress - stop display refresh
 
-#define MAGIC_VALUE 302   //EEPROM version
+#define MAGIC_VALUE 303   //EEPROM version
 
 // 8266 internal pin registers
 // https://github.com/esp8266/esp8266-wiki/wiki/gpio-registers
@@ -238,7 +238,6 @@ volatile boolean EEPROMsaving = false; //saving in progress - stop display refre
 #define PIN_OUT_CLEAR PERIPHS_GPIO_BASEADDR + 8
 
 bool colonBlinkState = false;
-boolean clockWifiMode = true;
 boolean radarON = true;
 boolean makeFirmwareUpdate = false;
 unsigned long lastTimeUpdate = 0;  //last time refresh from GPS or internet timeserver
@@ -276,7 +275,8 @@ struct {
   unsigned int rgbFixColor = 150;  //0..255
   byte rgbSpeed = 50;              //0..255msec / step
   boolean rgbDir = false;          //false = right, true = left
-//Wifi / ip settings _______________________________________________________________________________________  
+//Wifi / ip settings _______________________________________________________________________________________ 
+  boolean wifiMode = true; 
   char wifiSsid[20];
   char wifiPsw[20];
   char ApSsid[20];
@@ -902,6 +902,9 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
         displayON = v;
       }
     }
+    else if (key == "wifiMode")      {
+      prm.wifiMode = (value == "true");
+    }    
     else if (key == "alarmEnable")      {
       prm.alarmEnable = (value == "true");
     }
@@ -956,7 +959,6 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
       value.toCharArray(prm.firmwareServer,sizeof(prm.firmwareServer));
       makeFirmwareUpdate = true; //for testing only
     }
-    #ifdef USE_MQTT
       else if (key == "mqttBrokerAddr") {
         value.toCharArray(prm.mqttBrokerAddr,sizeof(prm.mqttBrokerAddr));
       }
@@ -972,8 +974,6 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
       else if (key == "mqttEnable") {
         prm.mqttEnable = (value == "true");
       }  
-    #endif
-    
     else if (key == "dateMode") {
       prm.dateMode = value.toInt();
     }
@@ -1105,7 +1105,7 @@ if (useTemp > 1)
   doc["nightBright"] = prm.nightBright;
   doc["animMode"] = prm.animMode;  //Tube animation
   doc["manualOverride"] = !displayON;
-
+  
   //Alarm values
   doc["alarmEnable"] = prm.alarmEnable;   //1 = ON, 0 = OFF
   sprintf(buf, "%02d:%02d", prm.alarmHour, prm.alarmMin);
@@ -1124,18 +1124,20 @@ if (useTemp > 1)
   doc["rgbSpeed"] = prm.rgbSpeed;       // 1..255
   doc["rgbDir"] = prm.rgbDir;          // 0 = right direction, 1 = left direction
   doc["rgbMinBrightness"] = c_MinBrightness;  //minimum brightness for range check!!
+  doc["wifiMode"] = prm.wifiMode; 
   doc["wifiSsid"] = prm.wifiSsid;
   doc["wifiPsw"] = prm.wifiPsw;
   doc["ApSsid"] = prm.ApSsid;
   doc["ApPsw"] = prm.ApPsw;  
   doc["NtpServer"] = prm.NtpServer;
   doc["firmware"] = prm.firmwareServer;
+
+  doc["mqttBrokerAddr"] = prm.mqttBrokerAddr;
+  doc["mqttBrokerUser"] = prm.mqttBrokerUser;
+  doc["mqttBrokerPsw"] = prm.mqttBrokerPsw;
+  doc["mqttEnable"] = prm.mqttEnable;
   #if defined(USE_MQTT)
-    doc["mqttBrokerAddr"] = prm.mqttBrokerAddr;
-    doc["mqttBrokerUser"] = prm.mqttBrokerUser;
-    doc["mqttBrokerPsw"] = prm.mqttBrokerPsw;
-    doc["mqttBrokerRefresh"] = prm.mqttBrokerRefresh;
-    doc["mqttEnable"] = prm.mqttEnable;
+    doc["mqttBrokerRefresh"] = prm.mqttBrokerRefresh;  
   #else
     doc["mqttBrokerRefresh"] = 0;  
   #endif
@@ -1347,11 +1349,14 @@ void setup() {
     DPRINTLN("SPIFFS started.");
   }
 
-  clockWifiMode = true;
-  startWifiMode();
-  if (wifiMulti.run() != WL_CONNECTED) //failed to connect to wifi
+  if (prm.wifiMode) {
+    startWifiMode();
+    if (wifiMulti.run() != WL_CONNECTED) //failed to connect to wifi
+      startStandaloneMode();
+  }
+  else 
     startStandaloneMode();
-
+    
   delay(500);
   startServer();
   #ifdef USE_MQTT
@@ -1377,12 +1382,12 @@ void calcTime() {
   myTZ = Timezone(myDST, mySTD);
   
   res = updateTimefromTimeserver();  //update time from wifi
+  if (res) setTime(myTZ.toLocal(timeClient.getEpochTime()));
   if (GPSexist) res = res || getGPS();    //update time from GPS, if exist
   if (RTCexist) {
     if (res) updateRTC();    //update RTC, if needed
     getRTC();
   }
-  setTime(myTZ.toLocal(timeClient.getEpochTime()));
 }
 
 
@@ -1476,6 +1481,7 @@ void factoryReset() {
   prm.rgbFixColor = 150;
   prm.rgbSpeed = 50;
   prm.rgbDir = 0;
+  prm.wifiMode = true;
   strcpy(prm.wifiSsid,"");
   strcpy(prm.wifiPsw,"");
   for (int i=0;i<strlen(prm.ApSsid);i++) {  //repair bad chars in AP SSID
@@ -2226,6 +2232,20 @@ void getLightSensor(void) {
   }
 }
 
+void checkWifiMode() {     
+static boolean oldMode = prm.wifiMode;  
+
+  if (oldMode != prm.wifiMode) {
+    if (prm.wifiMode) {
+        startWifiMode();
+      }
+      else  {
+        startStandaloneMode();
+      }
+        oldMode = prm.wifiMode;  
+    }  
+}
+
 void loop(void) {
   dnsServer.processNextRequest();
   //MDNS.update();
@@ -2237,9 +2257,10 @@ void loop(void) {
   alarmSound();
   checkTubePowerOnOff();
   getLightSensor();
-  if (prm.mqttEnable) mqttSend();
+  if (prm.mqttEnable && prm.wifiMode) mqttSend();
+  
   checkWifiMode();
-  if (clockWifiMode) { //Wifi Clock Mode
+  if (prm.wifiMode) { //Wifi Clock Mode
     if (WiFi.status() != WL_CONNECTED) {
       resetWiFi();
     }
@@ -2247,6 +2268,7 @@ void loop(void) {
   else {   //Manual Clock Mode
     editor();
   } //endelse
+  
   if (makeFirmwareUpdate) {
     makeFirmwareUpdate = false;
     doFirmwareUpdate();

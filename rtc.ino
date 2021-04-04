@@ -67,10 +67,6 @@ void setupRTC() {
   if (RTCexist) {
     DS3231_init(DS3231_CONTROL_INTCN);
     DS3231_get(&tim);
-    checkWifiMode();
-  }
-  else {
-    clockWifiMode = true;
   }
   
 /*  
@@ -160,41 +156,7 @@ void saveRTC() {
     DS3231_set(tim); 
 }
 
-//-------------------------- check buttons and switch  ------------------------------------------------
-boolean checkWifiMode() {     //output TRUE, if mode changed
-static unsigned long lastRun = millis(); 
-static byte oldMode = 2;  
-
-#if PIN_MODE_SWITCH >=0  //is switch is installed?
-  if (((millis()-lastRun)<500) || !RTCexist) return false;
-  lastRun = millis();
-  if (PIN_MODE_SWITCH==A0) {
-    clockWifiMode = (analogRead(PIN_MODE_SWITCH)>100);
-  }
-  else {
-    clockWifiMode = digitalRead(PIN_MODE_SWITCH);
-  }
-  //DPRINT(digitalRead(PIN_FLD_BUTTON)); DPRINT(" / "); DPRINTLN(digitalRead(PIN_SET_BUTTON));
-  if (!RTCexist) clockWifiMode = true;  
-  if (oldMode != clockWifiMode) {
-    if (oldMode!=2) {
-      DPRINT("Clock switched to ");
-      if (clockWifiMode) { 
-        DPRINTLN("WIFI mode!");
-        startWifiMode();
-      }
-      else 
-        {
-        DPRINTLN("MANUAL-RTC mode");          
-        startStandaloneMode();
-        }
-    }  
-    oldMode = (byte)clockWifiMode;
-    return true;  
-  }
-#endif
-  return false;
-}  
+//-------------------------- check buttons  ------------------------------------------------
 
 void scanButFLD(unsigned long mill) {
 static unsigned long lastRun = millis(); 
@@ -376,18 +338,8 @@ int I2C_ClearBus() {
 
 //------------------------------------------------------------------------------------------
 #else
-void updateRTC() {}
-void setupRTC() {}
-void getRTC() {}
-
-boolean checkWifiMode() {
-  
-  #ifdef USE_GPS  
-    return false;
-  #else
-    return true;
-  #endif
-}
-    
-void editor() {}
+  void updateRTC() {}
+  void setupRTC() {}
+  void getRTC() {}
+  void editor() {}
 #endif

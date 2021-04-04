@@ -12,7 +12,8 @@ var controlInfos = {
 	"humidity2": "Humidity sensor #2",
 	"pressure": "Pressure sensor #1",
 	"lux": "Lux sensor current value",
-    "alarmEnabled": "Switch ON/OFF alarm",
+    "wifiMode": "WiFi Client or Access Point",
+	"alarmEnable": "Switch ON/OFF alarm",
     "alarmTime": "Alarm time (hour/minute)",
 	"alarmPeriod": "Alarm maximum length (sec)",
 	
@@ -80,7 +81,8 @@ var configuration = {
 	"humidity2": 255,
 	"pressure": 255,
 	"lux": 100,
-    "alarmEnabled": 0,
+	"wifiMode": true,
+    "alarmEnable": false,
     "alarmTime": "6:30",
 	"alarmPeriod": 15,
 	
@@ -380,7 +382,7 @@ function Init(){
                 index == 'rgbDir' || index == 'manualOverride' ||
 				index == 'enableAutoDim' || index == 'enableRadar' ||
 				index == 'enableDoubleBlink' || index == 'enableTimeDisplay' ||
-				index == 'mqttEnable' || index == 'tempCF'
+				index == 'mqttEnable' || index == 'tempCF' || index == "wifiMode"
                 ) && !!value
             ){
             $('#'+index).prop('checked',true);

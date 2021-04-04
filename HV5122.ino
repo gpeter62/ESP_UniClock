@@ -40,8 +40,10 @@ void setup_pins() {
   digitalWrite(PIN_OE, LOW);
   driverSetupStr = "<br>HV5122 pin settings:<br>";
   for (int i=0;i<maxDigits+1;i++) {
+    driverSetupStr += String("{");
     for (int j=0;j<10;j++) {
-      driverSetupStr += String(digitPins[i][j]) + ",";
+      driverSetupStr += String(digitPins[i][j]); 
+      driverSetupStr += (j==9) ? "}," : ",";
     }
     driverSetupStr += String("<br>");
   }

@@ -31,7 +31,6 @@ void setupGPS() {
   DPRINTLN("Starting GPS..."); 
   regPin(RXPin,"RXPin");   
   regPin(TXPin,"TXPin");
-  clockWifiMode = false;
                          
   ss.begin(GPSBaud);                                    // Set Software Serial Comm Speed to 9600    
   delay(200);
