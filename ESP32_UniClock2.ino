@@ -215,7 +215,7 @@ volatile boolean dState = false;
 volatile unsigned long lastDisable = 0;
 volatile boolean EEPROMsaving = false; //saving in progress - stop display refresh
 
-#define MAGIC_VALUE 303   //EEPROM version
+#define MAGIC_VALUE 304   //EEPROM version
 
 // 8266 internal pin registers
 // https://github.com/esp8266/esp8266-wiki/wiki/gpio-registers
@@ -317,6 +317,10 @@ struct {
   boolean enableAutoDim = false;   //Automatic dimming by luxmeter
   boolean enableRadar = false;     //Radar sensor
   int radarTimeout = 300;          //sec
+  float corrT0 = 0;
+  float corrT1 = 0;
+  float corrH0 = 0;
+  float corrH1 = 0;
 //____________________________________________________________________________________________________  
   int magic = MAGIC_VALUE;        //magic value, to check EEPROM version when starting the clock
 } prm;
@@ -1019,7 +1023,18 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
     else if (key == "tempCF") {
       prm.tempCF = (value == "true");
     }   
-
+    else if (key == "corrT0") {
+      prm.corrT0 = value.toInt();
+    } 
+    else if (key == "corrT1") {
+      prm.corrT1 = value.toInt();
+    } 
+    else if (key == "corrH0") {
+      prm.corrH0 = value.toInt();
+    } 
+    else if (key == "corrH1") {
+      prm.corrH1 = value.toInt();
+    }             
     else  {
       paramFound = false;
     }
@@ -1057,24 +1072,24 @@ void handleSendConfig(AsyncWebServerRequest *request) {
   //useHumid = 2; humid[0] = 41; humid[1] = 42;
   
   if (useTemp > 0) {
-    doc["temperature"] = temperature[0];  
+    doc["temperature"] = temperature[0] + prm.corrT0;  
   }
   else
     doc["temperature"] = 255;
 
 if (useTemp > 1)
-    doc["temperature2"] = temperature[1];
+    doc["temperature2"] = temperature[1] + prm.corrT1;
   else
     doc["temperature2"] = 255;
 
   if (useHumid>0) {
-    doc["humidity"] = humid[0];
+    doc["humidity"] = humid[0] + prm.corrH0;
   }
   else
     doc["humidity"] = 255;
  
   if (useHumid>1)
-    doc["humidity2"] = humid[1];
+    doc["humidity2"] = humid[1] + prm.corrH1;
   else
     doc["humidity2"] = 255;
 
@@ -1162,6 +1177,10 @@ if (useTemp > 1)
   #else
     doc["radarTimeout"] = 0;   
   #endif
+  doc["corrT0"] = prm.corrT0;
+  doc["corrT1"] = prm.corrT1;
+  doc["corrH0"] = prm.corrH0;
+  doc["corrH1"] = prm.corrH1;
   String json;
   serializeJson(doc, json);
   request->send(200, "application/json", json);
@@ -1173,10 +1192,14 @@ void handleSendClockDetails(AsyncWebServerRequest *request) {
   String dat;
 
   DPRINTLN("SendClockDetails");
-  dat = String("<br>Firmware:") + FW + "<br>";
+  dat = String("<br>FirmwareID:") + FW + "<br>";
   dat += String("  Tube driver:") + tubeDriver + "<br>";
   dat += String("  Mac:") + String(WiFi.macAddress()) + "<br>";
   dat += String("MAXBRIGHTNESS:") + String(MAXBRIGHTNESS) + "<br>";
+  if (RTCexist) dat += String("RTC exist: YES <br>");
+  if (useTemp>0) dat += String("Temperature sensors:") + useTemp + "<br>";
+  if (useHumid>0) dat += String("Humidity sensors:") + useHumid + "<br>";
+  if (usePress>0) dat += String("Pressure sensors:") + usePress + "<br>";
   dat += usedPinsStr + "<br>";
   dat += driverSetupStr + "<br>";
   DPRINTLN(dat);
@@ -1196,26 +1219,26 @@ void handleSendCurrentInfos(AsyncWebServerRequest *request) {
   doc["currentTime"] = buf;
 
   if (useTemp > 0) {
-    doc["temperature1"] = temperature[0];
-    doc["temperature"] = temperature[0];  //for compatibility with the old web page
+    doc["temperature1"] = temperature[0] + prm.corrT0;
+    doc["temperature"] = temperature[0] + prm.corrT0;  //for compatibility with the old web page
   }
   else
     doc["temperature1"] = 255;
 
 if (useTemp > 1)
-    doc["temperature2"] = temperature[1];
+    doc["temperature2"] = temperature[1] + prm.corrT1;
   else
     doc["temperature2"] = 255;
 
   if (useHumid>0) {
-    doc["humidity1"] = humid[0];
-    doc["humidity"] = humid[0];  //for compatibility with the old web page
+    doc["humidity1"] = humid[0] + prm.corrH0;
+    doc["humidity"] = humid[0] + prm.corrH0;  //for compatibility with the old web page
   }
   else
     doc["humidity1"] = 255;
  
   if (useHumid>1)
-    doc["humidity2"] = humid[1];
+    doc["humidity2"] = humid[1] + prm.corrH1;
   else
     doc["humidity2"] = 255;
   
@@ -1542,6 +1565,10 @@ void factoryReset() {
   prm.enableAutoDim = false;          //Automatic dimming by luxmeter
   prm.enableRadar = false;            //Radar sensor
   prm.radarTimeout = 300;             //sec
+  prm.corrT0 = 0;
+  prm.corrT1 = 0;
+  prm.corrH0 = 0;
+  prm.corrH1 = 0;  
   prm.magic = MAGIC_VALUE;              //magic value to check the EEPROM version
   saveEEPROM();
   calcTime();
@@ -1609,6 +1636,8 @@ inline void incMod10(byte &x) {
 
 void displayTemp(byte ptr) {
   float t = temperature[ptr];
+  if (ptr==0) t += prm.corrT0;
+  if (ptr==1) t += prm.corrT1;
   if (prm.tempCF) {
     t = round1((temperature[ptr] * 9/5)+32);
   }
@@ -1643,12 +1672,14 @@ void displayHumid(byte ptr) {
     digitDP[i] = false;
     newDigit[i] = 10;
   }
-  
-  newDigit[digPtr] = int(humid[ptr]) / 10;
+  float h = humid[ptr];
+  if (ptr==0) h += prm.corrH0;
+  if (ptr==1) h += prm.corrH1;
+  newDigit[digPtr] = int(h) / 10;
   if (newDigit[digPtr] == 0) newDigit[digPtr] = 10; //BLANK if zero!!!
-  newDigit[--digPtr] = int(humid[ptr]) % 10;
+  newDigit[--digPtr] = int(h) % 10;
   digitDP[digPtr] = true;
-  newDigit[--digPtr] = int(humid[ptr] * 10) % 10;
+  newDigit[--digPtr] = int(h * 10) % 10;
   if (maxDigits > 4) {
     if (digitsOnly) {
       newDigit[--digPtr] = 10;   //empty character

@@ -453,6 +453,8 @@
 
 #ifdef CLOCK_33   //TOM025 ESP32, Pálfi S. board, 6 x Z573M Nixie tubes
   #define DEBUG 
+  #define FW "fw33"
+  #define MAXBRIGHTNESS 100
   //#define USE_NEOPIXEL 
   //#define NEOPIXEL_PIN 2
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
@@ -460,7 +462,7 @@
   #define TEMP_DALLAS_PIN 23    //Dallas temp sensor pin.  If not used, SET TO -1    
   #define MULTIPLEX74141_ESP32
   const byte digitEnablePins[] = {22,23,21,19,12,14};   //ESP32 6x tube Clock
-  const byte ABCDPins[4] =  {18,5,17,16};   
+  const byte ABCDPins[4] =  {18,5,16,17};   
   #define DP_PIN 15             // decimalPoint inside Nixie tube, set -1, if not used!
   #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
   //#define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
@@ -695,14 +697,14 @@
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 27
   byte tubePixels[] = {0,1,2,3,4,5};        //6 tubes, single leds
-  #define USE_DALLAS_TEMP
+  //#define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN 26    //Dallas temp sensor pin.  If not used, SET TO -1   
   //#define LIGHT_SENSOR_PIN 23
   #define PIN_SDA 4             // you can set the used SDA and SCL pins
   #define PIN_SCL 32             // if it is not default value
-  //#define USE_DHT_TEMP
+  #define USE_DHT_TEMP
   //#define DHTTYPE DHT11
-  //#define TEMP_DHT_PIN  26
+  #define TEMP_DHT_PIN  26
   //#define USE_RTC
   //#define USE_GPS
   #define USE_BME280            //I2C Temperature + humidity + pressure
@@ -1647,5 +1649,7 @@
 #ifndef DATE_REPEAT_MIN
   #define DATE_REPEAT_MIN 1
 #endif
-
+#ifndef FW
+  #define FW "UNKNOWN"
+#endif
 //______________________________________________________________________________________
