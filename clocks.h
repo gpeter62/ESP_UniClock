@@ -26,6 +26,7 @@
 //#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
 //#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
+//#define CLOCK_33   //TOM025 ESP32, Pálfi S. board, 6 x Z573M Nixie tubes
 
 //#define CLOCK_40  //V1  ESP32, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_41  //V2  ESP32, UNFI 6 x IV-11 VFD tubes clock (átkötés)
@@ -450,7 +451,27 @@
   #define WEBNAME "ESP32UniClock 3.0"
 #endif
 
-
+#ifdef CLOCK_33   //TOM025 ESP32, Pálfi S. board, 6 x Z573M Nixie tubes
+  #define DEBUG 
+  //#define USE_NEOPIXEL 
+  //#define NEOPIXEL_PIN 2
+  byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
+  //#define USE_DALLAS_TEMP
+  #define TEMP_DALLAS_PIN 23    //Dallas temp sensor pin.  If not used, SET TO -1    
+  #define MULTIPLEX74141_ESP32
+  const byte digitEnablePins[] = {22,23,21,19,12,14};   //ESP32 6x tube Clock
+  const byte ABCDPins[4] =  {18,5,17,16};   
+  #define DP_PIN 15             // decimalPoint inside Nixie tube, set -1, if not used!
+  #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
+  //#define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
+  //#define GRAD_CHARCODE -1   //disable char => shift display right with 1 digit
+  //#define ALARMSPEAKER_PIN 33   //Alarm buzzer pin                                            
+  //#define ALARMBUTTON_PIN 32    //Alarm switch off button pin 
+  //#define ALARM_ON HIGH
+  #define AP_NAME "UNICLOCK32"
+  #define AP_PASSWORD ""
+  #define WEBNAME "ESP32UniClock 2.5"
+#endif
 
 //______________________ESP-32 CLOCKS  (2x20pin ESP32 D1 mini modul) ______________________________________________________
 #ifdef CLOCK_40   //V1  ESP32, UNFI 6 x IV-11 VFD tubes clock
@@ -682,7 +703,8 @@
   //#define USE_DHT_TEMP
   //#define DHTTYPE DHT11
   //#define TEMP_DHT_PIN  26
-  #define USE_RTC
+  //#define USE_RTC
+  //#define USE_GPS
   #define USE_BME280            //I2C Temperature + humidity + pressure
   #define USE_BMP280            //I2C Temperature + barometric  pressure
   #define USE_AHTX0             //I2C Temperature + humidity

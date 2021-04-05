@@ -445,6 +445,9 @@ void Fdelay(unsigned long d) {
     doAnimationMakuna();
     doAnimationPWM();
     alarmSound();
+    #ifdef USE_GPS
+      smartDelay(1);  //feed GPS
+    #endif  
     yield();
   }
 }
@@ -501,8 +504,8 @@ void startWifiMode() {
     WiFi.hostname(webName);
   #endif
   #if defined(ESP32)
-    esp_wifi_set_ps (WIFI_PS_NONE);
-    esp_wifi_set_max_tx_power(78);
+    //esp_wifi_set_ps (WIFI_PS_NONE);  //power saving disable!
+    esp_wifi_set_max_tx_power(78);     //Maximum output power
   #endif
   wifiMulti.addAP(prm.wifiSsid, prm.wifiPsw);
   //wifiMulti.addAP(DEFAULT_SSID, DEFAULT_WIFIPSW);
@@ -513,7 +516,7 @@ void startWifiMode() {
   while (wifiMulti.run() != WL_CONNECTED) {
     DPRINT('.');
     counter++;
-    delay(1000);
+    Fdelay(1000);
     if (counter>10) return;
   }
   DPRINTLN(" ");
@@ -1373,27 +1376,37 @@ void setup() {
 }
 
 void calcTime() {
-  boolean res;
-  mySTD.offset = prm.utc_offset * 60;
-  myDST.offset = mySTD.offset;
-  if (prm.enableDST) {
-    myDST.offset += 60;
-  }
-  myTZ = Timezone(myDST, mySTD);
+  boolean refreshed = false;
+  boolean refreshed2 = false;
   
-  res = updateTimefromTimeserver();  //update time from wifi
-  if (res) setTime(myTZ.toLocal(timeClient.getEpochTime()));
-  if (GPSexist) res = res || getGPS();    //update time from GPS, if exist
+ 
+  refreshed = updateTimefromTimeserver();  //update time from wifi
+  if (refreshed) {
+    mySTD.offset = prm.utc_offset * 60;
+    myDST.offset = mySTD.offset;
+    if (prm.enableDST) {
+      myDST.offset += 60;
+    }
+    myTZ = Timezone(myDST, mySTD);  
+    setTime(myTZ.toLocal(timeClient.getEpochTime()));
+  }
+      
+  if (GPSexist) { //update time from GPS, if exist
+    refreshed2 = getGPS();
+  }
+  
   if (RTCexist) {
-    if (res) updateRTC();    //update RTC, if needed
-    getRTC();
+    if (refreshed || refreshed2) 
+      updateRTC();    //update RTC, if needed
+    else 
+      getRTC();
   }
 }
 
 
 void timeProgram() {
   static unsigned long lastRun = 0;
-
+  
   if ((millis() - lastRun) < 200) return;
   lastRun = millis();
 
