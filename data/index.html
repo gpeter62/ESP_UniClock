@@ -353,7 +353,26 @@
                     <label>MQTT Refresh (sec)</label>
                     <input type="range" min="10" max="100" class="slider" id="mqttBrokerRefresh">
                 </div>
-            </div>			
+            </div>	
+            <!-- Sensor corrections -->
+            <div page="Sensor corrections" class="sensors-holder">
+				<div class="control-holder temperature-holder">
+                    <label>Temperature#1</label>
+                    <input type="range" min="-5" max="5" step="0.1" class="slider" id="corrT0">
+                </div>
+				<div class="control-holder temperature-holder2">
+                    <label>Temperature#2</label>
+                    <input type="range" min="-5" max="5" step="0.1" class="slider" id="corrT1">
+                </div>
+				<div class="control-holder humidity-holder">
+                    <label>Humidity#1</label>
+                    <input type="range" min="-25" max="25" step="0.1" class="slider" id="corrH0">
+                </div>	
+				<div class="control-holder humidity-holder2">
+                    <label>Humidity#2</label>
+                    <input type="range" min="-25" max="25" step="0.1" class="slider" id="corrH1">
+                </div>					
+            </div>		
             <div page="settings" hidden="true">
                 <div class="control-holder">
                     <label>Firmware Server</label>

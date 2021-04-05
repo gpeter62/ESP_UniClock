@@ -64,7 +64,11 @@ var controlInfos = {
 	"mqttBrokerPsw": "MQTT password",
 	"mqttBrokerRefresh": "MQTT send data in every xx sec",
 	"mqttEnable": "Enable/Disable MQTT refresh",
-	"firmware": "http server + firmware name to download new firmware"
+	"firmware": "http server + firmware name to download new firmware",
+	"corrT0": "Temperature sensor#1 correction",
+	"corrT1": "Temperature sensor#2 correction",
+	"corrH0": "Humidity sensor#1 correction",
+	"corrH1": "Humidity sensor#2 correction"	
 };
 
 //Example config that UI recieves
@@ -133,7 +137,11 @@ var configuration = {
 	"mqttBrokerPsw": "mqttPW",
 	"mqttBrokerRefresh": 30,
 	"mqttEnable": false,
-	"firmware": "http://server/fw.bin"
+	"firmware": "http://server/fw.bin",
+	"corrT0": 0.0,
+	"corrT1": 0.0,
+	"corrH0": 0.0,
+	"corrH1": 0.0	
 };
 
 //Runs, when HTML document is fully loaded
@@ -372,7 +380,8 @@ function Init(){
 				index == 'ApSsid' || index == 'ApPsw' || 
 				index == 'mqttBrokerAddr' || index == 'NtpServer' ||
 				index == 'mqttBrokerUser' || index =='mqttBrokerPsw' ||
-				index == 'firmware'
+				index == 'firmware' || index == 'corrT0' || index == 'corrT1' ||
+				index == 'corrH0' || index == 'corrH1'
             ){
             $('#'+index).val(value);
         }
