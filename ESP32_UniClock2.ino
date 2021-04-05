@@ -520,7 +520,7 @@ void startWifiMode() {
   while (wifiMulti.run() != WL_CONNECTED) {
     DPRINT('.');
     counter++;
-    Fdelay(1000);
+    delay(1000);
     if (counter>10) return;
   }
   DPRINTLN(" ");
