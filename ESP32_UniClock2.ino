@@ -884,6 +884,7 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
       prm.utc_offset = value.toInt();
       if (old_utc_offset != prm.utc_offset) {   //Change time zone
         setTime(now()+(prm.utc_offset-old_utc_offset)*3600);
+        updateRTC();
       }
     }
     else if (key == "set12_24") {
@@ -903,9 +904,11 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
       prm.enableDST = (value == "true");
       if (oldDST && !prm.enableDST) {   //Switching off DST
         setTime(now()-3600);
+        updateRTC();
       }
       if (!oldDST && prm.enableDST) {   //Switching on DST
         setTime(now()+3600);
+        updateRTC();
       }
     }
     else if (key == "interval")   {
@@ -1366,11 +1369,13 @@ void setup() {
     #endif
   #endif
   
-  #if PIN_EXTINP1>=0
-    pinMode(PIN_EXTINP1, INPUT); regPin(PIN_EXTINP1,"NOT_USED_INPUT");
+  #if defined(PIN_EXTINP1)
+    if (PIN_EXTINP1>=0)
+      pinMode(PIN_EXTINP1, INPUT); regPin(PIN_EXTINP1,"NOT_USED_INPUT");
   #endif
-  #if PIN_EXTINP2>=0
-    pinMode(PIN_EXTINP2, INPUT); regPin(PIN_EXTINP2,"NOT_USED_INPUT");
+  #if defined(PIN_EXTINP2)
+    if (PIN_EXTINP2>=0)
+      pinMode(PIN_EXTINP2, INPUT); regPin(PIN_EXTINP2,"NOT_USED_INPUT");
   #endif
       
   #if TEMP_DALLAS_PIN >= 0 
