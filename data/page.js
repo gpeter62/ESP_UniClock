@@ -149,10 +149,10 @@ var configuration = {
 var isMouseDown = 0;
 //Runs, when HTML document is fully loaded
 $(document).ready(function(){    
-    $(document).on('mousedown, touchstart',function(event) {
+    $(document).on('mousedown touchstart',function(event) {
         ++isMouseDown;
     });
-    $(document).on('mouseup, touchend',function(event) {
+    $(document).on('mouseup touchend',function(event) {
         --isMouseDown;
     });
 
