@@ -119,7 +119,7 @@
   #define USE_NEOPIXEL 
   byte tubePixels[] = {0,9,1,9,2,9,3};  //4 tubes, single leds, 3 leds not used
   //#define RADAR_PIN 21
-  #define RADAR_TIMEOUT 300  //second (5min)
+  #define RADAR_TIMEOUT 5  //(min)
   //#define TUBE_POWER_PIN 2
   //#define TUBE_POWER_ON  LOW
   #define LIGHT_SENSOR_PIN A0  //Only ADC pins are usable! for example: 34,35,36,39... 
@@ -244,7 +244,7 @@
   //#define USE_DALLAS_TEMP
   //#define TEMP_DALLAS_PIN 2
   //#define RADAR_PIN 4
-  #define RADAR_TIMEOUT 300  //second (5min)
+  #define RADAR_TIMEOUT 5  //min
   #define LIGHT_SENSOR_PIN A0  //Only ADC pins are usable! for example: 34,35,36,39... 
   #define MAXIMUM_LUX 100    //Lux level for maximum tube brightness
   #define MM5450
@@ -387,7 +387,7 @@
   #define ALARMBUTTON_PIN -1  //32    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   #define RADAR_PIN -1
-  #define RADAR_TIMEOUT 300  //second (5min)
+  #define RADAR_TIMEOUT 5  //5min
   //#define TUBE_POWER_PIN 25
   //#define TUBE_POWER_ON  LOW
   #define LIGHT_SENSOR_PIN 35  //Only ADC pins are usable! for example: 34,35,36,39... 
@@ -735,7 +735,7 @@
   //#define ALARMBUTTON_PIN 23    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   //#define RADAR_PIN 4
-  #define RADAR_TIMEOUT 300  //second (5min)
+  #define RADAR_TIMEOUT  5 //min
   //#define TUBE_POWER_PIN 4
   #define TUBE_POWER_ON  HIGH
   #define ENABLE_CLOCK_DISPLAY true  
@@ -791,7 +791,7 @@
   #define ALARMBUTTON_PIN 16    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   //#define RADAR_PIN 4
-  #define RADAR_TIMEOUT 300  //second (5min)
+  #define RADAR_TIMEOUT 5  //min
   //#define TUBE_POWER_PIN 4
   #define TUBE_POWER_ON  HIGH
   #define ENABLE_CLOCK_DISPLAY true  
@@ -848,7 +848,7 @@
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   #define LIGHT_SENSOR_PIN 34
   #define RADAR_PIN 19
-  #define RADAR_TIMEOUT 900  //second (5min)
+  #define RADAR_TIMEOUT 5  //min
   //#define TUBE_POWER_PIN 4
   //#define TUBE_POWER_ON  LOW
   #define ENABLE_CLOCK_DISPLAY true  
@@ -903,7 +903,7 @@
   #define ALARMBUTTON_PIN 13    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   //#define RADAR_PIN 4
-  #define RADAR_TIMEOUT 300  //second (5min)
+  #define RADAR_TIMEOUT 5  //min
   //#define TUBE_POWER_PIN 4
   #define TUBE_POWER_ON  LOW
   #define ENABLE_CLOCK_DISPLAY true  
@@ -960,7 +960,7 @@
   //#define ALARMBUTTON_PIN 2    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   //#define RADAR_PIN 4
-  //#define RADAR_TIMEOUT 300  //second (5min)
+  //#define RADAR_TIMEOUT 5  //min
   //#define TUBE_POWER_PIN 16
   #define TUBE_POWER_ON  LOW
   #define ENABLE_CLOCK_DISPLAY true  
@@ -1014,7 +1014,7 @@
   #define ALARMBUTTON_PIN 13    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   //#define RADAR_PIN 4
-  #define RADAR_TIMEOUT 300  //second (5min)
+  #define RADAR_TIMEOUT 5  //5min
   //#define TUBE_POWER_PIN 4
   #define TUBE_POWER_ON  LOW
   #define ENABLE_CLOCK_DISPLAY true  
@@ -1257,7 +1257,7 @@
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   //#define TUBE_POWER_PIN 15
   #define RADAR_PIN 21
-  #define RADAR_TIMEOUT 160  //second (5min)
+  #define RADAR_TIMEOUT 3  //5
   #define TUBE_POWER_ON  HIGH
   //#define LIGHT_SENSOR_PIN 35  //Only ADC pins are usable! for example: 34,35,36,39... 
   #define MAXIMUM_LUX 100    //Lux level for maximum tube brightness
@@ -1308,7 +1308,7 @@
   #define ALARMBUTTON_PIN 23    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   //#define RADAR_PIN 4
-  #define RADAR_TIMEOUT 300  //second (5min)
+  #define RADAR_TIMEOUT 5  //min
   //#define TUBE_POWER_PIN 4
   #define TUBE_POWER_ON  LOW
   #define ENABLE_CLOCK_DISPLAY true  
@@ -1361,7 +1361,7 @@
   //#define ALARMBUTTON_PIN 23    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   //#define RADAR_PIN 4
-  //#define RADAR_TIMEOUT 300  //second (5min)
+  //#define RADAR_TIMEOUT 5  //min
   //#define TUBE_POWER_PIN 4
   //#define TUBE_POWER_ON  LOW
   #define ENABLE_CLOCK_DISPLAY true  
@@ -1420,7 +1420,7 @@
   #define ALARMBUTTON_PIN 13    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   //#define RADAR_PIN 4
-  #define RADAR_TIMEOUT 300  //second (5min)
+  #define RADAR_TIMEOUT 5  //min
   //#define TUBE_POWER_PIN 4
   #define TUBE_POWER_ON  LOW
   #define ENABLE_CLOCK_DISPLAY true  
@@ -1481,7 +1481,7 @@
   //#define ALARMBUTTON_PIN 2    //Alarm switch off button pin 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   //#define RADAR_PIN 4
-  //#define RADAR_TIMEOUT 300  //second (5min)
+  //#define RADAR_TIMEOUT 5 //min
   //#define TUBE_POWER_PIN 16
   #define TUBE_POWER_ON  LOW
   #define ENABLE_CLOCK_DISPLAY true  
@@ -1555,7 +1555,7 @@
 #endif
 
 #ifndef RADAR_TIMEOUT
-  #define RADAR_TIMEOUT 300     //Automatic switch off tubes (without radar detecting somebody) after xxx sec
+  #define RADAR_TIMEOUT 5     //Automatic switch off tubes (without radar detecting somebody) after xxx min
 #endif
 
 #ifndef ALARM_ON

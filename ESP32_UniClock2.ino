@@ -74,7 +74,7 @@
   //#define RGB_MIN_BRIGHTNESS 8   //Neopixel leds minimum brightness
   //#define RGB_MAX_BRIGHTNESS 255 //Neopixel leds maximum brightness
   //#define RADAR_PIN -1          //Radar sensor pin
-  //#define RADAR_TIMEOUT 300     //Automatic switch off tubes (without radar detecting somebody) after xxx sec
+  //#define RADAR_TIMEOUT 5     //Automatic switch off tubes (without radar detecting somebody) after xxx min
   //#define TUBE_POWER_PIN -1     //Filament or HV switch ON/OFF pin
   //#define TUBE_POWER_ON HIGH    //HIGH or LOW level is needed to switch ON the TUBE POWER?
   //#define LIGHT_SENSOR_PIN -1   //Environment light sensor, only ADC pins are usable! ESP32 for example: 34,35,36,39... 8266: only A0
@@ -316,7 +316,7 @@ struct {
   boolean enableDoubleBlink;       //both separator points are blinking (6 or 8 tubes VFD clock)
   boolean enableAutoDim = false;   //Automatic dimming by luxmeter
   boolean enableRadar = false;     //Radar sensor
-  int radarTimeout = 300;          //sec
+  int radarTimeout = 5;          //min
   float corrT0 = 0;
   float corrT1 = 0;
   float corrH0 = 0;
@@ -1019,6 +1019,7 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
     }
     else if (key == "radarTimeout"){
       prm.radarTimeout = value.toInt();
+      if (prm.radarTimeout>60) prm.radarTimeout = 60;
     }  
     else if (key == "tempCF") {
       prm.tempCF = (value == "true");
@@ -1564,7 +1565,7 @@ void factoryReset() {
   #endif  
   prm.enableAutoDim = false;          //Automatic dimming by luxmeter
   prm.enableRadar = false;            //Radar sensor
-  prm.radarTimeout = 300;             //sec
+  prm.radarTimeout = 5;             //min
   prm.corrT0 = 0;
   prm.corrT1 = 0;
   prm.corrH0 = 0;
@@ -2202,7 +2203,7 @@ void checkTubePowerOnOff(void) {
 
     #if RADAR_PIN >=0
       if (digitalRead(RADAR_PIN) == HIGH) lastON = millis(); 
-      radarON = ((millis()-lastON)<1000l*prm.radarTimeout);
+      radarON = ((millis()-lastON)<60000l*prm.radarTimeout);
       if (radarON != oldRadarON) {
         oldRadarON = radarON;
         if (radarON) DPRINTLN("RADAR: Switching ON tubes.");

@@ -44,7 +44,7 @@ var controlInfos = {
 	"enableDoubleBlink": "Enable both blinking dots",             
 	"enableAutoDim": "Enable auto brightness control (if sensor is installed)",  
 	"enableRadar": "Enable Radar/Pir tube switch (if sensor is installed)",   
-	"radarTimeout": "If Radar is used, automatic switch off after this timeout (sec)",         
+	"radarTimeout": "If Radar is used, automatic switch off after this timeout (minutes)",         
 
     //RGB settings	
     "rgbDir" : "RGB animation direction (left/right)",
@@ -117,7 +117,7 @@ var configuration = {
 	"enableDoubleBlink": true,             
 	"enableAutoDim": false,  
 	"enableRadar": false,   
-	"radarTimeout": 300,         
+	"radarTimeout": 5,         
 
     //RGB settings	
     "rgbDir" : true,
