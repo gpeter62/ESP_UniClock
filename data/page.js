@@ -287,7 +287,7 @@ function Init(){
         },600);
     }
 
-    $('input[type="range"]').on('input',function(){
+    $('input[type="range"]').on('mousedown touchstart input',function(){
         clearTimeout(sliderFadeOutTimer);
         var id = $(this).attr('id');
         var parent = $(this).closest('.control-holder');
