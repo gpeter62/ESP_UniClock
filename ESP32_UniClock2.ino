@@ -521,7 +521,7 @@ void startWifiMode() {
     DPRINT('.');
     counter++;
     delay(1000);
-    if (counter>10) return;
+    if (counter>5) return;
   }
   DPRINTLN(" ");
 /*

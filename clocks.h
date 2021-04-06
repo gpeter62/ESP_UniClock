@@ -451,7 +451,7 @@
   #define WEBNAME "ESP32UniClock 3.0"
 #endif
 
-#ifdef CLOCK_33   //TOM025 ESP32, Pálfi S. board, 6 x Z573M Nixie tubes
+#ifdef CLOCK_33   //TOM025 ESP32, Palfi S. board, 6 x Z573M Nixie tubes
   #define DEBUG 
   #define FW "fw33"
   #define MAXBRIGHTNESS 100
@@ -702,7 +702,7 @@
   //#define LIGHT_SENSOR_PIN 23
   #define PIN_SDA 4             // you can set the used SDA and SCL pins
   #define PIN_SCL 32             // if it is not default value
-  #define USE_DHT_TEMP
+  //#define USE_DHT_TEMP
   //#define DHTTYPE DHT11
   #define TEMP_DHT_PIN  26
   //#define USE_RTC
