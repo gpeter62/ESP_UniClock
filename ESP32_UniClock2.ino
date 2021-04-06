@@ -670,7 +670,12 @@ void doFirmwareUpdate(){
                     break;
             }
         }
-    if (succ) doReset();
+ 
+    if (succ) {
+      DPRINTLN(" ");
+      delay(1000);
+      doReset();
+    }
     DPRINTLN(" ");
 }
 
@@ -688,7 +693,8 @@ void doCathodeProtect() {
   DPRINT("Cathode Protect is running for "); DPRINT(cathProtMin); DPRINTLN(" minutes.");
   while (true) {
    for (int i=0;i<maxDigits;i++)  {  
-    digit[i] = num;
+    if (i%2) digit[i] = num;
+    else     digit[i] = 9-num;
    } 
    writeDisplaySingle();
    Fdelay(100);
@@ -1062,16 +1068,16 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
       prm.tempCF = (value == "true");
     }   
     else if (key == "corrT0") {
-      prm.corrT0 = value.toInt();
+      prm.corrT0 = value.toFloat();
     } 
     else if (key == "corrT1") {
-      prm.corrT1 = value.toInt();
+      prm.corrT1 = value.toFloat();
     } 
     else if (key == "corrH0") {
-      prm.corrH0 = value.toInt();
+      prm.corrH0 = value.toFloat();
     } 
     else if (key == "corrH1") {
-      prm.corrH1 = value.toInt();
+      prm.corrH1 = value.toFloat();
     }        
     else if (key == "cathProtMin") {
       cathProtMin = value.toInt();
