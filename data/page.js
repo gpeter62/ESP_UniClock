@@ -68,7 +68,8 @@ var controlInfos = {
 	"corrT0": "Temperature sensor#1 correction",
 	"corrT1": "Temperature sensor#2 correction",
 	"corrH0": "Humidity sensor#1 correction",
-	"corrH1": "Humidity sensor#2 correction"	
+	"corrH1": "Humidity sensor#2 correction"	,
+	"cathProtMin": "Cathode Protect procedure (minutes)"
 };
 
 //Example config that UI recieves
@@ -141,7 +142,8 @@ var configuration = {
 	"corrT0": 0.0,
 	"corrT1": 0.0,
 	"corrH0": 0.0,
-	"corrH1": 0.0	
+	"corrH1": 0.0,
+	"cathProtMin": 5	
 };
 
 //Runs, when HTML document is fully loaded
@@ -381,7 +383,7 @@ function Init(){
 				index == 'mqttBrokerAddr' || index == 'NtpServer' ||
 				index == 'mqttBrokerUser' || index =='mqttBrokerPsw' ||
 				index == 'firmware' || index == 'corrT0' || index == 'corrT1' ||
-				index == 'corrH0' || index == 'corrH1'
+				index == 'corrH0' || index == 'corrH1' || index == 'cathProtMin'
             ){
             $('#'+index).val(value);
         }
@@ -461,6 +463,9 @@ function areYouSure(fn){
         else if(fn == "firmwareupdate"){
             callFirmwareUpdate();
         }
+        else if(fn == "cathodeProtect"){
+            callCathodeProtect();
+        }		
     }
 }
 
@@ -489,6 +494,15 @@ function callFirmwareUpdate(){
         if(!!data.header){
             showPopUp(data.header, data.content, 300, data.canClose);
         }
+    }).always(function(){
+        
+    });
+}
+
+function callCathodeProtect(){
+    if(isTest){return;}
+    $.post('/cathodeProtect/', {}).done(function(data){
+        location.reload();
     }).always(function(){
         
     });

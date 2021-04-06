@@ -240,6 +240,8 @@ volatile boolean EEPROMsaving = false; //saving in progress - stop display refre
 bool colonBlinkState = false;
 boolean radarON = true;
 boolean makeFirmwareUpdate = false;
+boolean makeCathodeProtect = false;
+int cathProtMin = 5;
 unsigned long lastTimeUpdate = 0;  //last time refresh from GPS or internet timeserver
 boolean RTCexist = false;
 boolean GPSexist = false;
@@ -672,6 +674,33 @@ void doFirmwareUpdate(){
     DPRINTLN(" ");
 }
 
+void doCathodeProtect() {
+  unsigned long started = millis();
+  byte num =0;
+  int db = prm.dayBright;  //save brightness values
+  int nb = prm.nightBright;
+  boolean ab = autoBrightness;
+  
+  prm.dayBright=MAXBRIGHTNESS;  
+  prm.nightBright = MAXBRIGHTNESS;
+  autoBrightness = false;
+  
+  DPRINT("Cathode Protect is running for "); DPRINT(cathProtMin); DPRINTLN(" minutes.");
+  while (true) {
+   for (int i=0;i<maxDigits;i++)  {  
+    digit[i] = num;
+   } 
+   writeDisplaySingle();
+   Fdelay(100);
+   num++; if (num>9) num = 0;
+   if ((millis()-started)>long(cathProtMin)*60000l) break;
+  } //end while
+  
+  prm.dayBright = db;  //restore brightness values
+  prm.nightBright = nb;
+  autoBrightness = ab; 
+}
+
 void startServer() {
   DPRINTLN("Starting Async Webserver...");
 
@@ -786,6 +815,11 @@ void startServer() {
   server.on("/firmwareupdate", HTTP_POST, [](AsyncWebServerRequest * request) {
     makeFirmwareUpdate = true;
   });
+//____________________________________________________________________________
+  server.on("/cathodeProtect", HTTP_POST, [](AsyncWebServerRequest * request) {
+    makeCathodeProtect = true;
+  });
+
 
   server.on("/saveSetting", HTTP_POST, handleConfigChanged);
   server.on("/getConfiguration", HTTP_GET, handleSendConfig);
@@ -1035,7 +1069,10 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
     } 
     else if (key == "corrH1") {
       prm.corrH1 = value.toInt();
-    }             
+    }        
+    else if (key == "cathProtMin") {
+      cathProtMin = value.toInt();
+    }    
     else  {
       paramFound = false;
     }
@@ -1182,6 +1219,7 @@ if (useTemp > 1)
   doc["corrT1"] = prm.corrT1;
   doc["corrH0"] = prm.corrH0;
   doc["corrH1"] = prm.corrH1;
+  doc["cathProtMin"] = 3;   //default value for cathProtMin slider
   String json;
   serializeJson(doc, json);
   request->send(200, "application/json", json);
@@ -1193,9 +1231,9 @@ void handleSendClockDetails(AsyncWebServerRequest *request) {
   String dat;
 
   DPRINTLN("SendClockDetails");
-  dat = String("<br>FirmwareID:") + FW + "<br>";
+  dat = String("<br><br><strong>FirmwareID:") + FW + "<br>";
   dat += String("  Tube driver:") + tubeDriver + "<br>";
-  dat += String("  Mac:") + String(WiFi.macAddress()) + "<br>";
+  dat += String("  Mac:") + String(WiFi.macAddress()) + "</strong><br>";
   dat += String("MAXBRIGHTNESS:") + String(MAXBRIGHTNESS) + "<br>";
   if (RTCexist) dat += String("RTC exist: YES <br>");
   if (useTemp>0) dat += String("Temperature sensors:") + useTemp + "<br>";
@@ -1327,7 +1365,14 @@ void setup() {
       ledcSetup(2, 200, 8); // 12
     #endif
   #endif
-    
+  
+  #if PIN_EXTINP1>=0
+    pinMode(PIN_EXTINP1, INPUT); regPin(PIN_EXTINP1,"NOT_USED_INPUT");
+  #endif
+  #if PIN_EXTINP2>=0
+    pinMode(PIN_EXTINP2, INPUT); regPin(PIN_EXTINP2,"NOT_USED_INPUT");
+  #endif
+      
   #if TEMP_DALLAS_PIN >= 0 
     setupDallasTemp();
   #endif
@@ -2318,6 +2363,10 @@ void loop(void) {
     makeFirmwareUpdate = false;
     doFirmwareUpdate();
   }
+  if (makeCathodeProtect) {
+    makeCathodeProtect = false;
+    doCathodeProtect();
+  }  
   yield();
 }
 

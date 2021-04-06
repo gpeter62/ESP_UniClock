@@ -374,17 +374,21 @@
                 </div>					
             </div>		
             <div page="settings" hidden="true">
+				<div class="control-holder">			
+                    <label>CathodeProtect (minutes)</label>
+                    <input type="range" min="1" max="60" step="1" class="slider" id="cathProtMin">
+					<button id="cath-prot-btn" onclick="areYouSure('cathodeProtect')">Cathode Protect</button>
+                </div>				
                 <div class="control-holder">
                     <label>Firmware Server</label>
                     <input type="text" id="firmware">
-                </div>
-                <div class="control-holder">
                     <button id="fw-update-btn" onclick="areYouSure('firmwareupdate')">Firmware Update</button>
                 </div>
                 <div class="control-holder">
+					<label>_____________________</label>
                     <button id="restart-btn" onclick="areYouSure('reset')">Restart</button>
-                    <button id="factory-reset-btn" onclick="areYouSure('factoryreset')">Factory Reset</button>
-                </div>
+					<button id="factory-reset-btn" onclick="areYouSure('factoryreset')">Factory Reset</button>
+				</div>	
                 <div id="clock-details">
 
                 </div>              

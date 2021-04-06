@@ -37,9 +37,9 @@
 //#define CLOCK_46  //V1  ESP32, UNFI 6 x IV-9 Numitron clock
 //#define CLOCK_47  //V3  ESP32, UNFI board, 6 x Z573M Nixie tubes
 //--------------------------------------------------------------------------------------------------------------
-#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
+//#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_51   //V2  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
-//#define CLOCK_52   //ESP32,    P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
+#define CLOCK_52   //ESP32,    P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_53   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_54   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
 //#define CLOCK_55   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock
@@ -823,6 +823,8 @@
   //#define USE_SHT21               //I2C Temperature + humidity
   //#define PIN_SDA  4              // you can set the used SDA and SCL pins
   //#define PIN_SCL 32              // if it is not default value
+  #define PIN_EXTINP1  4           //extra input pin (not used)
+  #define PIN_EXTINP2  32          //extra input pin (not used)
   #define USE_RTC    
   #define PIN_SDA 27               //D1   SDA/SCL swapped
   #define PIN_SCL 26               //D2
