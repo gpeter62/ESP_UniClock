@@ -146,8 +146,16 @@ var configuration = {
 	"cathProtMin": 5	
 };
 
+var isMouseDown = 0;
 //Runs, when HTML document is fully loaded
 $(document).ready(function(){    
+    $(document).on('mousedown, touchstart',function(event) {
+        ++isMouseDown;
+    });
+    $(document).on('mouseup, touchend',function(event) {
+        --isMouseDown;
+    });
+
     if(isTest){
         Init();
         setCurrentInfos();
@@ -265,6 +273,20 @@ function Init(){
     });
 
     var sliderFadeOutTimer;
+    function setFadeOutTimer(element){
+        setTimeout(function(){
+            if(isMouseDown > 0){
+                clearTimeout(sliderFadeOutTimer);
+                sliderFadeOutTimer = setFadeOutTimer(element);
+            }
+            else{
+                $(element).addClass('fading').fadeOut('slow',function(){
+                    $(this).remove();
+                });
+            }
+        },600);
+    }
+
     $('input[type="range"]').on('input',function(){
         clearTimeout(sliderFadeOutTimer);
         var id = $(this).attr('id');
@@ -281,11 +303,7 @@ function Init(){
             $(parent).children('.slider-info').fadeIn(300);
         }
         var _this = $(parent).children('.slider-info').text($(this).val());
-        sliderFadeOutTimer = setTimeout(function(){
-            $(_this).addClass('fading').fadeOut('slow',function(){
-                $(this).remove();
-            });
-        },600);
+        sliderFadeOutTimer = setFadeOutTimer(_this);
     });
 
     $('.form label').on('click',function(){
@@ -440,6 +458,10 @@ function Init(){
         });
         $('#dateMode').on('change',function(){
             configuration["dateMode"] = $(this).val();
+            setCurrentInfos();
+        });
+        $('#tempCF').on('change',function(){
+            configuration["tempCF"] = !configuration["tempCF"];
             setCurrentInfos();
         });
     },200);
