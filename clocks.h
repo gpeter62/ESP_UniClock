@@ -30,7 +30,7 @@
 
 //#define CLOCK_40  //V1  ESP32, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_41  //V2  ESP32, UNFI 6 x IV-11 VFD tubes clock (átkötés)
-//#define CLOCK_42  //V3  ESP32, UNFI 6 x IV-11 VFD tubes clock
+#define CLOCK_42  //V3  ESP32, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_43  //V1  ESP32, UNFI 6 x Z573M Nixie tubes
 //#define CLOCK_44  //V2  ESP32, UNFI 6 x Z573M Nixie tubes (átkötés)
 //#define CLOCK_45  //V3  ESP32, UNFI 6 x Z573M Nixie tubes
@@ -39,7 +39,7 @@
 //--------------------------------------------------------------------------------------------------------------
 //#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_51   //V2  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
-#define CLOCK_52   //ESP32,    P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
+//#define CLOCK_52   //ESP32,    P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_53   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_54   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
 //#define CLOCK_55   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock
@@ -561,7 +561,7 @@
     #define PIN_BL    32  // Shift Register Blank (1=display off     0=display on)
   #define ALARMSPEAKER_PIN 2   //Alarm buzzer pin                                            
   #define ALARMBUTTON_PIN 0    //Alarm switch off button pin
-  #define TUBE_POWER_PIN 23
+  #define TUBE_POWER_PIN 27
   #define TUBE_POWER_ON  HIGH 
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   #define AP_NAME "UNFICLOCK32"
@@ -702,7 +702,7 @@
   //#define LIGHT_SENSOR_PIN 23
   #define PIN_SDA 4             // you can set the used SDA and SCL pins
   #define PIN_SCL 32             // if it is not default value
-  //#define USE_DHT_TEMP
+  #define USE_DHT_TEMP
   //#define DHTTYPE DHT11
   #define TEMP_DHT_PIN  26
   //#define USE_RTC
