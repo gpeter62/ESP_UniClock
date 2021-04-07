@@ -628,14 +628,15 @@ void doFirmwareUpdate(){
     yield();
     String fname = String(prm.firmwareServer)+"/"+String(FW)+".bin";
     DPRINT("Update firmware: "); DPRINTLN(fname);
-    t_httpUpdate_return ret;
+    t_httpUpdate_return ret,ret2;
     boolean succ = false;
+    
     ESPhttpUpdate.rebootOnUpdate(false);
     ret = ESPhttpUpdate.update(fname);
-
     switch(ret) {
             case HTTP_UPDATE_FAILED:
                 DPRINTF("HTTP_UPDATE_FAILED Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+                DPRINTLN(" ");
                 break;
 
             case HTTP_UPDATE_NO_UPDATES:
@@ -644,20 +645,18 @@ void doFirmwareUpdate(){
 
             case HTTP_UPDATE_OK:
                 DPRINTLN("HTTP_UPDATE_OK");
-                delay(1000);
                 succ = true;
                 break;
     }
         
     fname = String(prm.firmwareServer)+"/"+String(FW)+".spiffs.bin";
     DPRINT("Update SPIFFS: "); DPRINTLN(fname);
+    ret2 = ESPhttpUpdate.updateSpiffs(fname);
 
-    ret = ESPhttpUpdate.updateSpiffs(fname);
-      if(ret == HTTP_UPDATE_OK) {
-
-            switch(ret) {
+            switch(ret2) {
                 case HTTP_UPDATE_FAILED:
                     DPRINTF("HTTP_UPDATE_FAILED Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+                    DPRINTLN(" ");
                     break;
 
                 case HTTP_UPDATE_NO_UPDATES:
@@ -669,7 +668,6 @@ void doFirmwareUpdate(){
                     succ = true;
                     break;
             }
-        }
  
     if (succ) {
       DPRINTLN(" ");
@@ -2259,7 +2257,7 @@ void checkTubePowerOnOff(void) {
 
     #if RADAR_PIN >=0
       if (digitalRead(RADAR_PIN) == HIGH) lastON = millis(); 
-      radarON = ((millis()-lastON)<60000l*prm.radarTimeout);
+      radarON = ((millis()-lastON)<60000l*long(prm.radarTimeout));
       if (radarON != oldRadarON) {
         oldRadarON = radarON;
         if (radarON) DPRINTLN("RADAR: Switching ON tubes.");
