@@ -130,16 +130,18 @@ void ICACHE_RAM_ATTR shift(uint32_t Data) {
 
   for (uint32_t i = 0; i < 32; i++) {
     digitalWrite(PIN_CLK, HIGH);
+    for (int t=0;t<20;t++) asm volatile ("nop");
     if (SHIFT_LSB_FIRST)
       b = ((Data & (uint32_t(1) << i))) > 0;  //LSB first
     else
       b = (Data & (uint32_t(1) << (31 - i))) > 0; //MSB first
     digitalWrite(PIN_DIN, b);
-    for (int t=0;t<7;t++) asm volatile ("nop");
+    for (int t=0;t<20;t++) asm volatile ("nop");
     digitalWrite(PIN_CLK, LOW);  //falling CLK  to store DIN
-    for (int t=0;t<7;t++) asm volatile ("nop");
+    for (int t=0;t<20;t++) asm volatile ("nop");
   }
   digitalWrite(PIN_CLK, HIGH);
+  for (int t=0;t<20;t++) asm volatile ("nop");
 }
 
 void clearTubes() {

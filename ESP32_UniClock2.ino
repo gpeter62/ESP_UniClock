@@ -239,6 +239,7 @@ volatile boolean EEPROMsaving = false; //saving in progress - stop display refre
 
 bool colonBlinkState = false;
 boolean radarON = true;
+unsigned long radarLastOn = 0;
 boolean makeFirmwareUpdate = false;
 boolean makeCathodeProtect = false;
 int cathProtMin = 5;
@@ -1057,10 +1058,14 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
     }
     else if (key == "enableRadar")  {
       prm.enableRadar = (value == "true");
+      radarLastOn = millis();
+      radarON = true;
     }
     else if (key == "radarTimeout"){
       prm.radarTimeout = value.toInt();
       if (prm.radarTimeout>60) prm.radarTimeout = 60;
+      radarLastOn = millis();
+      radarON = true;
     }  
     else if (key == "tempCF") {
       prm.tempCF = (value == "true");
@@ -2249,21 +2254,24 @@ void printDigits(unsigned long timeout) {
 
 void checkTubePowerOnOff(void) {
     static unsigned long lastRun = 0;
-    static unsigned long lastON = 0;
-    static boolean oldRadarON = true;
     
-    if ((millis()-lastRun)<1000) return;
+    if ((millis()-lastRun)<500) return;
     lastRun = millis();
 
     #if RADAR_PIN >=0
-      if (digitalRead(RADAR_PIN) == HIGH) lastON = millis(); 
-      radarON = ((millis()-lastON)<60000l*long(prm.radarTimeout));
-      if (radarON != oldRadarON) {
-        oldRadarON = radarON;
-        if (radarON) DPRINTLN("RADAR: Switching ON tubes.");
-        else DPRINTLN("RADAR: Switching OFF tubes.");
+      boolean newP = digitalRead(RADAR_PIN);
+      if (!radarON && newP) {   //check, is switching ON?
+        DPRINTLN("RADAR: Switching ON tubes.");
       }
-      //DPRINT("RadarON:"); DPRINT(radarON);  DPRINT(":"); DPRINTLN((millis()-lastON));
+      if (newP) {  //restart timeout
+        radarLastOn = millis();
+        radarON = true;
+      }
+      if (radarON && (millis()-radarLastOn)>60000ul*uint32_t(prm.radarTimeout)) {   //check if should switch off?
+                radarON = false;
+                DPRINTLN("RADAR: Switching OFF tubes.");
+      }
+      //DPRINT("RadarON:"); DPRINT(radarON);  DPRINT(":"); DPRINTLN((millis()-radarLastOn));
     #else
       radarON = true;  //without radar sensor, always ON 
     #endif
