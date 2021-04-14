@@ -6,7 +6,7 @@ char tubeDriver[] = "Numitron_4511N";
 //byte digitEnablePins[] = {13,12,14,16};    //define here the digit enable pins from 4 to 8
 //byte ABCDPins[4] = {4,0,2,15};
 
-const int maxDigits = sizeof(digitEnablePins);
+int maxDigits = sizeof(digitEnablePins);
 
 #if defined(ESP32)
   int DRAM_ATTR PWMrefresh=5500;   ////msec, Multiplex time period. Greater value => slower multiplex frequency

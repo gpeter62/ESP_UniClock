@@ -30,14 +30,14 @@
 
 //#define CLOCK_40  //V1  ESP32, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_41  //V2  ESP32, UNFI 6 x IV-11 VFD tubes clock (átkötés)
-#define CLOCK_42  //V3  ESP32, UNFI 6 x IV-11 VFD tubes clock
+//#define CLOCK_42  //V3  ESP32, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_43  //V1  ESP32, UNFI 6 x Z573M Nixie tubes
 //#define CLOCK_44  //V2  ESP32, UNFI 6 x Z573M Nixie tubes (átkötés)
 //#define CLOCK_45  //V3  ESP32, UNFI 6 x Z573M Nixie tubes
 //#define CLOCK_46  //V1  ESP32, UNFI 6 x IV-9 Numitron clock
 //#define CLOCK_47  //V3  ESP32, UNFI board, 6 x Z573M Nixie tubes
 //--------------------------------------------------------------------------------------------------------------
-//#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
+#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_51   //V2  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_52   //ESP32,    P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_53   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
@@ -55,8 +55,8 @@
   //#define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN -1    //Dallas temp sensor pin.  If not used, SET TO -1    
   #define MULTIPLEX74141
-  const byte digitEnablePins[] = {14,12,13,15};   //IN16 4x tube clock
-  const byte ABCDPins[4] =  {2,4,5,0};   
+  byte digitEnablePins[] = {14,12,13,15};   //IN16 4x tube clock
+  byte ABCDPins[4] =  {2,4,5,0};   
   #define DP_PIN -1             // decimalPoint inside Nixie tube, set -1, if not used!
   #define COLON_PIN   16        //Blinking Colon pin.  If not used, SET TO -1      
   #define AP_NAME "UNICLOCK"
@@ -72,8 +72,8 @@
   //#define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN -1    //Dallas temp sensor pin.  
   #define MULTIPLEX74141
-  const byte digitEnablePins[] = {13,12,14,15};  
-  const byte ABCDPins[4] = {16,5,4,0};
+  byte digitEnablePins[] = {13,12,14,15};  
+  byte ABCDPins[4] = {16,5,4,0};
   #define DP_PIN -1             // decimalPoint inside Nixie tube, set -1, if not used!
   #define COLON_PIN   2        //Blinking Colon pin.  If not used, SET TO -1          
   #define ALARMSPEAKER_PIN -1   //Alarm buzzer pin                             
@@ -285,8 +285,8 @@
   #define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN 3 //RX
   #define MULTIPLEX74141
-  const byte digitEnablePins[] = {15,13,12,14};   
-  const byte ABCDPins[4] =  {2,4,5,0};
+  byte digitEnablePins[] = {15,13,12,14};   
+  byte ABCDPins[4] =  {2,4,5,0};
   #define DP_PIN  -1 // decimalPoint inside Nixie tube, set -1, if not used!
   #define ENABLE_CLOCK_DISPLAY true  //don't display date/time!!!
   #define DATE_REPEAT_MIN 3       //show date only every xxx minute. If zero, datum is never displayed
@@ -309,8 +309,8 @@
   #define DHTTYPE DHT22
   #define TEMP_DHT_PIN  3  //RX
   #define MULTIPLEX74141
-  const byte digitEnablePins[] = {15,13,12,14};  
-  const byte ABCDPins[4] =  {2,4,5,0};
+  byte digitEnablePins[] = {15,13,12,14};  
+  byte ABCDPins[4] =  {2,4,5,0};
   #define DP_PIN -1             // decimalPoint inside Nixie tube, set -1, if not used!
   #define ENABLE_CLOCK_DISPLAY false  //don't display date/time!!!
   #define SHIFT_TUBES_LEFT_BY_1 //shift left IP address by 1 tube the display, if a thermometer is used with spec tube
@@ -339,8 +339,8 @@
   #define DHTTYPE DHT22
   #define TEMP_DHT_PIN  1
   #define MULTIPLEX74141
-  const byte digitEnablePins[] = {15,13,12,14};  
-  const byte ABCDPins[4] =  {2,4,5,0};
+  byte digitEnablePins[] = {15,13,12,14};  
+  byte ABCDPins[4] =  {2,4,5,0};
   #define DP_PIN -1             // decimalPoint inside Nixie tube, set -1, if not used!
   #define ENABLE_CLOCK_DISPLAY false  //don't display date/time!!!
   #define SHIFT_TUBES_LEFT_BY_1 //shift left by 1 tube the display, if a thermometer is used with spec tube
@@ -408,8 +408,8 @@
   #define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN 23    //Dallas temp sensor pin.  If not used, SET TO -1    
   #define MULTIPLEX74141_ESP32
-  const byte digitEnablePins[] = {4,16,17,5,18,19};   //ESP32 6x tube Clock
-  const byte ABCDPins[4] =  {12,27,14,13};   
+  byte digitEnablePins[] = {4,16,17,5,18,19};   //ESP32 6x tube Clock
+  byte ABCDPins[4] =  {12,27,14,13};   
   #define DP_PIN 15             // decimalPoint inside Nixie tube, set -1, if not used!
   #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
   //#define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
@@ -461,8 +461,8 @@
   //#define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN 23    //Dallas temp sensor pin.  If not used, SET TO -1    
   #define MULTIPLEX74141_ESP32
-  const byte digitEnablePins[] = {22,23,21,19,12,14};   //ESP32 6x tube Clock
-  const byte ABCDPins[4] =  {18,5,16,17};   
+  byte digitEnablePins[] = {22,23,21,19,12,14};   //ESP32 6x tube Clock
+  byte ABCDPins[4] =  {18,5,16,17};   
   #define DP_PIN 15             // decimalPoint inside Nixie tube, set -1, if not used!
   #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
   //#define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
@@ -583,8 +583,8 @@
   //#define TEMP_DHT_PIN 25
   #define TEMP_DALLAS_PIN 25    //Dallas temp sensor pin.  If not used, SET TO -1    
   #define MULTIPLEX74141_ESP32
-  const byte digitEnablePins[] = {26,18,33,19,23,5};   //ESP32 6x tube Clock
-  const byte ABCDPins[4] =  {32,16,4,17};   
+  byte DRAM_ATTR digitEnablePins[] = {26,18,33,19,23,5};   //ESP32 6x tube Clock
+  byte DRAM_ATTR ABCDPins[4] =  {32,16,4,17};   
   #define DP_PIN 27             // decimalPoint inside Nixie tube, set -1, if not used!
   #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
   //#define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
@@ -594,7 +594,7 @@
   #define ALARM_ON HIGH
   #define AP_NAME "UNFICLOCK32"
   #define AP_PASSWORD ""
-  #define WEBNAME "ESP32 Z573M Nixie-Clock"
+  #define WEBNAME "Z573M Nixie-Clock"
 #endif
 
 #ifdef CLOCK_44   //V2  ESP32, UNFI board, 6 x Z573M Nixie tubes (átkötéses)
@@ -610,8 +610,8 @@
   //#define TEMP_DHT_PIN 4
   #define TEMP_DALLAS_PIN 4    //Dallas temp sensor pin.  If not used, SET TO -1    
   #define MULTIPLEX74141_ESP32
-  const byte digitEnablePins[] = {26,18,33,19,5,25};   //ESP32 6x tube Clock
-  const byte ABCDPins[4] =  {21,16,22,17};   
+  byte digitEnablePins[] = {26,18,33,19,5,25};   //ESP32 6x tube Clock
+  byte ABCDPins[4] =  {21,16,22,17};   
   #define DP_PIN 27             // decimalPoint inside Nixie tube, set -1, if not used!
   #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
   //#define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
@@ -637,8 +637,8 @@
   //#define TEMP_DHT_PIN 22
   #define TEMP_DALLAS_PIN 22    //Dallas temp sensor pin.  If not used, SET TO -1    
   #define MULTIPLEX74141_ESP32
-  const byte digitEnablePins[] = {26,18,33,19,23,5};   //ESP32 6x tube Clock
-  const byte ABCDPins[4] =  {32,16,4,17};   
+  byte digitEnablePins[] = {26,18,33,19,23,5};   //ESP32 6x tube Clock
+  byte ABCDPins[4] =  {32,16,4,17};   
   #define DP_PIN 27             // decimalPoint inside Nixie tube, set -1, if not used!
   #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
   //#define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
@@ -674,8 +674,8 @@
   #define Numitron_4511N
   #define PCB_VERSION 32
   #define LTBIpin 23
-  const byte digitEnablePins[] = {4,16,17,32,21,25};   //ESP32 6x tube Clock
-  const byte ABCDPins[4] =  {19,18,26,33};   
+  byte digitEnablePins[] = {4,16,17,32,21,25};   //ESP32 6x tube Clock
+  byte ABCDPins[4] =  {19,18,26,33};   
   #define DP_PIN -1             // decimalPoint inside Nixie tube, set -1, if not used!
   #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
   //#define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
@@ -719,8 +719,9 @@
   #define PIN_DIN  22   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
   #define PIN_CLK  17   // Clock
   #define PIN_OE   21   // OutputEnable
-  const int maxDigits = 6;
-  byte digitPins[maxDigits+1][10] = {            ////Data pin numbers 100+ means: chip1 pins are used. Chip0-s DOUT is connected to chip1's DIN
+  #define MAXDIGITS 6
+  int maxDigits = MAXDIGITS;
+  byte digitPins[MAXDIGITS+1][10] = {            ////Data pin numbers 100+ means: chip1 pins are used. Chip0-s DOUT is connected to chip1's DIN
     {2,10,9,8,7,6,5,4,3,1},                      //sec  1 , chip0  (tube#0)
     {11,32,20,19,18,17,16,15,14,13},             //sec  10 , chip0 (tube#1)
     {22,31,29,30,27,28,25,26,23,24},             //min   1 , chip0 (tube#2)
@@ -775,8 +776,9 @@
   #define PIN_DIN  22   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
   #define PIN_CLK  17   // Clock
   #define PIN_OE   21   // OutputEnable
-  const int maxDigits = 6;
-  byte digitPins[maxDigits+1][10] = {            ////Data pin numbers 100+ means: chip1 pins are used. Chip0-s DOUT is connected to chip1's DIN
+  #define MAXDIGITS 6
+  int maxDigits = MAXDIGITS;
+  byte digitPins[MAXDIGITS+1][10] = {
     {2,10,9,8,7,6,5,4,3,1},                      //sec  1 , chip0  (tube#0)
     {11,32,20,19,18,17,16,15,14,13},             //sec  10 , chip0 (tube#1)
     {22,31,29,30,27,28,25,26,23,24},             //min   1 , chip0 (tube#2)
@@ -833,8 +835,9 @@
   #define PIN_DIN  16   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
   #define PIN_CLK  17   // Clock
   #define PIN_OE   21   // OutputEnable
-  const int maxDigits = 6;
-  byte digitPins[maxDigits+1][10] = {
+  #define MAXDIGITS 6
+  int maxDigits = MAXDIGITS;
+  byte digitPins[MAXDIGITS+1][10] = {            ////Data pin numbers 100+ means: chip1 pins are used. Chip0-s DOUT is connected to chip1's DIN
     {126,127,128,130,124,123,132,131,129,125},            //hour 10 , CHIP0
     {116,117,118,120,114,113,122,121,119,115},            //hour 1 , CHIP0
     {104,105,106,108,102,101,110,109,107,103},            //min 10 , CHIP0
@@ -889,8 +892,9 @@
   #define PIN_DIN  5   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
   #define PIN_CLK  0   // Clock
   #define PIN_OE   4   // OutputEnable
-  const int maxDigits = 6;
-  byte digitPins[maxDigits+1][10] = {
+  #define MAXDIGITS 6
+  int maxDigits = MAXDIGITS;
+  byte digitPins[MAXDIGITS+1][10] = {            ////Data pin numbers 100+ means: chip1 pins are used. Chip0-s DOUT is connected to chip1's DIN
     {2,10,9,8,7,6,5,4,3,1},            //sec  1 , chip0
     {11,32,20,19,18,17,16,15,14,13},  //sec  10 , chip0
     {22,31,29,30,27,28,25,26,23,24},  //min   1 , chip0
@@ -943,8 +947,9 @@
   #define PIN_DIN  23   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
   #define PIN_CLK  18   // Clock
   #define PIN_OE   5  // OutputEnable
-  const int maxDigits = 6;
-  byte digitPins[maxDigits+1][10] = {
+  #define MAXDIGITS 6
+  int maxDigits = MAXDIGITS;
+  byte digitPins[MAXDIGITS+1][10] = {            ////Data pin numbers 100+ means: chip1 pins are used. Chip0-s DOUT is connected to chip1's DIN
     {121,122,123,124,125,126,127,128,129,130},  //sec   1 , chip1
     {111,112,113,114,115,116,117,118,119,120},  //sec  10 , chip1
     {101,102,103,104,105,106,107,108,109,110},  //min   1 , chip1
@@ -1000,8 +1005,9 @@
   #define PIN_DIN  5   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
   #define PIN_CLK  0   // Clock
   #define PIN_OE   4   // OutputEnable
-  const int maxDigits = 6;
-  byte digitPins[maxDigits+1][10] = {            ////Data pin numbers 100+ means: chip1 pins are used. Chip0-s DOUT is connected to chip1's DIN
+  #define MAXDIGITS 6
+  int maxDigits = MAXDIGITS;
+  byte digitPins[MAXDIGITS+1][10] = {            ////Data pin numbers 100+ means: chip1 pins are used. Chip0-s DOUT is connected to chip1's DIN
     {2,10,9,8,7,6,5,4,3,1},                      //sec  1 , chip0  (tube#0)
     {11,32,20,19,18,17,16,15,14,13},             //sec  10 , chip0 (tube#1)
     {22,31,29,30,27,28,25,26,23,24},             //min   1 , chip0 (tube#2)
@@ -1087,8 +1093,8 @@
   //#define TEMP_DHT_PIN 25
   #define TEMP_DALLAS_PIN 25    //Dallas temp sensor pin.  If not used, SET TO -1    
   #define MULTIPLEX74141_ESP32
-  const byte digitEnablePins[] = {26,18,33,19,23,5};   //ESP32 6x tube Clock
-  const byte ABCDPins[4] =  {32,16,4,17};   
+  byte digitEnablePins[] = {26,18,33,19,23,5};   //ESP32 6x tube Clock
+  byte ABCDPins[4] =  {32,16,4,17};   
   #define DP_PIN 27             // decimalPoint inside Nixie tube, set -1, if not used!
   #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
   //#define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
@@ -1202,8 +1208,8 @@
   #define Numitron_4511N
   #define PCB_VERSION 32
   #define LTBIpin 23
-  const byte digitEnablePins[] = {4,16,17,32,21,25};   //ESP32 6x tube Clock
-  const byte ABCDPins[4] =  {19,18,26,33};   
+  byte digitEnablePins[] = {4,16,17,32,21,25};   //ESP32 6x tube Clock
+  byte ABCDPins[4] =  {19,18,26,33};   
   #define DP_PIN 23             // decimalPoint inside Nixie tube, set -1, if not used!
   #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
   //#define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
@@ -1269,60 +1275,7 @@
   #define WEBNAME "Uniclock VFD"
 #endif
 
-#ifdef CLOCK_50   //ESP32 D1 mini,UNFI 2xHV5122 PCB version, 6xIN18 clock   Example clock!!!
-  #define DEBUG
-  #define FW "fw50"  //firmware name 
-  #define MAXBRIGHTNESS 100
-  #define USE_NEOPIXEL 
-  #define NEOPIXEL_PIN 27
-  byte tubePixels[] = {0,1,2,3,4,5};        //6 tubes, single leds
-  //#define USE_DALLAS_TEMP
-  #define TEMP_DALLAS_PIN 26    //Dallas temp sensor pin.  If not used, SET TO -1   
-  //#define LIGHT_SENSOR_PIN 23
-  #define PIN_SDA 4             // you can set the used SDA and SCL pins
-  #define PIN_SCL 32             // if it is not default value
-  //#define USE_DHT_TEMP
-  //#define DHTTYPE DHT11
-  //#define TEMP_DHT_PIN  23
-  //#define USE_BME280            //I2C Temperature + humidity + pressure
-  //#define USE_BMP280            //I2C Temperature + barometric  pressure
-  //#define USE_AHTX0             //I2C Temperature + humidity
-  //#define USE_SHT21             //I2C Temperature + humidity
-  #define USE_BH1750            //I2C luxmeter sensor
-//_______________________________ HV5122 setup ____________________________________________________  
-  #define HV5122
-  #define PIN_DIN  22   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
-  #define PIN_CLK  17   // Clock
-  #define PIN_OE   21   // OutputEnable
-  const int maxDigits = 6;
-  byte digitPins[maxDigits+1][10] = {            ////Data pin numbers 100+ means: chip1 pins are used. Chip0-s DOUT is connected to chip1's DIN
-    {2,10,9,8,7,6,5,4,3,1},                      //sec  1 , chip0  (tube#0)
-    {11,32,20,19,18,17,16,15,14,13},             //sec  10 , chip0 (tube#1)
-    {22,31,29,30,27,28,25,26,23,24},             //min   1 , chip0 (tube#2)
-    {101,131,110,109,108,107,106,105,104,103},   //min  10 , chip1 (tube#3)
-    {111,132,120,119,118,117,116,115,114,113},   //hour  1 , chip1 (tube#4)
-    {122,129,130,127,128,125,126,123,124,121},   //hour 10 , chip1 (tube#5)
-    {0,12,21,102,112,0,    0,0,0,0}              //extra decimalPoint/blinking dots (tube0...tube6)
-    };    
-   //#define MAKE_BLINKING_DOTS //it means, the extra datapins are used as 4 blinking dot instead of decimal points!  #1..#4 positions are used
-//___________________________________________________________________________________    
-  #define ALARMSPEAKER_PIN 16   //Alarm buzzer pin                                            
-  #define ALARMBUTTON_PIN 23    //Alarm switch off button pin 
-  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
-  //#define RADAR_PIN 4
-  #define RADAR_TIMEOUT 5  //min
-  //#define TUBE_POWER_PIN 4
-  #define TUBE_POWER_ON  LOW
-  #define ENABLE_CLOCK_DISPLAY true  
-  #define DATE_REPEAT_MIN 3       //show date only every xxx minute. If zero, datum is never displayed
-  //#define SHIFT_TUBES_LEFT_BY_1 //shift left by 1 tube the display, if a thermometer is used with spec tube
-  #define TEMP_CHARCODE 10
-  #define GRAD_CHARCODE 10 
-  #define PERCENT_CHARCODE 10
-  #define AP_NAME "UNICLOCK32"
-  #define AP_PASSWORD "" 
-  #define WEBNAME "Nixie Clock HV5122"
-#endif
+
 
 #ifdef CLOCK_51   //ESP32 D1 mini, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
   #define DEBUG
@@ -1347,8 +1300,9 @@
   #define PIN_DIN  16   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
   #define PIN_CLK  17   // Clock
   #define PIN_OE   21   // OutputEnable
-  const int maxDigits = 6;
-  byte digitPins[maxDigits+1][10] = {
+  #define MAXDIGITS 6
+  int maxDigits = MAXDIGITS;
+  byte digitPins[MAXDIGITS+1][10] = {            ////Data pin numbers 100+ means: chip1 pins are used. Chip0-s DOUT is connected to chip1's DIN
     {4,5,6,8,2,1,10,9,7,3},                               //hour 10 , CHIP0
     {16,17,18,20,14,13,22,21,19,15},                      //hour 1 , CHIP0
     {26,27,28,30,24,23,32,31,29,25},                      //min 10 , CHIP0
@@ -1406,8 +1360,9 @@
   #define PIN_DIN  5   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
   #define PIN_CLK  0   // Clock
   #define PIN_OE   4   // OutputEnable
-  const int maxDigits = 6;
-  byte digitPins[maxDigits+1][10] = {
+  #define MAXDIGITS 6
+  int maxDigits = MAXDIGITS;
+  byte digitPins[MAXDIGITS+1][10] = {            ////Data pin numbers 100+ means: chip1 pins are used. Chip0-s DOUT is connected to chip1's DIN
     {2,10,9,8,7,6,5,4,3,1},            //sec  1 , chip0
     {11,32,20,19,18,17,16,15,14,13},  //sec  10 , chip0
     {22,31,29,30,27,28,25,26,23,24},  //min   1 , chip0
@@ -1464,8 +1419,9 @@
   #define PIN_DIN  23   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
   #define PIN_CLK  18   // Clock
   #define PIN_OE   5  // OutputEnable
-  const int maxDigits = 6;
-  byte digitPins[maxDigits+1][10] = {
+  #define MAXDIGITS 6
+  int maxDigits = MAXDIGITS;
+  byte digitPins[MAXDIGITS+1][10] = {            ////Data pin numbers 100+ means: chip1 pins are used. Chip0-s DOUT is connected to chip1's DIN
     {121,122,123,124,125,126,127,128,129,130},  //sec   1 , chip1
     {111,112,113,114,115,116,117,118,119,120},  //sec  10 , chip1
     {101,102,103,104,105,106,107,108,109,110},  //min   1 , chip1

@@ -44,11 +44,11 @@ const int PixelCount = sizeof(tubePixels)+2;
 //NeoBrgFeature give me BGRW (g and r swapped)
 
 #if defined(ESP32)
-  const byte PixelPin = NEOPIXEL_PIN;  //on ESP32 usable any pin below 32 
+  byte PixelPin = NEOPIXEL_PIN;  //on ESP32 usable any pin below 32 
   NeoPixelBrightnessBus<NeoGrbFeature, NeoEsp32I2s1800KbpsMethod> strip(PixelCount+4,PixelPin);  //instead of NeoEsp32Rmt7Ws2812xMethod the  NeoEsp32I2s1800KbpsMethod is better!
 #else
   #define NEOPIXEL_PIN 3
-  const byte PixelPin = 3;  // on 8266 it MUST use GPIO3 (RX pin)    
+  byte PixelPin = 3;  // on 8266 it MUST use GPIO3 (RX pin)    
   NeoPixelBrightnessBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount+4);   
 #endif
                                                                               
@@ -125,7 +125,7 @@ void rainbow2() {   //Rainbow Stepper
   static int16_t j=0;
   static int16_t i=0;   
   static unsigned long lastRun = 0;
-  const int steps = 15;
+  int steps = 15;
   unsigned long spd = max(0,steps * (258-prm.rgbSpeed));
   
    if ((millis()-lastRun)<spd) return;
@@ -213,9 +213,9 @@ int colorDistance(int c1,int c2) {
 void effect3(boolean enableRandom,boolean eachPixelRandom) {
   static const int c[] = {255,5,12,22,30,40,54,62,78,85,100,110,122,137,177,WHITE_INDEX,210,227,240};
   static const int cMax = sizeof(c) / sizeof(c[0]);  //size of array
-  static int newColor[maxDigits];
-  static int oldColor[maxDigits];
-  static int actColor[maxDigits];
+  static int newColor[10];
+  static int oldColor[10];
+  static int actColor[10];
   static int i = 2;
   static int step = 1;
   static int idx = 0;
@@ -311,10 +311,10 @@ void effect3(boolean enableRandom,boolean eachPixelRandom) {
 
 
 void effect4() {    //every pixel is random changer
-  static int newColor[maxDigits];
-  static int oldColor[maxDigits];
-  static int actColor[maxDigits];
-  static int step[maxDigits];
+  static int newColor[10];
+  static int oldColor[10];
+  static int actColor[10];
+  static int step[10];
   static boolean firstRun = true;
   //unsigned long spd = max(0, 25*(258-prm.rgbSpeed));
 

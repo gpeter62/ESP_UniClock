@@ -123,6 +123,7 @@ String usedPinsStr;
 String driverSetupStr;
 
 #if defined(ESP8266)
+  #define DRAM_ATTR
   #ifndef WEBNAME
     #define WEBNAME "ESP32_UniClock 3.0"
   #endif
@@ -195,7 +196,7 @@ extern void ICACHE_RAM_ATTR writeDisplay();
 extern void writeDisplaySingle();
 extern void setup_pins();
 extern void clearTubes();
-extern const int maxDigits;
+extern int maxDigits;
 extern char tubeDriver[];
 
 char webName[] = WEBNAME;
@@ -204,12 +205,12 @@ AsyncWebServer server(80);
 #define CACHE_MAX_AGE "max-age=31536000" //maximum is: 31536000
 
 #define BUFSIZE 12
-byte digit[BUFSIZE];
-byte newDigit[BUFSIZE];
-byte oldDigit[BUFSIZE];
-boolean digitDP[BUFSIZE];   //actual value to put to display
+byte DRAM_ATTR digit[BUFSIZE];
+byte DRAM_ATTR newDigit[BUFSIZE];
+byte DRAM_ATTR oldDigit[BUFSIZE];
+boolean DRAM_ATTR digitDP[BUFSIZE];   //actual value to put to display
 boolean digitsOnly = true;  //only 0..9 numbers are possible to display?
-byte animMask[BUFSIZE];     //0 = no animation mask is used
+byte DRAM_ATTR animMask[BUFSIZE];     //0 = no animation mask is used
 
 volatile boolean dState = false;
 volatile unsigned long lastDisable = 0;
@@ -467,6 +468,12 @@ float round1(float in) {
 
 void enableDisplay(unsigned long timeout) {
   unsigned long seged2;
+  dState = true;
+  EEPROMsaving = false;
+  return;   //NOT USED ANYMORE
+
+
+  
 #if defined(ESP32) || defined(PCF_74141)  //safety mode for slow multiplex hardvare to avoid crash when write to flash memory
   if (dState) return;
   seged2 = lastDisable;
@@ -482,6 +489,8 @@ void enableDisplay(unsigned long timeout) {
 }
 
 void disableDisplay()  {
+  dState = true;  EEPROMsaving = false;
+  return;   //DO NOT USE ANYMORE!!!
 
   EEPROMsaving = true;
 
@@ -511,19 +520,20 @@ void startWifiMode() {
     WiFi.hostname(webName);
   #endif
   #if defined(ESP32)
-    //esp_wifi_set_ps (WIFI_PS_NONE);  //power saving disable!
-    esp_wifi_set_max_tx_power(78);     //Maximum output power
+    esp_wifi_set_ps (WIFI_PS_NONE);  //power saving disable!
+    //esp_wifi_set_max_tx_power(78);   //Maximum output power
   #endif
   wifiMulti.addAP(prm.wifiSsid, prm.wifiPsw);
   //wifiMulti.addAP(DEFAULT_SSID, DEFAULT_WIFIPSW);
   wifiMulti.addAP("farm32", "birka12345");  //for testing
-  DPRINTLN(" ");
-  DPRINT("Connecting to WiFi ");
+  playTubes();
+  DPRINT("\nConnecting to WiFi ");
   int counter = 0;
   while (wifiMulti.run() != WL_CONNECTED) {
     DPRINT('.');
     counter++;
-    delay(1000);
+    playTubes();
+    //yield();
     if (counter>5) return;
   }
   DPRINTLN(" ");
@@ -1434,7 +1444,7 @@ void setup() {
 #endif
     DPRINTLN("SPIFFS started.");
   }
-
+  
   if (prm.wifiMode) {
     startWifiMode();
     if (wifiMulti.run() != WL_CONNECTED) //failed to connect to wifi
@@ -1448,6 +1458,7 @@ void setup() {
   #ifdef USE_MQTT
     setupMqtt();
   #endif
+  
   clearDigits();
   delay(200);
   enableDisplay(0);
@@ -2185,6 +2196,16 @@ void testTubes(int dely) {
   memset(digitDP, 0, sizeof(digitDP));
 }
 
+void playTubes() {
+  static byte tube = 0;
+  memset(digitDP, 0, sizeof(digitDP));
+  for (int j = 0; j < maxDigits; j++) {
+    newDigit[j] = tube++ % maxDigits;
+  }
+  changeDigit();
+  writeDisplaySingle();
+  
+}
 
 void printSensors(void) {
   static unsigned long lastRun = millis();

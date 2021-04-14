@@ -4,18 +4,18 @@
 
 #if defined(ESP8266)  
   #include <SoftwareSerial.h>     // Software Serial Library so we can use other Pins for communication with the GPS module
-  static const int RXPin = 3;     //RX pin  -  remove wire, when uploading program to 8266          
-  static const int TXPin = -1;    //not used   
+  static int RXPin = 3;     //RX pin  -  remove wire, when uploading program to 8266          
+  static int TXPin = -1;    //not used   
   SoftwareSerial ss(RXPin, TXPin);  
 #else
   #include <HardwareSerial.h>   //on ESP32 no SoftwareSerial is needed
-  static const int RXPin = 25;     //RX pin 
-  static const int TXPin = -1;    //not used   
+  static int RXPin = 25;     //RX pin 
+  static int TXPin = -1;    //not used   
   HardwareSerial ss(1);  
 #endif
            
 // The serial connection to the GPS device
-static const uint32_t GPSBaud = 9600;                   // Ublox GPS default Baud Rate is 9600
+static uint32_t GPSBaud = 9600;                   // Ublox GPS default Baud Rate is 9600
 TinyGPSPlus gps;                                        // Create an Instance of the TinyGPS++ object called gps
 
 void setupGPS() { 

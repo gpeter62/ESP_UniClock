@@ -49,7 +49,7 @@ byte charDefinition[] = {
 
 #define MAXCHARS sizeof(charDefinition)
 #define MAXSEGMENTS sizeof(segmentEnablePins)
-const int maxDigits =  sizeof(digitEnablePins);
+int maxDigits =  sizeof(digitEnablePins);
 
 uint32_t charTable[MAXCHARS];              //generated pin table from segmentDefinitions
 uint32_t segmentEnableBits[MAXSEGMENTS];   //bitmaps, generated from EnablePins tables

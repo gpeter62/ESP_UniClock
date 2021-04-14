@@ -14,9 +14,9 @@ byte digitEnablePins[] = {100,101,102,103,104,105};    //6 tube nixie driven by 
 byte ABCDPins[4] = {14,12,13,2};  //D5,D6,D7,D4 on 8266
 #define DP_PIN  16 // decimalPoint on 8266's D0
 
-const int maxDigits = sizeof(digitEnablePins);
+int maxDigits = sizeof(digitEnablePins);
 
-//const byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
+//byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
 int PWMrefresh=15000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
 int PWM_min = 2000;
 int PWM_max = 14000;

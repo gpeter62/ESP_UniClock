@@ -3,14 +3,14 @@ char tubeDriver[] = "MULTIPLEX74141_ESP32";
 
 //define here the digit enable pins from 4 to 8
 
-//const byte digitEnablePins[] = {15,13,12,14};   //fox example... But SET in clocks.h !!!
-//const byte ABCDPins[4] =  {2,4,5,0};
-//const int DP_PIN = -1; // decimalPoint inside Nixie tube, set -1, if not used!
+//byte digitEnablePins[] = {15,13,12,14};   //fox example... But SET in clocks.h !!!
+//byte ABCDPins[4] =  {2,4,5,0};
+//int DP_PIN = -1; // decimalPoint inside Nixie tube, set -1, if not used!
 
-const int maxDigits = sizeof(digitEnablePins);
+int maxDigits = sizeof(digitEnablePins);
 int DRAM_ATTR maxDig = maxDigits;   //memory variable version
 
-//const byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
+//byte convert[] = {1,0,9,8,7,6,5,4,3,2};   //tube pin conversion, is needed (for example: bad tube pin layout)
 int DRAM_ATTR PWMrefresh=11000;   //msec, Multiplex time period. Greater value => slower multiplex frequency
 int DRAM_ATTR PWM_min = 1000;
 int DRAM_ATTR PWM_max = 10000;

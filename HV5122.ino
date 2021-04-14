@@ -7,7 +7,7 @@ char tubeDriver[] = "HV5122";
 //#define PIN_CLK  22   // Clock
 //#define PIN_OE   21   // OutputEnable
 
-//const int maxDigits = 6;
+//int maxDigits = 6;
 
 //Data pin numbers 100+ means: chip1 pins are used. Chip0-s DOUT is connected to chip1's DIN
 /* Example:

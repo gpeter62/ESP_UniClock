@@ -36,7 +36,7 @@ uint32_t DRAM_ATTR animationMaskBits[5];
 
 #define MAXCHARS sizeof(charDefinition)
 #define MAXSEGMENTS sizeof(segmentEnablePins)
-const int maxDigits =  sizeof(digitEnablePins);
+int maxDigits =  sizeof(digitEnablePins);
 
 uint32_t DRAM_ATTR charTable[MAXCHARS];              //generated pin table from segmentDefinitions
 uint32_t DRAM_ATTR segmentEnableBits[MAXSEGMENTS];   //bitmaps, generated from EnablePins tables
@@ -68,8 +68,6 @@ void setup_pins() {
   digitalWrite(PIN_BL,LOW);  //brightness
   pinMode(PIN_DATA,OUTPUT);  regPin(PIN_DATA,"PIN_DATA");
   pinMode(PIN_CLK, OUTPUT);  regPin(PIN_CLK,"PIN_CLK");
-  
-  maxDig = maxDigits;  //put const to memory var
   
   driverSetupStr = "MAX6921 segmentEnablePins:";
   for (int j=0;j<sizeof(segmentEnablePins);j++) {
@@ -109,7 +107,7 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
   if ((!autoBrightness) && (brightness==MAXBRIGHTNESS)) state = true;
   
   if (state) {  //ON state
-    pos++;  if (pos>maxDig-1)  {   //go to the tube#0
+    pos++;  if (pos>maxDigits-1)  {   //go to the tube#0
       pos = 0; 
       if (autoBrightness && displayON) {   //change brightness only on the tube#0
         PWMtimeBrightness = max(PWM_min,PWM_max*lx/MAXIMUM_LUX);

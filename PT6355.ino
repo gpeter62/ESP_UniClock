@@ -1,7 +1,7 @@
 #ifdef PT6355
 char tubeDriver[] = "PT6355";
-const int maxDigits = 10;
-const int wt = 5;   //Serial timing
+int maxDigits = 10;
+int wt = 5;   //Serial timing
 
 //MAX7219CNG control pins
 #define PIN_CS 15 //12 or 15     // D6 CS_

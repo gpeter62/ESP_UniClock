@@ -13,7 +13,7 @@ char tubeDriver[] = "NO_MULTIPLEX74141";
 byte tubes[] = {3,2,1,0};         //4 tubes,   old clock...     
 //byte tubes[] = {5,4,3,2,1,0};   //6 tubes, reverse order
 
-const int maxDigits = sizeof(tubes);
+int maxDigits = sizeof(tubes);
 int PWMrefresh=12000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
 int PWM_min = 1000;
 int PWM_max = 12000;
