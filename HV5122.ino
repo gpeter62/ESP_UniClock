@@ -154,7 +154,6 @@ void writeDisplaySingle() {
   uint32_t bitBuffer0 = 0;
   uint32_t bitBuffer1 = 0;
   byte num;
-  static uint32_t cnt = 0;
 
   if ((millis() - lastRun) < 50) return; //slow down!!!
   lastRun = millis();

@@ -123,7 +123,7 @@ String usedPinsStr;
 String driverSetupStr;
 
 #if defined(ESP8266)
-  #define DRAM_ATTR
+  #define DRAM_ATTR     //https://docs.espressif.com/projects/esp-idf/en/v4.3-beta2/esp32/api-reference/storage/spi_flash_concurrency.html
   #ifndef WEBNAME
     #define WEBNAME "ESP32_UniClock 3.0"
   #endif
@@ -134,8 +134,6 @@ String driverSetupStr;
     #define AP_PASSWORD ""
   #endif
   #include <ESP8266WiFi.h>
-  #include <ESP8266WiFiMulti.h>
-  ESP8266WiFiMulti wifiMulti;
   #include <ESP8266HTTPClient.h>
   #include <WiFiClient.h>
   #include <ESP8266httpUpdate.h>
@@ -154,11 +152,8 @@ String driverSetupStr;
   #ifndef AP_PASSWORD
     #define AP_PASSWORD ""
   #endif
-  
+  #include <WiFi.h>  
   #include <esp_wifi.h>
-  #include <WiFi.h>
-  #include <WiFiMulti.h>
-  WiFiMulti wifiMulti;
   #include <WiFiClient.h>
   #include <HTTPClient.h>
   #include <ESP32httpUpdate.h>
@@ -427,12 +422,14 @@ void stopTimer() {
 #endif
 }
 
+/*
 void configModeCallback (AsyncWiFiManager *myWiFiManager) {
   DPRINTLN("Switch to AP config mode...");
   DPRINTLN("To configure Wifi,  ");
   DPRINT("connect to Wifi network "); DPRINTLN(prm.wifiSsid);
   DPRINTLN("and open 192.168.4.1 in web browser");
 }
+*/
 
 void clearDigits() {
   memset(oldDigit, 10, sizeof(oldDigit));
@@ -446,8 +443,7 @@ void Fdelay(unsigned long d) {
 
   doAnimationMakuna();
   while ((millis() - dStart) < d) {
-    dnsServer.processNextRequest();
-    //MDNS.update();
+    if (WiFi.getMode() == 2) dnsServer.processNextRequest();
     enableDisplay(2000);
     getLightSensor();
     doAnimationMakuna();
@@ -509,13 +505,18 @@ void disableDisplay()  {
 }
 
 void startWifiMode() {
-  //if (wifiMulti.run() != WL_CONNECTED) return;
-  int count = 0;
   disableDisplay();
   DPRINTLN("Starting Clock in WiFi Mode!");
-  WiFi.mode(WIFI_STA);
+  if (strlen(prm.wifiSsid)==0) {
+    DPRINTLN("WiFi SSID not defined!");
+    return;
+  }
+  WiFi.disconnect(true);
+  WiFi.mode(WIFI_OFF);
+  delay(500);
   #if defined(ESP32)
     WiFi.setHostname(webName);
+    WiFi.setSleep(false);
   #else
     WiFi.hostname(webName);
   #endif
@@ -523,18 +524,20 @@ void startWifiMode() {
     esp_wifi_set_ps (WIFI_PS_NONE);  //power saving disable!
     //esp_wifi_set_max_tx_power(78);   //Maximum output power
   #endif
-  wifiMulti.addAP(prm.wifiSsid, prm.wifiPsw);
-  //wifiMulti.addAP(DEFAULT_SSID, DEFAULT_WIFIPSW);
-  wifiMulti.addAP("farm32", "birka12345");  //for testing
+  //if (WiFi.status() == WL_CONNECTED) return;
+
   playTubes();
-  DPRINT("\nConnecting to WiFi ");
+  DPRINT("\nConnecting to WiFi SSID:("); DPRINT(prm.wifiSsid); DPRINT(")  PSW:("); DPRINT(prm.wifiPsw); DPRINTLN(")");
   int counter = 0;
-  while (wifiMulti.run() != WL_CONNECTED) {
+  if (strlen(prm.wifiPsw)>0)
+    WiFi.begin(prm.wifiSsid, prm.wifiPsw);
+  else  
+    WiFi.begin(prm.wifiSsid);
+  while (WiFi.status() != WL_CONNECTED) {
     DPRINT('.');
-    counter++;
     playTubes();
-    //yield();
-    if (counter>5) return;
+    delay(1000);
+    if (counter++>5) return;
   }
   DPRINTLN(" ");
 /*
@@ -630,7 +633,7 @@ void startStandaloneMode() {
 }
 
 void doFirmwareUpdate(){
-    if (wifiMulti.run() != WL_CONNECTED) {
+    if (WiFi.status() != WL_CONNECTED) {
       DPRINTLN("Wifi disconnected. FirmwareUpdate failed.");
       return;
     }
@@ -1438,16 +1441,16 @@ void setup() {
     DPRINTLN("An Error has occurred while mounting SPIFFS");
   }
   else {
-#if defined(ESP32)
-    DPRINT("SPIFFS Total bytes:    "); DPRINTLN(SPIFFS.totalBytes());
-    DPRINT("SPIFFS Used bytes:     "); DPRINTLN(SPIFFS.usedBytes());
-#endif
+    #if defined(ESP32)
+      DPRINT("SPIFFS Total bytes:    "); DPRINTLN(SPIFFS.totalBytes());
+      DPRINT("SPIFFS Used bytes:     "); DPRINTLN(SPIFFS.usedBytes());
+    #endif
     DPRINTLN("SPIFFS started.");
   }
   
   if (prm.wifiMode) {
     startWifiMode();
-    if (wifiMulti.run() != WL_CONNECTED) //failed to connect to wifi
+    if (WiFi.status() != WL_CONNECTED) //failed to connect to wifi
       startStandaloneMode();
   }
   else 
@@ -2265,7 +2268,6 @@ void printDigits(unsigned long timeout) {
     DPRINT("  Lux:"); DPRINT(lx);
   }
   //DPRINT("  tON:"); DPRINT(timerON); DPRINT("  tOFF:"); DPRINT(timerOFF);   //Multiplex timing values for testing
-  //if (wifiMulti.run() != WL_CONNECTED) DPRINT("  no WIFI");
   if (WiFi.status() != WL_CONNECTED) DPRINT("  no WIFI");
   DPRINTLN(" ");
   printSensors();
@@ -2375,8 +2377,7 @@ static boolean oldMode = prm.wifiMode;
 }
 
 void loop(void) {
-  dnsServer.processNextRequest();
-  //MDNS.update();
+  if (WiFi.status() != WL_CONNECTED) dnsServer.processNextRequest();
   enableDisplay(3000);
   timeProgram();
   writeDisplaySingle();
