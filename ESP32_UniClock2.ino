@@ -526,7 +526,7 @@ void startWifiMode() {
   #endif
   //if (WiFi.status() == WL_CONNECTED) return;
 
-  playTubes();
+  //playTubes();
   DPRINT("\nConnecting to WiFi SSID:("); DPRINT(prm.wifiSsid); DPRINT(")  PSW:("); DPRINT(prm.wifiPsw); DPRINTLN(")");
   int counter = 0;
   if (strlen(prm.wifiPsw)>0)
@@ -535,7 +535,7 @@ void startWifiMode() {
     WiFi.begin(prm.wifiSsid);
   while (WiFi.status() != WL_CONNECTED) {
     DPRINT('.');
-    playTubes();
+    //playTubes();
     delay(1000);
     if (counter++>5) return;
   }
@@ -697,20 +697,24 @@ void doCathodeProtect() {
   int db = prm.dayBright;  //save brightness values
   int nb = prm.nightBright;
   boolean ab = autoBrightness;
+  byte onOff = 0;
   
   prm.dayBright=MAXBRIGHTNESS;  
   prm.nightBright = MAXBRIGHTNESS;
   autoBrightness = false;
   
   DPRINT("Cathode Protect is running for "); DPRINT(cathProtMin); DPRINTLN(" minutes.");
+  memset(digitDP, 0, sizeof(digitDP));
   while (true) {
    for (int i=0;i<maxDigits;i++)  {  
     if (i%2) digit[i] = num;
     else     digit[i] = 9-num;
+    digitDP[i] = (onOff%2 == i%2);
    } 
    writeDisplaySingle();
    Fdelay(100);
    num++; if (num>9) num = 0;
+   onOff++;
    if ((millis()-started)>long(cathProtMin)*60000l) break;
   } //end while
   
@@ -1470,6 +1474,8 @@ void setup() {
   timeClient.begin();
   calcTime();
   timeProgram();
+
+  //newCathodeProtect(5000,0);
 }
 
 void calcTime() {
@@ -1525,7 +1531,7 @@ void timeProgram() {
       // The current time can drift slightly relative to the protectTimer when NIST time is updated
       // Need to make a small adjustment to the timer to ensure it is triggered at the minute change
       protectTimer -= ((second() + 30) % 60 - 30);
-      if (displayON && (millis() > 30000)) cathodeProtect();
+      if (displayON && (millis() > 30000)) newCathodeProtect(7000,random(3)-1);
     }
   }
 
@@ -1648,6 +1654,88 @@ void factoryReset() {
   calcTime();
 }
 
+
+void newCathodeProtect(unsigned long t,int dir) {    //t = time in msec, dir = direction -1,0,1    (0=random) 
+  byte tmp[10];
+  unsigned long started = millis();
+  boolean finish, stopThis;
+  byte fin[10];
+  byte lastStoppedDigit = 0;
+  byte nextStoppedDigit;
+  int sum = 0;
+  
+  DPRINT("Cathode Protect running! dir:"); DPRINT(dir); 
+  memcpy(tmp,digit,sizeof(tmp));
+  memset(fin,0,sizeof(fin));
+  switch (dir) {
+    case -1:
+      nextStoppedDigit = 0;
+      break;
+    case 0:
+      nextStoppedDigit = random(maxDigits);
+      break;
+    case 1:
+      nextStoppedDigit = maxDigits-1;
+      break;            
+  }
+  nextStoppedDigit = dir>0 ? 0 : maxDigits-1;
+  while(true) {
+    for (int i=0;i<maxDigits;i++) {
+      finish = ((millis()-started) >= t);
+      stopThis = (i == nextStoppedDigit); 
+        
+      if (finish && stopThis) {  //this digit stops
+        fin[i] = 1;
+        lastStoppedDigit = i;
+        t +=1000;
+        if (dir>0) {  //find next stop digit
+          nextStoppedDigit++;
+          if (nextStoppedDigit>=maxDigits) nextStoppedDigit =0;
+        }
+        else if (dir<0) {
+          nextStoppedDigit--;
+          if (nextStoppedDigit==255) nextStoppedDigit = maxDigits-1;
+        }
+        else if (sum<=maxDigits-2) {
+          while(true) {
+          nextStoppedDigit = random(maxDigits);
+          //DPRINT("next:"); DPRINTLN(nextStoppedDigit);
+          if (fin[nextStoppedDigit] ==0) break;  //found a running digit
+          }
+        }
+      }
+      else if (fin[i]==0) {  //get next number
+        if (dir>=0) 
+          digit[i] = (digit[i]+1) % 10;
+        else {
+          digit[i]--; if (digit[i] == 255) digit[i] = 9;
+        } 
+      }
+  } //end for
+   //DPRINT("lastStoppedDigit:"); DPRINT(lastStoppedDigit);
+   //DPRINT("  nextStoppedDigit:"); DPRINTLN(nextStoppedDigit);
+   for (int d=0;d<maxDigits;d++) {
+    digitDP[d] = ((digit[d]%2) == 0);
+   }
+  
+    writeDisplaySingle();
+    //printDigits(0);
+    Fdelay(100);
+    sum = 0;
+    for (int i=0;i<maxDigits;i++)  sum += fin[i];
+    //DPRINT("Sum:"); DPRINTLN(sum);
+    if (sum >= maxDigits)  //all digits ready
+      break;  
+    if ((millis()-started) >= (t+5000)) {
+      DPRINTLN("Safety exit");
+      break;
+    }
+  } //end while
+   
+  memcpy(oldDigit, digit, sizeof(oldDigit));
+  lastCathodeProt = minute();
+}
+
 void cathodeProtect() {
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
   byte hourShow = (byte)hour12_24;
@@ -1696,6 +1784,9 @@ void cathodeProtect() {
     incMod10(dh1); incMod10(dh2);
     incMod10(dm1); incMod10(dm2);
     incMod10(ds1); incMod10(ds2);
+	for (int d=0;d<maxDigits;d++) {
+		digitDP[d] = ((digit[d]%2) == 0);
+	}
     writeDisplaySingle();
     Fdelay(100);
   }
