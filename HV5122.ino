@@ -182,12 +182,11 @@ void writeDisplaySingle() {
   #endif
   
   for (int i = 0; i < maxDigits-1; i++) { //Set the extra decimal point dots
-    if (LEFTDECIMAL) DPpos = min(maxDigits-1,i+1); else DPpos = i;
-    if (digitDP[DPpos] && digitPins[maxDigits][DPpos]>0) {
-      if (digitPins[maxDigits][DPpos] < 100) 
-        bitBuffer0 |= (uint32_t)(1 << (digitPins[maxDigits][DPpos]-1)); //chip0
+    if (digitDP[i] && digitPins[maxDigits][i]>0) {
+      if (digitPins[maxDigits][i] < 100) 
+        bitBuffer0 |= (uint32_t)(1 << (digitPins[maxDigits][i]-1)); //chip0
       else
-        bitBuffer1 |= (uint32_t)(1 << (digitPins[maxDigits][DPpos] - 101)); //chip1
+        bitBuffer1 |= (uint32_t)(1 << (digitPins[maxDigits][i] - 101)); //chip1
     }
   }  //end for i
 

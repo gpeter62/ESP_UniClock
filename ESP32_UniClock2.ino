@@ -513,7 +513,7 @@ void startWifiMode() {
   }
   WiFi.disconnect(true);
   WiFi.mode(WIFI_OFF);
-  delay(500);
+  delay(1000);
   #if defined(ESP32)
     WiFi.setHostname(webName);
     WiFi.setSleep(false);
@@ -1328,10 +1328,10 @@ if (useTemp > 1)
 }
 
 void setup() {
-  //WiFi.mode(WIFI_OFF);
+  delay(1000);
+  WiFi.mode(WIFI_OFF);
   EEPROM.begin(EEPROM_SIZE);
   memset(pinTxt,0,sizeof(pinTxt));
-  delay(1000);
   DPRINTBEGIN(115200); DPRINTLN(" ");
   DPRINTLN(F("================================================="));
   DPRINT("Starting "); DPRINTLN(webName);
@@ -1531,7 +1531,7 @@ void timeProgram() {
       // The current time can drift slightly relative to the protectTimer when NIST time is updated
       // Need to make a small adjustment to the timer to ensure it is triggered at the minute change
       protectTimer -= ((second() + 30) % 60 - 30);
-      if (displayON && (millis() > 30000)) newCathodeProtect(7000,random(3)-1);
+      if (displayON && (millis() > 30000)) newCathodeProtect(7000,random(3)-1);   //dont play in the first 30sec
     }
   }
 
@@ -1657,6 +1657,7 @@ void factoryReset() {
 
 void newCathodeProtect(unsigned long t,int dir) {    //t = time in msec, dir = direction -1,0,1    (0=random) 
   byte tmp[10];
+  boolean tmpDP[10];
   unsigned long started = millis();
   boolean finish, stopThis;
   byte fin[10];
@@ -1664,8 +1665,9 @@ void newCathodeProtect(unsigned long t,int dir) {    //t = time in msec, dir = d
   byte nextStoppedDigit;
   int sum = 0;
   
-  DPRINT("Cathode Protect running! dir:"); DPRINT(dir); 
+  DPRINT("Cathode Protect running! dir:"); DPRINTLN(dir); 
   memcpy(tmp,digit,sizeof(tmp));
+  memcpy(tmpDP,digitDP,sizeof(tmpDP));
   memset(fin,0,sizeof(fin));
   switch (dir) {
     case -1:
@@ -1687,6 +1689,7 @@ void newCathodeProtect(unsigned long t,int dir) {    //t = time in msec, dir = d
       if (finish && stopThis) {  //this digit stops
         fin[i] = 1;
         lastStoppedDigit = i;
+        digitDP[i] = tmpDP[i];   //restore original DP value
         t +=1000;
         if (dir>0) {  //find next stop digit
           nextStoppedDigit++;
@@ -1710,13 +1713,11 @@ void newCathodeProtect(unsigned long t,int dir) {    //t = time in msec, dir = d
         else {
           digit[i]--; if (digit[i] == 255) digit[i] = 9;
         } 
+        digitDP[i] = ((digit[i]%2) == 0);
       }
   } //end for
    //DPRINT("lastStoppedDigit:"); DPRINT(lastStoppedDigit);
    //DPRINT("  nextStoppedDigit:"); DPRINTLN(nextStoppedDigit);
-   for (int d=0;d<maxDigits;d++) {
-    digitDP[d] = ((digit[d]%2) == 0);
-   }
   
     writeDisplaySingle();
     //printDigits(0);
@@ -1736,7 +1737,7 @@ void newCathodeProtect(unsigned long t,int dir) {    //t = time in msec, dir = d
   lastCathodeProt = minute();
 }
 
-void cathodeProtect() {
+void cathodeProtect() {   //original version
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
   byte hourShow = (byte)hour12_24;
   byte minShow  = (byte)minute();
@@ -2477,17 +2478,18 @@ void loop(void) {
   alarmSound();
   checkTubePowerOnOff();
   getLightSensor();
-  if (prm.mqttEnable && prm.wifiMode) mqttSend();
-  
+    
   checkWifiMode();
   if (prm.wifiMode) { //Wifi Clock Mode
-    if (WiFi.status() != WL_CONNECTED) {
-      resetWiFi();
+    if (WiFi.status() == WL_CONNECTED) {
+      if (prm.mqttEnable) mqttSend();
     }
+    else
+      resetWiFi();
   }
-  else {   //Manual Clock Mode
-    editor();
-  } //endelse
+  //else {   //Manual Clock Mode
+  //  editor();
+  //} //endelse
   
   if (makeFirmwareUpdate) {
     makeFirmwareUpdate = false;

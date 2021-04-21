@@ -37,8 +37,8 @@
 //#define CLOCK_46  //V1  ESP32, UNFI 6 x IV-9 Numitron clock
 //#define CLOCK_47  //V3  ESP32, UNFI board, 6 x Z573M Nixie tubes
 //--------------------------------------------------------------------------------------------------------------
-#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
-//#define CLOCK_51   //V2  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
+//#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
+#define CLOCK_51   //V2  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_52   //ESP32,    P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_53   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_54   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
@@ -785,7 +785,7 @@
     {101,131,110,109,108,107,106,105,104,103},   //min  10 , chip1 (tube#3)
     {111,132,120,119,118,117,116,115,114,113},   //hour  1 , chip1 (tube#4)
     {122,129,130,127,128,125,126,123,124,121},   //hour 10 , chip1 (tube#5)
-    {0,12,21,102,112,0,    0,0,0,0}              //extra decimalPoint/blinking dots (tube0...tube6)
+    {0,21,12,112,102,0,    0,0,0,0}              //extra decimalPoint/blinking dots (tube0...tube6)
     };    
    //#define MAKE_BLINKING_DOTS //it means, the extra datapins are used as 4 blinking dot instead of decimal points!  #1..#4 positions are used
 //___________________________________________________________________________________    
@@ -802,9 +802,9 @@
   #define TEMP_CHARCODE 10
   #define GRAD_CHARCODE 10 
   #define PERCENT_CHARCODE 10
-  #define AP_NAME "UNFICLOCK32"
+  #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD "" 
-  #define WEBNAME "UNFI Nixie-Clock HV5122"
+  #define WEBNAME "Nixie-Clock"
 #endif
 
 #ifdef CLOCK_52   //ESP32, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
