@@ -536,8 +536,8 @@ void startWifiMode() {
   while (WiFi.status() != WL_CONNECTED) {
     DPRINT('.');
     //playTubes();
-    delay(1000);
-    if (counter++>5) return;
+    delay(3000);
+    if (counter++>2) return;
   }
   DPRINTLN(" ");
 /*
@@ -637,6 +637,9 @@ void doFirmwareUpdate(){
       DPRINTLN("Wifi disconnected. FirmwareUpdate failed.");
       return;
     }
+
+    DPRINTLN("Webserver stopped...");
+    server.reset();  //Stop server
     delay(2000);
     disableDisplay();
     yield();
@@ -662,7 +665,7 @@ void doFirmwareUpdate(){
                 succ = true;
                 break;
     }
-        
+
     fname = String(prm.firmwareServer)+"/"+String(FW)+".spiffs.bin";
     DPRINT("Update SPIFFS: "); DPRINTLN(fname);
     ret2 = ESPhttpUpdate.updateSpiffs(fname);
@@ -689,6 +692,7 @@ void doFirmwareUpdate(){
       doReset();
     }
     DPRINTLN(" ");
+    startServer();  //restart webserver
 }
 
 void doCathodeProtect() {
@@ -1321,7 +1325,7 @@ if (useTemp > 1)
   }
   else
     doc["lx"] = 255;
-    
+  doc["rssi"] = WiFi.RSSI();  
   String json;
   serializeJson(doc, json);
   request->send(200, "application/json", json);
@@ -1571,10 +1575,10 @@ void timeProgram() {
 void loadEEPROM() {
   disableDisplay();
   byte d;
-  DPRINTLN("Loading setting from EEPROM.");
-  DPRINT("Size:"); DPRINTLN(EEPROM_SIZE);
+  DPRINT("Loading setting from EEPROM.  Size:");  DPRINT(EEPROM_SIZE);
+  
   EEPROM.get(EEPROM_addr, prm);
-  DPRINT("EEPROM ver:"); DPRINTLN(prm.magic);
+  DPRINT("  version:"); DPRINTLN(prm.magic);
   enableDisplay(0);
 }
 

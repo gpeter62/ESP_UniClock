@@ -38,8 +38,8 @@
 //#define CLOCK_47  //V3  ESP32, UNFI board, 6 x Z573M Nixie tubes
 //--------------------------------------------------------------------------------------------------------------
 //#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
-#define CLOCK_51   //V2  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
-//#define CLOCK_52   //ESP32,    P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
+//#define CLOCK_51   //V2  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
+#define CLOCK_52   //ESP32,    P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_53   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_54   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
 //#define CLOCK_55   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock
@@ -257,6 +257,20 @@
   #define DEBUG
   #define FW "fw12"  //firmware name 
   #define PT6355
+  int maxDigits = 6;
+  byte segmentEnablePins[] =  {16,7,0,1,2,3,4,5,6,8,9,11,10,12,13,14,15};    //segment enable bits 
+  #define PIN_CS 22 //12 or 15     // D6 CS_
+  #define PIN_CLK  16   // D7 Clock
+  #define PIN_SIN  21   // D5 DataIN  
+  #define PIN_SDA 19
+  #define PIN_SCL 23
+  #define USE_DALLAS_TEMP
+  #define TEMP_DALLAS_PIN 5
+  #define ALARMSPEAKER_PIN 26   //Alarm buzzer pin                                            
+  #define ALARMBUTTON_PIN 4  //32    //Alarm switch off button pin 
+  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
+  #define RADAR_PIN -1
+  #define RADAR_TIMEOUT 5  //5min
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "VFD UniClock"

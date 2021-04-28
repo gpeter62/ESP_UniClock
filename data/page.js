@@ -12,6 +12,7 @@ var controlInfos = {
 	"humidity2": "Humidity sensor #2",
 	"pressure": "Pressure sensor #1",
 	"lux": "Lux sensor current value",
+	"rssi": "WiFi RSSI level dB (connection quality)",
     "wifiMode": "WiFi Client or Access Point",
 	"alarmEnable": "Switch ON/OFF alarm",
     "alarmTime": "Alarm time (hour/minute)",
@@ -86,6 +87,7 @@ var configuration = {
 	"humidity2": 255,
 	"pressure": 255,
 	"lux": 100,
+	"rssi": 0,
 	"wifiMode": true,
     "alarmEnable": false,
     "alarmTime": "6:30",
@@ -223,6 +225,7 @@ function setPreviewColor(){
 function setCurrentInfos(){
     $('#currentTime').html(getCurrentDate(configuration["currentDate"]) + " " + configuration["currentTime"]);
     $('#lux').html(configuration["lux"]);
+	$('#rssi').html(configuration["rssi"]);
     $('#pressure').html(configuration["pressure"]);
     $('#humidity').html(configuration["humidity"]);
     $('#humidity2').html(configuration["humidity2"]);

@@ -1,19 +1,18 @@
 #ifdef PT6355
 char tubeDriver[] = "PT6355";
-int maxDigits = 10;
+//int maxDigits = 6;
 int wt = 5;   //Serial timing
 
 //MAX7219CNG control pins
-#define PIN_CS 15 //12 or 15     // D6 CS_
-#define PIN_CLK  13   // D7 Clock
-#define PIN_SIN  14   // D5 DataIN
+//#define PIN_CS 22 //12 or 15     // D6 CS_
+//#define PIN_CLK  16   // D7 Clock
+//#define PIN_SIN  21   // D5 DataIN
 
-#define SEGMENT8
+//#define SEGMENT8
 //#define TESTMODE   //for testing the segments of a new type VFD modul
 
 //PT6355 Commands
 #define C1_DISPLAY_STATE_SETTING   B11000000  // Display duty setting=15 + Display ON
-
 #define C3_PORT_DATA_SETTINGS      B10000000  //Port selection + output data
 
 
@@ -48,7 +47,7 @@ byte charDefinition[] = {
                    B10001110    //F  aefg  (20)                            
 };
 
-byte segmentEnablePins[] =  {9,8,5,3,4,7,6,2};   //segment enable bits (a,b,c,d,e,f,g,DP)   (You MUST define always 8 bits!!!)
+//byte segmentEnablePins[] =  {9,8,5,3,4,7,6,2};   //segment enable bits (a,b,c,d,e,f,g,DP)   (You MUST define always 8 bits!!!)
 
 #else //16 segment + DP  ---------------------------------------------------------------------------------------------
 #define C0_DISPLAY_DATA_SETTING    B11101111  //grid=10, segments>17  
@@ -154,7 +153,7 @@ uint32_t charDefinition[96] = {
   0b00000000000000000, /* (del) */
 };
 
-  byte segmentEnablePins[] =  {16,7,0,1,2,3,4,5,6,8,9,11,10,12,13,14,15};    //segment enable bits 
+  //byte segmentEnablePins[] =  {16,7,0,1,2,3,4,5,6,8,9,11,10,12,13,14,15};    //segment enable bits 
 #endif
 
 
