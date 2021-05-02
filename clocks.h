@@ -22,6 +22,7 @@
 //#define CLOCK_20  //8266 D1-mini, P.S. PCB 4xIN14 clock-thermometer 
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
+#define CLOCK_23    ////ESP32 D1 mini, P.S. PCB 3xIN14 1xIN-19A thermometer / humidity
 
 //#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
 //#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
@@ -39,7 +40,7 @@
 //--------------------------------------------------------------------------------------------------------------
 //#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_51   //V2  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
-#define CLOCK_52   //ESP32,    P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
+//#define CLOCK_52   //ESP32,    P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_53   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_54   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
 //#define CLOCK_55   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock
@@ -372,6 +373,38 @@
   #define WEBNAME "Nixie Hőmérő"
 #endif
 
+#ifdef CLOCK_23   //ESP32 D1 mini, P.S. PCB 3xIN14 1xIN-19A thermometer / humidity
+  #define DEBUG
+  #define FW "fw23"  //firmware name 
+  #define MAXBRIGHTNESS 100    
+  #define USE_NEOPIXEL 
+  #define NEOPIXEL_PIN 22
+  byte tubePixels[] = {0,1,2,3};        //4 tubes, single leds
+  #define USE_DHT_TEMP
+  #define DHTTYPE DHT22
+  #define TEMP_DHT_PIN  1
+  #define MULTIPLEX74141_ESP32
+  byte digitEnablePins[] = {26,18,33,19};  
+  byte ABCDPins[4] =  {32,16,4,17};
+  #define DP_PIN -1             // decimalPoint inside Nixie tube, set -1, if not used!
+  #define ENABLE_CLOCK_DISPLAY false  //don't display date/time!!!
+  #define SHIFT_TUBES_LEFT_BY_1 //shift left by 1 tube the display, if a thermometer is used with spec tube
+  #define USE_SHT21                //I2C Temperature + humidity
+  #define PIN_SDA  25              // you can set the used SDA and SCL pins
+  #define PIN_SCL  21              // if it is not default value
+  #define TEMP_CHARCODE 5
+  #define GRAD_CHARCODE 10 
+  #define PERCENT_CHARCODE 6
+  #define DECIMALPOINT_PIN  23  //Nixie decimal point between digits. If not used, SET TO -1 
+  #define DATE_REPEAT_MIN 0       //show date only every xxx minute. If zero, datum is never displayed
+  #define TEMP_START  01
+  #define TEMP_END    45 
+  #define HUMID_START 45 
+  #define HUMID_END   59 
+  #define AP_NAME "NixieHomero32"
+  #define AP_PASSWORD ""
+  #define WEBNAME "Nixie Homero32"
+#endif
 
 //______________________ESP-32 CLOCKS  (2x18pin ESP32 modul) ______________________________________________________
 #ifdef CLOCK_30   //ESP32, UNFI PCB clock, 6 x IV-11 VFD tubes

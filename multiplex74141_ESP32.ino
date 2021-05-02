@@ -126,7 +126,7 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
   
   #if DECIMALPOINT_PIN >=0 
         if (num==10) {digitalWrite(DECIMALPOINT_PIN,LOW);}
-        else digitalWrite(DECIMALPOINT_PIN,decimalpointON); }
+        else {digitalWrite(DECIMALPOINT_PIN,decimalpointON); }
   #endif
 
   portEXIT_CRITICAL_ISR(&timerMux);
