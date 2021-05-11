@@ -22,7 +22,7 @@
 //#define CLOCK_20  //8266 D1-mini, P.S. PCB 4xIN14 clock-thermometer 
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
-#define CLOCK_23    ////ESP32 D1 mini, P.S. PCB 3xIN14 1xIN-19A thermometer / humidity
+//#define CLOCK_23    ////ESP32 D1 mini, P.S. PCB 3xIN14 1xIN-19A thermometer / humidity
 
 //#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
 //#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
@@ -38,7 +38,7 @@
 //#define CLOCK_46  //V1  ESP32, UNFI 6 x IV-9 Numitron clock
 //#define CLOCK_47  //V3  ESP32, UNFI board, 6 x Z573M Nixie tubes
 //--------------------------------------------------------------------------------------------------------------
-//#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
+#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_51   //V2  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_52   //ESP32,    P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_53   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
@@ -63,6 +63,9 @@
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "IN-16 Nixie Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER   
 #endif
 
 #ifdef CLOCK_2   //8266, UNFI PCB clock, 4x Z-570M tubes
@@ -83,6 +86,9 @@
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "Z-570M Nixie Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER 
 #endif
 
 #ifdef CLOCK_3   //8266, PCB less clock, IV-18 VFD tube   https://www.thingiverse.com/thing:3417955
@@ -102,6 +108,9 @@
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "IV-18 VFD Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER   
 #endif
 
 
@@ -129,6 +138,9 @@
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "IV-11 VFD Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER   
 #endif
 
 #ifdef CLOCK_5   //8266, UNFI PCB clock IVL-2-5/7 tube with RTC
@@ -155,6 +167,9 @@
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "IVL-2 VFD Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER   
 #endif
 
 #ifdef CLOCK_6   //8266, GP PCB clock, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
@@ -171,6 +186,9 @@
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "IN-1 Nixie Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER   
 #endif
 
 
@@ -193,6 +211,9 @@
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "Z574M Nixie Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER   
 #endif
 
 #ifdef CLOCK_8   //8266 GP PCB v3 clock with 4x IV-16 Numitron tubes (plexi box) //Flash size: 1MB (FS:160k, OTA:422k)
@@ -211,7 +232,10 @@
   #define ALARM_ON HIGH         //How to switch ON alarm buzzer
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
-  #define WEBNAME "Numitron UniClock"
+  #define WEBNAME "Numitron Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER   
 #endif
 
 #ifdef CLOCK_9   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes (brown box) //Flash size: 1MB (FS:160k, OTA:422k)
@@ -225,7 +249,10 @@
   byte ABCDPins[4] = {4,0,2,15};
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
-  #define WEBNAME "Numitron UniClock"
+  #define WEBNAME "Numitron Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER   
 #endif
 
 #ifdef CLOCK_10   //8266 LED Clock with MAX7219 chip
@@ -236,6 +263,9 @@
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "LED UniClock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER   
 #endif
 
 #ifdef CLOCK_11   //8266 LED Clock with MM5450 chip
@@ -252,6 +282,9 @@
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "LED UniClock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER   
 #endif
 
 #ifdef CLOCK_12   //8266 VFD Clock with PT6355 chip
@@ -275,6 +308,9 @@
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "VFD UniClock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER   
 #endif
 
 #ifdef CLOCK_13   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes + GPS timesync (white box)
@@ -290,6 +326,9 @@
   #define AP_NAME "UNICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "Numitron UniClock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER   
 #endif
 
 //____________ P.S. clocks / thermometers ____________________________________________
@@ -314,6 +353,9 @@
   #define AP_NAME "Nixie ORA"
   #define AP_PASSWORD ""
   #define WEBNAME "Nixie IN-14 Óra"  
+  #define DEFAULT_SSID ""
+  #define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER
 #endif
 
 #ifdef CLOCK_21   //8266 D1-mini, P.S. PCB 3xIN14 1xIN-19A thermometer / humidity 
@@ -342,6 +384,9 @@
   #define AP_NAME "Nixie Homero"
   #define AP_PASSWORD ""
   #define WEBNAME "Nixie Hőmérő"
+  #define DEFAULT_SSID ""
+  #define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER
 #endif
 
 #ifdef CLOCK_22   //8266 NODEMCU, P.S. PCB 3xIN14 1xIN-19A thermometer / humidity
@@ -371,6 +416,9 @@
   #define AP_NAME "Nixie Homero"
   #define AP_PASSWORD ""
   #define WEBNAME "Nixie Hőmérő"
+  #define DEFAULT_SSID ""
+  #define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER  
 #endif
 
 #ifdef CLOCK_23   //ESP32 D1 mini, P.S. PCB 3xIN14 1xIN-19A thermometer / humidity
@@ -404,6 +452,9 @@
   #define AP_NAME "NixieHomero32"
   #define AP_PASSWORD ""
   #define WEBNAME "Nixie Homero32"
+  #define DEFAULT_SSID ""
+  #define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER  
 #endif
 
 //______________________ESP-32 CLOCKS  (2x18pin ESP32 modul) ______________________________________________________
@@ -443,6 +494,9 @@
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD ""  
   #define WEBNAME "GP IV-11"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER  
 #endif
 
 #ifdef CLOCK_31   //ESP32, UNFI board, 6 x Z573M Nixie tubes
@@ -467,6 +521,9 @@
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD ""
   #define WEBNAME "ESP32UniClock 3.0"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER  
 #endif
 
 
@@ -496,6 +553,9 @@
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD ""  
   #define WEBNAME "ESP32UniClock 3.0"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER  
 #endif
 
 #ifdef CLOCK_33   //TOM025 ESP32, Palfi S. board, 6 x Z573M Nixie tubes
@@ -519,7 +579,10 @@
   //#define ALARM_ON HIGH
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD ""
-  #define WEBNAME "ESP32UniClock 2.5"
+  #define WEBNAME "ESP32UniClock 3.0"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER  
 #endif
 
 //______________________ESP-32 CLOCKS  (2x20pin ESP32 D1 mini modul) ______________________________________________________
@@ -552,6 +615,9 @@
   #define AP_NAME "UNFICLOCK32"
   #define AP_PASSWORD ""  
   #define WEBNAME "ESP32 IV-11 VFD-Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER  
 #endif
 
 #ifdef CLOCK_41   //V2  ESP32, UNFI 6 x IV-11 VFD tubes clock (jumper wire)
@@ -583,6 +649,9 @@
   #define AP_NAME "UNFICLOCK32"
   #define AP_PASSWORD ""  
   #define WEBNAME "ESP32 IV-11 VFD-Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER  
 #endif
 
 #ifdef CLOCK_42   //V3  ESP32, UNFI 6 x IV-11 VFD tubes clock
@@ -614,6 +683,9 @@
   #define AP_NAME "UNFICLOCK32"
   #define AP_PASSWORD ""  
   #define WEBNAME "ESP32 IV-11 VFD-Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER  
 #endif
 
 
@@ -642,6 +714,9 @@
   #define AP_NAME "UNFICLOCK32"
   #define AP_PASSWORD ""
   #define WEBNAME "Z573M Nixie-Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER  
 #endif
 
 #ifdef CLOCK_44   //V2  ESP32, UNFI board, 6 x Z573M Nixie tubes (átkötéses)
@@ -669,6 +744,9 @@
   #define AP_NAME "UNFICLOCK32"
   #define AP_PASSWORD ""
   #define WEBNAME "ESP32 Z573M Nixie-Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER  
 #endif
 
 #ifdef CLOCK_45   //V3  ESP32, UNFI board, 6 x Z573M Nixie tubes
@@ -696,6 +774,9 @@
   #define AP_NAME "UNFICLOCK32"
   #define AP_PASSWORD ""
   #define WEBNAME "ESP32 Z573M Nixie-Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER  
 #endif
 
 #ifdef CLOCK_46   //ESP32, UNFI board, 6 x IV-9 Numitron tubes
@@ -733,6 +814,9 @@
   #define AP_NAME "UNFICLOCK32"
   #define AP_PASSWORD ""
   #define WEBNAME "ESP32 Numitron-Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER  
 #endif
 
 //---------------------ESP32   2X HV5122--------------------------------------------------
@@ -795,6 +879,9 @@
   #define AP_NAME "UNFICLOCK32"
   #define AP_PASSWORD "" 
   #define WEBNAME "UNFI Nixie-Clock HV5122"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER  
 #endif
 
 #ifdef CLOCK_51   //V2  ESP32, UNFI 2xHV5122 PCB version, 6xZ573M clock   Example clock!!!
@@ -852,6 +939,9 @@
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD "" 
   #define WEBNAME "Nixie-Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER  
 #endif
 
 #ifdef CLOCK_52   //ESP32, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
@@ -918,6 +1008,9 @@
   #define AP_NAME "IN-18-Clock"
   #define AP_PASSWORD "" 
   #define WEBNAME "Nixie IN-18 Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER  
 #endif
 
 #ifdef CLOCK_53   //ESP8266 Wemos D1 mini,UNFI 2xHV5122 PCB version, 6xIN18 clock  
@@ -968,6 +1061,9 @@
   #define AP_NAME "UNFICLOCK"
   #define AP_PASSWORD "" 
   #define WEBNAME "UNFI Nixie Clock HV5122"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER  
 #endif
 
 #ifdef CLOCK_54   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
@@ -1024,6 +1120,9 @@
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD "" 
   #define WEBNAME "NCS312 Nixie Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER
 #endif
 
 #ifdef CLOCK_55   //ESP8266 D1 Mini,UNFI 2xHV5122 PCB version, 6xZ573M clock
@@ -1081,6 +1180,9 @@
   #define AP_NAME "UNFICLOCK32"
   #define AP_PASSWORD "" 
   #define WEBNAME "UNFI Nixie Clock HV5122"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER
 #endif
 
 

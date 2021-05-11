@@ -41,7 +41,7 @@
   //#define USE_NEOPIXEL    //WS2812B led stripe, for tubes backlight. Don't forget to define tubePixels[] !
   //#define USE_PWMLEDS     //WWM led driver on 3 pins for RG
   //#define USE_MQTT        //Home Assistant integration: https://www.home-assistant.io/
-
+  //#define USE_WIFIMANAGER //if no WiFi defined, use Wifimanager
   //----- DRIVER SELECTION ------ Use only 1 driver from the following options in the clocks.h file!
   //#define MULTIPLEX74141_ESP32  //4..8 Nixie tubes generic driver for ESP32
   //#define MAX6921_ESP32         //4..8 VFD tubes (IV18) driver for ESP8232
@@ -106,6 +106,8 @@
   //#define AP_NAME "UNICLOCK"  	//Access Point name
   //#define AP_PASSWORD ""	   		//AP password
   //#define WEBNAME "LED UniClock"  //Clock's name on the web page
+  //#define DEFAULT_SSID ""       //factoryReset default value for WiFi
+  //#define DEFAULT_PSW ""        //factoryReset default value  for WiFi password
 */
 #define TIMESERVER_REFRESH 7200000     //2h, Refresh time in millisec   86400000 = 24h
 unsigned long timeserverErrors = 0;        //timeserver refresh errors
@@ -179,7 +181,6 @@ DNSServer dnsServer;
 #include <TimeLib.h>
 #include <Timezone.h>
 #include <Wire.h>
-#include <ESPAsyncWiFiManager.h>
 #include <EEPROM.h>
 #include "ArduinoJson.h"
 
@@ -196,8 +197,12 @@ extern char tubeDriver[];
 
 char webName[] = WEBNAME;
 AsyncWebServer server(80);
-//DNSServer dns;
 #define CACHE_MAX_AGE "max-age=31536000" //maximum is: 31536000
+
+#ifdef USE_WIFIMANAGER
+  #include <ESPAsyncWiFiManager.h>
+  AsyncWiFiManager myWiFiManager(&server,&dnsServer);
+#endif
 
 #define BUFSIZE 12
 byte DRAM_ATTR digit[BUFSIZE];
@@ -422,14 +427,14 @@ void stopTimer() {
 #endif
 }
 
-/*
+#ifdef USE_WIFIMANAGER
 void configModeCallback (AsyncWiFiManager *myWiFiManager) {
   DPRINTLN("Switch to AP config mode...");
   DPRINTLN("To configure Wifi,  ");
   DPRINT("connect to Wifi network "); DPRINTLN(prm.wifiSsid);
   DPRINTLN("and open 192.168.4.1 in web browser");
 }
-*/
+#endif
 
 void clearDigits() {
   memset(oldDigit, 10, sizeof(oldDigit));
@@ -504,11 +509,50 @@ void disableDisplay()  {
   lastDisable = millis();
 }
 
+void wifiManager() {
+  #ifdef USE_WIFIMANAGER
+  AsyncWiFiManager MyWifiManager(&server, &dnsServer);
+  MyWifiManager.setAPCallback(configModeCallback);
+  //MyWifiManager.setConfigPortalTimeout(180);
+  for (int i = 0; i < 5; i++) {
+    if (!MyWifiManager.autoConnect(AP_NAME)) {  //or autoConnect(AP_NAME,AP_PASSWORD))
+      DPRINT("Retry to Connect:"); DPRINTLN(i);
+      WiFi.disconnect();
+      WiFi.mode(WIFI_OFF);
+      delay(1000);
+      WiFi.mode(WIFI_STA);
+      #if defined(ESP32)
+        WiFi.setHostname(webName);
+      #else
+        WiFi.hostname(webName);
+      #endif
+      if (i == 4) {
+        MyWifiManager.autoConnect(AP_NAME); // or autoConnect(AP_NAME,AP_PASSWORD))
+      }
+    }
+    else
+      break;
+  }  //end for
+
+  if (WiFi.status() == WL_CONNECTED) {  //save wifi settings to prm
+    String s = WiFi.SSID();
+    String p = WiFi.psk();
+    s.toCharArray(prm.wifiSsid,sizeof(prm.wifiSsid));
+    p.toCharArray(prm.wifiPsw,sizeof(prm.wifiPsw));
+    ip = WiFi.localIP();
+    WiFi.setAutoReconnect(true);
+    enableDisplay(100);
+    showMyIp();
+  }
+  #endif
+}
+
 void startWifiMode() {
   disableDisplay();
   DPRINTLN("Starting Clock in WiFi Mode!");
   if (strlen(prm.wifiSsid)==0) {
     DPRINTLN("WiFi SSID not defined!");
+    wifiManager();
     return;
   }
   WiFi.disconnect(true);
@@ -537,33 +581,12 @@ void startWifiMode() {
     DPRINT('.');
     //playTubes();
     delay(3000);
-    if (counter++>2) return;
+    if (counter++>2) {
+      wifiManager();
+      return;
+    }
   }
   DPRINTLN(" ");
-/*
-  AsyncWiFiManager MyWifiManager(&server, &dnsServer);
-  MyWifiManager.setAPCallback(configModeCallback);
-  //MyWifiManager.setConfigPortalTimeout(180);
-  for (int i = 0; i < 5; i++) {
-    if (!MyWifiManager.autoConnect(AP_NAME)) {  //or autoConnect(AP_NAME,AP_PASSWORD))
-      DPRINT("Retry to Connect:"); DPRINTLN(i);
-      WiFi.disconnect();
-      WiFi.mode(WIFI_OFF);
-      delay(1000);
-      WiFi.mode(WIFI_STA);
-      #if defined(ESP32)
-        WiFi.setHostname(webName);
-      #else
-        WiFi.hostname(webName);
-      #endif
-      if (i == 4) {
-        MyWifiManager.autoConnect(AP_NAME); // or autoConnect(AP_NAME,AP_PASSWORD))
-      }
-    }
-    else
-      break;
-  }  //end for
-  */
   ip = WiFi.localIP();
   WiFi.setAutoReconnect(true);
   enableDisplay(100);
@@ -1076,6 +1099,7 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
     }    
     else if (key == "enableAutoDim") {
       prm.enableAutoDim = (value == "true");
+      autoBrightness = prm.enableAutoDim;
     }
     else if (key == "enableRadar")  {
       prm.enableRadar = (value == "true");
@@ -1602,8 +1626,16 @@ void factoryReset() {
   prm.rgbSpeed = 50;
   prm.rgbDir = 0;
   prm.wifiMode = true;
-  strcpy(prm.wifiSsid,"");
-  strcpy(prm.wifiPsw,"");
+  #ifdef DEFAULT_SSID
+    strncpy(prm.wifiSsid,DEFAULT_SSID,sizeof(prm.wifiSsid));
+  #else
+    strcpy(prm.wifiSsid,"");
+  #endif
+  #ifdef DEFAULT_PSW
+    strncpy(prm.wifiPsw,DEFAULT_PSW,sizeof(prm.wifiPsw));
+  #else
+    strcpy(prm.wifiPsw,"");
+  #endif  
   for (int i=0;i<strlen(prm.ApSsid);i++) {  //repair bad chars in AP SSID
     if ((prm.ApSsid[i]<32) || (prm.ApSsid[i]>126)) prm.ApSsid[i]='_';
   }
@@ -2264,8 +2296,7 @@ void resetWiFi(void) {
   counter++;
   DPRINT("Wifi lost! Minutes to restart:"); DPRINTLN(180 - counter);
   if (counter < 180) return;  //3 hours passed
-  //WiFiManager MyWifiManager;
-  //MyWifiManager.resetSettings();    //reset all AP and wifi passwords...
+
   DPRINTLN("Restart Clock...");
   delay(1000);
   doReset();
@@ -2440,14 +2471,14 @@ void getLightSensor(void) {
 
   if (BH1750exist) {
     tmp = getBH1750();
-    if ((abs(tmp-oldLx)>1) || (tmp == MAXIMUM_LUX)) {
+    if ((abs(tmp-oldLx)>1) || (tmp >= MAXIMUM_LUX)) {
       lx=tmp; oldLx = lx; 
-      autoBrightness = prm.enableAutoDim;
     }
+    autoBrightness = prm.enableAutoDim;
   }
   else if (LDRexist) {
     tmp = luxMeter();
-    if ((abs(tmp-oldLx)>1) || (tmp == MAXIMUM_LUX))  {
+    if ((abs(tmp-oldLx)>1) || (tmp >= MAXIMUM_LUX))  {
       lx=tmp;  oldLx = lx; 
     }
     autoBrightness = prm.enableAutoDim;
@@ -2473,7 +2504,8 @@ static boolean oldMode = prm.wifiMode;
 }
 
 void loop(void) {
-  if (WiFi.status() != WL_CONNECTED) dnsServer.processNextRequest();
+  if (WiFi.status() != WL_CONNECTED) 
+    dnsServer.processNextRequest();
   enableDisplay(3000);
   timeProgram();
   writeDisplaySingle();
