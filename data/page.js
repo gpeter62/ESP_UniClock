@@ -70,7 +70,9 @@ var controlInfos = {
 	"corrT1": "Temperature sensor#2 correction",
 	"corrH0": "Humidity sensor#1 correction",
 	"corrH1": "Humidity sensor#2 correction"	,
-	"cathProtMin": "Cathode Protect procedure (minutes)"
+	"cathProtMin": "Cathode Protect procedure (minutes)",
+	"FW": "firmware code",
+	"tubeDriver": "Tube driver modul"
 };
 
 //Example config that UI recieves
@@ -145,7 +147,9 @@ var configuration = {
 	"corrT1": 0.0,
 	"corrH0": 0.0,
 	"corrH1": 0.0,
-	"cathProtMin": 5	
+	"cathProtMin": 5,
+    "FW": "fw",
+	"tubeDriver": "xxx"
 };
 
 var isMouseDown = 0;
@@ -432,6 +436,7 @@ function Init(){
     $('.temperature-holder').toggleClass('hidden',configuration['temperature'] == 255);
 	$('.temperature-holder2').toggleClass('hidden',configuration['temperature2'] == 255);
     $('.rgb-holder').toggleClass('hidden',configuration['rgbEffect'] == 255);
+	$('.tube-holder').toggleClass('hidden',configuration['tubeDriver'] == "DUMMY");
     setPreviewColor();
 
     //sets a possible good timezone, if not already set

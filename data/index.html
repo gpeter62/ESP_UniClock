@@ -96,10 +96,27 @@
                     <label for="alarmPeriod">Alarm End (sec)</label>
                     <input type="range" min="1" max="240" class="slider" id="alarmPeriod">
                 </div>
-            </div>            
-			
+                <div class="control-holder radar-holder">
+                    <label>Radar</label>
+                    <input id="enableRadar" type="checkbox" class="switch">
+                    <span class="switcher-text left non-selectable" for="enableRadar">off</span>
+                    <span class="switcher non-selectable" for="enableRadar"></span>
+                    <span class="switcher-text right non-selectable" for="enableRadar">on</span>
+                </div>			
+                <div class="control-holder radar-holder">
+                    <label>Radar Timeout (min)</label>
+                    <input type="range" min="1" max="60" class="slider" id="radarTimeout">
+                </div>				
+                <div class="control-holder lux-holder">
+                    <label>AutoDimmer</label>
+                    <input id="enableAutoDim" type="checkbox" class="switch">
+                    <span class="switcher-text left non-selectable" for="enableAutoDim">off</span>
+                    <span class="switcher non-selectable" for="enableAutoDim"></span>
+                    <span class="switcher-text right non-selectable" for="enableAutoDim">on</span>
+                </div>			
+			</div> 
 			<!-- Tube display settings -->	
-            <div page="tube">
+            <div page="tube" class="tube-holder">
                 <div class="control-holder">
                     <label>Manual Override</label>
                     <input id="manualOverride" type="checkbox" class="switch two-side">
@@ -245,24 +262,6 @@
                         <select id="humidEnd" class="number-select two-digit" min="0" max="59" step="1"></select>
                     </div>
                 </div>  
-                <div class="control-holder lux-holder">
-                    <label>AutoDimmer</label>
-                    <input id="enableAutoDim" type="checkbox" class="switch">
-                    <span class="switcher-text left non-selectable" for="enableAutoDim">off</span>
-                    <span class="switcher non-selectable" for="enableAutoDim"></span>
-                    <span class="switcher-text right non-selectable" for="enableAutoDim">on</span>
-                </div>
-                <div class="control-holder radar-holder">
-                    <label>Radar</label>
-                    <input id="enableRadar" type="checkbox" class="switch">
-                    <span class="switcher-text left non-selectable" for="enableRadar">off</span>
-                    <span class="switcher non-selectable" for="enableRadar"></span>
-                    <span class="switcher-text right non-selectable" for="enableRadar">on</span>
-                </div>			
-                <div class="control-holder radar-holder">
-                    <label>Radar Timeout (min)</label>
-                    <input type="range" min="1" max="60" class="slider" id="radarTimeout">
-                </div>
             </div>
 
             <!-- RGB settings -->

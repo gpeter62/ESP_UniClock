@@ -240,6 +240,7 @@ volatile boolean EEPROMsaving = false; //saving in progress - stop display refre
 
 bool colonBlinkState = false;
 boolean radarON = true;
+boolean mqttRadarON = true;
 unsigned long radarLastOn = 0;
 boolean makeFirmwareUpdate = false;
 boolean makeCathodeProtect = false;
@@ -1154,6 +1155,8 @@ void handleSendConfig(AsyncWebServerRequest *request) {
 
   //Global data
   doc["version"] = webName;
+  doc["FW"] = FW;
+  doc["tubeDriver"] = tubeDriver;
   doc["maxDigits"] = maxDigits;   //number of digits (tubes)
   doc["maxBrightness"] = MAXBRIGHTNESS; //Maximum tube brightness usually 10, sometimes 12
 
@@ -1266,12 +1269,8 @@ if (useTemp > 1)
   doc["humidStart"] = prm.humidStart; 
   doc["humidEnd"] = prm.humidEnd; 
   doc["enableAutoDim"] = prm.enableAutoDim; 
-  #if RADAR_PIN>=0
-    doc["enableRadar"] = prm.enableRadar;     
-    doc["radarTimeout"] = prm.radarTimeout;   
-  #else
-    doc["radarTimeout"] = 0;   
-  #endif
+  doc["enableRadar"] = prm.enableRadar;     
+  doc["radarTimeout"] = prm.radarTimeout;   
   doc["corrT0"] = prm.corrT0;
   doc["corrT1"] = prm.corrT1;
   doc["corrH0"] = prm.corrH0;
@@ -2394,6 +2393,9 @@ void printDigits(unsigned long timeout) {
   if (useLux>0) {
     DPRINT("  Lux:"); DPRINT(lx);
   }
+  if (RADAR_PIN>=0) {
+    DPRINT("  Pin:"); DPRINT(digitalRead(RADAR_PIN)); DPRINT("  lastOn:"); DPRINT(radarLastOn);  DPRINT("  sec:"); DPRINTLN((millis()-radarLastOn)/1000);  
+  }
   //DPRINT("  tON:"); DPRINT(timerON); DPRINT("  tOFF:"); DPRINT(timerOFF);   //Multiplex timing values for testing
   if (WiFi.status() != WL_CONNECTED) DPRINT("  no WIFI");
   DPRINTLN(" ");
@@ -2407,24 +2409,23 @@ void checkTubePowerOnOff(void) {
     
     if ((millis()-lastRun)<500) return;
     lastRun = millis();
-
-    #if RADAR_PIN >=0
-      boolean newP = digitalRead(RADAR_PIN);
-      if (!radarON && newP) {   //check, is switching ON?
-        DPRINTLN("RADAR: Switching ON tubes.");
-      }
-      if (newP) {  //restart timeout
-        radarLastOn = millis();
-        radarON = true;
-      }
-      if (radarON && (millis()-radarLastOn)>60000ul*uint32_t(prm.radarTimeout)) {   //check if should switch off?
-                radarON = false;
-                DPRINTLN("RADAR: Switching OFF tubes.");
-      }
-      //DPRINT("RadarON:"); DPRINT(radarON);  DPRINT(":"); DPRINTLN((millis()-radarLastOn));
-    #else
-      radarON = true;  //without radar sensor, always ON 
-    #endif
+    
+    boolean newP = mqttRadarON;
+    if (RADAR_PIN >=0) {   //if local RADAR is defined, it has priority
+      newP = digitalRead(RADAR_PIN);
+    } 
+    if (!radarON && newP) {   //check, is switching ON?
+      DPRINTLN("RADAR: Switching ON tubes.");
+    }
+    if (newP) {  //restart timeout
+      radarLastOn = millis();
+      radarON = true;
+    }
+    if (radarON && (millis()-radarLastOn)>60000ul*uint32_t(prm.radarTimeout)) {   //check if should switch off?
+              radarON = false;
+              DPRINTLN("RADAR: Switching OFF tubes.");
+    }
+    //DPRINT("RadarON:"); DPRINT(radarON);  DPRINT(" timeout:"); DPRINTLN((millis()-radarLastOn));
     
     if (!prm.enableRadar) radarON = true;  //If Radar is disabled, always ON !
     #if TUBE_POWER_PIN >=0
@@ -2455,7 +2456,6 @@ int luxMeter(void) {
   ldrLux = LUX_CALC_SCALAR * pow(ldrResistance, LUX_CALC_EXPONENT);
   if ((ldrLux>=MAXIMUM_LUX)||(ldrLux <0)) ldrLux = MAXIMUM_LUX;   //Limit lux value to maximum
   oldLux = oldLux + (ldrLux-oldLux)/10;   //slow down Lux change
-  if (oldLux>=MAXIMUM_LUX-2) oldLux = MAXIMUM_LUX;
   return (int)oldLux;
 #else
   return (0);
@@ -2474,6 +2474,7 @@ void getLightSensor(void) {
     if ((abs(tmp-oldLx)>1) || (tmp >= MAXIMUM_LUX)) {
       lx=tmp; oldLx = lx; 
     }
+    if (lx>=MAXIMUM_LUX-2) lx = MAXIMUM_LUX;
     autoBrightness = prm.enableAutoDim;
   }
   else if (LDRexist) {
@@ -2481,6 +2482,7 @@ void getLightSensor(void) {
     if ((abs(tmp-oldLx)>1) || (tmp >= MAXIMUM_LUX))  {
       lx=tmp;  oldLx = lx; 
     }
+    if (lx>=MAXIMUM_LUX-2) lx = MAXIMUM_LUX;
     autoBrightness = prm.enableAutoDim;
   }
   else {

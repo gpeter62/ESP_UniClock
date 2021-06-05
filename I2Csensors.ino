@@ -307,6 +307,7 @@ int getBH1750() {
     //DPRINT("BH1750 Light: "); DPRINT(lux); DPRINTLN(" lx");
     
     if (lux>MAXIMUM_LUX) lux = MAXIMUM_LUX;   //Limited //Limit lux value to maximum
+    if (lux<0) lux = oldLux;
     oldLux = oldLux + (lux-oldLux)/10;   //slow down Lux change
   }
   return (int)oldLux;
