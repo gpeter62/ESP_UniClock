@@ -2031,4 +2031,7 @@
 #ifndef FW
   #define FW "UNKNOWN"
 #endif
+#ifndef DP_PIN
+  #define DP_PIN   -1        //Decimal Point pin.
+#endif
 //______________________________________________________________________________________

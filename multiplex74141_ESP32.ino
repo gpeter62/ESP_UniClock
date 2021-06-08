@@ -140,7 +140,10 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
 void clearTubes() {
   
   for (int i=0;i<maxDig;i++) digitalWrite(digitEnablePins[i],LOW); 
-    if (DP_PIN>=0) digitalWrite(DP_PIN,LOW);
+    
+    #if (DP_PIN>=0) 
+      digitalWrite(DP_PIN,LOW);
+    #endif  
 }
 
 void writeDisplaySingle() {}
