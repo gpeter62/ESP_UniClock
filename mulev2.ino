@@ -105,15 +105,15 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
 
   if ((brightness == 0) || (state == 3) || (num >9) || (!radarON)) {  //blank digit
     state = 0; 
-    for (int i=0;i<maxDig;i++)
-      digitalWrite(digitEnablePins[i],LOW);  //switch off anode 
+    for (int i=0;i<sizeof(digitEnablePins);i++)
+      digitalWrite(digitEnablePins[i],HIGH);  //switch off anode 
     #if DP_PIN >=0
       digitalWrite(DP_PIN,LOW);
     #endif  
     }
   else {
       for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],num  & 1<<i); }
-      for (int i=0;i<maxDig;i++) {digitalWrite(digitEnablePins[pos],HIGH);}    //switch on the new digit}
+      for (int i=0;i<sizeof(digitEnablePins);i++) {digitalWrite(digitEnablePins[i],pos  & 1<<i);} //switch on the new digit}
       
       #if DP_PIN >=0
         if (LEFTDECIMAL) DPpos = min(maxDig-1,pos+1); else DPpos = pos;
@@ -141,7 +141,7 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
 
 void clearTubes() {
   
-  for (int i=0;i<maxDig;i++) digitalWrite(digitEnablePins[i],LOW); 
+  for (int i=0;i<sizeof(digitEnablePins);i++) digitalWrite(digitEnablePins[i],HIGH); 
     #if (DP_PIN>=0) 
       digitalWrite(DP_PIN,LOW);
     #endif  
