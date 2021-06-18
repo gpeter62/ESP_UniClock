@@ -113,7 +113,7 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
     }
   else {
       for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],num  & 1<<i); }
-      for (int i=0;i<sizeof(digitEnablePins);i++) {digitalWrite(digitEnablePins[i],pos  & 1<<i);} //switch on the new digit}
+      for (int i=0;i<sizeof(digitEnablePins);i++) {digitalWrite(digitEnablePins[i],(pos+1)  & 1<<i);} //switch on the new digit}
       
       #if DP_PIN >=0
         if (LEFTDECIMAL) DPpos = min(maxDig-1,pos+1); else DPpos = pos;

@@ -3,7 +3,6 @@ char tubeDriver[] = "PT6355";
 //int maxDigits = 6;
 int wt = 5;   //Serial timing
 
-//MAX7219CNG control pins
 //#define PIN_CS 22 //12 or 15     // D6 CS_
 //#define PIN_CLK  16   // D7 Clock
 //#define PIN_SIN  21   // D5 DataIN

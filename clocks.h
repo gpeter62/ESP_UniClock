@@ -31,7 +31,7 @@
 //#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
 //#define CLOCK_33   //TOM025 ESP32, Pálfi S. board, 6 x Z573M Nixie tubes
-#define CLOCK_34   //Mule V2 ESP32, board, 6 x SA40 LED Display
+//#define CLOCK_34   //Mule V2 ESP32, board, 6 x SA40 LED Display
 
 //#define CLOCK_40  //V1  ESP32, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_41  //V2  ESP32, UNFI 6 x IV-11 VFD tubes clock (átkötés)
@@ -41,7 +41,7 @@
 //#define CLOCK_45  //V3  ESP32, UNFI 6 x Z573M Nixie tubes
 //#define CLOCK_46  //V1  ESP32, UNFI 6 x IV-9 Numitron clock
 //#define CLOCK_47  //V3  ESP32, UNFI 10-LT-50G VFD tubes clock
-//#define CLOCK_48  //WROOM ESP32, UNFI  SN75518 6xIV-17 clock
+#define CLOCK_48  //WROOM ESP32, UNFI  SN75518 6xIV-17 clock
 //--------------------------------------------------------------------------------------------------------------
 //#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_51   //V2  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
@@ -968,8 +968,9 @@
   #define PIN_SDA 21             // you can set the used SDA and SCL pins
   #define PIN_SCL 22             // if it is not default value     
   #define SN75518_ESP32
-  byte segmentEnablePins[] =  {16,15,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};   //segment enable OUTbits of SN75518 (2,3,4,5,6,7,8,9,10,13,14,15,16,17,18,19,20,21)  (You MUST define always 8 Pins!!!)
-  byte digitEnablePins[] =    {38,37,36,35,34,33};  //digit enable OUTbits of SN75518 (1,2,3,4,5,6)  (You may define any number)
+  //Segments:  Dutsrpnmkhgfedcba   
+  byte segmentEnablePins[] =  {23,30,18,19,20,26,27,28,29,32,15,17,21,22,24,25,31};   //segment enable OUTbits of SN75518 (2,3,4,5,6,7,8,9,10,13,14,15,16,17,18,19,20,21)  (You MUST define always 8 Pins!!!)
+  byte digitEnablePins[] =    {6,5,4,3,2,1};  //digit enable OUTbits of SN75518 (1,2,3,4,5,6)  (You may define any number)
   #define DOUBLE_BLINK  //both separator points are blinking 
   //SN75518 pins
     #define PIN_LE    13  // Shift Register Latch Enable
@@ -1384,13 +1385,13 @@
   #define MAXDIGITS 6
   int maxDigits = MAXDIGITS;
   byte digitPins[MAXDIGITS+1][10] = {   
-    {129,128,127,126,125,124,123,132,131,130},  //min  10 , chip1 (tube#3)
-    {118,117,116,115,114,113,112,122,121,119},  //hour  1 , chip1 (tube#4)
-    {107,106,105,104,103,102,101,111,110,108},  //hour 10 , chip1 (tube#5)    
-    {28,27,26,25,24,23,22,32,31,29},            //sec  1 , chip0  (tube#0)
-    {17,16,15,14,13,12,11,21,20,18},            //sec  10 , chip0 (tube#1)
-    {7,6,5,4,3,2,1,10,9,8},                    //min   1 , chip0 (tube#2)    
-    {0,20,109,30,19,0,    0,0,0,0}              //extra decimalPoint/blinking dots (tube0...tube6)
+    {129,128,127,126,125,124,123,132,131,130},  //sec   1 , chip1 (tube#0)
+    {118,117,116,115,114,113,112,122,121,119},  //sec  10 , chip1 (tube#1)
+    {107,106,105,104,103,102,101,111,110,108},  //min   1 , chip1 (tube#2)    
+    {28,27,26,25,24,23,22,32,31,29},            //min  10 , chip0  (tube#3)
+    {17,16,15,14,13,12,11,21,20,18},            //hour 10 , chip0 (tube#4)
+    {7,6,5,4,3,2,1,10,9,8},                     //hour   1 , chip0 (tube#5)    
+    {0,0,109,30,19,0,    0,0,0,0}              //extra decimalPoint/blinking dots (tube0...tube6)
     };    
    //#define MAKE_BLINKING_DOTS //it means, the extra datapins are used as 4 blinking dot instead of decimal points!  #1..#4 positions are used
 //___________________________________________________________________________________    
