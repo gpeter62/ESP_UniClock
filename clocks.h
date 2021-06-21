@@ -988,6 +988,7 @@
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
   //#define USE_WIFIMANAGER  
+  #define DISABLE_BROWNOUT
 #endif
 
 //---------------------ESP32   2X HV5122--------------------------------------------------

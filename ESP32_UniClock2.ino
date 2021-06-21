@@ -142,6 +142,7 @@ String driverSetupStr;
   //#include <ESP8266mDNS.h>
   #include "ESPAsyncTCP.h"
   #include "FS.h"
+  
   const char ESPpinout[] = {"OOOOOO      OOOOOI"};   //GPIO 0..5, 12..16, A0)  usable pins
 
 #elif defined(ESP32)
@@ -162,7 +163,8 @@ String driverSetupStr;
   //#include <ESPmDNS.h>
   #include "AsyncTCP.h"
   #include "SPIFFS.h"
-
+  #include "soc/soc.h"
+  #include "soc/rtc_cntl_reg.h"
   hw_timer_t * ESP32timer = NULL;
   portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
   #define PRESCALER 15   //multiplex timer prescaler, about 80Hz for 6 tubes
@@ -1355,6 +1357,9 @@ if (useTemp > 1)
 }
 
 void setup() {
+  #if defined(DISABLE_BROWNOUT) && defined(ESP32)
+    WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector 
+  #endif  
   delay(1000);
   WiFi.mode(WIFI_OFF);
   EEPROM.begin(EEPROM_SIZE);
