@@ -41,7 +41,8 @@
 //#define CLOCK_45  //V3  ESP32, UNFI 6 x Z573M Nixie tubes
 //#define CLOCK_46  //V1  ESP32, UNFI 6 x IV-9 Numitron clock
 //#define CLOCK_47  //V3  ESP32, UNFI 10-LT-50G VFD tubes clock
-#define CLOCK_48  //WROOM ESP32, UNFI  SN75518 6xIV-17 clock
+//#define CLOCK_48  //WROOM ESP32, UNFI  SN75518 6xIV-17 clock
+#define CLOCK_49  //WROOM ESP32, UNFI  SN75518 6xIV-11 clock
 //--------------------------------------------------------------------------------------------------------------
 //#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_51   //V2  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
@@ -985,6 +986,46 @@
   #define AP_NAME "UNFICLOCK32"
   #define AP_PASSWORD ""  
   #define WEBNAME "ESP32 IV-17 VFD-Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER  
+  //#define DISABLE_BROWNOUT
+#endif
+
+#ifdef CLOCK_49   //WROOM ESP32, UNFI  SN75518 6xIV-11 clock
+  #define DEBUG 
+  #define FW "fw49"  //firmware name
+  #define MAXBRIGHTNESS 100    
+  #define USE_NEOPIXEL 
+  #define NEOPIXEL_PIN 26
+  byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
+  #define USE_DALLAS_TEMP
+  #define TEMP_DALLAS_PIN 23    //Dallas temp sensor pin.  If not used, SET TO -1    
+  //#define USE_DHT_TEMP
+  //#define DHTTYPE DHT22
+  //#define TEMP_DHT_PIN 23    //DHT temp sensor pin.  If not used, SET TO -1
+  //#define LIGHT_SENSOR_PIN 32
+  #define PIN_SDA 21             // you can set the used SDA and SCL pins
+  #define PIN_SCL 22             // if it is not default value     
+  #define SN75518_ESP32
+  //Segments:  abcdefgD  
+  #define SEGMENT8 
+  byte segmentEnablePins[] =  {17,18,19,20,21,22,23,24};   //segment enable OUTbits of SN75518   (You MUST define  8 Pins!!!)
+  byte digitEnablePins[] =    {32,31,30,29,28,27};  //digit enable OUTbits of SN75518 (1,2,3,4,5,6)  (You may define any number)
+  #define DOUBLE_BLINK  //both separator points are blinking 
+  //SN75518 pins
+    #define PIN_LE    13  // Shift Register Latch Enable
+    #define PIN_CLK   12  // Shift Register Clock
+    #define PIN_DATA  27  // Shift Register Data
+    #define PIN_STB   14  // Shift Register Strobe
+  #define ALARMSPEAKER_PIN 19   //Alarm buzzer pin                                            
+  #define ALARMBUTTON_PIN 33    //Alarm switch off button pin
+  //#define TUBE_POWER_PIN 
+  #define TUBE_POWER_ON  HIGH 
+  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
+  #define AP_NAME "UNFICLOCK32"
+  #define AP_PASSWORD ""  
+  #define WEBNAME "ESP32 IV-11 VFD-Clock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
   //#define USE_WIFIMANAGER  

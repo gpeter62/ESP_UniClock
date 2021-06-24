@@ -14,8 +14,6 @@ int wt = 5;   //Serial timing
 #define C1_DISPLAY_STATE_SETTING   B11000000  // Display duty setting=15 + Display ON
 #define C3_PORT_DATA_SETTINGS      B10000000  //Port selection + output data
 
-
-
 #ifdef SEGMENT8
 //------------------abcdefgDP----------------   definition of different characters
 #define C0_DISPLAY_DATA_SETTING    B11101100  //grid=10, segments<=16  
@@ -156,7 +154,7 @@ uint32_t charDefinition[96] = {
 #endif
 
 
-char asciiConvert[] = "0123456789 -.APC^%IF";
+char asciiConvert[] = "0123456789 -.APC~%oIF";
 
 #define MAXCHARS sizeof(charDefinition)/sizeof(charDefinition[0])
 
@@ -245,12 +243,12 @@ static int count = 15;
     }
     bitBuffer = 0;
     for (int j=0;j<MAXSEGMENTS;j++)   
-      if ((charDefinition[dispChar] & 1<<(MAXSEGMENTS-1-j)) != 0) {
-        bitBuffer |= 1<<segmentEnablePins[j]; 
+      if ((charDefinition[dispChar] & (uint32_t)1<<(MAXSEGMENTS-1-j)) != 0) {
+        bitBuffer |= (uint32_t)1<<segmentEnablePins[j]; 
         }
-    //if (digitDP[i]) bitBuffer |= 1<<segmentEnablePins[7];   //Decimal Point  
+    //if (digitDP[i]) bitBuffer |= (uint32_t)1<<segmentEnablePins[7];   //Decimal Point  
     #ifdef TESTMODE
-      bitBuffer = 1<<count;
+      bitBuffer = (uint32_t)1<<count;
     #endif   
     //DPRINT(charDefinition[dispChar],BIN); DPRINT(" / "); DPRINTLN(bitBuffer,BIN);
     //bitBuffer = 0x03FFFF;

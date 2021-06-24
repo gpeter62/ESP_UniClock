@@ -8,14 +8,46 @@ int wt = 5;   //Serial timing
 #define PIN_DATA    27  // D5 Shift Register Data
 #define PIN_STROBE  14  // D1 Shift Register Strobe (1=display off     0=display on)
 
-//#define SEGMENT8
+//#define SEGMENT8   //please set in clocks.h
 //#define TESTMODE   //for testing the segments of a new type VFD modul
 int count = 15;  //output# to test
 unsigned long lastTest = 0;
 
-//16 segment + DP  ---------------------------------------------------------------------------------------------
-boolean ASCIImode = true;
-uint32_t charDefinition[96] = {
+#ifdef SEGMENT8
+  boolean ASCIImode = false;
+  #define DP_CHAR 12
+  byte charDefinition[] = {
+//------------------abcdefgDP----------------   definition of different characters
+                   B11111100,   //0: abcdef
+                   B01100000,   //1: bc 
+                   B11011010,   //2: abdeg
+                   B11110010,   //3: abcdg
+                   B01100110,   //4: bcfg
+                   B10110110,   //5: acdfg
+                   B10111110,   //6: acdefg
+                   B11100000,   //7: abc
+                   B11111110,   //8: abcdefg
+                   B11110110,   //9: abcdfg
+                   B00000000,   // : BLANK   (10)
+                   B00000010,   //-: minus (11)
+                   B00000001,   // decimal point (12)
+                   B11101110,   // A  abcefg  (13)
+                   B11001110,   // P  abefg (14)
+                   B10011100,   // C  adef (15)
+                   B11000110,   //grad (upper circle) abfg  (16)         
+                   B10110100,   //%  acdf  (17) 
+                   B00111010,   //lower circle cdeg  (18)                   
+                   B01100000,   //I  bc    (19)
+                   B10001110    //F  aefg  (20)                            
+};
+
+//byte segmentEnablePins[] =  {9,8,5,3,4,7,6,2};   //segment enable bits (a,b,c,d,e,f,g,DP)   (You MUST define always 8 bits!!!)
+
+#else
+  //16 segment + DP  ---------------------------------------------------------------------------------------------
+  boolean ASCIImode = true;
+  #define DP_CHAR 14
+  uint32_t charDefinition[96] = {
 //  Dutsrpnmkhgfedcba   
   0b00000000000000000, /* (space) */ 
   0b10000000000001100, /* ! */   
@@ -115,21 +147,16 @@ uint32_t charDefinition[96] = {
   0b00000000000000000, /* (del) */
 };
 
-  //byte segmentEnablePins[] =  {16,7,0,1,2,3,4,5,6,8,9,11,10,12,13,14,15};    //segment enable bits 
-
-
-char asciiConvert[] = "0123456789 -.APC^%IF";
+  //byte segmentEnablePins[] =  {16,7,0,1,2,3,4,5,6,8,9,11,10,12,13,14,15};    //segment enable bits defined in clocks.h
+#endif
 
 #define MAXCHARS sizeof(charDefinition)/sizeof(charDefinition[0])
-
-
-uint32_t DRAM_ATTR animationMaskBits[5];
-
-#define MAXCHARS sizeof(charDefinition)
 #define MAXSEGMENTS sizeof(segmentEnablePins)
+char asciiConvert[] = "0123456789 -.APC~%oIF";
 int maxDigits =  sizeof(digitEnablePins);
 int dispChar;
 
+uint32_t DRAM_ATTR animationMaskBits[5];
 uint32_t DRAM_ATTR charTable[MAXCHARS];              //generated pin table from segmentDefinitions
 uint32_t DRAM_ATTR segmentEnableBits[MAXSEGMENTS];   //bitmaps, generated from EnablePins tables
 uint32_t DRAM_ATTR digitEnableBits[10];
@@ -214,9 +241,9 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
       dispChar -= 32;                  
     }
     val = (digitEnableBits[pos] | charTable[dispChar]);  //the full bitmap to send to MAX chip
-    if (digitDP[pos]) val = val | charTable[14];    //Decimal Point
+    if (digitDP[pos]) val = val | charTable[DP_CHAR];    //Decimal Point
     #ifdef TESTMODE
-      val = digitEnableBits[pos] | (1<<(count-1));
+      val = digitEnableBits[pos] | ((uint32_t)1<<(count-1));
       animMask[pos] = 0;
       if ((millis()-lastTest)>5000) {
         lastTest=millis();
@@ -267,7 +294,7 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
 void generateBitTable() {
 uint32_t out;
 
-  DPRINTLN("--- Generating segment pins bitmap ---");
+  DPRINT("--- Generating segment pins bitmap:"); DPRINTLN(MAXSEGMENTS);
   for (int i=0;i<MAXSEGMENTS;i++) {
     segmentEnableBits[i] = uint32_t(1<<(segmentEnablePins[i]-1)); 
     //DPRINT(i); DPRINT(": "); DPRINTLN(segmentEnableBits[i],BIN);
@@ -290,19 +317,19 @@ uint32_t out;
     animationMaskBits[i] = ~animationMaskBits[i]; //invert bits
     //DPRINTLN(animationMaskBits[i],HEX);
   }
-  DPRINTLN("--- Generating digit pins bitmap ---");
+  DPRINT("--- Generating digit pins bitmap:"); DPRINTLN(maxDigits);
   for (int i=0;i<maxDigits;i++) {
     digitEnableBits[i] = uint32_t(1 << (digitEnablePins[i]-1));
     //DPRINT(i); DPRINT(": "); DPRINTLN( digitEnableBits[i],BIN);
   }
 
-DPRINTLN("---- Generated Character / Pins table -----");
+  DPRINT("--- Generated Character / Pins table:"); DPRINTLN(MAXCHARS);
   for (int i=0;i<MAXCHARS;i++) {
     out = 0;
     //DPRINT(i); DPRINT(":  ");
     //DPRINT(charDefinition[i],BIN);  //DPRINT(" = ");
     for (int j=0;j<MAXSEGMENTS;j++)   //from a to g
-      if ((charDefinition[i] & 1<<j) != 0) {
+      if ((charDefinition[i] & (uint32_t)1<<j) != 0) {
         out = out | segmentEnableBits[MAXSEGMENTS-j-1]; //DPRINT("1"); 
         }
     else        //{DPRINT("0");}

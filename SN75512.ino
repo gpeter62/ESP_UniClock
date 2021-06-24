@@ -87,7 +87,7 @@ static volatile int brightCounter[] = {0,9,2,8,4,7,6,5,3,1};
   val = (digitEnableBits[pos] | charTable[digit[pos]]);  //the full bitmap to send to MAX chip
   if (digitDP[pos]) val = val | charTable[12];    //Decimal Point
   for (int i=0; i<DATABITS; i++)  {
-    if ((val & uint32_t(1 << (DATABITS -1 - i))) ) {
+    if ((val & (uint32_t)1 << (DATABITS -1 - i)) ) {
       WRITE_PERI_REG( PIN_OUT_SET, PIN_DATA_BIT );
           for (int t=0; t<4;t++) asm volatile ("nop");   
     }
@@ -116,13 +116,13 @@ uint32_t out;
 
   DPRINTLN("--- Generating segment pins bitmap ---");
   for (int i=0;i<MAXSEGMENTS;i++) {
-    segmentEnableBits[i] = uint32_t(1<<segmentEnablePins[i]);
+    segmentEnableBits[i] = (uint32_t)1<<segmentEnablePins[i];
     //DPRINT(i); DPRINT(": "); DPRINTLN(segmentEnableBits[i],BIN);
   }
   
   DPRINTLN("--- Generating digit pins bitmap ---");
   for (int i=0;i<maxDigits;i++) {
-    digitEnableBits[i] = uint32_t(1 << digitEnablePins[i]);
+    digitEnableBits[i] = (uint32_t)1 << digitEnablePins[i];
     //DPRINT(i); DPRINT(": "); DPRINTLN( digitEnableBits[i],BIN);
   }
 
@@ -132,7 +132,7 @@ DPRINTLN("---- Generated Character / Pins table -----");
     //DPRINT(i); DPRINT(":  ");
     //DPRINT(charDefinition[i],BIN);  //DPRINT(" = ");
     for (int j=0;j<=7;j++)   //from a to g
-      if ((charDefinition[i] & 1<<(7-j)) != 0) {
+      if ((charDefinition[i] & (uint32_t)1<<(7-j)) != 0) {
         out = out | segmentEnableBits[j]; //DPRINT("1"); 
         }
     //else        DPRINT("0");
