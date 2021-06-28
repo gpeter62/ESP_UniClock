@@ -296,23 +296,26 @@ uint32_t out;
 
   DPRINT("--- Generating segment pins bitmap:"); DPRINTLN(MAXSEGMENTS);
   for (int i=0;i<MAXSEGMENTS;i++) {
-    segmentEnableBits[i] = uint32_t(1<<(segmentEnablePins[i]-1)); 
+    segmentEnableBits[i] = uint32_t(1)<<(segmentEnablePins[i]-1); 
     //DPRINT(i); DPRINT(": "); DPRINTLN(segmentEnableBits[i],BIN);
   }
+#ifdef SEGMENT8
+  animationMaskBits[0] = uint32_t(1<<segmentEnablePins[0]);  //a
+  animationMaskBits[1] = animationMaskBits[0] | uint32_t(1)<<segmentEnablePins[1] | uint32_t(1<<segmentEnablePins[5]);  //bf
+  animationMaskBits[2] = animationMaskBits[1] | uint32_t(1)<<segmentEnablePins[6];  //g
+  animationMaskBits[3] = animationMaskBits[2] | uint32_t(1)<<segmentEnablePins[4] | uint32_t(1<<segmentEnablePins[2]);  //ec
+  animationMaskBits[4] = animationMaskBits[3] | uint32_t(1)<<segmentEnablePins[3];  //d
+#else  
   //Dutsrpnmkhgfedcba  
   //DP=16,u=15,t=14,s=13,r=12,p=11,n=10,m=9,k=8,h=7,g=6,f=5,e=4,d=3,c=2,b=1,a=0}
-    
   animationMaskBits[0] = uint32_t(1<<segmentEnablePins[0]) | uint32_t(1<<segmentEnablePins[1]);  //ab
-  
   animationMaskBits[1] = animationMaskBits[0] | uint32_t(1<<segmentEnablePins[2]) | uint32_t(1<<segmentEnablePins[8]) |
-  uint32_t(1<<segmentEnablePins[9]) | uint32_t(1<<segmentEnablePins[10]) | uint32_t(1<<segmentEnablePins[7]);  //hkmnc
-  
+      uint32_t(1<<segmentEnablePins[9]) | uint32_t(1<<segmentEnablePins[10]) | uint32_t(1<<segmentEnablePins[7]);  //hkmnc
   animationMaskBits[2] = animationMaskBits[1] | uint32_t(1<<segmentEnablePins[15]) | uint32_t(1<<segmentEnablePins[11]);  //up
-  
   animationMaskBits[3] = animationMaskBits[2] | uint32_t(1<<segmentEnablePins[6]) | uint32_t(1<<segmentEnablePins[14]) |
-  uint32_t(1<<segmentEnablePins[13]) |uint32_t(1<<segmentEnablePins[12]) |uint32_t(1<<segmentEnablePins[3]);  //gtsrd
-  
+      uint32_t(1<<segmentEnablePins[13]) |uint32_t(1<<segmentEnablePins[12]) |uint32_t(1<<segmentEnablePins[3]);  //gtsrd
   animationMaskBits[4] = animationMaskBits[3] | uint32_t(1<<segmentEnablePins[5]) | uint32_t(1<<segmentEnablePins[4]);  //fe
+#endif  
   for (int i=0;i<5;i++) {
     animationMaskBits[i] = ~animationMaskBits[i]; //invert bits
     //DPRINTLN(animationMaskBits[i],HEX);
@@ -326,17 +329,17 @@ uint32_t out;
   DPRINT("--- Generated Character / Pins table:"); DPRINTLN(MAXCHARS);
   for (int i=0;i<MAXCHARS;i++) {
     out = 0;
-    //DPRINT(i); DPRINT(":  ");
-    //DPRINT(charDefinition[i],BIN);  //DPRINT(" = ");
+    DPRINT(i); DPRINT(":  ");
+    DPRINT(charDefinition[i],BIN);  //DPRINT(" = ");
     for (int j=0;j<MAXSEGMENTS;j++)   //from a to g
-      if ((charDefinition[i] & (uint32_t)1<<j) != 0) {
+      if ((uint32_t)(charDefinition[i] & (uint32_t)1<<j) != 0) {
         out = out | segmentEnableBits[MAXSEGMENTS-j-1]; //DPRINT("1"); 
         }
-    else        //{DPRINT("0");}
-    //DPRINT("  >> ");  
+    //else        {DPRINT("0");}
+    DPRINT("  >> ");  
     
     charTable[i] = out;
-    //DPRINTLN(charTable[i],BIN);
+    DPRINTLN(charTable[i],BIN);
   }  //end for
 }
 
