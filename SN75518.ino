@@ -316,9 +316,10 @@ uint32_t out;
       uint32_t(1<<segmentEnablePins[13]) |uint32_t(1<<segmentEnablePins[12]) |uint32_t(1<<segmentEnablePins[3]);  //gtsrd
   animationMaskBits[4] = animationMaskBits[3] | uint32_t(1<<segmentEnablePins[5]) | uint32_t(1<<segmentEnablePins[4]);  //fe
 #endif  
+  DPRINTLN("--- Generating animation mask bitmap:");
   for (int i=0;i<5;i++) {
     animationMaskBits[i] = ~animationMaskBits[i]; //invert bits
-    //DPRINTLN(animationMaskBits[i],HEX);
+    DPRINTLN(animationMaskBits[i],BIN);
   }
   DPRINT("--- Generating digit pins bitmap:"); DPRINTLN(maxDigits);
   for (int i=0;i<maxDigits;i++) {

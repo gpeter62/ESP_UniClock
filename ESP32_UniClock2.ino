@@ -1485,6 +1485,7 @@ void setup() {
   }
   
   if (prm.wifiMode) {
+    WiFi.scanNetworks(false);
     startWifiMode();
     if (WiFi.status() != WL_CONNECTED) //failed to connect to wifi
       startStandaloneMode();
@@ -1919,15 +1920,14 @@ void displayDate()  {
   int t = 0;
   for (int i=0;i<3;i++) {
     if (p[m][i] == 2) {
-      if (maxDigits>6) {
-        newDigit[t++] = (year() % 1000) / 100;
-        newDigit[t++] = year() / 1000;
-      }
       if (maxDigits>4) {
         newDigit[t++] = year() % 10;
         newDigit[t++] = (year() % 100) / 10;
-        digitDP[4] = true;
       }
+      if (maxDigits>6) {
+        newDigit[t++] = (year() % 1000) / 100;
+        newDigit[t++] = year() / 1000;
+      }      
     }
     if (p[m][i] == 1) {
       newDigit[t++] = month() % 10;
@@ -1938,7 +1938,14 @@ void displayDate()  {
       newDigit[t++] = day() / 10;
     }
   } //end for
-  digitDP[2] = true;
+  if ((maxDigits>6) && (m<2)) {
+    digitDP[4] = true;
+    digitDP[6] = true;
+  }
+  else {
+    digitDP[2] = true;
+    digitDP[4] = true;
+  }
   colonBlinkState = true;
   if (prm.animMode == 1)  memcpy(oldDigit, newDigit, sizeof(oldDigit)); //don't do animation
 }

@@ -7,7 +7,7 @@
 
 //#define CLOCK_1   //8266, UNFI PCB clock, 4x IN-16 tubes
 //#define CLOCK_2   //8266, UNFI PCB clock, 4x Z-570M tubes
-//#define CLOCK_3   //8266, PCB less clock, IV-18 VFD tube   https://www.thingiverse.com/thing:3417955
+#define CLOCK_3   //8266, PCB less clock, IV-18 VFD tube   https://www.thingiverse.com/thing:3417955
 //#define CLOCK_4   //8266, custom clock, 4x IV-11 VFD tubes
 //#define CLOCK_5   //8266, UNFI PCB clock IVL-2-5/7 tube with RTC
 //#define CLOCK_6   //8266, GP PCB clock, 4x IN-1 tubes and  4x74141  driver (NON-MULTIPLEX)
@@ -42,7 +42,7 @@
 //#define CLOCK_46  //V1  ESP32, UNFI 6 x IV-9 Numitron clock
 //#define CLOCK_47  //V3  ESP32, UNFI 10-LT-50G VFD tubes clock
 //#define CLOCK_48  //WROOM ESP32, UNFI  SN75518 6xIV-17 clock
-#define CLOCK_49  //WROOM ESP32, UNFI  SN75518 6xIV-11 clock
+//#define CLOCK_49  //WROOM ESP32, UNFI  SN75518 6xIV-11 clock
 //--------------------------------------------------------------------------------------------------------------
 //#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_51   //V2  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
@@ -967,7 +967,12 @@
   //#define TEMP_DHT_PIN 23    //DHT temp sensor pin.  If not used, SET TO -1
   //#define LIGHT_SENSOR_PIN 32
   #define PIN_SDA 21             // you can set the used SDA and SCL pins
-  #define PIN_SCL 22             // if it is not default value     
+  #define PIN_SCL 22             // if it is not default value   
+  #define USE_BH1750            //I2C luxmeter sensor
+  #define USE_BME280            //I2C Temperature + humidity + pressure
+  #define USE_BMP280            //I2C Temperature + barometric  pressure
+  #define USE_AHTX0             //I2C Temperature + humidity
+  #define USE_SHT21             //I2C Temperature + humidity  
   #define SN75518_ESP32
   //Segments:  Dutsrpnmkhgfedcba   
   byte segmentEnablePins[] =  {23,30,18,19,20,26,27,28,29,32,15,17,21,22,24,25,31};   //segment enable OUTbits of SN75518 (2,3,4,5,6,7,8,9,10,13,14,15,16,17,18,19,20,21)  (You MUST define always 8 Pins!!!)
