@@ -82,13 +82,13 @@ void IRAM_ATTR writeDisplay() { //void IRAM_ATTR  writeDisplay(){
   if ( (brightness == 0) || (!state) || (!radarON)) {  //OFF state, blank digit
         digitalWrite(LTBIpin,LOW); //disable display
         #if COLON_PIN >=0  
-          digitalWrite(COLON_PIN,!colonBlinkState);  // Blink colon pin
+          digitalWrite(COLON_PIN,LOW);  // Blink colon pin
         #endif
     }
   else {  //ON state
         digitalWrite(LTBIpin,HIGH); //enable display
         #if COLON_PIN >=0  
-          digitalWrite(COLON_PIN,LOW);
+          digitalWrite(COLON_PIN,colonBlinkState);
         #endif
   }
   state = !state;  
@@ -179,13 +179,13 @@ void ICACHE_RAM_ATTR writeDisplay() {       //https://circuits4you.com/2018/01/0
   if ( (brightness == 0) || (!state) || (!radarON)) {  //OFF state, blank digit
         digitalWrite(LTBIpin,LOW); //disable display
         #if COLON_PIN >=0  
-          digitalWrite(COLON_PIN,!colonBlinkState);  // Blink colon pin
+          digitalWrite(COLON_PIN,LOW);  // Blink colon pin
         #endif
   }
   else {  //ON state
         digitalWrite(LTBIpin,HIGH); //enable display
         #if COLON_PIN >=0  
-          digitalWrite(COLON_PIN,LOW);
+          digitalWrite(COLON_PIN,colonBlinkState);
         #endif
   }
   state = !state;  

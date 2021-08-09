@@ -7,7 +7,7 @@
 
 //#define CLOCK_1   //8266, UNFI PCB clock, 4x IN-16 tubes
 //#define CLOCK_2   //8266, UNFI PCB clock, 4x Z-570M tubes
-#define CLOCK_3   //8266, PCB less clock, IV-18 VFD tube   https://www.thingiverse.com/thing:3417955
+//#define CLOCK_3   //8266, PCB less clock, IV-18 VFD tube   https://www.thingiverse.com/thing:3417955
 //#define CLOCK_4   //8266, custom clock, 4x IV-11 VFD tubes
 //#define CLOCK_5   //8266, UNFI PCB clock IVL-2-5/7 tube with RTC
 //#define CLOCK_6   //8266, GP PCB clock, 4x IN-1 tubes and  4x74141  driver (NON-MULTIPLEX)
@@ -32,6 +32,7 @@
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
 //#define CLOCK_33   //TOM025 ESP32, Pálfi S. board, 6 x Z573M Nixie tubes
 //#define CLOCK_34   //Mule V2 ESP32, board, 6 x SA40 LED Display
+#define CLOCK_35   //ESP32, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
 
 //#define CLOCK_40  //V1  ESP32, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_41  //V2  ESP32, UNFI 6 x IV-11 VFD tubes clock (átkötés)
@@ -689,6 +690,26 @@
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
   //#define USE_WIFIMANAGER  
+#endif
+
+
+#ifdef CLOCK_35   //ESP32, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
+  #define DEBUG
+  #define FW "fw35"  //firmware name
+  #define MAXBRIGHTNESS 100
+  //#define USE_DALLAS_TEMP
+  //#define TEMP_DALLAS_PIN -1
+  #define USE_NEOPIXEL
+  byte tubePixels[] = {0,0,1,1,2,2,3,3,3,3,2,2,1,1,0,0,0};  //4 tubes, double row, 17 leds (GP)  
+  #define NO_MULTIPLEX_ESP32
+  #define TEMP_DALLAS_PIN -1
+  #define COLON_PIN   2        //Blinking Colon pin.  If not used, SET TO -1                 ( old IN-1-Clock: white:2 brown: SDA)
+  #define AP_NAME "UNICLOCK32"
+  #define AP_PASSWORD ""
+  #define WEBNAME "IN-1 Nixie Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER   
 #endif
 
 //______________________ESP-32 CLOCKS  (2x20pin ESP32 D1 mini modul) ______________________________________________________
