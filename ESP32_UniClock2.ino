@@ -23,9 +23,26 @@
       ESP8266:  https://randomnerdtutorials.com/install-esp8266-filesystem-uploader-arduino-ide/
       ESP32: https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide/
 */
-
+#define byte uint8_t
 #include "clocks.h"  //DEFINE YOUR CLOCKS SETUP IN THIS FILE!!!
 
+#if defined(ESP8266)
+  #if defined(ARDUINO_ESP8266_RELEASE_2_6_0) || \
+    defined(ARDUINO_ESP8266_RELEASE_2_6_1) || \
+    defined(ARDUINO_ESP8266_RELEASE_2_6_2) || \
+    defined(ARDUINO_ESP8266_RELEASE_2_6_3) || \
+    defined(ARDUINO_ESP8266_RELEASE_2_7_0) || \
+    defined(ARDUINO_ESP8266_RELEASE_2_7_1) || \
+    defined(ARDUINO_ESP8266_RELEASE_2_7_2) || \
+    defined(ARDUINO_ESP8266_RELEASE_2_7_3) || \
+    defined(ARDUINO_ESP8266_RELEASE_2_7_4)
+    #define ESP8266_CORE_2xx
+    #pragma message "8266_Core 2.xx"
+  #else
+    #pragma message "8266_Core_3.xx"
+    #define ICACHE_RAM_ATTR IRAM_ATTR
+  #endif
+#endif
 /*_______________________________ USABLE PARAMETERS ____________________________________________
   //#define DEBUG  //Enable Serial Monitor, 115200baud (only, if TX pin is not used anywhere!!!)
   //---------------------------- CLOCK EXTRA OPTION PARAMETERS ---------------------------------
@@ -163,6 +180,7 @@ String driverSetupStr;
   //#include <ESPmDNS.h>
   #include "AsyncTCP.h"
   #include "SPIFFS.h"
+  #include "FS.h"  
   #include "soc/soc.h"
   #include "soc/rtc_cntl_reg.h"
   hw_timer_t * ESP32timer = NULL;
@@ -673,9 +691,13 @@ void doFirmwareUpdate(){
     DPRINT("Update firmware: "); DPRINTLN(fname);
     t_httpUpdate_return ret,ret2;
     boolean succ = false;
-    
+    WiFiClient client;
     ESPhttpUpdate.rebootOnUpdate(false);
-    ret = ESPhttpUpdate.update(fname);
+    #if defined(ESP32) || defined(ESP8266_CORE_2xx)
+      ret = ESPhttpUpdate.update(fname);    //ESP32 and old 8266 Core
+    #else
+      ret = ESPhttpUpdate.update(client,fname);   //new 8266 core
+    #endif  
     switch(ret) {
             case HTTP_UPDATE_FAILED:
                 DPRINTF("HTTP_UPDATE_FAILED Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
@@ -694,8 +716,11 @@ void doFirmwareUpdate(){
 
     fname = String(prm.firmwareServer)+"/"+String(FW)+".spiffs.bin";
     DPRINT("Update SPIFFS: "); DPRINTLN(fname);
-    ret2 = ESPhttpUpdate.updateSpiffs(fname);
-
+    #if defined(ESP32)|| defined(ESP8266_CORE_2xx)
+      ret2 = ESPhttpUpdate.updateSpiffs(fname);    //ESP32 or old 8266 Core
+    #else  
+      ret2 = ESPhttpUpdate.update(client,fname,true);   //new 8266 core
+    #endif  
             switch(ret2) {
                 case HTTP_UPDATE_FAILED:
                     DPRINTF("HTTP_UPDATE_FAILED Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
@@ -1603,7 +1628,6 @@ void timeProgram() {
 
 void loadEEPROM() {
   disableDisplay();
-  byte d;
   DPRINT("Loading setting from EEPROM.  Size:");  DPRINT(EEPROM_SIZE);
   
   EEPROM.get(EEPROM_addr, prm);
@@ -1650,7 +1674,6 @@ void factoryReset() {
   strcpy(prm.mqttBrokerAddr,"10.10.0.202"); 
   strcpy(prm.mqttBrokerUser,"mqtt");
   strcpy(prm.mqttBrokerPsw,"mqtt");
-  char tmp[100];
   strncpy(prm.firmwareServer,FIRMWARE_SERVER,sizeof(prm.firmwareServer));
   prm.mqttEnable = false;
   prm.mqttBrokerRefresh = 10; //sec
@@ -1702,7 +1725,6 @@ void newCathodeProtect(unsigned long t,int dir) {    //t = time in msec, dir = d
   unsigned long started = millis();
   boolean finish, stopThis;
   byte fin[10];
-  byte lastStoppedDigit = 0;
   byte nextStoppedDigit;
   int sum = 0;
   
@@ -1729,7 +1751,6 @@ void newCathodeProtect(unsigned long t,int dir) {    //t = time in msec, dir = d
         
       if (finish && stopThis) {  //this digit stops
         fin[i] = 1;
-        lastStoppedDigit = i;
         digitDP[i] = tmpDP[i];   //restore original DP value
         t +=1000;
         if (dir>0) {  //find next stop digit
@@ -1743,7 +1764,6 @@ void newCathodeProtect(unsigned long t,int dir) {    //t = time in msec, dir = d
         else if (sum<=maxDigits-2) {
           while(true) {
           nextStoppedDigit = random(maxDigits);
-          //DPRINT("next:"); DPRINTLN(nextStoppedDigit);
           if (fin[nextStoppedDigit] ==0) break;  //found a running digit
           }
         }
@@ -2457,15 +2477,11 @@ void checkTubePowerOnOff(void) {
 //https://www.pcboard.ca/ldr-light-dependent-resistor
  
 int luxMeter(void) {    
-  static float oldLux = MAXIMUM_LUX;
-  float ADCdata;
-  float ldrResistance;
-  float ldrLux;
-  
-#if LIGHT_SENSOR_PIN >=0     
-  ADCdata = analogRead(LIGHT_SENSOR_PIN); //DPRINT("ADC:"); DPRINTLN(ADCdata);
-  ldrResistance = (MAX_ADC_READING - ADCdata) / ADCdata * REF_RESISTANCE;
-  ldrLux = LUX_CALC_SCALAR * pow(ldrResistance, LUX_CALC_EXPONENT);
+#if LIGHT_SENSOR_PIN >=0   
+  static float oldLux = MAXIMUM_LUX;  
+  float ADCdata = analogRead(LIGHT_SENSOR_PIN); //DPRINT("ADC:"); DPRINTLN(ADCdata);
+  float ldrResistance = (MAX_ADC_READING - ADCdata) / ADCdata * REF_RESISTANCE;
+  float ldrLux = LUX_CALC_SCALAR * pow(ldrResistance, LUX_CALC_EXPONENT);
   if ((ldrLux>=MAXIMUM_LUX)||(ldrLux <0)) ldrLux = MAXIMUM_LUX;   //Limit lux value to maximum
   oldLux = oldLux + (ldrLux-oldLux)/10;   //slow down Lux change
   return (int)oldLux;

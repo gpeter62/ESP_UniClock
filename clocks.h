@@ -21,20 +21,21 @@
 //#define CLOCK_14  //8266 6X LD8035 VFD-clock
 //#define CLOCK_15  //8266 6X IV-6 VFD-clock RGB
 //#define CLOCK_16  //8266 4X IV-6, 1X LD8035
+//#define CLOCK_17  //8266 + PT6311 4X IV-22, russian clock
 
 //#define CLOCK_20  //8266 D1-mini, P.S. PCB 4xIN14 clock-thermometer 
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
 //#define CLOCK_23    ////ESP32 D1 mini, P.S. PCB 3xIN14 1xIN-19A thermometer / humidity
 
-//define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
+//#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
 //#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
 //#define CLOCK_33   //TOM025 ESP32, Pálfi S. board, 6 x Z573M Nixie tubes
 //#define CLOCK_34   //Mule V2 ESP32, board, 6 x SA40 LED Display
-#define CLOCK_35   //ESP32, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
+//#define CLOCK_35   //ESP32, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
 
-//#define CLOCK_40  //V1  ESP32, UNFI 6 x IV-11 VFD tubes clock
+#define CLOCK_40  //V1  ESP32, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_41  //V2  ESP32, UNFI 6 x IV-11 VFD tubes clock (átkötés)
 //#define CLOCK_42  //V3  ESP32, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_43  //V1  ESP32, UNFI 6 x Z573M Nixie tubes
@@ -411,6 +412,30 @@
   #define WEBNAME "IV-6 VFD Clock"
 #endif
 
+#ifdef CLOCK_17  //8266 + PT6311 4X IV-22, russian clock
+  #define DEBUG 
+  #define USE_RTC
+  #define FW "fw17"  //firmware name
+  #define MAXBRIGHTNESS 10  
+  #define USE_DALLAS_TEMP
+  #define TEMP_DALLAS_PIN 4    //Dallas temp sensor pin.  If not used, SET TO -1
+  #define PT6311
+  byte segmentEnablePins[] =  {0,1,2,3,4,5,6};   
+  byte digitEnablePins[] = {0,1,2,3};         
+  //PT6311 pins
+  #define PIN_CLK  14   //  Clock
+  #define PIN_DIN  13   //  DataIN
+  #define PIN_LOAD 15   //  STB pin 
+  //#define LIGHT_SENSOR_PIN A0  //Only ADC pins are usable!  
+  //#define MAXIMUM_LUX 100    //Lux level for maximum tube brightness
+  //#define LUX_CALC_SCALAR   12518931 * 1.2
+  #define PIN_SDA  4              
+  #define PIN_SCL  5             
+  #define AP_NAME "UNFICLOCK"
+  #define AP_PASSWORD ""
+  #define WEBNAME "IV-6 VFD Clock"
+#endif
+
 //____________ P.S. clocks / thermometers ____________________________________________
 #ifdef CLOCK_20   //8266 D1-mini, P.S. PCB 4xIN14 clock-thermometer 
   //#define DEBUG 
@@ -718,7 +743,7 @@
   #define FW "fw40"  //firmware name
   #define MAXBRIGHTNESS 100    
   #define USE_NEOPIXEL 
-  #define NEOPIXEL_PIN 322
+  #define NEOPIXEL_PIN 22
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   #define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN 25    //Dallas temp sensor pin.  If not used, SET TO -1    

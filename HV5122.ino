@@ -57,7 +57,6 @@ void IRAM_ATTR writeDisplay() { //void IRAM_ATTR  writeDisplay(){
 #else
 void ICACHE_RAM_ATTR writeDisplay() {       //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
 #endif
-  static volatile int brightCounter = 1;
   static volatile int timer = PWMrefresh;
   static volatile boolean state=true;
   static volatile int brightness;
@@ -154,7 +153,6 @@ void writeDisplaySingle() {
   uint32_t bitBuffer0 = 0;
   uint32_t bitBuffer1 = 0;
   byte num;
-  byte DPpos;
 
   if ((millis() - lastRun) < 50) return; //slow down!!!
   lastRun = millis();
