@@ -21,7 +21,7 @@
 //#define CLOCK_14  //8266 6X LD8035 VFD-clock
 //#define CLOCK_15  //8266 6X IV-6 VFD-clock RGB
 //#define CLOCK_16  //8266 4X IV-6, 1X LD8035
-#define CLOCK_17  //8266 + PT6311 4X IV-22, russian clock
+#define CLOCK_17  //8266 + PT6311 4X IV-22, russian clock https://vk.com/@retromodding-chasy-na-vfd-indikatorah-iv-22-s-wifi
 
 //#define CLOCK_20  //8266 D1-mini, P.S. PCB 4xIN14 clock-thermometer 
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
