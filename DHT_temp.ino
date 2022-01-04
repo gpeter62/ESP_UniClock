@@ -25,12 +25,27 @@
 
 
 DHT dht(TEMP_DHT_PIN, DHTTYPE);
-byte DHTtempPtr = 0;
-byte DHThumidPtr = 0;
+int DHTtempPtr = -1;
+int DHThumidPtr = -1;
 
 void setupDHTemp() {
+  float tempTMP, humidTMP;
   regPin(TEMP_DHT_PIN,"TEMP_DHT_PIN");
   dht.begin();
+  int i= 0;
+  while (i<5) {
+    humidTMP = dht.readHumidity();
+    tempTMP = dht.readTemperature();
+    DPRINT("DHT Test:"); DPRINT(tempTMP); DPRINT("/"); DPRINTLN(humidTMP);
+    i++;
+    if (!isnan(tempTMP)) 
+      break;
+    delay(1000);
+  }  
+  if (isnan(tempTMP)) {
+    DPRINT("No DHTxx sensor found on GPIO"); DPRINTLN(TEMP_DHT_PIN);
+    return;
+  }
   DHTtempPtr = useTemp;  //remember my ID-s
   DHThumidPtr = useHumid;
   useTemp++;   //increase the number of sensors
@@ -42,6 +57,7 @@ static unsigned long lastRun = 0;
 float tempTMP, humidTMP;
 
   if (EEPROMsaving) return;
+  if (DHTtempPtr<0) return;  //no sensor
   //if (((millis()-lastRun)<2500) || (second()!=prm.tempStart)) return;
   if ((((millis()-lastRun)<2500) || (second()!=prm.tempStart)) && (lastRun !=0)) return;
   lastRun = millis();  

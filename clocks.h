@@ -21,7 +21,7 @@
 //#define CLOCK_14  //8266 6X LD8035 VFD-clock
 //#define CLOCK_15  //8266 6X IV-6 VFD-clock RGB
 //#define CLOCK_16  //8266 4X IV-6, 1X LD8035
-//#define CLOCK_17  //8266 + PT6311 4X IV-22, russian clock
+#define CLOCK_17  //8266 + PT6311 4X IV-22, russian clock
 
 //#define CLOCK_20  //8266 D1-mini, P.S. PCB 4xIN14 clock-thermometer 
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
@@ -35,7 +35,7 @@
 //#define CLOCK_34   //Mule V2 ESP32, board, 6 x SA40 LED Display
 //#define CLOCK_35   //ESP32, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
 
-#define CLOCK_40  //V1  ESP32, UNFI 6 x IV-11 VFD tubes clock
+//#define CLOCK_40  //V1  ESP32, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_41  //V2  ESP32, UNFI 6 x IV-11 VFD tubes clock (átkötés)
 //#define CLOCK_42  //V3  ESP32, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_43  //V1  ESP32, UNFI 6 x Z573M Nixie tubes
@@ -416,11 +416,15 @@
   #define DEBUG 
   #define USE_RTC
   #define FW "fw17"  //firmware name
+  #define USE_NEOPIXEL 
+  #define NEOPIXEL_PIN 3
+  byte tubePixels[] = {0,1,2,3};        //4 tubes, single leds
   #define MAXBRIGHTNESS 10  
-  #define USE_DALLAS_TEMP
-  #define TEMP_DALLAS_PIN 4    //Dallas temp sensor pin.  If not used, SET TO -1
+  //#define USE_DALLAS_TEMP
+  //#define TEMP_DALLAS_PIN 4    //Dallas temp sensor pin.  If not used, SET TO -1
+  #define USE_RTC
   #define PT6311
-  byte segmentEnablePins[] =  {0,1,2,3,4,5,6};   
+  byte segmentEnablePins[] =  {4,3,1,7,6,5,2,0};    
   byte digitEnablePins[] = {0,1,2,3};         
   //PT6311 pins
   #define PIN_CLK  14   //  Clock
@@ -433,7 +437,7 @@
   #define PIN_SCL  5             
   #define AP_NAME "UNFICLOCK"
   #define AP_PASSWORD ""
-  #define WEBNAME "IV-6 VFD Clock"
+  #define WEBNAME "IV-22 VFD Clock"
 #endif
 
 //____________ P.S. clocks / thermometers ____________________________________________
@@ -1012,6 +1016,8 @@
   //#define DHTTYPE DHT22
   //#define TEMP_DHT_PIN 23    //DHT temp sensor pin.  If not used, SET TO -1
   //#define LIGHT_SENSOR_PIN 32
+  #define LOWER_CIRCLE_CHARCODE 10
+  #define UPPER_CIRCLE_CHARCODE 17
   #define PIN_SDA 21             // you can set the used SDA and SCL pins
   #define PIN_SCL 22             // if it is not default value   
   #define USE_BH1750            //I2C luxmeter sensor
@@ -2083,6 +2089,15 @@
 #ifndef PERCENT_CHARCODE 
   #define PERCENT_CHARCODE 17 
 #endif
+
+#ifndef UPPER_CIRCLE_CHARCODE 
+  #define UPPER_CIRCLE_CHARCODE 16 
+#endif
+
+#ifndef LOWER_CIRCLE_CHARCODE 
+  #define LOWER_CIRCLE_CHARCODE 18 
+#endif
+
 
 #ifndef LEFTDECIMAL
   #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!

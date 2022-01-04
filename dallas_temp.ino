@@ -23,11 +23,11 @@ byte d2Ptr = 0;
 
 void setupDallasTemp() {
   regPin(TEMP_DALLAS_PIN,"TEMP_DALLAS_PIN"); 
-  //pinMode(TEMP_DALLAS_PIN,OUTPUT);
-  //#if defined(ESP8266)
+  pinMode(TEMP_DALLAS_PIN,OUTPUT);
+  #if defined(ESP8266)
     oneWire.reset();
     delay(200);  //200ms
-  //#endif  
+  #endif  
   tempSensors.begin();                     // Start the temperature sensor  
   tempSensors.setResolution(TEMPERATURE_PRECISION);
   tempSensors.setWaitForConversion(false); // Don't block the program while the temperature sensor is reading

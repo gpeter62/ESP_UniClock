@@ -143,8 +143,9 @@ unsigned long lastTest = 0;
   0b01010001000010010, /* { */
   0b00010001000000000, /* | */
   0b00010101000100001, /* } */
-  0b01100110000000000, /* ~ */
+  0b01000001010000001, /* ~ */
   0b00000000000000000, /* (del) */
+  //Dutsrpnmkhgfedcba  
 };
 
   //byte segmentEnablePins[] =  {16,7,0,1,2,3,4,5,6,8,9,11,10,12,13,14,15};    //segment enable bits defined in clocks.h
@@ -152,7 +153,7 @@ unsigned long lastTest = 0;
 
 #define MAXCHARS sizeof(charDefinition)/sizeof(charDefinition[0])
 #define MAXSEGMENTS sizeof(segmentEnablePins)
-char asciiConvert[] = "0123456789 -.APC~%oIF";
+char asciiConvert[] = "0123456789 -.APC~% IF";
 int maxDigits =  sizeof(digitEnablePins);
 int dispChar;
 
@@ -216,7 +217,7 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
       //digitalWrite(PIN_STROBE,HIGH);    //OFF
     return;
   }
-
+  //digit[5] = 15;   digit[4] = 16;     digit[3] = 17;     digit[2] = 18;      digit[1] = 19;       digit[0] = 20;
   portENTER_CRITICAL_ISR(&timerMux);
   noInterrupts();
   intCounter++;
@@ -251,6 +252,10 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
       }
     #endif       
     timer = PWMtimeBrightness;
+    #ifdef CLOCK_xx  //example only
+      if (pos==2) timer = 2*timer;  //Weak  tube#2 brightness compensation, some hacking
+      if (pos==4) timer = 3*timer;  //Weak  tube#4 brightness compensation, some hacking
+    #endif 
     timerON = timer;
     timerOFF = PWMrefresh-PWMtimeBrightness;
   }
@@ -319,7 +324,7 @@ uint32_t out;
   DPRINTLN("--- Generating animation mask bitmap:");
   for (int i=0;i<5;i++) {
     animationMaskBits[i] = ~animationMaskBits[i]; //invert bits
-    DPRINTLN(animationMaskBits[i],BIN);
+    //DPRINTLN(animationMaskBits[i],BIN);
   }
   DPRINT("--- Generating digit pins bitmap:"); DPRINTLN(maxDigits);
   for (int i=0;i<maxDigits;i++) {
@@ -330,17 +335,17 @@ uint32_t out;
   DPRINT("--- Generated Character / Pins table:"); DPRINTLN(MAXCHARS);
   for (int i=0;i<MAXCHARS;i++) {
     out = 0;
-    DPRINT(i); DPRINT(":  ");
-    DPRINT(charDefinition[i],BIN);  //DPRINT(" = ");
+    //DPRINT(i); DPRINT(":  ");
+    //DPRINT(charDefinition[i],BIN);  //DPRINT(" = ");
     for (int j=0;j<MAXSEGMENTS;j++)   //from a to g
       if ((uint32_t)(charDefinition[i] & (uint32_t)1<<j) != 0) {
         out = out | segmentEnableBits[MAXSEGMENTS-j-1]; //DPRINT("1"); 
         }
     //else        {DPRINT("0");}
-    DPRINT("  >> ");  
+    //DPRINT("  >> ");  
     
     charTable[i] = out;
-    DPRINTLN(charTable[i],BIN);
+    //DPRINTLN(charTable[i],BIN);
   }  //end for
 }
 

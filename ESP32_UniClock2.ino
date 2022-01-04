@@ -1,7 +1,8 @@
+
 /*
       Universal Clock  (Nixie, VFD, LED, Numitron) for ESP8266 or ESP32
       with optional Dallas Thermometer and DS3231 RTC, Neopxels stripe, GPS and more...
-      18/01/2021
+      27/12/2021
       Copyright (C) 2020  Peter Gautier
 
       This program is free software: you can redistribute it and/or modify
@@ -650,7 +651,7 @@ void startStandaloneMode() {
   IPAddress gateway(192, 168, 4, 1);
   IPAddress subnet(255, 255, 255, 0);
   WiFi.mode(WIFI_AP);
-
+  WiFi.softAPConfig(local_ip, gateway, subnet);
   boolean nwState;
   if (strlen(prm.ApPsw)) {
     nwState =  WiFi.softAP(prm.ApSsid, prm.ApPsw);
@@ -659,7 +660,7 @@ void startStandaloneMode() {
     nwState =  WiFi.softAP(prm.ApSsid);
   }
   delay(2000);   //info: https://github.com/espressif/arduino-esp32/issues/2025
-  WiFi.softAPConfig(local_ip, gateway, subnet);
+  
   DPRINT("AP status:"); DPRINTLN(nwState ? "Ready" : "Failed!");  //channel
   DPRINT("Mac address:"); DPRINTLN(WiFi.softAPmacAddress());
   ip = WiFi.softAPIP();
@@ -1914,8 +1915,8 @@ void displayHumid(byte ptr) {
     }
     else {
       newDigit[--digPtr] = 10;   //empty character
-      newDigit[--digPtr] = 16;   //upper circle
-      newDigit[--digPtr] = 18;  // lower circle
+      newDigit[--digPtr] = UPPER_CIRCLE_CHARCODE;   //upper circle = 16
+      newDigit[--digPtr] = LOWER_CIRCLE_CHARCODE;  // lower circle = 18
     }
   } //4 tubes only
   else {

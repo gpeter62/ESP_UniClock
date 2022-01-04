@@ -1,4 +1,5 @@
 #ifdef PT6311
+//CLOCK_17 
 char tubeDriver[] = "PT6311";
 int maxDigits = sizeof(digitEnablePins);
 int wt = 1;   //Serial timing
@@ -8,7 +9,7 @@ int wt = 1;   //Serial timing
 //#define PIN_LOAD 15   //  STB pin 
 
 #define SEGMENT8   //if not used, 17 segments or more
-#define TESTMODE   //for testing the segments of a new type VFD modul
+//#define TESTMODE   //for testing the segments of a new type VFD modul
 
 //PT6311 Commands
 
@@ -27,7 +28,7 @@ byte DISPLAY_MODE[11] = {
 };
 
 #define C1_DISPLAY_MODE_SETTING     B00000000  //8 digit, 20 segments
-#define C2_DATA_SETTING             B01001000  //write data to display, addr increment
+#define C2_DATA_SETTING             B01000000  //write data to display, addr increment
 #define C2_DATA_SETTING_TESTMODE    B01001000  //write data to display, addr increment
 #define C3_ADDRESS_SETTING          B11000000  //Address setting to 0
 #define C4_DISPLAY_CONTROL          B10001111  //max brightness, ON
@@ -174,24 +175,25 @@ char asciiConvert[] = "0123456789 -.APC~%oIF";
 
 #define MAXCHARS sizeof(charDefinition)/sizeof(charDefinition[0])
 
-
 void inline shift(byte Data) {
   for (int i=0;i<8;i++) {
     digitalWrite(PIN_CLK,LOW);
-    delayMicroseconds(wt);
+    delayMicroseconds(2);
     digitalWrite(PIN_DIN, Data & (1<<i));
-    delayMicroseconds(wt);
+    delayMicroseconds(5);
     digitalWrite(PIN_CLK,HIGH);
-    delayMicroseconds(wt);
+    delayMicroseconds(5);
+    digitalWrite(PIN_CLK,LOW);
+    delayMicroseconds(2);
   }
-  DPRINTLN(" ");
-  delayMicroseconds(wt);
 }
 
 void ICACHE_RAM_ATTR sendCommand(byte val){    //for commands C1..C3
   digitalWrite(PIN_LOAD,LOW);
+  delayMicroseconds(2);
   shift(val);
   digitalWrite(PIN_LOAD,HIGH);
+  delayMicroseconds(2);
 
   //DPRINT(address,HEX); DPRINT(","); DPRINTLN(val,HEX);
 }
@@ -203,23 +205,9 @@ void setup_pins() {
   pinMode(PIN_CLK, OUTPUT);   regPin(PIN_CLK,"PIN_CLK"); 
   digitalWrite(PIN_CLK, HIGH);
   digitalWrite(PIN_LOAD, HIGH);
-  digitsOnly = false;
-  delay(1);
-
-  sendCommand(C1_DISPLAY_MODE_SETTING);
-  sendCommand(C4_DISPLAY_CONTROL);
-  #ifdef TESTMODE
-   int num = 0;
-   while (true) {
-       for (int i=0;i<4;i++) digit[i] = num;   // " char
-       writeDisplaySingle(); 
-       delay(1000);
-       num++;
-       if (num>9) num = 0;
-       DPRINTLN(num);
-   }
-  #endif
-   
+  digitsOnly = true;
+  delay(10);
+  sendCommand(C1_DISPLAY_MODE_SETTING); 
 }
 
 #if defined(ESP32) 
@@ -227,61 +215,61 @@ void IRAM_ATTR writeDisplaySingle(){
 #else 
 void ICACHE_RAM_ATTR writeDisplaySingle(){     
 #endif
-static byte oldBright = 0;
-static byte newBright = 0;
-byte dispState;
+byte newBright = 0;
 uint32_t bitBuffer;  
 int dispChar;
 static int count = 15;
 
-  #ifdef TESTMODE
-    DPRINT("count:"); DPRINTLN(count);
-  #endif
   newBright = displayON ?  prm.dayBright : prm.nightBright;
-  if (newBright != oldBright) {
-    if (newBright>10) newBright = 10;
-    dispState = DISPLAY_MODE[newBright];
-    //sendCommand(dispState);    //Set Brightness
-    //sendCommand(C4_DISPLAY_CONTROL);
-    oldBright = newBright;
-  }
+  if (newBright>10) newBright = 10;
 
-  sendCommand(C4_DISPLAY_CONTROL);   //full brightness
-  sendCommand(C2_DATA_SETTING);
-  for (int i=0;i<maxDigits;i++) {
+  digitalWrite(PIN_LOAD, LOW);  //safety only
+  delayMicroseconds(2);
+
+  sendCommand(C2_DATA_SETTING); 
+  sendCommand(DISPLAY_MODE[newBright]);
+  
+for (int i=0;i<maxDigits;i++) {
     dispChar = digit[i];
     if (ASCIImode) {
       if (dispChar<sizeof(asciiConvert)) dispChar = asciiConvert[dispChar];       
       dispChar -= 32;                  
     }
     bitBuffer = 0;
-    delayMicroseconds(wt);
     digitalWrite(PIN_LOAD,LOW);
-    delayMicroseconds(wt);
+    delayMicroseconds(2);
     shift(C3_ADDRESS_SETTING + i*3);  //set display address
     for (int j=0;j<MAXSEGMENTS;j++)   
       if ((charDefinition[dispChar] & (uint32_t)1<<(MAXSEGMENTS-1-j)) != 0) {
         bitBuffer |= (uint32_t)1<<segmentEnablePins[j]; 
         }
-    //if (digitDP[i]) bitBuffer |= (uint32_t)1<<segmentEnablePins[7];   //Decimal Point  
-    #ifdef TESTMODE
-      //bitBuffer = (uint32_t)1<<count;
-    #endif   
+    if (digitDP[i]) bitBuffer |= (uint32_t)1<<segmentEnablePins[7];   //Decimal Point  
     //DPRINT(charDefinition[dispChar],BIN); DPRINT(" / "); DPRINTLN(bitBuffer,BIN);
-    //bitBuffer = 0xFFFFFF;
+    if (newBright==0) bitBuffer = 0;  //switch OFF display
     shift(bitBuffer & 0xFF);
     shift(bitBuffer >>8);
     if (MAXSEGMENTS>16) shift(bitBuffer >>16);
-    delayMicroseconds(wt);
+    delayMicroseconds(2);
     digitalWrite(PIN_LOAD,HIGH);
-    delayMicroseconds(wt);
+    delayMicroseconds(2);
   }  //end for i
-  sendCommand(C1_DISPLAY_MODE_SETTING);
-  sendCommand(C4_DISPLAY_CONTROL);
+
+/*  //TEST  mode
+  digitalWrite(PIN_LOAD, LOW);  //upload data
+  delayMicroseconds(2);
+  shift(C3_ADDRESS_SETTING); 
+  for (int i=0;i<48;i++) {
+    shift(0xff); // Data to fill table 5*16 = 80 bits
+    //shift(0x00); // Data to fill table 5*16 = 80 bits
+    //shift(0xff); // Data to fill table 5*16 = 80 bits
+  }
+  digitalWrite(PIN_LOAD, HIGH);
+  delay(2);
+*/  
 }
 
-void writeDisplay() {
-}
+/*********************** Send command without strobe/chip select******************************************/
 
+void writeDisplay() {}
 void clearTubes() {}
 #endif
