@@ -138,7 +138,7 @@ if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
 
       if (animMask[pos] > 0) { //Animation?
         num = oldDigit[pos];  //show old character
-        timer = (PWMtimeBrightness * (10-animMask[pos]))/10;
+        timer = (PWMtimeBrightness * (20-animMask[pos]))/20;
         state = 1;  //next state is: show newDigit
       }
       else {
@@ -149,7 +149,7 @@ if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
       break;
     case 1:  //show new character, if animation
       num =   newDigit[pos];
-      timer = (PWMtimeBrightness * animMask[pos])/10;      
+      timer = (PWMtimeBrightness * animMask[pos])/20;      
       state = 2;  //default next state is: BLANK display
       break;
     case 2:  //blank display

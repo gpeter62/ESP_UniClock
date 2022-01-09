@@ -21,7 +21,7 @@
 //#define CLOCK_14  //8266 6X LD8035 VFD-clock
 //#define CLOCK_15  //8266 6X IV-6 VFD-clock RGB
 //#define CLOCK_16  //8266 4X IV-6, 1X LD8035
-#define CLOCK_17  //8266 + PT6311 4X IV-22, russian clock https://vk.com/@retromodding-chasy-na-vfd-indikatorah-iv-22-s-wifi
+//#define CLOCK_17  //8266 + PT6311 4X IV-22, russian clock
 
 //#define CLOCK_20  //8266 D1-mini, P.S. PCB 4xIN14 clock-thermometer 
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
@@ -29,7 +29,7 @@
 //#define CLOCK_23    ////ESP32 D1 mini, P.S. PCB 3xIN14 1xIN-19A thermometer / humidity
 
 //#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
-//#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
+#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
 //#define CLOCK_33   //TOM025 ESP32, Pálfi S. board, 6 x Z573M Nixie tubes
 //#define CLOCK_34   //Mule V2 ESP32, board, 6 x SA40 LED Display
@@ -1099,11 +1099,11 @@
   #define NEOPIXEL_PIN 27
   byte tubePixels[] = {0,1,2,3,4,5};        //6 tubes, single leds
   //#define USE_DALLAS_TEMP
-  #define TEMP_DALLAS_PIN 26    //Dallas temp sensor pin.  If not used, SET TO -1   
+  //#define TEMP_DALLAS_PIN 26    //Dallas temp sensor pin.  If not used, SET TO -1   
   //#define LIGHT_SENSOR_PIN 23
   #define PIN_SDA 4             // you can set the used SDA and SCL pins
   #define PIN_SCL 32             // if it is not default value
-  //#define USE_DHT_TEMP
+  #define USE_DHT_TEMP
   #define DHTTYPE DHT11
   #define TEMP_DHT_PIN  26
   //#define USE_RTC
@@ -1113,7 +1113,7 @@
   #define USE_AHTX0             //I2C Temperature + humidity
   #define USE_SHT21             //I2C Temperature + humidity
   #define USE_BH1750            //I2C luxmeter sensor
-  #define USE_MQTT
+  //#define USE_MQTT
   byte mac[6] = {0x3e,0x09,0x0b,0x3e,0x09,0x0c};   //3e090b3e090b
 //_______________________________ HV5122 setup ____________________________________________________  
   #define HV5122

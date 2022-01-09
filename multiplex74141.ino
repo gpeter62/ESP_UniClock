@@ -78,7 +78,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
       
       if (animMask[pos] > 0) { //Animation?
         num = oldDigit[pos];  //show old character
-        timer = (PWMtimeBrightness * (10-animMask[pos]))/10;
+        timer = (PWMtimeBrightness * (20-animMask[pos]))/20;
         state = 1;  //next state is: show newDigit
       }
       else {
@@ -89,7 +89,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
       break;
     case 1:  //show new character, if animation
       num =   newDigit[pos];
-      timer = (PWMtimeBrightness * animMask[pos])/10;      
+      timer = (PWMtimeBrightness * animMask[pos])/20;      
       state = 2;  //default next state is: BLANK display
       break;
     case 2:  //blank display

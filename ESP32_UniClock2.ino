@@ -2127,8 +2127,8 @@ void changeDigit() {
         break;
       case 5:
         memset(animMask, 0, sizeof(animMask));
-#if defined(MULTIPLEX74141) || defined(NO_MULTIPLEX74141)
-        for (int i = 1; i < 10; i++) {
+#if defined(MULTIPLEX74141) || defined(NO_MULTIPLEX74141) || defined(MULTIPLEX74141_ESP32) || defined(MULE_V2) || defined(PCF_74141) || defined(NO_MULTIPLEX_ESP32)
+        for (int i = 1; i < 20; i++) {
           for (int tube = j; tube < maxDigits; tube++) {
             if (oldDigit[tube] != newDigit[tube]) animMask[tube] = i;  //digit is changed
           }  //end for tube

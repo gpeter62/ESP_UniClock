@@ -110,7 +110,7 @@ void IRAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8
         PWMtimeBrightness = max(PWM_min,PWM_max*brightness/MAXBRIGHTNESS);
       }      
       if (animM > 0) { //Animation?
-        timer =  (PWMtimeBrightness * (10-animM))/10;
+        timer =  (PWMtimeBrightness * (20-animM))/20;
         state = 1;  //next state is: show newDigits
       }
       else {
@@ -120,7 +120,7 @@ void IRAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8
       }
       break;
     case 1:  //show new character, if animation
-      timer = (PWMtimeBrightness * animM)/10;      
+      timer = (PWMtimeBrightness * animM)/20;      
       if (brightness>=MAXBRIGHTNESS) state = 0;
       else state = 2;  //default next state is: BLANK display
       break;
