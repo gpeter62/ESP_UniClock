@@ -22,19 +22,19 @@
 //#define CLOCK_15  //8266 6X IV-6 VFD-clock RGB
 //#define CLOCK_16  //8266 4X IV-6, 1X LD8035
 //#define CLOCK_17  //8266 + PT6311 4X IV-22, russian clock
-
+//#define CLOCK_18  //8266 IV-18 VFD-clock RGB
 //#define CLOCK_20  //8266 D1-mini, P.S. PCB 4xIN14 clock-thermometer 
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
 //#define CLOCK_23    ////ESP32 D1 mini, P.S. PCB 3xIN14 1xIN-19A thermometer / humidity
 
 //#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
-#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
+//#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
 //#define CLOCK_33   //TOM025 ESP32, Pálfi S. board, 6 x Z573M Nixie tubes
 //#define CLOCK_34   //Mule V2 ESP32, board, 6 x SA40 LED Display
-//#define CLOCK_35   //ESP32, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
-
+#define CLOCK_35   //ESP32, 6x Z566M and 3x74595 6x74141 (NON-MULTIPLEX)
+//#define CLOCK_36   //ESP32, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
 //#define CLOCK_40  //V1  ESP32, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_41  //V2  ESP32, UNFI 6 x IV-11 VFD tubes clock (átkötés)
 //#define CLOCK_42  //V3  ESP32, UNFI 6 x IV-11 VFD tubes clock
@@ -440,6 +440,37 @@
   #define WEBNAME "IV-22 VFD Clock"
 #endif
 
+#ifdef CLOCK_18   //8266 IV-18 VFD-clock RGB
+  #define DEBUG 
+  #define FW "fw18"  //firmware name
+  #define MAXBRIGHTNESS 100
+  #define USE_NEOPIXEL 
+  #define NEOPIXEL_PIN 3
+  byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds  
+  //#define USE_DALLAS_TEMP
+  //#define TEMP_DALLAS_PIN -1   //Dallas temp sensor pin.  If not used, SET TO -1
+  #define USE_DHT_TEMP 
+  #define DHTTYPE DHT11
+  #define TEMP_DHT_PIN  12 
+  #define MAX6921
+  byte segmentEnablePins[] =  {13,15,18,19,17,14,16,12};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
+  byte digitEnablePins[] = {6,10,5,4,0,3,2,1};   //digit enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  (You may define any number)
+  //MAX6921 pins
+  #define PIN_LE    4  // D4 Shift Register Latch Enable
+  #define PIN_CLK   5  // D1 Shift Register Clock
+  #define PIN_DATA  2  // D4 Shift Register Data
+  #define PIN_BL    14  // D5 Shift Register Blank (1=display off     0=display on)
+  #define ALARMSPEAKER_PIN 16   //Alarm buzzer pin                                            
+  #define ALARMBUTTON_PIN  13   //Alarm switch off button pin 
+  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
+  //#define LIGHT_SENSOR_PIN A0  //Only ADC pins are usable!  
+  //#define MAXIMUM_LUX 100    //Lux level for maximum tube brightness
+  //#define LUX_CALC_SCALAR   12518931 * 1.2
+  #define AP_NAME "UNFICLOCK"
+  #define AP_PASSWORD ""
+  #define WEBNAME "IV-18 VFD Clock"
+#endif
+
 //____________ P.S. clocks / thermometers ____________________________________________
 #ifdef CLOCK_20   //8266 D1-mini, P.S. PCB 4xIN14 clock-thermometer 
   //#define DEBUG 
@@ -721,17 +752,43 @@
   //#define USE_WIFIMANAGER  
 #endif
 
+#ifdef CLOCK_35   //ESP32, 6X Z566M and 3x 74595 6x74141  driver  (NON-MULTIPLEX)
+  #define DEBUG
+  #define FW "fw35"  //firmware name
+  #define MAXBRIGHTNESS 100
+  #define USE_DALLAS_TEMP
+  #define TEMP_DALLAS_PIN 32
+  #define USE_NEOPIXEL
+  #define NEOPIXEL_PIN 25
+  byte tubePixels[] = {5,4,3,2,1,0}; 
+  #define dataPin  14  //D5
+  #define latchPin 27  //D6
+  #define clkPin   26  //D7
+  #define NO_MULTIPLEX_ESP32 
+  #define COLON_PIN  13         //Blinking Colon pin.  If not used, SET TO -1
+  #define ALARMSPEAKER_PIN 12   //Alarm buzzer pin                                            
+  //#define ALARMBUTTON_PIN 36   //Alarm switch off button pin
+  #define ALARM_ON HIGH
+  //#define LIGHT_SENSOR_PIN -1
+  #define RADAR_PIN 15
+  #define RADAR_TIMEOUT  5 //min
+  #define AP_NAME "UNFICLOCK32"
+  #define AP_PASSWORD ""
+  #define WEBNAME "Z566M Nixie Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER   
+#endif  
 
-#ifdef CLOCK_35   //ESP32, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
+#ifdef CLOCK_36   //ESP32, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
   #define DEBUG
   #define FW "fw35"  //firmware name
   #define MAXBRIGHTNESS 100
   //#define USE_DALLAS_TEMP
-  //#define TEMP_DALLAS_PIN -1
+  #define TEMP_DALLAS_PIN -1
   #define USE_NEOPIXEL
   byte tubePixels[] = {0,0,1,1,2,2,3,3,3,3,2,2,1,1,0,0,0};  //4 tubes, double row, 17 leds (GP)  
   #define NO_MULTIPLEX_ESP32
-  #define TEMP_DALLAS_PIN -1
   #define COLON_PIN   2        //Blinking Colon pin.  If not used, SET TO -1                 ( old IN-1-Clock: white:2 brown: SDA)
   #define AP_NAME "UNICLOCK32"
   #define AP_PASSWORD ""
@@ -1104,7 +1161,7 @@
   #define PIN_SDA 4             // you can set the used SDA and SCL pins
   #define PIN_SCL 32             // if it is not default value
   #define USE_DHT_TEMP
-  #define DHTTYPE DHT11
+  #define DHTTYPE DHT22
   #define TEMP_DHT_PIN  26
   //#define USE_RTC
   //#define USE_GPS

@@ -66,7 +66,7 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   
   digitalWrite(latchPin, LOW);
 
-  if (brightness ==0) {
+  if ((brightness ==0) || !radarON){
     for (int i=0;i<maxDigits;i++) writeBits(0xA);  //black display
     
   #if DECIMALPOINT_PIN>=0 

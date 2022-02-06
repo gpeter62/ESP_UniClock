@@ -18,9 +18,9 @@ int DRAM_ATTR PWMrefresh=12000;   ////msec, Multiplex time period. Greater value
 int DRAM_ATTR PWM_min = 1000;
 int DRAM_ATTR PWM_max = 12000;
 
-#define dataPin  14  //D5
-#define latchPin 12  //D6
-#define clkPin   13  //D7
+//#define dataPin  14  //D5
+//#define latchPin 27 //12  //D6
+//#define clkPin   26 //13  //D7
 
 void IRAM_ATTR writeDisplaySingle() { }   
 
@@ -67,7 +67,7 @@ void IRAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/02/esp8
   
   digitalWrite(latchPin, LOW);
 
-  if (brightness ==0) {
+  if ((brightness ==0) || !radarON) {
     for (int i=0;i<maxDigits;i++) writeBits(0xA);  //black display
     
   #if DECIMALPOINT_PIN>=0 

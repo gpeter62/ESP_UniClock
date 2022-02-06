@@ -2427,7 +2427,7 @@ void printDigits(unsigned long timeout) {
     DPRINT("  Lux:"); DPRINT(lx);
   }
   if (RADAR_PIN>=0) {
-    DPRINT("  Pin:"); DPRINT(digitalRead(RADAR_PIN)); DPRINT("  lastOn:"); DPRINT(radarLastOn);  DPRINT("  sec:"); DPRINTLN((millis()-radarLastOn)/1000);  
+    //DPRINT("  RadarPin:"); DPRINT(digitalRead(RADAR_PIN)); DPRINT("  lastOn:"); DPRINT(radarLastOn);  DPRINT("  sec:"); DPRINTLN((millis()-radarLastOn)/1000);  
   }
   //DPRINT("  tON:"); DPRINT(timerON); DPRINT("  tOFF:"); DPRINT(timerOFF);   //Multiplex timing values for testing
   if (WiFi.status() != WL_CONNECTED) DPRINT("  no WIFI");
