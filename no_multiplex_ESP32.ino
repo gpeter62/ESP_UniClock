@@ -14,9 +14,9 @@ byte tubes[] = {3,2,1,0};         //4 tubes,   old clock...
 //byte tubes[] = {5,4,3,2,1,0};   //6 tubes, reverse order
 
 int maxDigits = sizeof(tubes);
-int DRAM_ATTR PWMrefresh=12000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-int DRAM_ATTR PWM_min = 1000;
-int DRAM_ATTR PWM_max = 12000;
+int DRAM_ATTR PWMrefresh=25000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+int DRAM_ATTR PWM_min = 5000;
+int DRAM_ATTR PWM_max = 25000;
 
 //#define dataPin  14  //D5
 //#define latchPin 27 //12  //D6
