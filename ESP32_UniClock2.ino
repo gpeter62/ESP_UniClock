@@ -1,8 +1,8 @@
 
 /*
-      Universal Clock  (Nixie, VFD, LED, Numitron) for ESP8266 or ESP32
+      Universal Clock  v3.xx (Nixie, VFD, LED, Numitron) for ESP8266 or ESP32
       with optional Dallas Thermometer and DS3231 RTC, Neopxels stripe, GPS and more...
-      27/12/2021
+      03/04/2022
       Copyright (C) 2020  Peter Gautier
 
       This program is free software: you can redistribute it and/or modify
@@ -145,7 +145,7 @@ String driverSetupStr;
 #if defined(ESP8266)
   #define DRAM_ATTR     //https://docs.espressif.com/projects/esp-idf/en/v4.3-beta2/esp32/api-reference/storage/spi_flash_concurrency.html
   #ifndef WEBNAME
-    #define WEBNAME "ESP32_UniClock 3.0"
+    #define WEBNAME "ESP32_UniClock 3.1"
   #endif
   #ifndef AP_NAME
     #define AP_NAME "UNICLOCK"
@@ -379,6 +379,8 @@ boolean showTemp1 = false;
 boolean showHumid0 = false;
 boolean showHumid1 = false;
 int lastCathodeProt = -1;
+boolean cathodeProtRunning = false;
+boolean ipShowRunning = false;
 
 #define MAX_PIN sizeof(ESPpinout)-1
 #define PIN_TXT_LEN 16
@@ -758,6 +760,7 @@ void doCathodeProtect() {
   prm.dayBright=MAXBRIGHTNESS;  
   prm.nightBright = MAXBRIGHTNESS;
   autoBrightness = false;
+  cathodeProtRunning = true;
   
   DPRINT("Cathode Protect is running for "); DPRINT(cathProtMin); DPRINTLN(" minutes.");
   memset(digitDP, 0, sizeof(digitDP));
@@ -777,6 +780,7 @@ void doCathodeProtect() {
   prm.dayBright = db;  //restore brightness values
   prm.nightBright = nb;
   autoBrightness = ab; 
+  cathodeProtRunning = false;
 }
 
 void startServer() {
@@ -1297,8 +1301,12 @@ if (useTemp > 1)
   doc["humidStart"] = prm.humidStart; 
   doc["humidEnd"] = prm.humidEnd; 
   doc["enableAutoDim"] = prm.enableAutoDim; 
-  doc["enableRadar"] = prm.enableRadar;     
-  doc["radarTimeout"] = prm.radarTimeout;   
+  doc["enableRadar"] = prm.enableRadar;    
+  #if RADAR_PIN >= 0
+    doc["radarTimeout"] = prm.radarTimeout;   
+  #else
+    doc["radarTimeout"] = 0;
+  #endif  
   doc["corrT0"] = prm.corrT0;
   doc["corrT1"] = prm.corrT1;
   doc["corrH0"] = prm.corrH0;
@@ -1729,6 +1737,7 @@ void newCathodeProtect(unsigned long t,int dir) {    //t = time in msec, dir = d
   byte nextStoppedDigit;
   int sum = 0;
   
+  cathodeProtRunning = true;
   DPRINT("Cathode Protect running! dir:"); DPRINTLN(dir); 
   memcpy(tmp,digit,sizeof(tmp));
   memcpy(tmpDP,digitDP,sizeof(tmpDP));
@@ -1797,6 +1806,7 @@ void newCathodeProtect(unsigned long t,int dir) {    //t = time in msec, dir = d
    
   memcpy(oldDigit, digit, sizeof(oldDigit));
   lastCathodeProt = minute();
+  cathodeProtRunning = false;
 }
 
 void cathodeProtect() {   //original version
@@ -2063,7 +2073,11 @@ void changeDigit() {
   byte tmp[50];
   byte space = 4;
   byte anim;
-
+  
+  #if defined(TUBE1CLOCK)
+    prm.animMode = 0;
+    return;
+  #endif  
   anim = prm.animMode;
   //anim = 0;
   if (anim == 6) anim = 1 + rand() % 5;
@@ -2127,7 +2141,7 @@ void changeDigit() {
         break;
       case 5:
         memset(animMask, 0, sizeof(animMask));
-#if defined(MULTIPLEX74141) || defined(NO_MULTIPLEX74141) || defined(MULTIPLEX74141_ESP32) || defined(MULE_V2) || defined(PCF_74141) || defined(NO_MULTIPLEX_ESP32)
+#if defined(MULTIPLEX74141) || defined(NO_MULTIPLEX74141) || defined(MULTIPLEX74141_ESP32) || defined(MULE_V2) || defined(PCF_74141) || defined(NO_MULTIPLEX_ESP32) || defined(VQC10)
         for (int i = 1; i < 20; i++) {
           for (int tube = j; tube < maxDigits; tube++) {
             if (oldDigit[tube] != newDigit[tube]) animMask[tube] = i;  //digit is changed
@@ -2286,7 +2300,7 @@ void writeIpTag(byte iptag) {
 void showMyIp(void) {   //at startup, show the web page internet address
   //clearDigits();
 #define SPEED 1500
-
+  ipShowRunning = true;
   writeIpTag(ip[0]);
   printDigits(0);
   Fdelay(SPEED);
@@ -2299,6 +2313,7 @@ void showMyIp(void) {   //at startup, show the web page internet address
   writeIpTag(ip[3]);
   printDigits(0);
   Fdelay(SPEED);
+  ipShowRunning = false;
 }
 
 
@@ -2342,6 +2357,7 @@ inline int mod(int a, int b) {
 
 void testTubes(int dely) {
   Fdelay(dely);
+  cathodeProtRunning = true;
   DPRINT("Testing tubes: ");
   for (int i = 0; i < 10; i++) {
     DPRINT(i); DPRINT(" ");
@@ -2356,6 +2372,7 @@ void testTubes(int dely) {
   DPRINTLN(" ");
   Fdelay(1000);
   memset(digitDP, 0, sizeof(digitDP));
+  cathodeProtRunning = false;
 }
 
 void playTubes() {

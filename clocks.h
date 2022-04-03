@@ -33,7 +33,7 @@
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
 //#define CLOCK_33   //TOM025 ESP32, Pálfi S. board, 6 x Z573M Nixie tubes
 //#define CLOCK_34   //Mule V2 ESP32, board, 6 x SA40 LED Display
-#define CLOCK_35   //ESP32, 6x Z566M and 3x74595 6x74141 (NON-MULTIPLEX)
+//#define CLOCK_35   //ESP32, 6x Z566M and 3x74595 6x74141 (NON-MULTIPLEX)
 //#define CLOCK_36   //ESP32, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
 //#define CLOCK_40  //V1  ESP32, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_41  //V2  ESP32, UNFI 6 x IV-11 VFD tubes clock (átkötés)
@@ -53,6 +53,8 @@
 //#define CLOCK_54   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
 //#define CLOCK_55   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_56   //WROOM ESP32, UNFI 2xHV5122 6xZ573 clock   /flat panel/
+//#define CLOCK_70   //1 tube esp8266 Nixie Clock by UNFI 
+#define CLOCK_71   //2x VQC10 clock by UNFI 
 //#define CLOCK_99   //Dummy clock, sensor box with MQTT connector
 
 //______________________ESP8266 CLOCKS by UNFI and GP ______________________________________________________
@@ -1572,6 +1574,33 @@
   #define USE_WIFIMANAGER  
 #endif
 
+#ifdef CLOCK_70   //1 tube esp8266 Nixie Clock by UNFI 
+  #define DEBUG 
+  #define FW "fw70"  //firmware name
+  #define MAXBRIGHTNESS 100  
+  #define TUBE1CLOCK
+  byte ABCDPins[4] =  {2,4,5,15};   
+  #define AP_NAME "1TUBE_CLOCK"
+  #define AP_PASSWORD ""
+  #define WEBNAME "1TUBE Nixie Clock"
+#endif
+
+#ifdef CLOCK_71   //2x VQC10 clock by UNFI 
+  #define DEBUG 
+  #define PIN_FLD_BUTTON   12     
+  #define PIN_SET_BUTTON   13  
+  #define USE_DALLAS_TEMP
+  #define TEMP_DALLAS_PIN 15    //PIN16 not working!!!
+  #define FW "fw71"  //firmware name
+  #define MAXBRIGHTNESS 100  
+  #define VQC10
+  #define AP_NAME "VQC10_LED_CLOCK"
+  #define AP_PASSWORD ""
+  #define WEBNAME "LED Clock"
+  #define DEFAULT_SSID "farm32"
+  #define DEFAULT_PSW "birka12345"
+#endif
+
 #ifdef CLOCK_99   //Dummy clock, sensor box with MQTT connector
   #define DEBUG 
   #define FW "fw99"  //firmware name
@@ -1615,420 +1644,7 @@
   //#define USE_WIFIMANAGER  
 #endif
 
-/*  //old version of clock definitions
-  
-//#define CLOCK_40  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock
-//#define CLOCK_41  //ESP32 D1 mini, UNFI board, 6 x Z573M Nixie tubes
-//#define CLOCK_42  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock SHT21
-//#define CLOCK_43  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock SHT21
-//#define CLOCK_44  //ESP32 D1 mini, Numitron clock
-//#define CLOCK_45  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock (Ovidiu)
 
-//#define CLOCK_50   //ESP32 D1 mini, UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
-//#define CLOCK_51   //ESP32 D1 mini, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
-//#define CLOCK_52   //ESP8266 Wemos D1 mini,UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
-//#define CLOCK_55   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
-//______________________ESP-32 CLOCKS  (2x20pin ESP32 D1 mini modul) ______________________________________________________
-#ifdef CLOCK_40   //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock
-  #define DEBUG
-  #define FW "fw40"  //firmware name 
-  #define MAXBRIGHTNESS 100
-  #define USE_NEOPIXEL 
-  #define NEOPIXEL_PIN 22
-  byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
-  //#define USE_DALLAS_TEMP
-  //#define TEMP_DALLAS_PIN -1    //Dallas temp sensor pin.  If not used, SET TO -1    
-  #define USE_DHT_TEMP
-  #define DHTTYPE DHT22
-  #define TEMP_DHT_PIN 25    //DHT temp sensor pin.  If not used, SET TO -1     
-  #define MAX6921_ESP32
-  byte segmentEnablePins[] =  {19,17,15,12,13,16,18,14};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
-  byte digitEnablePins[] = {9,8,7,2,1,0};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
-  #define DOUBLE_BLINK  //both separator points are blinking 
-  //MAX6921 pins
-    #define PIN_LE    4  // Shift Register Latch Enable
-    #define PIN_CLK   17  // Shift Register Clock
-    #define PIN_DATA  16  // Shift Register Data
-    #define PIN_BL    32  // Shift Register Blank (1=display off     0=display on)
-  #define ALARMSPEAKER_PIN 2   //Alarm buzzer pin                                            
-  #define ALARMBUTTON_PIN 0    //Alarm switch off button pin 
-  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
-  #define AP_NAME "UNICLOCK32"
-  #define AP_PASSWORD ""  
-  #define WEBNAME "ESP32 IV-11 VFD-Clock"
-#endif
-
-#ifdef CLOCK_41   //ESP32 D1 mini, UNFI board, 6 x Z573M Nixie tubes
-  #define DEBUG
-  #define FW "fw41"  //firmware name 
-  #define MAXBRIGHTNESS 100    
-  #define USE_NEOPIXEL 
-  #define NEOPIXEL_PIN 22
-  byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
-  #define USE_DALLAS_TEMP
-  //#define USE_DHT_TEMP
-  //#define DHTTYPE DHT22
-  //#define TEMP_DHT_PIN 25
-  #define TEMP_DALLAS_PIN 25    //Dallas temp sensor pin.  If not used, SET TO -1    
-  #define MULTIPLEX74141_ESP32
-  byte digitEnablePins[] = {26,18,33,19,23,5};   //ESP32 6x tube Clock
-  byte ABCDPins[4] =  {32,16,4,17};   
-  #define DP_PIN 27             // decimalPoint inside Nixie tube, set -1, if not used!
-  #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
-  //#define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
-  //#define GRAD_CHARCODE -1   //disable char => shift display right with 1 digit
-  #define ALARMSPEAKER_PIN 2   //Alarm buzzer pin                                            
-  #define ALARMBUTTON_PIN 0    //Alarm switch off button pin 
-  #define ALARM_ON HIGH
-  #define AP_NAME "UNICLOCK32"
-  #define AP_PASSWORD ""
-  #define WEBNAME "ESP32 Z573M Nixie-Clock"
-#endif
-
-
-#ifdef CLOCK_42   //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock, SHT21
-  #define DEBUG
-  #define FW "fw42"  //firmware name 
-  #define MAXBRIGHTNESS 100
-  #define USE_NEOPIXEL 
-  #define NEOPIXEL_PIN 22
-  byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
-  #define USE_DALLAS_TEMP
-  #define TEMP_DALLAS_PIN 25    //Dallas temp sensor pin.  If not used, SET TO -1    
-  //#define USE_DHT_TEMP
-  //#define DHTTYPE DHT22
-  //#define TEMP_DHT_PIN 25    //DHT temp sensor pin.  If not used, SET TO -1     
-  //#define USE_BME280            //I2C Temperature + humidity + pressure
-  //#define USE_BMP280            //I2C Temperature + barometric  pressure
-  //#define USE_AHTX0             //I2C Temperature + humidity
-  //#define USE_SHT21             //I2C Temperature + humidity
-  //#define USE_RTC
-  #define USE_MQTT
-  #define PIN_SDA 26           // you can set the used SDA and SCL pins
-  #define PIN_SCL 27           // if it is not default value
-  #define MAX6921_ESP32
-  byte segmentEnablePins[] =  {19,17,15,12,13,16,18,14};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
-  byte digitEnablePins[] = {9,8,7,2,1,0};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
-  #define DOUBLE_BLINK  //both separator points are blinking 
-  #define DATE_REPEAT_MIN 60       //show date only every xxx minute. If zero, datum is never displayed
-  #define DATE_START  07
-  #define DATE_END    12 
-  #define TEMP_START  25
-  #define TEMP_END    30 
-  #define HUMID_START 30 
-  #define HUMID_END   35 
-  //MAX6921 pins
-    #define PIN_LE    4  // Shift Register Latch Enable
-    #define PIN_CLK   17  // Shift Register Clock
-    #define PIN_DATA  16  // Shift Register Data
-    #define PIN_BL    32  // Shift Register Blank (1=display off     0=display on)
-  #define ALARMSPEAKER_PIN 2   //Alarm buzzer pin                                            
-  #define ALARMBUTTON_PIN 0    //Alarm switch off button pin 
-  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
-  #define AP_NAME "VFD-Ora"
-  #define AP_PASSWORD ""  
-  #define WEBNAME "VFD-Óra"
-#endif
-
-#ifdef CLOCK_43   //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock, SHT21 & DHT22 sensor
-  #define DEBUG
-  #define FW "fw43"  //firmware name 
-  #define MAXBRIGHTNESS 100
-  #define USE_NEOPIXEL 
-  #define NEOPIXEL_PIN 22
-  byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
-  //#define USE_DALLAS_TEMP
-  //#define TEMP_DALLAS_PIN -1    //Dallas temp sensor pin.  If not used, SET TO -1    
-  //#define USE_DHT_TEMP
-  #define DHTTYPE DHT22
-  #define TEMP_DHT_PIN 25    //DHT temp sensor pin.  If not used, SET TO -1     
-  #define USE_SHT21          //I2C Temperature + humidity
-  #define PIN_SDA 26         // you can set the used SDA and SCL pins
-  #define PIN_SCL 27         // if it is not default value
-  #define MAX6921_ESP32
-  byte segmentEnablePins[] =  {19,17,15,12,13,16,18,14};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
-  byte digitEnablePins[] = {9,8,7,2,1,0};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
-  #define DOUBLE_BLINK  //both separator points are blinking 
-  #define DATE_REPEAT_MIN 1       //show date only every xxx minute. If zero, datum is never displayed
-  #define DATE_START  00
-  #define TEMP_END    35 
-  #define HUMID_START 35 
-  #define HUMID_END   40 
-  //MAX6921 pins
-    #define PIN_LE    4   // Shift Register Latch Enable
-    #define PIN_CLK   17  // Shift Register Clock
-    #define PIN_DATA  16  // Shift Register Data
-    #define PIN_BL    32  // Shift Register Blank (1=display off     0=display on)
-  #define ALARMSPEAKER_PIN 2   //Alarm buzzer pin                                            
-  #define ALARMBUTTON_PIN 0    //Alarm switch off button pin 
-  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
-  #define AP_NAME "VFD-Óra"
-  #define AP_PASSWORD ""  
-  #define WEBNAME "VFD-Óra"
-#endif
-
-#ifdef CLOCK_44   //ESP32 D1 mini, UNFI board, 6 x IV-9 Numitron tubes
-  #define DEBUG
-  #define FW "fw44"  //firmware name 
-  #define MAXBRIGHTNESS 100    
-  #define USE_NEOPIXEL 
-  #define NEOPIXEL_PIN 22
-  byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
-  #define USE_DALLAS_TEMP
-  //#define USE_DHT_TEMP
-  //#define DHTTYPE DHT22
-  //#define TEMP_DHT_PIN 27
-  #define TEMP_DALLAS_PIN 27    //Dallas temp sensor pin.  If not used, SET TO -1    
-  //#define LIGHT_SENSOR_PIN 35
-  #define PIN_SDA 5             // you can set the used SDA and SCL pins
-  #define PIN_SCL 0             // if it is not default value
-  #define USE_BH1750            //I2C luxmeter sensor
-  #define Numitron_4511N
-  #define PCB_VERSION 32
-  #define LTBIpin 23
-  byte digitEnablePins[] = {4,16,17,32,21,25};   //ESP32 6x tube Clock
-  byte ABCDPins[4] =  {19,18,26,33};   
-  #define DP_PIN 23             // decimalPoint inside Nixie tube, set -1, if not used!
-  #define LEFTDECIMAL false   //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
-  //#define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
-  //#define GRAD_CHARCODE -1   //disable char => shift display right with 1 digit
-  #define ALARMSPEAKER_PIN 2   //Alarm buzzer pin                                            
-  #define ALARMBUTTON_PIN 34    //Alarm switch off button pin 
-  #define ALARM_ON HIGH
-  #define AP_NAME "UNICLOCK32"
-  #define AP_PASSWORD ""
-  #define WEBNAME "ESP32 Numitron-Clock"
-#endif
-
-#ifdef CLOCK_45   //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock, (Ovidiu)
-  #define DEBUG
-  #define FW "fw45"  //firmware name
-  #define MAXBRIGHTNESS 100
-  #define USE_RTC 
-  #define USE_NEOPIXEL 
-  #define NEOPIXEL_PIN 22
-  #define USE_MQTT
-  byte mac[6] = {7,6,0,0,3,2};  //This is the unique ID - set it as you want or mac address of the clock (length: 6) VFD
-  byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
-  //#define USE_DALLAS_TEMP
-  //#define TEMP_DALLAS_PIN 25    //Dallas temp sensor pin.  If not used, SET TO -1    
-  //#define USE_DHT_TEMP
-  //#define DHTTYPE DHT22
-  //#define TEMP_DHT_PIN 25    //DHT temp sensor pin.  If not used, SET TO -1
-  #define USE_BH1750     
-  #define USE_BME280            //I2C Temperature + humidity + pressure
-  #define USE_BMP280            //I2C Temperature + barometric  pressure
-  #define USE_AHTX0             //I2C Temperature + humidity
-  #define USE_SHT21             //I2C Temperature + humidity
-  #define PIN_SDA 26           // you can set the used SDA and SCL pins
-  #define PIN_SCL 27           // if it is not default value
-  #define MAX6921_ESP32
-  byte segmentEnablePins[] =  {19,17,15,12,13,16,18,14};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
-  byte digitEnablePins[] = {9,8,7,2,1,0};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
-  #define DOUBLE_BLINK  //both separator points are blinking 
-  #define DATE_REPEAT_MIN 3      //show date only every xxx minute. If zero, datum is never displayed
-  #define DATE_START  07
-  #define DATE_END    12 
-  #define TEMP_START  25
-  #define TEMP_END    30 
-  #define HUMID_START 30 
-  #define HUMID_END   35 
-  //MAX6921 pins
-    #define PIN_LE    4  // Shift Register Latch Enable
-    #define PIN_CLK   17  // Shift Register Clock
-    #define PIN_DATA  16  // Shift Register Data
-    #define PIN_BL    32  // Shift Register Blank (1=display off     0=display on)
-  #define ALARMSPEAKER_PIN 2   //Alarm buzzer pin                                            
-  #define ALARMBUTTON_PIN 0    //Alarm switch off button pin 
-  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
-  //#define TUBE_POWER_PIN 15
-  #define RADAR_PIN 21
-  #define RADAR_TIMEOUT 3  //5
-  #define TUBE_POWER_ON  HIGH
-  //#define LIGHT_SENSOR_PIN 35  //Only ADC pins are usable! for example: 34,35,36,39... 
-  #define MAXIMUM_LUX 100    //Lux level for maximum tube brightness
-  #define LUX_CALC_SCALAR   12518931 * 1.2 
-  #define AP_NAME "Uniclock VFD"
-  #define AP_PASSWORD ""  
-  #define WEBNAME "Uniclock VFD"
-#endif
-
-
-
-#ifdef CLOCK_51   //ESP32 D1 mini, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
-  #define DEBUG
-  #define FW "fw51"  //firmware name 
-  #define USE_NEOPIXEL 
-  #define NEOPIXEL_PIN 22
-  byte tubePixels[] = {0,1,2,3,4,5};        //6 tubes, single leds
-  //#define USE_DALLAS_TEMP
-  //#define TEMP_DALLAS_PIN 26    //Dallas temp sensor pin.  If not used, SET TO -1   
-  //#define LIGHT_SENSOR_PIN 23
-  //#define USE_DHT_TEMP
-  //#define DHTTYPE DHT11
-  //#define TEMP_DHT_PIN  23
-  //#define USE_BME280            //I2C Temperature + humidity + pressure
-  //#define USE_BMP280            //I2C Temperature + barometric  pressure
-  //#define USE_AHTX0             //I2C Temperature + humidity
-  #define USE_SHT21               //I2C Temperature + humidity
-  #define PIN_SDA 4               // you can set the used SDA and SCL pins
-  #define PIN_SCL 32              // if it is not default value
-//_______________________________ HV5122 setup ____________________________________________________    
-  #define HV5122
-  #define PIN_DIN  16   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
-  #define PIN_CLK  17   // Clock
-  #define PIN_OE   21   // OutputEnable
-  #define MAXDIGITS 6
-  int maxDigits = MAXDIGITS;
-  byte digitPins[MAXDIGITS+1][10] = {            ////Data pin numbers 100+ means: chip1 pins are used. Chip0-s DOUT is connected to chip1's DIN
-    {4,5,6,8,2,1,10,9,7,3},                               //hour 10 , CHIP0
-    {16,17,18,20,14,13,22,21,19,15},                      //hour 1 , CHIP0
-    {26,27,28,30,24,23,32,31,29,25},                      //min 10 , CHIP0
-    {104,105,106,108,102,101,110,109,107,103},            //min 1 , CHIP1
-    {116,117,118,120,114,113,122,121,119,115},            //secound 10 , CHIP1
-    {126,127,128,130,124,123,132,131,129,125},            //secound 1 , CHIP1
-    {0,12,11,112,111,0,   0,0,0,0}                        //extra GL dots  //GL1,GL2,GL3,GL4
-    };    
-    #define MAKE_BLINKING_DOTS //it means, the extra datapins are used as 4 blinking dot instead of decimal points!  #1..#4 positions are used, #0. and  #5..#9. positions are zero!
-//_______________________________________________________________________________________    
-  #define ALARMSPEAKER_PIN 23   //Alarm buzzer pin                                            
-  //#define ALARMBUTTON_PIN 23    //Alarm switch off button pin 
-  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
-  //#define RADAR_PIN 4
-  //#define RADAR_TIMEOUT 5  //min
-  //#define TUBE_POWER_PIN 4
-  //#define TUBE_POWER_ON  LOW
-  #define ENABLE_CLOCK_DISPLAY true  
-  #define DATE_REPEAT_MIN 60       //show date only every xxx minute. If zero, datum is never displayed
-  #define DATE_START  07
-  #define DATE_END    12 
-  #define TEMP_START  25
-  #define TEMP_END    30 
-  #define HUMID_START 30 
-  #define HUMID_END   35 
-  #define SHIFT_TUBES_LEFT_BY_1 //shift left by 1 tube the display, if a thermometer is used with spec tube
-  #define TEMP_CHARCODE 10
-  #define GRAD_CHARCODE 10 
-  #define PERCENT_CHARCODE 10
-  #define AP_NAME "IN-18 Ora"
-  #define AP_PASSWORD "" 
-  #define WEBNAME "Nixie IN-18 Óra"
-#endif
-
-#ifdef CLOCK_52   //ESP8266 Wemos D1 mini,UNFI 2xHV5122 PCB version, 6xIN18 clock  
-  #define DEBUG
-  #define FW "fw52"  //firmware name 
-  #define USE_NEOPIXEL 
-  #define NEOPIXEL_PIN 3
-  byte tubePixels[] = {0,1,2,3,4,5};        //6 tubes, single leds
-  #define USE_DALLAS_TEMP
-  #define TEMP_DALLAS_PIN 16    //Dallas temp sensor pin.  If not used, SET TO -1   
-  //#define LIGHT_SENSOR_PIN 23
-  //#define PIN_SDA 4             // you can set the used SDA and SCL pins
-  //#define PIN_SCL 32             // if it is not default value
-  //#define USE_DHT_TEMP
-  //#define DHTTYPE DHT11
-  //#define TEMP_DHT_PIN  23
-  //#define USE_BME280            //I2C Temperature + humidity + pressure
-  //#define USE_BMP280            //I2C Temperature + barometric  pressure
-  //#define USE_AHTX0             //I2C Temperature + humidity
-  //#define USE_SHT21             //I2C Temperature + humidity
-//_______________________________ HV5122 setup ____________________________________________________    
-  #define HV5122
-  #define PIN_DIN  5   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
-  #define PIN_CLK  0   // Clock
-  #define PIN_OE   4   // OutputEnable
-  #define MAXDIGITS 6
-  int maxDigits = MAXDIGITS;
-  byte digitPins[MAXDIGITS+1][10] = {            ////Data pin numbers 100+ means: chip1 pins are used. Chip0-s DOUT is connected to chip1's DIN
-    {2,10,9,8,7,6,5,4,3,1},            //sec  1 , chip0
-    {11,32,20,19,18,17,16,15,14,13},  //sec  10 , chip0
-    {22,31,29,30,27,28,25,26,23,24},  //min   1 , chip0
-    {101,131,110,109,108,107,106,105,104,103},   //min  10 , chip1
-    {111,132,120,119,118,117,116,115,114,113},   //hour  1 , chip1
-    {122,129,130,127,128,125,126,123,124,121},   //hour 10 , chip1
-    {0,12,21,102,112,0,    0,0,0,0}              //extra decimal point (tube0...tube6)
-    };    
-  //#define MAKE_BLINKING_DOTS //it means, the extra datapins are used as 4 blinking dot instead of decimal points!  #1..#4 positions are used, #0. and  #5..#9. positions are zero!    
-//__________________________________________________________________________________________________      
-  #define ALARMSPEAKER_PIN 2   //Alarm buzzer pin                                            
-  #define ALARMBUTTON_PIN 13    //Alarm switch off button pin 
-  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
-  //#define RADAR_PIN 4
-  #define RADAR_TIMEOUT 5  //min
-  //#define TUBE_POWER_PIN 4
-  #define TUBE_POWER_ON  LOW
-  #define ENABLE_CLOCK_DISPLAY true  
-  #define DATE_REPEAT_MIN 3       //show date only every xxx minute. If zero, datum is never displayed
-  //#define SHIFT_TUBES_LEFT_BY_1 //shift left by 1 tube the display, if a thermometer is used with spec tube
-  #define TEMP_CHARCODE 10
-  #define GRAD_CHARCODE 10 
-  #define PERCENT_CHARCODE 10
-  #define AP_NAME "UNICLOCK"
-  #define AP_PASSWORD "" 
-  #define WEBNAME "UNFI Nixie Clock HV5122"
-#endif
-
-#ifdef CLOCK_55   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
-  #define DEBUG
-  #define FW "fw55"  //firmware name
-  #define DOUBLE_BLINK 
-  //#define USE_NEOPIXEL 
-  #define NEOPIXEL_PIN 22
-  byte tubePixels[] = {0,1,2,3,4,5};        //6 tubes, single leds
-  #define USE_DALLAS_TEMP
-  #define TEMP_DALLAS_PIN 14    //Dallas temp sensor pin.  If not used, SET TO -1   
-  //#define LIGHT_SENSOR_PIN 23
-  #define PIN_SDA 26     //on ESP32 only below GPIO34 are digit pins! 36..39 are INPUT ONLY!            
-  #define PIN_SCL 27        
-  #define USE_RTC
-  #define USE_MQTT
-  //#define PIN_MODE_SWITCH 2   ////Uno: A0 mode onNCS312 board
-  //#define PIN_FLD_BUTTON  4   ////Uno: A1 down
-  //#define PIN_SET_BUTTON 35   ////Uno: A2 up
-  //#define USE_DHT_TEMP
-  //#define DHTTYPE DHT11
-  //#define TEMP_DHT_PIN  23
-  //#define USE_BME280            //I2C Temperature + humidity + pressure
-  //#define USE_BMP280            //I2C Temperature + barometric  pressure
-  //#define USE_AHTX0             //I2C Temperature + humidity
-  //#define USE_SHT21             //I2C Temperature + humidity
-  #define HV5122
-  #define PIN_DIN  23   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
-  #define PIN_CLK  18   // Clock
-  #define PIN_OE   5  // OutputEnable
-  #define MAXDIGITS 6
-  int maxDigits = MAXDIGITS;
-  byte digitPins[MAXDIGITS+1][10] = {            ////Data pin numbers 100+ means: chip1 pins are used. Chip0-s DOUT is connected to chip1's DIN
-    {121,122,123,124,125,126,127,128,129,130},  //sec   1 , chip1
-    {111,112,113,114,115,116,117,118,119,120},  //sec  10 , chip1
-    {101,102,103,104,105,106,107,108,109,110},  //min   1 , chip1
-    {21,22,23,24,25,26,27,28,29,30},            //min  10 , chip0
-    {11,12,13,14,15,16,17,18,19,20},            //hour  1 , chip0
-    {1,2,3,4,5,6,7,8,9,10},                     //hour 10 , chip0
-    {0,131,132,31,32,0,0,0,0,0}                 //extra GL dots
-    };    
-  #define MAKE_BLINKING_DOTS 
-  #define USE_PWMLEDS
-  #define PWM1_PIN 13  //Uno: D9 Red
-  //#define PWM2_PIN 27  //Uno: D6 Green
-  #define PWM3_PIN 25  //Uno: D3 Blue
-  //#define ALARMSPEAKER_PIN 17   //Alarm buzzer pin                                            
-  //#define ALARMBUTTON_PIN 2    //Alarm switch off button pin 
-  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
-  //#define RADAR_PIN 4
-  //#define RADAR_TIMEOUT 5 //min
-  //#define TUBE_POWER_PIN 16
-  #define TUBE_POWER_ON  LOW
-  #define ENABLE_CLOCK_DISPLAY true  
-  #define TEMP_CHARCODE 10
-  #define GRAD_CHARCODE 10 
-  #define PERCENT_CHARCODE 10
-  #define AP_NAME "UNICLOCK32"
-  #define AP_PASSWORD "" 
-  #define WEBNAME "NCS312 Nixie Clock"
-#endif
-*/
 
 //__________________________________________________________________________________________________________________________
 //if not defined, here is defined as NOT USED
