@@ -66,15 +66,20 @@ void setupI2Csensors() {
   while(millis()<2000) {yield();}  //waiting for 2 sec from startup
   //I2C_ClearBus();
   delay(100);
-  Wire.beginTransmission(0x68);
-  byte error = Wire.endTransmission();
-  if (error == 0) {   //DS3231_get_addr(0x68)
-    RTCexist = true;
-    DPRINTLN("RTC found on 0x68.");
-  }
-  else { 
-    DPRINTLN("!!!No RTC found on 0x68!!!");
-  }
+  #if defined(PIN_SDA) && defined(PIN_SCL)
+    Wire.beginTransmission(0x68);
+    byte error = Wire.endTransmission();
+    if (error == 0) {   //DS3231_get_addr(0x68)
+      RTCexist = true;
+      DPRINTLN("RTC found on 0x68.");
+    }
+    else { 
+      DPRINTLN("!!!No RTC found on 0x68!!!");
+    }
+  #else
+    RTCexist = false;
+    DPRINTLN("PIN_SDA or PIN_SCL not defined!");
+  #endif  
 #endif
 
   

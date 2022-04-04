@@ -21,24 +21,22 @@
 
 #define MENU_UNSELECT_TIMEOUT 30000
 
-//#include <ds3231.h>    //https://github.com/rodan/ds3231
 struct ts tim;
-
 int monthdays[13] = {0,31,29,31,30,31,30,31,31,30,31,30,31};
 
 struct Menu {
    short lowlimit;        // alsó határ
    short uplimit;         // felső határ
-   char _name[10];
+   char name[5];
 };
 
 const struct Menu m1[]= {
-  {0,0,"not used"},
-  {2018,2099,"year"},
-  {1,12,"month"},
-  {1,31,"day"},
-  {0,23,"hour"},
-  {0,59,"minute"},
+  {0,0,"    "},
+  {2022,2099,"Year"},
+  {1,12,"Mon "},
+  {1,31,"Day "},
+  {0,23,"Hour"},
+  {0,59,"Min "},
 };
 
 #define MAXFLD 5 
@@ -81,7 +79,7 @@ while (true) {
 
 
 void editor() {
-  DS3231_get(&tim);
+  if (RTCexist) {  DS3231_get(&tim); }
   LastModify = 0;
   #if PIN_FLD_BUTTON >= 0 && PIN_SET_BUTTON >= 0   //Are buttons installed?
     while (true) {
@@ -101,20 +99,29 @@ void showValue() {
   memset(digitDP,0,sizeof(digitDP));
   if(fld==1) {
     digit[3] = mvar[1] / 1000;
-    digit[2] = (mvar[1]%1000) / 100;    
-    digit[1] = (mvar[1]%100) / 10;
+    digit[2] = (mvar[1] % 1000) / 100;    
+    digit[1] = (mvar[1] % 100) / 10;
     digit[0] = mvar[1] % 10;
   }      
   else {
     digit[1] = mvar[fld] / 10;
     digit[0] = mvar[fld] % 10;
   }
+  if (!digitsOnly && (maxDigits>4)) {
+    if (maxDigits>=8) digit[7] = m1[fld].name[0];
+    if (maxDigits>=8) digit[6] = m1[fld].name[1];
+    if (maxDigits>=6) digit[5] = m1[fld].name[2];
+    else digit[5] = ':';
+    digit[4] = m1[fld].name[3];
+    
+  }
 }
 
 //------------------------------------- RTC Clock functions --------------------------------------------------------------------
 void updateRTC() {
   DPRINTLN("Update RTC?");
-  if (!RTCexist && year()<2020) return;    //invalid system date??
+  if (!RTCexist) return;
+  if (year()<2020) return;    //invalid system date??
   DS3231_get(&tim);
   if (abs(tim.sec - second())>2 || (tim.min != minute()) || (tim.hour != hour())  
       || (tim.mday != day()) || (tim.mon != month()) || (tim.year != year()) )   {
@@ -135,25 +142,32 @@ void updateRTC() {
 
 
 void getRTC() {
-  if (!RTCexist) return;
-  DS3231_get(&tim);
-  setTime(tim.hour,tim.min,tim.sec,tim.mday,tim.mon,tim.year);  //set the time (hr,min,sec,day,mnth,yr)
-  mvar[1] = tim.year; mvar[2] = tim.mon; mvar[3] = tim.mday;
-  mvar[4] = tim.hour; mvar[5] = tim.min; 
+  if (RTCexist) {
+    DS3231_get(&tim);
+    setTime(tim.hour,tim.min,tim.sec,tim.mday,tim.mon,tim.year);  //set the time (hr,min,sec,day,mnth,yr)
+    mvar[1] = tim.year; mvar[2] = tim.mon; mvar[3] = tim.mday;
+    mvar[4] = tim.hour; mvar[5] = tim.min; 
+  }
+  else {
+    mvar[1] = year(); mvar[2] = month(); mvar[3] = day();
+    mvar[4] = hour(); mvar[5] = minute(); 
+  }
 }
 
 void saveRTC() {
-    if (!RTCexist) return;
-    DPRINTLN("Updating RTC from Manual settings...");
     tim.sec = 0;
     tim.min = mvar[5];
     tim.hour = mvar[4];
     tim.mday = mvar[3];
     tim.mon = mvar[2];
     tim.year = mvar[1]; 
-    DPRINT("New RTC date:"); DPRINT(tim.year); DPRINT("/"); DPRINT(tim.mon); DPRINT("/"); DPRINT(tim.mday); 
+    setTime(tim.hour,tim.min,tim.sec,tim.mday,tim.mon,tim.year);  //set the time (hr,min,sec,day,mnth,yr)
+    DPRINT("New Date & Time:"); DPRINT(tim.year); DPRINT("/"); DPRINT(tim.mon); DPRINT("/"); DPRINT(tim.mday); 
     DPRINT(" time:");  DPRINT(tim.hour); DPRINT(":"); DPRINT(tim.min); DPRINT(":"); DPRINTLN(tim.sec);  
-    DS3231_set(tim); 
+    if (RTCexist) {
+      DPRINTLN("Updating RTC from Manual settings...");
+      DS3231_set(tim); 
+    }
 }
 
 //-------------------------- check buttons  ------------------------------------------------
@@ -187,12 +201,17 @@ byte sw;
     case IS_LONGPRESSING:  
       butState = IS_LONGPRESSED; 
       DPRINTLN(" IS_LONGPRESSED");
-      //if (noZero !=0) noZero =0; else noZero = 1;
-      //EEPROM.update(EEPROM_NOZERO, noZero);  
+      if (fld>0) {
+        fld = 0;
+        saveRTC();
+      }
+      else {
+        fld = 1;
+        getRTC();
+      }
       break; 
     case IS_LONGPRESSED:  
       if (sw == HIGH) butState = IS_LONGOPENING; 
-      fld = 0;
       break;      
     case IS_OPENING:
       butState = IS_OPEN;
@@ -200,7 +219,7 @@ byte sw;
       if ((millis()-lastPush)<500) {
            LastModify = millis();
           fld++;  if (fld>MAXFLD) fld = 0;
-          DPRINT(m1[fld]._name); DPRINTLN(fld);
+          DPRINT(m1[fld].name); DPRINTLN(fld);
        } //endif millis()
       break; 
     case IS_LONGOPENING: 
@@ -272,6 +291,8 @@ byte sw;
   } //end switch
 }
 
+
+#if defined(PIN_SDA) && defined(PIN_SCL)
 int I2C_ClearBus() {
 #if defined(TWCR) && defined(TWEN)
   TWCR &= ~(_BV(TWEN)); //Disable the Atmel 2-Wire interface so we can control the SDA and SCL pins directly
@@ -334,7 +355,9 @@ int I2C_ClearBus() {
   pinMode(PIN_SCL, INPUT);
   return 0; // all ok
 }
-
+#else
+int I2C_ClearBus() {return 1;}
+#endif
 
 //------------------------------------------------------------------------------------------
 #else

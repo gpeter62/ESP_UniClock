@@ -1589,16 +1589,22 @@
   #define DEBUG 
   #define PIN_FLD_BUTTON   12     
   #define PIN_SET_BUTTON   13  
+  #define USE_RTC   //no RTC exist, but the push buttons are defined here, too
   #define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN 15    //PIN16 not working!!!
   #define FW "fw71"  //firmware name
   #define MAXBRIGHTNESS 100  
   #define VQC10
+  #define latchPin  5 //D2 RCK
+  #define clockPin  4 //D1 SCK
+  #define dataPin   2 //D4 DIN
+  #define ledOffpin 0 //D5
+  #define D5pin  14  
   #define AP_NAME "VQC10_LED_CLOCK"
   #define AP_PASSWORD ""
-  #define WEBNAME "LED Clock"
-  #define DEFAULT_SSID "farm32"
-  #define DEFAULT_PSW "birka12345"
+  #define WEBNAME "VQC10 LED Clock"
+  //#define DEFAULT_SSID "xxx"   //factory reset default wifi ssid/psw
+  //#define DEFAULT_PSW "yyy"
 #endif
 
 #ifdef CLOCK_99   //Dummy clock, sensor box with MQTT connector
@@ -1661,7 +1667,11 @@
 #endif
 
 #if defined(USE_BME280) || defined(USE_BMP280) || defined(USE_AHTX0) || defined(USE_SHT21) || defined(USE_BH1750) || defined(USE_RTC)
-  #define USE_I2CSENSORS
+  #if defined(PIN_SDA) && defined(PIN_SCL)
+    #define USE_I2CSENSORS
+  #else
+    #warning "PIN_SDA or PIN_SCL is not defined!"  
+  #endif
 #endif
 
 #ifndef LED_SWITCH_PIN

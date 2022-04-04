@@ -3,29 +3,25 @@ char tubeDriver[] = "VQC10";
 #define NUMDIGITS 8
 int maxDigits = NUMDIGITS;
 
-#define latchPin  5 //D2 RCK
-#define clockPin  4 //D1 SCK
-#define dataPin   2 //D4 DIN
-#define ledOffpin 0 //D5
-#define SW1      12 //D6
-#define SW2      13 //D7
-#define D5pin  14
+//Please, set the pin numbers in clock.h!
+//#define latchPin  5 //D2 RCK
+//#define clockPin  4 //D1 SCK
+//#define dataPin   2 //D4 DIN
+//#define ledOffpin 0 //D5
+//#define D5pin  14
 
-int DRAM_ATTR PWMrefresh = 9000;
-int DRAM_ATTR PWM_min = 4000;
-int DRAM_ATTR PWM_max = 9000;
 
 #define NUMCOLS 5
 #define NUMROWS 7
 
-boolean _upsidedown = false;
-volatile byte row[NUMROWS];
+ boolean _upsidedown = false;
+ byte row[NUMROWS];
 
 char asciiConvert[] = "0123456789 -.APC~% IF";
 char cDigit[NUMDIGITS+1] = "76543210";
-byte dat[NUMDIGITS][NUMROWS];
-byte oldDat[NUMDIGITS][NUMROWS];
-byte newDat[NUMDIGITS][NUMROWS];
+byte  dat[NUMDIGITS][NUMROWS];
+byte  oldDat[NUMDIGITS][NUMROWS];
+byte  newDat[NUMDIGITS][NUMROWS];
 
 // standard ascii 5x7 font incl. the IPM-PC extension:
 // already defined in DotMatrx5x7.h
@@ -306,13 +302,10 @@ void setup_pins() {
   pinMode(dataPin,OUTPUT);    regPin(dataPin,"dataPin");
   pinMode(clockPin,OUTPUT);   regPin(clockPin,"clockPin");
   pinMode(D5pin,INPUT);       regPin(D5pin,"D5pin");
-  pinMode(PIN_FLD_BUTTON,INPUT);  regPin(PIN_FLD_BUTTON,"FLD_BUTTON");
-  pinMode(PIN_SET_BUTTON,INPUT);  regPin(PIN_SET_BUTTON,"SET_BUTTON");
   digitsOnly = false;
-  startTimer();
 }
 
-void IRAM_ATTR shiftOut(byte myDataOut) {
+void inline shiftOutForward(byte myDataOut) {
   // This shifts 8 bits out MSB first, on the rising edge of the clock, clock idles low
   for (int i=7; i>=0; i--)  {
     digitalWrite(clockPin, 0);
@@ -322,7 +315,7 @@ void IRAM_ATTR shiftOut(byte myDataOut) {
   }
 }
 
-void IRAM_ATTR shiftOutReverse(byte myDataOut) {
+void inline shiftOutReverse(byte myDataOut) {
   // This shifts 8 bits out LSB first, on the rising edge of the clock, clock idles low
   for (int i=0; i<8; i++)  {
     digitalWrite(clockPin, 0);
@@ -333,25 +326,35 @@ void IRAM_ATTR shiftOutReverse(byte myDataOut) {
 }
 
 
+/*
+#define PWMrefresh 8000
 void IRAM_ATTR writeDisplay() {
-static DRAM_ATTR int timer = PWMrefresh;
-static DRAM_ATTR int row = 0;
-static DRAM_ATTR boolean state=true;
-static DRAM_ATTR int brightness;
-static DRAM_ATTR int PWMtimeBrightness = PWM_min;
-static byte counter = 0;
+  refreshFlag = true;
+  timer1_write(PWMrefresh);
+}
+*/
+
+int PWM_min = 0;
+int PWM_max = 800;
+
+void writeDisplay2() {
+static  int PWMtimeBrightness;
+static  int timer = 1;
+static uint32_t refresh = 0;
+static uint32_t runtim = 0;
+static uint32_t laststart = 0;
 byte dispChar;
 boolean offState;
-
-  if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
-    //digitalWrite(digitEnablePins[pos],LOW); 
-    timer1_write(PWMrefresh);
-    return;  
-  }
+int brightness;
+int iRow,loopMax;
+  
+  
+  //refresh = millis()-laststart;
+  //laststart = millis();
+  //runtim = laststart;
 
   brightness = displayON ? prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHTNESS) brightness = MAXBRIGHTNESS;  //only for safety
-  //if ((!autoBrightness) && (brightness==MAXBRIGHTNESS)) state = true;
 
   if (autoBrightness && displayON) {  
     PWMtimeBrightness = max(PWM_min,PWM_max*lx/MAXIMUM_LUX);
@@ -359,58 +362,44 @@ boolean offState;
   else
     PWMtimeBrightness = max(PWM_min,PWM_max*brightness/MAXBRIGHTNESS);
   
-  offState = ( (brightness == 0) || (!radarON));  
-
-
-  counter++; 
-  if (counter>maxDigits) counter = 0;
-  if (counter==maxDigits) {  //extra phase to switch off digits
-    offState = true;
-  }
-  row = counter<maxDigits ? counter : 0;
-   
+  iRow = 0;
+  loopMax = maxDigits;
+  do {
+  offState = ( (brightness == 0) || (!radarON) || (iRow == maxDigits));  
+ 
   for (int i=0;i<NUMDIGITS;i++) { //fill one line with dots
-      shiftOut(0xFF);     //deselect Z
-      shiftOut(~(1<<i));  //select digit
-      shiftOutReverse(offState ? 0 : dat[i][row]);  // set data line
+      shiftOutForward(0xFF);     //deselect Z
+      shiftOutForward(~(1<<i));  //select digit
+      shiftOutReverse(offState ? 0 : dat[i][iRow]);  // set data line
       digitalWrite(latchPin, HIGH); //Write shift register to latch
       digitalWrite(latchPin, LOW);   
       asm volatile ("nop");
-      asm volatile ("nop");
-      asm volatile ("nop");
-      asm volatile ("nop");
-      asm volatile ("nop");
       
       //Finish latching
-      shiftOut(0xFF);   //deselect Z
-      shiftOut(0xFF);  //All digit select lines are HIGH
-      shiftOutReverse(offState ? 0 : dat[i][row]);  //keep data line
+      shiftOutForward(0xFF);   //deselect Z
+      shiftOutForward(0xFF);  //All digit select lines are HIGH
+      shiftOutReverse(offState ? 0 : dat[i][iRow]);  //keep data line
       digitalWrite(latchPin, HIGH); //Write shift register to latch
       digitalWrite(latchPin, LOW); 
       asm volatile ("nop");
-      asm volatile ("nop");
-      asm volatile ("nop");
-      asm volatile ("nop");
-      asm volatile ("nop");
   }
 
-  shiftOut(~(1<<row)); //enable row
-  shiftOut(0xFF);     //All digit select lines are HIGH
-  shiftOut(0);        //anything
+  shiftOutForward(~(1<<iRow)); //enable row
+  shiftOutForward(0xFF);     //All digit select lines are HIGH
+  shiftOutForward(0);        //anything
   digitalWrite(latchPin, HIGH); //Write shift register to latch
-  digitalWrite(latchPin, LOW);  
+  digitalWrite(latchPin, LOW);
+  if (!offState) 
+    delayMicroseconds(PWMtimeBrightness);
+  else
+    delayMicroseconds(PWM_max-PWMtimeBrightness);  
   
-  if (!offState) {
-    timer = PWMtimeBrightness;
-    timerON = timer;
-    timerOFF = PWMrefresh-PWMtimeBrightness;
-  }
-  else {  //OFF state
-    timer = 2*(PWMrefresh-PWMtimeBrightness);
-  }
-  
-  if (timer<3000) timer = 3000;  //safety only...
-  timer1_write(timer);
+  iRow++;
+  } while(iRow<loopMax);
+    
+  //runtim = millis()-runtim;
+  //DPRINT(refresh); DPRINT("/"); DPRINTLN(runtim); 
+  yield();
 }
 
 
@@ -462,7 +451,7 @@ void writeDisplaySingle() {
   byte tubeShift[] = {3,2,1,0,7,6,5,4}; 
   byte a;
   byte oldPtr,newPtr;
-  
+
   for (int i=0;i<NUMDIGITS;i++) {   //generate new line
     dispChar = digit[tubeShift[i]];
     if (dispChar<sizeof(asciiConvert)) dispChar = asciiConvert[dispChar]; 

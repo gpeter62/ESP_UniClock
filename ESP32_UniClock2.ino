@@ -136,7 +136,7 @@ unsigned long intCounter = 0;   //for testing only, interrupt counter
 
 byte c_MinBrightness = RGB_MIN_BRIGHTNESS;     //minimum LED brightness
 byte c_MaxBrightness = RGB_MAX_BRIGHTNESS;     //maximum LED brightness
-
+boolean refreshFlag = false;
 //--------------------------------------------------------------------------------------------------
 #define FIRMWARE_SERVER "http://c.landventure.hu/store"
 String usedPinsStr;
@@ -225,6 +225,16 @@ AsyncWebServer server(80);
   AsyncWiFiManager myWiFiManager(&server,&dnsServer);
 #endif
 
+//______________ WiFi finding variables ____________________________________________
+byte bestChn;         //the recent found best wifi AP's channel No.
+uint8_t bestBssid[6]; //the recent found best wifi AP's BSSID (mac address)
+uint8_t oldBssid[6];  //the current wifi AP's BSSID (mac address)
+int bestRSSI = -200;  //the recent found best wifi AP's RSSI value
+unsigned long lastWifiScan = 0;  //last wifi scan timestamp in CPU msec millis()
+boolean wifiOK = false;
+char myIp[20]="";
+
+//Display buffers
 #define BUFSIZE 12
 byte DRAM_ATTR digit[BUFSIZE];
 byte DRAM_ATTR newDigit[BUFSIZE];
@@ -474,6 +484,7 @@ void Fdelay(unsigned long d) {
   while ((millis() - dStart) < d) {
     if (WiFi.getMode() == 2) dnsServer.processNextRequest();
     enableDisplay(2000);
+    writeDisplay2();
     getLightSensor();
     doAnimationMakuna();
     doAnimationPWM();
@@ -533,6 +544,43 @@ void disableDisplay()  {
   lastDisable = millis();
 }
 
+boolean findBestWifi() {
+  int n;
+  int newRssi;
+  boolean found = false;
+  
+  WiFi.scanNetworks(false);
+  n = WiFi.scanComplete();
+  DPRINT(F("Scanning WiFi, found networks:")); DPRINTLN(n); 
+  if (n>=0){
+    bestRSSI = -200;
+    memset(bestBssid,0,sizeof(bestBssid));
+    for (int i = 0; i < n; ++i){
+      if (WiFi.SSID(i) == String(prm.wifiSsid)) {
+        newRssi = WiFi.RSSI(i);
+        DPRINT(F("scan: RSSI")); DPRINT(newRssi);
+        if (bestRSSI<newRssi) {  //better rsssi found...
+          bestChn = WiFi.channel(i);
+          bestRSSI = newRssi;
+          memcpy(bestBssid,WiFi.BSSID(i),sizeof(bestBssid));
+          DPRINT(F("  FOUND: Channel:")); DPRINT(bestChn);
+          DPRINT(F("  BSSID:")); DPRINTLN(WiFi.BSSIDstr(i));
+          found = true;
+          lastWifiScan = millis();
+        }
+        else {
+          DPRINTLN(" ");
+        }
+      }
+    }
+    WiFi.scanDelete();
+    }  //end else
+    else {
+     // WiFi.scanNetworks(false);
+    }
+    return(found);
+}
+
 void wifiManager() {
   #ifdef USE_WIFIMANAGER
   AsyncWiFiManager MyWifiManager(&server, &dnsServer);
@@ -570,7 +618,66 @@ void wifiManager() {
   }
   #endif
 }
+void startNewWifiMode() { // Start a Wi-Fi access point, and try to connect to some given access points. Then wait for either an AP or STA connection
+ if (((millis()-lastWifiScan)<90000) && (bestRSSI > -80) && (WiFi.status() != WL_CONNECTED)) {
+  DPRINTLN(F("_____________ Connecting WiFi ___________________"));
+  if (strlen(prm.wifiSsid)==0) return;
+  WiFi.disconnect();
+  delay(200);
+  WiFi.mode(WIFI_OFF);
+  delay(200);
+  WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
+  #if defined(ESP32)
+    esp_wifi_set_ps(WIFI_PS_NONE);
+    WiFi.setHostname(webName);
+    WiFi.setSleep(false);
+  #else  
+    WiFi.hostname(webName);
+  #endif
+  
+  char tmp[20];
+  sprintf(tmp,"%02X:%02X:%02X:%02X:%02X:%02X",bestBssid[0],bestBssid[1],bestBssid[2],bestBssid[3],bestBssid[4],bestBssid[5]);
+  DPRINT(F("Connecting to best WiFi AP:")); DPRINT(prm.wifiSsid);  DPRINT(F("  PSW:")); DPRINT(prm.wifiPsw);
+  DPRINT(F(" BSSID:")); DPRINT(tmp); DPRINT(" Chn:"); DPRINTLN(bestChn); 
+  WiFi.begin(prm.wifiSsid, prm.wifiPsw, bestChn, bestBssid, true);
 
+  Fdelay(500);
+  int counter = 0;
+  while (WiFi.status() != WL_CONNECTED) {
+    DPRINT('.');
+    Fdelay(3000);
+    if (counter++>3) {
+      DPRINTLN("Connecting to WiFi failed.");
+      return;
+    }  
+  }    
+  ip = WiFi.localIP();
+  sprintf(myIp,"%d.%d.%d.%d",ip[0],ip[1],ip[2],ip[3]);
+  DPRINT("\nConnected to ");  DPRINT(WiFi.SSID());   
+  DPRINT(". LocalIP:"); DPRINT(myIp);     
+  DPRINT(" BSSID:"); DPRINT(WiFi.BSSIDstr());    
+  DPRINT(" RSSI:"); DPRINT(WiFi.RSSI());   
+  DPRINT(" CHN:"); DPRINTLN(WiFi.channel());   
+  DPRINTLN("\n\nNetwork Configuration:");
+  DPRINTLN("----------------------");
+  DPRINT("         SSID: "); DPRINTLN(WiFi.SSID());
+  DPRINT("  Wifi Status: "); DPRINTLN(WiFi.status());
+  DPRINT("Wifi Strength: "); DPRINT(WiFi.RSSI()); DPRINTLN(" dBm");
+  DPRINT("          MAC: "); DPRINTLN(WiFi.macAddress());
+  DPRINT("           IP: "); DPRINTLN(myIp);
+  DPRINT("       Subnet: "); DPRINTLN(WiFi.subnetMask());
+  DPRINT("      Gateway: "); DPRINTLN(WiFi.gatewayIP());
+  DPRINT("        DNS 1: "); DPRINTLN(WiFi.dnsIP(0));
+  DPRINT("        DNS 2: "); DPRINTLN(WiFi.dnsIP(1));
+  DPRINT("        DNS 3: "); DPRINTLN(WiFi.dnsIP(2));
+  DPRINTLN("_____________________________________________________________________________"); 
+  memcpy(oldBssid,WiFi.BSSID(),sizeof(oldBssid));
+}
+  DPRINTLN("\r\n");
+}
+
+/*
 void startWifiMode() {
   disableDisplay();
   DPRINTLN("Starting Clock in WiFi Mode!");
@@ -581,7 +688,7 @@ void startWifiMode() {
   }
   WiFi.disconnect(true);
   WiFi.mode(WIFI_OFF);
-  delay(1000);
+  Fdelay(1000);
   #if defined(ESP32)
     WiFi.setHostname(webName);
     WiFi.setSleep(false);
@@ -590,11 +697,9 @@ void startWifiMode() {
   #endif
   #if defined(ESP32)
     esp_wifi_set_ps (WIFI_PS_NONE);  //power saving disable!
-    //esp_wifi_set_max_tx_power(78);   //Maximum output power
   #endif
   //if (WiFi.status() == WL_CONNECTED) return;
 
-  //playTubes();
   DPRINT("\nConnecting to WiFi SSID:("); DPRINT(prm.wifiSsid); DPRINT(")  PSW:("); DPRINT(prm.wifiPsw); DPRINTLN(")");
   int counter = 0;
   if (strlen(prm.wifiPsw)>0)
@@ -604,7 +709,7 @@ void startWifiMode() {
   while (WiFi.status() != WL_CONNECTED) {
     DPRINT('.');
     //playTubes();
-    delay(3000);
+    Fdelay(3000);
     if (counter++>2) {
       wifiManager();
       return;
@@ -616,14 +721,19 @@ void startWifiMode() {
   enableDisplay(100);
   showMyIp();
 }
+*/
 
 boolean updateTimefromTimeserver() {  //true, if successful
+  static unsigned long lastTimeFailure = 0;
   boolean res = false;
   int count = 1;
+
   
   if (((millis()-lastTimeUpdate)<TIMESERVER_REFRESH) && (lastTimeUpdate!=0))
     return(res);
-
+    
+  if ((lastTimeFailure>0) && ((millis()-lastTimeFailure)<300000)) return(res);   //wait for 5min to retry, if no success
+  
   if (WiFi.status() == WL_CONNECTED) {
     while (true) {
       DPRINT("Connecting to timeserver: "); DPRINTLN(count);
@@ -635,11 +745,15 @@ boolean updateTimefromTimeserver() {  //true, if successful
         DPRINT("Timeserver date:"); DPRINT(year()); DPRINT("/"); DPRINT(month()); DPRINT("/"); DPRINT(day());      
         DPRINT(" time:");   DPRINT(hour()); DPRINT(":"); DPRINT(minute()); DPRINT(":"); DPRINTLN(second());  
         DPRINTLN("Clock refreshed from timeserver.");
+        lastTimeFailure = 0;
       }
       count ++; 
-      if (res || (count > 5)) break;
-      writeIpTag(count);
+      if (res) break;  //success!!!
       Fdelay(1000);
+      if (count > 3) {  //failure, but stop trying
+        lastTimeFailure = millis();
+        break;
+      }
     } //end while
   }
   return (res);
@@ -661,7 +775,7 @@ void startStandaloneMode() {
   else {
     nwState =  WiFi.softAP(prm.ApSsid);
   }
-  delay(2000);   //info: https://github.com/espressif/arduino-esp32/issues/2025
+  Fdelay(2000);   //info: https://github.com/espressif/arduino-esp32/issues/2025
   
   DPRINT("AP status:"); DPRINTLN(nwState ? "Ready" : "Failed!");  //channel
   DPRINT("Mac address:"); DPRINTLN(WiFi.softAPmacAddress());
@@ -675,8 +789,6 @@ void startStandaloneMode() {
   //}
   //MDNS.addService("http", "tcp", 80);
   enableDisplay(0);
-  Fdelay(1000);
-  showMyIp();
 }
 
 void doFirmwareUpdate(){
@@ -810,6 +922,20 @@ void startServer() {
     else {
       request->send( 204, "text/html", "File Not Found" );
       DPRINTLN("/jquery_351.js not found");
+    }
+  });
+
+  server.on("/jquery_360.js", HTTP_GET, [](AsyncWebServerRequest * request) {
+    disableDisplay();
+    DPRINTLN("Webserver: /jquery_360.js");
+    if (SPIFFS.exists("/jquery_360.js")) {
+      AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/jquery_360.js", "text/js");   
+      response->addHeader("Cache-Control", CACHE_MAX_AGE);
+      request->send(response);
+    }
+    else {
+      request->send( 204, "text/html", "File Not Found" );
+      DPRINTLN("/jquery_360.js not found");
     }
   });
 
@@ -1516,27 +1642,37 @@ void setup() {
       DPRINT("SPIFFS Used bytes:     "); DPRINTLN(SPIFFS.usedBytes());
     #endif
     DPRINTLN("SPIFFS started.");
+    if(!SPIFFS.exists("/index.html")) {DPRINTLN("/index.html not found!");}
+    if(!SPIFFS.exists("/site.css")) {DPRINTLN("/site.css not found!");}
+    if(!SPIFFS.exists("/page.js")) {DPRINTLN("/page.js not found!");}
+    if(!SPIFFS.exists("/jquery_360.js")) {DPRINTLN("/jquery_360.js not found!");}
   }
-  
+
   if (prm.wifiMode) {
-    WiFi.scanNetworks(false);
-    startWifiMode();
-    if (WiFi.status() != WL_CONNECTED) //failed to connect to wifi
+    findBestWifi();
+    startNewWifiMode();
+    if (WiFi.status() != WL_CONNECTED) { //failed to connect to wifi
       startStandaloneMode();
+    }
+    else {
+      ip = WiFi.localIP();
+      WiFi.setAutoReconnect(true);
+      enableDisplay(100);
+    }
   }
-  else 
+  else {
     startStandaloneMode();
-    
-  delay(500);
+  }
+  showMyIp();
+  Fdelay(500);
   startServer();
   #ifdef USE_MQTT
     setupMqtt();
   #endif
   
   clearDigits();
-  delay(200);
+  Fdelay(200);
   enableDisplay(0);
-  //showMyIp();
   prm.animMode = saveMode;
   timeClient.begin();
   calcTime();
@@ -1587,20 +1723,6 @@ void timeProgram() {
   }
   getDHTemp();
   getI2Csensors();             //check all existing I2C sensors
-  if (prm.interval > 0) {  // protection is enabled
-    // At the first top of the hour, initialize protection logic timer
-    if (!initProtectionTimer && (minute() == 0)) {
-      protectTimer = 0;   // Ensures protection logic will be immediately triggered
-      initProtectionTimer = true;
-    }
-    if ((now() - protectTimer) >= 60 * prm.interval) {
-      protectTimer = now();
-      // The current time can drift slightly relative to the protectTimer when NIST time is updated
-      // Need to make a small adjustment to the timer to ensure it is triggered at the minute change
-      protectTimer -= ((second() + 30) % 60 - 30);
-      if (displayON && (millis() > 30000)) newCathodeProtect(7000,random(3)-1);   //dont play in the first 30sec
-    }
-  }
 
   if (now() != prevTime) { // Update time every second
     prevTime = now();
@@ -1632,6 +1754,21 @@ void timeProgram() {
       digitalWrite(LED_SWITCH_PIN, LOW);
     printDigits(0);
     writeDisplaySingle();
+  
+  if (prm.interval > 0) {  // protection is enabled
+    // At the first top of the hour, initialize protection logic timer
+    if (!initProtectionTimer && (minute() == 0)) {
+      protectTimer = 0;   // Ensures protection logic will be immediately triggered
+      initProtectionTimer = true;
+    }
+    if ((now() - protectTimer) >= 60 * prm.interval) {
+      protectTimer = now();
+      // The current time can drift slightly relative to the protectTimer when NIST time is updated
+      // Need to make a small adjustment to the timer to ensure it is triggered at the minute change
+      protectTimer -= ((second() + 30) % 60 - 30);
+      if (displayON && (millis() > 50000)) newCathodeProtect(maxDigits*1500,random(3)-1);   //dont play in the first 50sec
+    }
+  }    
   }
 }
 
@@ -1762,6 +1899,7 @@ void newCathodeProtect(unsigned long t,int dir) {    //t = time in msec, dir = d
       if (finish && stopThis) {  //this digit stops
         fin[i] = 1;
         digitDP[i] = tmpDP[i];   //restore original DP value
+        digit[i] = tmp[i];
         t +=1000;
         if (dir>0) {  //find next stop digit
           nextStoppedDigit++;
@@ -2290,7 +2428,8 @@ void writeIpTag(byte iptag) {
     newDigit[5] = 19;  //'I'
     newDigit[4] = 14;  //'P'
   }
-  if (iptag >= 100) newDigit[2 + offset] = iptag / 100;
+  //if (iptag >= 100) 
+  newDigit[2 + offset] = iptag / 100;
   newDigit[1 + offset] = (iptag % 100) / 10;
   newDigit[0 + offset] = iptag % 10;
   changeDigit();
@@ -2299,20 +2438,13 @@ void writeIpTag(byte iptag) {
 
 void showMyIp(void) {   //at startup, show the web page internet address
   //clearDigits();
-#define SPEED 1500
+  #define SPEED 1500
   ipShowRunning = true;
-  writeIpTag(ip[0]);
-  printDigits(0);
-  Fdelay(SPEED);
-  writeIpTag(ip[1]);
-  printDigits(0);
-  Fdelay(SPEED);
-  writeIpTag(ip[2]);
-  printDigits(0);
-  Fdelay(SPEED);
-  writeIpTag(ip[3]);
-  printDigits(0);
-  Fdelay(SPEED);
+  for (int i=0;i<4;i++) {
+    writeIpTag(ip[i]);
+    printDigits(i);
+    Fdelay(SPEED);
+  }
   ipShowRunning = false;
 }
 
@@ -2334,10 +2466,11 @@ void resetWiFi(void) {
   //#if defined(ESP8266)  
     WiFi.disconnect();
     WiFi.reconnect();
-  //#endif  
-  delay(3000);
-  //if (WiFi.status() == WL_CONNECTED) lastTest = 
-  //enableDisplay(5000);
+  //#endif
+  if (WiFi.status() == WL_CONNECTED) return;
+  
+  findBestWifi();
+  startNewWifiMode();
   return;
 
   counter++;
@@ -2542,39 +2675,38 @@ static boolean oldMode = prm.wifiMode;
 
   if (oldMode != prm.wifiMode) {
     if (prm.wifiMode) {
-        startWifiMode();
+        startNewWifiMode();
       }
       else  {
         startStandaloneMode();
       }
-        oldMode = prm.wifiMode;  
+       oldMode = prm.wifiMode;  
     }  
 }
 
 void loop(void) {
+  writeDisplay2();
   if (WiFi.status() != WL_CONNECTED) 
     dnsServer.processNextRequest();
   enableDisplay(3000);
   timeProgram();
   writeDisplaySingle();
+  writeDisplay2();
   doAnimationMakuna();
   doAnimationPWM();
   alarmSound();
   checkTubePowerOnOff();
   getLightSensor();
-    
-  checkWifiMode();
+  //checkWifiMode();
   if (prm.wifiMode) { //Wifi Clock Mode
     if (WiFi.status() == WL_CONNECTED) {
       if (prm.mqttEnable) mqttSend();
     }
-    else
+    else {
       resetWiFi();
+    }
   }
-  //else {   //Manual Clock Mode
-  //  editor();
-  //} //endelse
-  
+  editor();
   if (makeFirmwareUpdate) {
     makeFirmwareUpdate = false;
     doFirmwareUpdate();
@@ -2596,3 +2728,8 @@ void doReset(void) {
   delay(1000);
   ESP.restart();
 }
+
+#if defined(VQC10)
+#else
+  void writeDisplay2(void){}  //not interrupt driven display handler
+#endif

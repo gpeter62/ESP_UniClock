@@ -437,6 +437,7 @@ function Init(){
 	$('.temperature-holder2').toggleClass('hidden',configuration['temperature2'] == 255);
     $('.rgb-holder').toggleClass('hidden',configuration['rgbEffect'] == 255);
 	$('.tube-holder').toggleClass('hidden',configuration['tubeDriver'] == "DUMMY");
+	$('.sensors-holder').toggleClass('hidden',configuration['temperature'] == 255);
     setPreviewColor();
 
     //sets a possible good timezone, if not already set
