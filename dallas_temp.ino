@@ -15,8 +15,8 @@ unsigned long lastRequest = millis();
 boolean DallasOK = true;   //is any measure from Dallas thermometer?
 float lastTemperature = 0;
 char lastTemperatureStr[5] = "----";
-long intervalTemp = 30000;      // Do a temperature measurement every 30sec
-long DS_delay = 800;         // Reading the temperature from the DS18x20 can take up to 750ms
+unsigned long intervalTemp = 30000;      // Do a temperature measurement every 30sec
+unsigned long DS_delay = 800;         // Reading the temperature from the DS18x20 can take up to 750ms
 
 byte d1Ptr = 0;
 byte d2Ptr = 0;

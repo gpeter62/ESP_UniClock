@@ -3,7 +3,7 @@
 #include <TinyGPS++.h>                                  // Tiny GPS Plus Library
 
 #if defined(ESP8266)  
-  #include <SoftwareSerial.h>     // Software Serial Library so we can use other Pins for communication with the GPS module
+  #include "SoftwareSerial.h"     // Software Serial Library so we can use other Pins for communication with the GPS module
   static int RXPin = 3;     //RX pin  -  remove wire, when uploading program to 8266          
   static int TXPin = -1;    //not used   
   SoftwareSerial ss(RXPin, TXPin);  
@@ -16,7 +16,7 @@
            
 // The serial connection to the GPS device
 static uint32_t GPSBaud = 9600;                   // Ublox GPS default Baud Rate is 9600
-TinyGPSPlus gps;                                        // Create an Instance of the TinyGPS++ object called gps
+TinyGPSPlus gps;                                  // Create an Instance of the TinyGPS++ object called gps
 
 void setupGPS() { 
   delay(1500);     
@@ -24,7 +24,8 @@ void setupGPS() {
   if (RXPin>=0) regPin(RXPin,"RXPin");   
   if (TXPin>=0) regPin(TXPin,"TXPin");
   #if defined(ESP8266)
-    ss.begin(GPSBaud);   
+    ss.begin(GPSBaud);  
+    //ss.begin(GPSBaud, SWSERIAL_8N1, RXPin, TXPin, false); 
   #else        
     ss.begin(GPSBaud, SERIAL_8N1, RXPin);    
   #endif

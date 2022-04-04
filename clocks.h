@@ -1589,6 +1589,7 @@
   #define DEBUG 
   #define PIN_FLD_BUTTON   12     
   #define PIN_SET_BUTTON   13  
+  //#define USE_GPS
   #define USE_RTC   //no RTC exist, but the push buttons are defined here, too
   #define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN 15    //PIN16 not working!!!
@@ -1605,6 +1606,7 @@
   #define WEBNAME "VQC10 LED Clock"
   //#define DEFAULT_SSID "xxx"   //factory reset default wifi ssid/psw
   //#define DEFAULT_PSW "yyy"
+  //#define USE_WIFIMANAGER
 #endif
 
 #ifdef CLOCK_99   //Dummy clock, sensor box with MQTT connector

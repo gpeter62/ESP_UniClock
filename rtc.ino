@@ -175,7 +175,6 @@ void saveRTC() {
 void scanButFLD(unsigned long mill) {
 static unsigned long lastRun = millis(); 
 static unsigned long lastPush = millis();; 
-static boolean lastState = false;
 static switchStates butState;
 byte sw;
 
@@ -190,7 +189,6 @@ byte sw;
       break; 
     case IS_PUSHING: 
       butState = IS_PUSHED;  
-      lastState = true;  
       lastPush = millis();
       DPRINTLN(" PUSHED");
       break; 
@@ -215,16 +213,14 @@ byte sw;
       break;      
     case IS_OPENING:
       butState = IS_OPEN;
-      lastState = false;      
       if ((millis()-lastPush)<500) {
            LastModify = millis();
-          fld++;  if (fld>MAXFLD) fld = 0;
+          fld++;  if (fld>MAXFLD) fld = 1;
           DPRINT(m1[fld].name); DPRINTLN(fld);
        } //endif millis()
       break; 
     case IS_LONGOPENING: 
       butState = IS_OPEN;
-      lastState = false;  
       break;    
   } //end switch
 }
@@ -232,7 +228,6 @@ byte sw;
 void scanButSET(unsigned long mill) {
 static unsigned long lastRun = millis(); 
 static unsigned long lastPush = millis(); 
-static boolean lastState = false;
 static switchStates butState;
 byte sw;
 
@@ -247,7 +242,6 @@ byte sw;
       break; 
     case IS_PUSHING: 
       butState = IS_PUSHED;  
-      lastState = true;  
       lastPush = millis();
       DPRINTLN(" PUSHED");
       break; 
@@ -272,7 +266,6 @@ byte sw;
        break;
     case IS_OPENING:
       butState = IS_OPEN;
-      lastState = false;      
       if ((millis()-lastPush)<500) {
           LastModify = millis();
           mvar[fld]++;
@@ -286,7 +279,6 @@ byte sw;
       break; 
     case IS_LONGOPENING: 
       butState = IS_OPEN;
-      lastState = false;  
       break;    
   } //end switch
 }

@@ -24,7 +24,8 @@
       ESP8266:  https://randomnerdtutorials.com/install-esp8266-filesystem-uploader-arduino-ide/
       ESP32: https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide/
 */
-#define byte uint8_t
+#include <stddef.h>
+//#define byte uint8_t
 #include "clocks.h"  //DEFINE YOUR CLOCKS SETUP IN THIS FILE!!!
 
 #if defined(ESP8266)
@@ -136,7 +137,6 @@ unsigned long intCounter = 0;   //for testing only, interrupt counter
 
 byte c_MinBrightness = RGB_MIN_BRIGHTNESS;     //minimum LED brightness
 byte c_MaxBrightness = RGB_MAX_BRIGHTNESS;     //maximum LED brightness
-boolean refreshFlag = false;
 //--------------------------------------------------------------------------------------------------
 #define FIRMWARE_SERVER "http://c.landventure.hu/store"
 String usedPinsStr;
@@ -412,7 +412,7 @@ void regPin(byte p,const char * txt) {  //register used pins
   if (strlen(pinTxt[p])>0) {
     DPRINT("*** ERROR *** "); DPRINT(txt); DPRINT(" on PIN#"); DPRINT(p);  
     DPRINT(" ALREADY DEFINED AS "); DPRINTLN(pinTxt[p]); 
-    strncpy(pinTxt[p],"ERROR! MULTI DEF",PIN_TXT_LEN);
+    strncpy(pinTxt[p],"Error:MULTI DEF",PIN_TXT_LEN);
   }
   else 
     strncpy(pinTxt[p],txt,16);
@@ -426,7 +426,7 @@ void listPins() {
   #else
     usedPinsStr = String("ESP8266 used pins:<br>");
   #endif  
-  for (int i=0;i<=MAX_PIN;i++) {
+  for (byte i=0;i<=MAX_PIN;i++) {
     if (strlen(pinTxt[i])>0) {
       usedPinsStr += String(i) + ": " + String(pinTxt[i]) + "<br>";
       DPRINT(i); DPRINT(": ");  DPRINTLN(pinTxt[i]);
@@ -503,14 +503,12 @@ float round1(float in) {
 //--------------------------------------------------------------------------------------------------------------------
 
 void enableDisplay(unsigned long timeout) {
-  unsigned long seged2;
   dState = true;
   EEPROMsaving = false;
   return;   //NOT USED ANYMORE
-
-
   
 #if defined(ESP32) || defined(PCF_74141)  //safety mode for slow multiplex hardvare to avoid crash when write to flash memory
+  unsigned long seged2;
   if (dState) return;
   seged2 = lastDisable;
   if (millis() < (seged2 + timeout)) return;
@@ -609,12 +607,13 @@ void wifiManager() {
   if (WiFi.status() == WL_CONNECTED) {  //save wifi settings to prm
     String s = WiFi.SSID();
     String p = WiFi.psk();
+    memcpy(oldBssid,WiFi.BSSID(),sizeof(oldBssid));
     s.toCharArray(prm.wifiSsid,sizeof(prm.wifiSsid));
     p.toCharArray(prm.wifiPsw,sizeof(prm.wifiPsw));
+    saveEEPROM();
     ip = WiFi.localIP();
     WiFi.setAutoReconnect(true);
     enableDisplay(100);
-    showMyIp();
   }
   #endif
 }
@@ -886,7 +885,7 @@ void doCathodeProtect() {
    Fdelay(100);
    num++; if (num>9) num = 0;
    onOff++;
-   if ((millis()-started)>long(cathProtMin)*60000l) break;
+   if ((millis()-started)>uint32_t(cathProtMin)*60000l) break;
   } //end while
   
   prm.dayBright = db;  //restore brightness values
@@ -1196,7 +1195,7 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
       value.toCharArray(prm.wifiPsw,sizeof(prm.wifiPsw));
     }
     else if (key == "ApSsid") {
-      for (int i=0;i<strlen(prm.ApSsid);i++) {  //repair bad chars in AP SSID
+      for (int i=0;i<(int)strlen(prm.ApSsid);i++) {  //repair bad chars in AP SSID
         if ((prm.ApSsid[i]<32) || (prm.ApSsid[i]>126)) prm.ApSsid[i]='_';
       }
       value.toCharArray(prm.ApSsid,sizeof(prm.ApSsid));
@@ -1651,6 +1650,20 @@ void setup() {
   if (prm.wifiMode) {
     findBestWifi();
     startNewWifiMode();
+
+   #ifdef USE_WIFIMANAGER
+   int counter = 0;
+    while (WiFi.status() != WL_CONNECTED) {   //try to use wifiManeger, if enabled
+      DPRINT('.');
+      Fdelay(3000);
+      if (counter++>2) {
+        wifiManager();
+        break;
+      }
+    }
+    DPRINTLN(" ");
+   #endif
+    
     if (WiFi.status() != WL_CONNECTED) { //failed to connect to wifi
       startStandaloneMode();
     }
@@ -1811,7 +1824,7 @@ void factoryReset() {
   #else
     strcpy(prm.wifiPsw,"");
   #endif  
-  for (int i=0;i<strlen(prm.ApSsid);i++) {  //repair bad chars in AP SSID
+  for (int i=0;i<(int)strlen(prm.ApSsid);i++) {  //repair bad chars in AP SSID
     if ((prm.ApSsid[i]<32) || (prm.ApSsid[i]>126)) prm.ApSsid[i]='_';
   }
   strncpy(prm.ApSsid,AP_NAME,sizeof(prm.ApSsid));
@@ -2314,8 +2327,8 @@ void changeDigit() {
 }
 
 void writeAlarmPin(boolean newState) {
-  static boolean oldState = !ALARM_ON;  
   #if ALARMSPEAKER_PIN>=0
+    static boolean oldState = !ALARM_ON; 
     if (oldState != newState) {
       oldState = newState;
       //if (newState == ALARM_ON) DPRINTLN("Alarm ON"); else DPRINTLN("Alarm OFF");

@@ -326,24 +326,20 @@ void inline shiftOutReverse(byte myDataOut) {
 }
 
 
-/*
-#define PWMrefresh 8000
-void IRAM_ATTR writeDisplay() {
-  refreshFlag = true;
-  timer1_write(PWMrefresh);
-}
-*/
+
+#define PWMrefresh 8000l
+
+void ICACHE_RAM_ATTR writeDisplay() {}
+
 
 int PWM_min = 0;
 int PWM_max = 800;
 
 void writeDisplay2() {
 static  int PWMtimeBrightness;
-static  int timer = 1;
-static uint32_t refresh = 0;
-static uint32_t runtim = 0;
-static uint32_t laststart = 0;
-byte dispChar;
+//static uint32_t refresh = 0;
+//static uint32_t runtim = 0;
+//static uint32_t laststart = 0;
 boolean offState;
 int brightness;
 int iRow,loopMax;
@@ -412,7 +408,6 @@ void show(byte c){
 
 void transposePattern(byte cols[], volatile byte rows[]){
   byte cmask;
-  byte realr;
   cmask = (_upsidedown ? 0x40 : 1);
   for (byte r=0; r < NUMROWS; r++) {
     rows[r] = 0;
@@ -450,11 +445,10 @@ void writeDisplaySingle() {
   char dispChar;
   byte tubeShift[] = {3,2,1,0,7,6,5,4}; 
   byte a;
-  byte oldPtr,newPtr;
 
   for (int i=0;i<NUMDIGITS;i++) {   //generate new line
     dispChar = digit[tubeShift[i]];
-    if (dispChar<sizeof(asciiConvert)) dispChar = asciiConvert[dispChar]; 
+    if (dispChar<sizeof(asciiConvert)) dispChar = asciiConvert[(byte)dispChar]; 
     show(dispChar); 
     for (int k=0;k<NUMROWS;k++) {
       oldDat[i][k] = row[k];
@@ -462,7 +456,7 @@ void writeDisplaySingle() {
   }
   for (int i=0;i<NUMDIGITS;i++) {  //generate old line
     dispChar = newDigit[tubeShift[i]];
-    if (dispChar<sizeof(asciiConvert)) dispChar = asciiConvert[dispChar]; 
+    if (dispChar<sizeof(asciiConvert)) dispChar = asciiConvert[(byte)dispChar]; 
     show(dispChar); 
     for (int k=0;k<NUMROWS;k++) {
       newDat[i][k] = row[k];
