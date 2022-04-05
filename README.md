@@ -7,7 +7,7 @@
                 - Wi-Fi, both infrastructure and standalone (AP) modes, see /Webpage.jpg
                 - Temperature / humidity sensor support
                 - Adjustable day and night brightness
-				- Radar or infra sensor for tube power off feature
+		- Radar or infra sensor for tube power off feature
                 - Tube animation: 5 different animation modes (also Mode 6 for random selected)
                 - Tube backlight using WS2812 LEDs, with different full-color animations 
                 - Alarm function with buzzer and LED light
@@ -23,10 +23,10 @@
 ## Optional components:
                 - DS18B20 temperature sensor (1 or 2 sensors) 
                 - DHT11/DHT22 temperature/humidity sensor
-			- BME280/BMP280/AHTX0/SHT21 temperature/humidity sensor on I2C bus
-			- Home-assistant integration with mqtt client
+		- BME280/BMP280/AHTX0/SHT21 temperature/humidity sensor on I2C bus
+		- Home-assistant integration with mqtt client
                 - DS3231 RTC clock, set via with Wi-Fi, or manually using pushbuttons
-			- Radar or infra motion sensor
+		- Radar or infra motion sensor
                 - GPS module for time sync - Wi-Fi is in AP (standalone) mode
                 - WS2812 adressable LEDS, selectable fixed color or multiple animation effects
                 - User defined pin numbers for digits and segments
