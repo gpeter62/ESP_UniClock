@@ -23,10 +23,10 @@
 ## Optional components:
                 - DS18B20 temperature sensor (1 or 2 sensors) 
                 - DHT11/DHT22 temperature/humidity sensor
-				- BME280/BMP280/AHTX0/SHT21 temperature/humidity sensor on I2C bus
-				- Home-assistant integration with mqtt client
+			- BME280/BMP280/AHTX0/SHT21 temperature/humidity sensor on I2C bus
+			- Home-assistant integration with mqtt client
                 - DS3231 RTC clock, set via with Wi-Fi, or manually using pushbuttons
-				- Radar or infra motion sensor
+			- Radar or infra motion sensor
                 - GPS module for time sync - Wi-Fi is in AP (standalone) mode
                 - WS2812 adressable LEDS, selectable fixed color or multiple animation effects
                 - User defined pin numbers for digits and segments
