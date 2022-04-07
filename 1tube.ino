@@ -119,18 +119,19 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
 
 void makeAnim() {
   static byte oldDig = 10;
-  
-  if (oldDig == newDigit[pos]) oldDig = 10; //if the old digit == new digit, use space instead
-  oldDigit[pos] = oldDig;  //last displayed digit
-  
-  for (int i = 1; i < 20; i++) {
-    animMask[pos] = i;  
-    Fdelay(ANIMSPEED);
-  }  
+
+  if (prm.animMode > 0) {
+    if (oldDig == newDigit[pos]) oldDig = 10; //if the old digit == new digit, use space instead
+    oldDigit[pos] = oldDig;  //last displayed digit
+    for (int i = 1; i < 20; i++) {
+      animMask[pos] = i;  
+      Fdelay(ANIMSPEED);
+    }  
+  }
   oldDig = newDigit[pos];  //save last displayed digit
   digit[pos] = newDigit[pos];
   animMask[pos] = 0;
-  Fdelay(400);
+  if (prm.animMode >0) {Fdelay(400);}
 }
 
 void writeDisplaySingle() { 

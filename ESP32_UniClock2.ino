@@ -1,4 +1,3 @@
-
 /*
       Universal Clock  v3.xx (Nixie, VFD, LED, Numitron) for ESP8266 or ESP32
       with optional Dallas Thermometer and DS3231 RTC, Neopxels stripe, GPS and more...
@@ -2292,7 +2291,7 @@ void changeDigit() {
         break;
       case 5:
         memset(animMask, 0, sizeof(animMask));
-#if defined(MULTIPLEX74141) || defined(NO_MULTIPLEX74141) || defined(MULTIPLEX74141_ESP32) || defined(MULE_V2) || defined(PCF_74141) || defined(NO_MULTIPLEX_ESP32) || defined(VQC10)
+#if defined(MULTIPLEX74141) || defined(NO_MULTIPLEX74141) || defined(MULTIPLEX74141_ESP32) || defined(MULE_V2) || defined(PCF_74141) || defined(NO_MULTIPLEX_ESP32) || defined(VQC10) || defined(NEWHV5122)
         for (int i = 1; i < 20; i++) {
           for (int tube = j; tube < maxDigits; tube++) {
             if (oldDigit[tube] != newDigit[tube]) animMask[tube] = i;  //digit is changed
@@ -2584,7 +2583,8 @@ void printDigits(unsigned long timeout) {
     #endif
     }
   */
-  //DPRINT("INT:"); DPRINT(intCounter);   //show multiplex interrupt counter
+  DPRINT("INT:"); DPRINT(intCounter);   //show multiplex interrupt counter
+  intCounter = 0;
   //DPRINT(" ESaving:"); DPRINT(EEPROMsaving);
   if (useLux>0) {
     DPRINT("  Lux:"); DPRINT(lx);
@@ -2742,7 +2742,7 @@ void doReset(void) {
   ESP.restart();
 }
 
-#if defined(VQC10)
+#if defined(VQC10) 
 #else
   void writeDisplay2(void){}  //not interrupt driven display handler
 #endif
