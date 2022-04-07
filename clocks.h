@@ -46,7 +46,7 @@
 //#define CLOCK_48  //WROOM ESP32, UNFI  SN75518 6xIV-17 clock
 //#define CLOCK_49  //WROOM ESP32, UNFI  SN75518 6xIV-11 clock
 //--------------------------------------------------------------------------------------------------------------
-//#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
+#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_51   //V2  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_52   //ESP32,    P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_53   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
@@ -54,7 +54,7 @@
 //#define CLOCK_55   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_56   //WROOM ESP32, UNFI 2xHV5122 6xZ573 clock   /flat panel/
 //#define CLOCK_70   //1 tube esp8266 Nixie Clock by UNFI 
-#define CLOCK_71   //2x VQC10 clock by UNFI 
+//#define CLOCK_71   //2x VQC10 clock by UNFI 
 //#define CLOCK_99   //Dummy clock, sensor box with MQTT connector
 
 //______________________ESP8266 CLOCKS by UNFI and GP ______________________________________________________
@@ -1175,7 +1175,7 @@
   //#define USE_MQTT
   byte mac[6] = {0x3e,0x09,0x0b,0x3e,0x09,0x0c};   //3e090b3e090b
 //_______________________________ HV5122 setup ____________________________________________________  
-  #define HV5122
+  #define NEWHV5122
   #define PIN_DIN  22   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
   #define PIN_CLK  17   // Clock
   #define PIN_OE   21   // OutputEnable
