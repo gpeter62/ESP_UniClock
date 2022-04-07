@@ -2583,8 +2583,7 @@ void printDigits(unsigned long timeout) {
     #endif
     }
   */
-  DPRINT("INT:"); DPRINT(intCounter);   //show multiplex interrupt counter
-  intCounter = 0;
+  //DPRINT("INT:"); DPRINT(intCounter); intCounter = 0;  //show multiplex interrupt counter
   //DPRINT(" ESaving:"); DPRINT(EEPROMsaving);
   if (useLux>0) {
     DPRINT("  Lux:"); DPRINT(lx);
