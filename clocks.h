@@ -46,7 +46,7 @@
 //#define CLOCK_48  //WROOM ESP32, UNFI  SN75518 6xIV-17 clock
 //#define CLOCK_49  //WROOM ESP32, UNFI  SN75518 6xIV-11 clock
 //--------------------------------------------------------------------------------------------------------------
-#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
+//#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_51   //V2  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_52   //ESP32,    P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_53   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
@@ -55,7 +55,7 @@
 //#define CLOCK_56   //WROOM ESP32, UNFI 2xHV5122 6xZ573 clock   /flat panel/
 //#define CLOCK_70   //1 tube esp8266 Nixie Clock by UNFI 
 //#define CLOCK_71   //2x VQC10 clock by UNFI 
-//#define CLOCK_99   //Dummy clock, sensor box with MQTT connector
+#define CLOCK_99   //Dummy clock, sensor box with MQTT connector
 
 //______________________ESP8266 CLOCKS by UNFI and GP ______________________________________________________
 #ifdef CLOCK_1   //8266, UNFI PCB clock, 4x IN-16 tubes
@@ -606,8 +606,6 @@
   #define MAXBRIGHTNESS 100
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 2
-  #define USE_MQTT
-  byte mac[6] = {12,14,0,0,2,3};  //Unique address
   byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
   #define DATE_REPEAT_MIN 3     //show date only every 3 minutes. If zero, datum is never displayed
   #define USE_DALLAS_TEMP
@@ -673,7 +671,6 @@
   #define DEBUG
   #define FW "fw32"  //firmware name 
   #define MAXBRIGHTNESS 100  
-  #define USE_MQTT
   #define USE_NEOPIXEL 
   #define NEOPIXEL_PIN 2
   #define LIGHT_SENSOR_PIN 23
@@ -1172,8 +1169,6 @@
   #define USE_AHTX0             //I2C Temperature + humidity
   #define USE_SHT21             //I2C Temperature + humidity
   #define USE_BH1750            //I2C luxmeter sensor
-  //#define USE_MQTT
-  byte mac[6] = {0x3e,0x09,0x0b,0x3e,0x09,0x0c};   //3e090b3e090b
 //_______________________________ HV5122 setup ____________________________________________________  
   #define NEWHV5122
   #define PIN_DIN  22   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
@@ -1233,9 +1228,17 @@
   //#define USE_AHTX0             //I2C Temperature + humidity
   //#define USE_SHT21             //I2C Temperature + humidity
   //#define USE_BH1750            //I2C luxmeter sensor
-  //#define USE_MQTT
+  //USE_MQTT
+  //#define MQTT_PREFIX "UniClock32"
+  //#define USE_MASTER_CLOCK  //enable it, if you want to get any data from MASTER CLOCK. This will be the sensor#0
+  //#define USE_MASTER_TEMP   //enable it, if you want to get temperature from MASTER CLOCK
+  //#define USE_MASTER_HUMID  //enable it, if you want to get humidity from MASTER CLOCK
+  //#define USE_MASTER_RADAR  //enable it, if you want to get radar from MASTER CLOCK
+  //#define MASTER_TEMPERATURE_TOPIC "homeassistant/sensor/10521c5e14c4/temperature/state"
+  //#define MASTER_HUMIDITY_TOPIC    "homeassistant/sensor/10521c5e14c4/humidity/state"
+  //#define MASTER_RADAR_TOPIC       "homeassistant/sensor/10521c5e14c4/radar/state"  
 //_______________________________ HV5122 setup ____________________________________________________  
-  #define HV5122
+  #define NEWHV5122
   #define PIN_DIN  22   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
   #define PIN_CLK  17   // Clock
   #define PIN_OE   21   // OutputEnable
@@ -1297,7 +1300,7 @@
   #define PIN_SDA 27               //D1   SDA/SCL swapped
   #define PIN_SCL 26               //D2
 //_______________________________ HV5122 setup ____________________________________________________    
-  #define HV5122
+  #define NEWHV5122
   #define PIN_DIN  16   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
   #define PIN_CLK  17   // Clock
   #define PIN_OE   21   // OutputEnable
@@ -1357,7 +1360,7 @@
   //#define TEMP_DHT_PIN  23
 
 //_______________________________ HV5122 setup ____________________________________________________    
-  #define HV5122
+  #define NEWHV5122
   #define PIN_DIN  5   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
   #define PIN_CLK  0   // Clock
   #define PIN_OE   4   // OutputEnable
@@ -1415,7 +1418,7 @@
   //#define USE_BMP280            //I2C Temperature + barometric  pressure
   //#define USE_AHTX0             //I2C Temperature + humidity
   //#define USE_SHT21             //I2C Temperature + humidity
-  #define HV5122
+  #define NEWHV5122
   #define PIN_DIN  23   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
   #define PIN_CLK  18   // Clock
   #define PIN_OE   5  // OutputEnable
@@ -1474,9 +1477,8 @@
   //#define USE_AHTX0             //I2C Temperature + humidity
   //#define USE_SHT21             //I2C Temperature + humidity
   //#define USE_BH1750            //I2C luxmeter sensor
-  //#define USE_MQTT
 //_______________________________ HV5122 setup ____________________________________________________  
-  #define HV5122
+  #define NEWHV5122
   #define PIN_DIN  5   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
   #define PIN_CLK  0   // Clock
   #define PIN_OE   4   // OutputEnable
@@ -1534,9 +1536,8 @@
   //#define USE_AHTX0             //I2C Temperature + humidity
   //#define USE_SHT21             //I2C Temperature + humidity
   //#define USE_BH1750            //I2C luxmeter sensor
-  //#define USE_MQTT
 //_______________________________ HV5122 setup ____________________________________________________  
-  #define HV5122
+  #define NEWHV5122
   #define PIN_DIN  14   // DataIn  - chip0 DOUT pin is connected to chip1 DIN pin!
   #define PIN_CLK  12   // Clock
   #define PIN_OE   27   // OutputEnable
@@ -1583,6 +1584,7 @@
   #define AP_NAME "1TUBE_CLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "1TUBE Nixie Clock"
+  #define USE_MQTT
 #endif
 
 #ifdef CLOCK_71   //2x VQC10 clock by UNFI 
@@ -1629,7 +1631,12 @@
   #define USE_SHT21             //I2C Temperature + humidity
   #define USE_BH1750            //I2C luxmeter sensor
   #define USE_MQTT
-  byte mac[6] = {0x3e,0x09,0x0b,0x3e,0x09,0x0c};   //3e090b3e090b
+  //#define USE_MASTER_CLOCK  //if used, this will be the sensor#0
+  //#define USE_MASTER_TEMP
+  //#define USE_MASTER_HUMID
+  //#define MASTER_TEMPERATURE_TOPIC "homeassistant/sensor/10521c5e14c4/temperature/state"
+  //#define MASTER_HUMIDITY_TOPIC "homeassistant/sensor/10521c5e14c4/humidity/state"
+  //#define MASTER_RADAR_TOPIC "homeassistant/sensor/10521c5e14c4/radar/state"
 //_______________________________ Driver setup ____________________________________________________  
   #define DUMMY
  //___________________________________________________________________________________    
