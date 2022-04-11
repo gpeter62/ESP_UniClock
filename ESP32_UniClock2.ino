@@ -121,8 +121,8 @@
   //#define TEMP_CHARCODE 15      //Thermometer "C", set to -1 to disable
   //#define GRAD_CHARCODE 16      //Thermometer grad, set to -1 to disable
   //#define PERCENT_CHARCODE 17   //Humidity %
-  //#define AP_NAME "UNICLOCK"  	//Access Point name
-  //#define AP_PASSWORD ""	   		//AP password
+  //#define AP_NAME "UNICLOCK"    //Access Point name
+  //#define AP_PASSWORD ""        //AP password
   //#define WEBNAME "LED UniClock"  //Clock's name on the web page
   //#define DEFAULT_SSID ""       //factoryReset default value for WiFi
   //#define DEFAULT_PSW ""        //factoryReset default value  for WiFi password
@@ -617,7 +617,7 @@ void wifiManager() {
   #endif
 }
 void startNewWifiMode() { // Start a Wi-Fi access point, and try to connect to some given access points. Then wait for either an AP or STA connection
- if (((millis()-lastWifiScan)<90000) && (bestRSSI > -80) && (WiFi.status() != WL_CONNECTED)) {
+ if (((millis()-lastWifiScan)<90000) && (bestRSSI > -90) && (WiFi.status() != WL_CONNECTED)) {
   DPRINTLN(F("_____________ Connecting WiFi ___________________"));
   if (strlen(prm.wifiSsid)==0) return;
   WiFi.disconnect();
@@ -748,7 +748,7 @@ boolean updateTimefromTimeserver() {  //true, if successful
       count ++; 
       if (res) break;  //success!!!
       Fdelay(1000);
-      if (count > 3) {  //failure, but stop trying
+      if (count > 5) {  //failure, but stop trying
         lastTimeFailure = millis();
         break;
       }
@@ -874,10 +874,12 @@ void doCathodeProtect() {
   
   DPRINT("Cathode Protect is running for "); DPRINT(cathProtMin); DPRINTLN(" minutes.");
   memset(digitDP, 0, sizeof(digitDP));
+  memset(animMask,0,sizeof(animMask));
   while (true) {
    for (int i=0;i<maxDigits;i++)  {  
     if (i%2) digit[i] = num;
     else     digit[i] = 9-num;
+    newDigit[i] = digit[i];
     digitDP[i] = (onOff%2 == i%2);
    } 
    writeDisplaySingle();
@@ -1645,7 +1647,10 @@ void setup() {
     if(!SPIFFS.exists("/page.js")) {DPRINTLN("/page.js not found!");}
     if(!SPIFFS.exists("/jquery_360.js")) {DPRINTLN("/jquery_360.js not found!");}
   }
-
+  memset(digit,10,sizeof(digit));   //clear display
+  memset(newDigit,10,sizeof(newDigit));
+  memset(oldDigit,10,sizeof(oldDigit));
+  
   if (prm.wifiMode) {
     findBestWifi();
     startNewWifiMode();
@@ -1727,7 +1732,6 @@ void timeProgram() {
   
   if ((millis() - lastRun) < 200) return;
   lastRun = millis();
-
   calcTime();
   if (useDallasTemp > 0) {
     requestDallasTemp(false);  //start measure
@@ -1758,29 +1762,28 @@ void timeProgram() {
     if (maxDigits >= 8)      displayTime8();
     else if (maxDigits == 6) displayTime6();
     else                     displayTime4();
-
     //   if (COLON_PIN>=0) digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
     if ((LED_SWITCH_PIN >= 0) && displayON) //Switch on backlight LED only daytime
       digitalWrite(LED_SWITCH_PIN, HIGH);
     else
       digitalWrite(LED_SWITCH_PIN, LOW);
+    changeDigit();
     printDigits(0);
-    writeDisplaySingle();
-  
-  if (prm.interval > 0) {  // protection is enabled
-    // At the first top of the hour, initialize protection logic timer
-    if (!initProtectionTimer && (minute() == 0)) {
-      protectTimer = 0;   // Ensures protection logic will be immediately triggered
-      initProtectionTimer = true;
-    }
-    if ((now() - protectTimer) >= 60 * prm.interval) {
-      protectTimer = now();
-      // The current time can drift slightly relative to the protectTimer when NIST time is updated
-      // Need to make a small adjustment to the timer to ensure it is triggered at the minute change
-      protectTimer -= ((second() + 30) % 60 - 30);
-      if (displayON && (millis() > 50000)) newCathodeProtect(maxDigits*1500,random(3)-1);   //dont play in the first 50sec
-    }
-  }    
+    
+    if (prm.interval > 0) {  // protection is enabled
+      // At the first top of the hour, initialize protection logic timer
+      if (!initProtectionTimer && (minute() == 0)) {
+        protectTimer = 0;   // Ensures protection logic will be immediately triggered
+        initProtectionTimer = true;
+      }
+      if ((now() - protectTimer) >= 60 * prm.interval) {
+        protectTimer = now();
+        // The current time can drift slightly relative to the protectTimer when NIST time is updated
+        // Need to make a small adjustment to the timer to ensure it is triggered at the minute change
+        protectTimer -= ((second() + 30) % 60 - 30);
+        if (displayON && (millis() > 50000)) newCathodeProtect(maxDigits*1500,random(3)-1);   //dont play in the first 50sec
+      }
+    }    
   }
 }
 
@@ -1941,7 +1944,6 @@ void newCathodeProtect(unsigned long t,int dir) {    //t = time in msec, dir = d
    //DPRINT("  nextStoppedDigit:"); DPRINTLN(nextStoppedDigit);
   
     writeDisplaySingle();
-    //printDigits(0);
     Fdelay(100);
     sum = 0;
     for (int i=0;i<maxDigits;i++)  sum += fin[i];
@@ -2007,9 +2009,9 @@ void cathodeProtect() {   //original version
     incMod10(dh1); incMod10(dh2);
     incMod10(dm1); incMod10(dm2);
     incMod10(ds1); incMod10(ds2);
-	for (int d=0;d<maxDigits;d++) {
-		digitDP[d] = ((digit[d]%2) == 0);
-	}
+  for (int d=0;d<maxDigits;d++) {
+    digitDP[d] = ((digit[d]%2) == 0);
+  }
     writeDisplaySingle();
     Fdelay(100);
   }
@@ -2149,8 +2151,6 @@ void displayTime4() {
     newDigit[0] = minute() % 10;
     if (prm.enableBlink && (second() % 2 == 0)) digitDP[2] = false;
   }
-  changeDigit();
-  writeDisplaySingle();
 }
 
 
@@ -2179,8 +2179,6 @@ void displayTime6() {
     newDigit[1] = second() / 10;
     newDigit[0] = second() % 10;
   }
-  changeDigit();
-  writeDisplaySingle();
 }
 
 void displayTime8() {
@@ -2213,8 +2211,6 @@ void displayTime8() {
       newDigit[1] = second() / 10;
       newDigit[0] = second() % 10;
   }
-  changeDigit();
-  writeDisplaySingle();
 }
 
 
@@ -2225,7 +2221,7 @@ void changeDigit() {
   byte anim;
   
   #if defined(TUBE1CLOCK)
-    prm.animMode = 0;
+    writeDisplaySingle();
     return;
   #endif  
   anim = prm.animMode;
@@ -2323,6 +2319,7 @@ void changeDigit() {
 
   memcpy(digit, newDigit, sizeof(digit));
   memcpy(oldDigit, newDigit, sizeof(oldDigit));
+  writeDisplaySingle();
 }
 
 void writeAlarmPin(boolean newState) {
@@ -2444,17 +2441,17 @@ void writeIpTag(byte iptag) {
   newDigit[2 + offset] = iptag / 100;
   newDigit[1 + offset] = (iptag % 100) / 10;
   newDigit[0 + offset] = iptag % 10;
+  memcpy(digit,newDigit,sizeof(digit));
+  printDigits(0);
   changeDigit();
-  writeDisplaySingle();
 }
 
 void showMyIp(void) {   //at startup, show the web page internet address
-  //clearDigits();
+  clearDigits();
   #define SPEED 1500
-  ipShowRunning = true;
   for (int i=0;i<4;i++) {
+    ipShowRunning = true;
     writeIpTag(ip[i]);
-    printDigits(i);
     Fdelay(SPEED);
   }
   ipShowRunning = false;
@@ -2508,10 +2505,10 @@ void testTubes(int dely) {
     DPRINT(i); DPRINT(" ");
     for (int j = 0; j < maxDigits; j++) {
       newDigit[j] = i;
+      digit[i] = i;
       digitDP[j] = i % 2;
     }
     changeDigit();
-    writeDisplaySingle();
     Fdelay(dely);
   }
   DPRINTLN(" ");
@@ -2527,8 +2524,6 @@ void playTubes() {
     newDigit[j] = tube++ % maxDigits;
   }
   changeDigit();
-  writeDisplaySingle();
-  
 }
 
 void printSensors(void) {
@@ -2552,6 +2547,20 @@ void printSensors(void) {
   }
 }
 
+void printChar(int i) {
+  if (i < 10)      {DPRINT(i);}
+    else if (i==10)  {DPRINT(" ");}
+    else if (i==TEMP_CHARCODE)    {DPRINT("C");}
+    else if (i==GRAD_CHARCODE)    {DPRINT("°");}
+    else if (i==18)    {DPRINT(".");}
+    else if (i==PERCENT_CHARCODE) {DPRINT("%"); }   
+    else if (i==19) {DPRINT("I");}    
+    else if (i==14) {DPRINT("P");}    
+    else    DPRINT("-");
+    
+    if (digitDP[i]) {DPRINT(".");} else {DPRINT(" ");}
+}
+
 void printDigits(unsigned long timeout) {
   static unsigned long lastRun = millis();
 
@@ -2559,22 +2568,11 @@ void printDigits(unsigned long timeout) {
   lastRun = millis();
   
   #ifdef DEBUG
-  for (int i = maxDigits - 1; i >= 0; i--) {
-    if (digit[i] < 10)      {DPRINT(digit[i]);}
-    else if (digit[i]==10)  {DPRINT(" ");}
-    else if (digit[i]==TEMP_CHARCODE)    {DPRINT("C");}
-    else if (digit[i]==GRAD_CHARCODE)    {DPRINT("°");}
-    else if (digit[i]==18)    {DPRINT(".");}
-    else if (digit[i]==PERCENT_CHARCODE) {DPRINT("%"); }   
-    else if (digit[i]==19) {DPRINT("I");}    
-    else if (digit[i]==14) {DPRINT("P");}    
-    else    DPRINT("-");
-    
-    if (digitDP[i]) {DPRINT(".");} else {DPRINT(" ");}
-  }
+  DPRINT("\n   digit: ");  for (int i = maxDigits - 1; i >= 0; i--) {printChar(digit[i]);}
+  DPRINT(colonBlinkState ? " * " : "   ");
+  //DPRINT("\noldDigit: ");  for (int i = maxDigits - 1; i >= 0; i--) {printChar(oldDigit[i]);}
+  //DPRINT("\nnewDigit: ");  for (int i = maxDigits - 1; i >= 0; i--) {printChar(newDigit[i]);}
 
-  if (colonBlinkState) {DPRINT(" * ");}
-  else  {DPRINT("   ");}
   /*
     if ((millis()/1000%10) == 1) {  //show free memory for debugging memory leak
     DPRINT("Heap:"); DPRINT(ESP.getFreeHeap()); DPRINT(" byte");
@@ -2702,7 +2700,7 @@ void loop(void) {
     dnsServer.processNextRequest();
   enableDisplay(3000);
   timeProgram();
-  writeDisplaySingle();
+  //writeDisplaySingle();
   writeDisplay2();
   doAnimationMakuna();
   doAnimationPWM();
@@ -2741,7 +2739,7 @@ void doReset(void) {
   ESP.restart();
 }
 
-#if defined(VQC10) 
+#if defined(VQC10) || defined(TUBE1CLOCK)
 #else
   void writeDisplay2(void){}  //not interrupt driven display handler
 #endif

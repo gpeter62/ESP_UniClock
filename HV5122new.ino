@@ -30,7 +30,9 @@ int DRAM_ATTR animPtr = 0;
 
 #define SHIFT_LSB_FIRST false  //true= LSB first, false= MSB first
 
-uint32_t DRAM_ATTR PWMrefresh = 100000; //Brightness PWM period. Greater value => slower brightness PWM frequency
+//Brightness PWM timing. Greater value => slower brightness PWM frequency  
+// Suggested values: 100000 / 20000, for faster PWM: 50000 / 10000
+uint32_t DRAM_ATTR PWMrefresh = 100000; 
 uint32_t DRAM_ATTR PWM_min = 20000;
 
 uint32_t DRAM_ATTR time1 = 2000;
@@ -237,6 +239,8 @@ if (animPtr>0) {
   if (animPtr ==0) animPtr = 10;   //to make equal timing
 
   time1 = PWMtimeBrightness * (20-animPtr)/20;
+  if (time1<1000) time1=1000;
+  if (time1 > (PWMtimeBrightness-1000)) time1 = PWMtimeBrightness-1000;
   time2 = PWMtimeBrightness - time1;
   offTime = PWMrefresh - time1 - time2;
   

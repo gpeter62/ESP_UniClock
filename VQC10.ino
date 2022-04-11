@@ -14,10 +14,12 @@ int maxDigits = NUMDIGITS;
 #define NUMCOLS 5
 #define NUMROWS 7
 
- boolean _upsidedown = false;
- byte row[NUMROWS];
+boolean _upsidedown = false;
+byte row[NUMROWS];
 
-char asciiConvert[] = "0123456789 -.APC~% IF";
+char asciiConvert[] = "0123456789 -.APC~%oIF";
+char DPchar = 0xFF;  //decimal point
+
 char cDigit[NUMDIGITS+1] = "76543210";
 byte  dat[NUMDIGITS][NUMROWS];
 byte  oldDat[NUMDIGITS][NUMROWS];
@@ -43,7 +45,7 @@ byte  _font[] = {
   0x1C, 0x5E, 0x7F, 0x5E, 0x1C, // 0x06 spade
   0x00, 0x18, 0x3C, 0x18, 0x00, // 0x07 small full circle
   0xFF, 0xE7, 0xC3, 0xE7, 0xFF, // 0x08 inverted small circle 
-  0x00, 0x18, 0x24, 0x18, 0x00, // 0x09 small empty circle 
+  0x06, 0x09, 0x06, 0x00, 0x00, // 0x09 small empty circle     //old: 0x00, 0x18, 0x24, 0x18, 0x00, // 0x09 small empty circle 
   0xFF, 0xE7, 0xDB, 0xE7, 0xFF, // 0x0A block (linefeed)
   0x30, 0x48, 0x3A, 0x06, 0x0E, // 0x0B male
   0x26, 0x29, 0x79, 0x29, 0x26, // 0x0C female
@@ -293,7 +295,8 @@ byte  _font[] = {
   0x00, 0x1F, 0x01, 0x01, 0x1E, // 0xFC
   0x00, 0x19, 0x1D, 0x17, 0x12, // 0xFD power of two
   0x00, 0x3C, 0x3C, 0x3C, 0x3C, // 0xFE blob
-  0x00, 0x00, 0x00, 0x00, 0x00, // 0xFF
+  //0x00, 0x00, 0x00, 0x60, 0x60, // // 0xFF: Decimal point: 4 points
+  0x00, 0x00, 0x00, 0x00, 0x40, // // 0xFF: Decimal point, only 1 point
 };
 
 void setup_pins() {
@@ -303,6 +306,7 @@ void setup_pins() {
   pinMode(clockPin,OUTPUT);   regPin(clockPin,"clockPin");
   pinMode(D5pin,INPUT);       regPin(D5pin,"D5pin");
   digitsOnly = false;
+  asciiConvert[16] = 9;
 }
 
 void inline shiftOutForward(byte myDataOut) {
@@ -445,13 +449,18 @@ void writeDisplaySingle() {
   char dispChar;
   byte tubeShift[] = {3,2,1,0,7,6,5,4}; 
   byte a;
-
   for (int i=0;i<NUMDIGITS;i++) {   //generate new line
     dispChar = digit[tubeShift[i]];
     if (dispChar<sizeof(asciiConvert)) dispChar = asciiConvert[(byte)dispChar]; 
     show(dispChar); 
     for (int k=0;k<NUMROWS;k++) {
       oldDat[i][k] = row[k];
+    }
+    if (digitDP[tubeShift[i]]) {
+      show(DPchar); 
+      for (int k=0;k<NUMROWS;k++) {
+        oldDat[i][k] |= row[k];
+      }
     }
   }
   for (int i=0;i<NUMDIGITS;i++) {  //generate old line
@@ -460,6 +469,12 @@ void writeDisplaySingle() {
     show(dispChar); 
     for (int k=0;k<NUMROWS;k++) {
       newDat[i][k] = row[k];
+    }
+    if (digitDP[tubeShift[i]]) {
+      show(DPchar); 
+      for (int k=0;k<NUMROWS;k++) {
+        newDat[i][k] |= row[k];
+      }
     }
   }
 

@@ -7,9 +7,9 @@ char tubeDriver[] = "1TUBE";
 int maxDigits = 4;
 int pos = 0;  //pointer of show phase
 
-int PWMrefresh=5500;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
-int PWM_min = 500;
-int PWM_max = 5000;
+int PWMrefresh = 15000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+int PWM_min = 2000;
+int PWM_max = 15000;
 int maxDig=maxDigits;
 
 void setup_pins() {
@@ -117,51 +117,109 @@ void ICACHE_RAM_ATTR writeDisplay(){        //https://circuits4you.com/2018/01/0
   timer1_write(timer); 
 }
 
+void Adelay(unsigned long d) {
+  unsigned long dStart = millis();
+
+  doAnimationMakuna();
+  while ((millis() - dStart) < d) {
+    if (WiFi.getMode() == 2) dnsServer.processNextRequest();
+    alarmSound();
+    #ifdef USE_GPS
+      smartDelay(1);  //feed GPS
+    #endif  
+    yield();
+  }
+}
+
 void makeAnim() {
   static byte oldDig = 10;
-  
+
+  if (cathodeProtRunning) {
+    memset(animMask,0,sizeof(animMask));
+    digit[pos] = newDigit[pos];
+    return;
+        
+  }
+  else if ((prm.animMode==0) || ipShowRunning ){
+    digit[pos] = newDigit[pos];
+    memset(animMask,0,sizeof(animMask));
+    Adelay(ANIMSPEED*20);
+    return;
+  }
+
+  //Time showing
   if (oldDig == newDigit[pos]) oldDig = 10; //if the old digit == new digit, use space instead
   oldDigit[pos] = oldDig;  //last displayed digit
-  
+  //DPRINT(oldDigit[pos]); DPRINT("/"); DPRINTLN(newDigit[pos]);
   for (int i = 1; i < 20; i++) {
     animMask[pos] = i;  
-    Fdelay(ANIMSPEED);
+    Adelay(ANIMSPEED);
   }  
   oldDig = newDigit[pos];  //save last displayed digit
   digit[pos] = newDigit[pos];
   animMask[pos] = 0;
-  Fdelay(400);
+  Adelay(5*ANIMSPEED);
+  if (pos==2) {
+    digit[pos] = 10;
+    oldDigit[pos] = 10;
+    oldDig = 10;
+    Adelay(20*ANIMSPEED);
+  }
 }
 
-void writeDisplaySingle() { 
+void writeDisplaySingle() {
   if (cathodeProtRunning) {
     pos = 3;
-    makeAnim();
   }
-  else if (ipShowRunning) {
+}
+
+void writeDisplay2(void){  
+  static unsigned long lastShow = 0;
+
+  if (cathodeProtRunning) {  //show cathode protect, only one digit
+    pos = 3;
+    return;
+    }
+  
+  if (ipShowRunning) {    //show 3digit IP address segment
+    memset(oldDigit,10,sizeof(oldDigit));
+    newDigit[3] = 10;
+    digit[3] = 10;
     for (int i=2;i>=0;i--) {
       pos = i;
       makeAnim();
+      digit[pos] = 10;
+      Adelay(200);
     }
-    pos = 4;
-    newDigit[4] = 10;
+    pos = 3;
     makeAnim();
-  }
-  else {
-    for (int i=3;i>=0;i--) {
-      pos = i;
-      makeAnim();
-    }
-    pos = 4;
-    newDigit[4] = 10;
-    makeAnim();
-    Fdelay(2000);  
+    pos = 0;
+    ipShowRunning = false;
+    memset(digit,10,sizeof(digit));
+    memset(newDigit,10,sizeof(newDigit));
+    memset(oldDigit,10,sizeof(oldDigit));
+    memset(animMask,0,sizeof(animMask));
+    Adelay(500);
+    return;
   }
 
-  memset(animMask, 0, sizeof(animMask));
-  memcpy(digit, newDigit, sizeof(digit));
-  memcpy(oldDigit, newDigit, sizeof(oldDigit)); 
+  if ((millis()-lastShow)<3000) return;   //show time 
+  for (int i=3;i>=0;i--) {
+      pos = i;
+      makeAnim();
+      if (prm.animMode==0) {  //make some pause
+        digit[pos] = 10;
+        Adelay((i==2)? 400 : 200);
+      }
+  }
+  newDigit[4] = 10;
+  pos = 4;
+  makeAnim();
+  memcpy(digit,newDigit,sizeof(digit));
+  memcpy(oldDigit,newDigit,sizeof(oldDigit));
+  memset(animMask,0,sizeof(animMask));
+  lastShow = millis();
 }
-  
+
 void clearTubes() {}
 #endif

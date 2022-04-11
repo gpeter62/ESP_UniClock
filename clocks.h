@@ -46,7 +46,7 @@
 //#define CLOCK_48  //WROOM ESP32, UNFI  SN75518 6xIV-17 clock
 //#define CLOCK_49  //WROOM ESP32, UNFI  SN75518 6xIV-11 clock
 //--------------------------------------------------------------------------------------------------------------
-//#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
+#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_51   //V2  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_52   //ESP32,    P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_53   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
@@ -55,7 +55,7 @@
 //#define CLOCK_56   //WROOM ESP32, UNFI 2xHV5122 6xZ573 clock   /flat panel/
 //#define CLOCK_70   //1 tube esp8266 Nixie Clock by UNFI 
 //#define CLOCK_71   //2x VQC10 clock by UNFI 
-#define CLOCK_99   //Dummy clock, sensor box with MQTT connector
+//#define CLOCK_99   //Dummy clock, sensor box with MQTT connector
 
 //______________________ESP8266 CLOCKS by UNFI and GP ______________________________________________________
 #ifdef CLOCK_1   //8266, UNFI PCB clock, 4x IN-16 tubes
@@ -1584,7 +1584,6 @@
   #define AP_NAME "1TUBE_CLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "1TUBE Nixie Clock"
-  #define USE_MQTT
 #endif
 
 #ifdef CLOCK_71   //2x VQC10 clock by UNFI 
