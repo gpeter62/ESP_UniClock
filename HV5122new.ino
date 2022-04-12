@@ -33,7 +33,7 @@ int DRAM_ATTR animPtr = 0;
 //Brightness PWM timing. Greater value => slower brightness PWM frequency  
 // Suggested values: 100000 / 20000, for faster PWM: 50000 / 10000
 uint32_t DRAM_ATTR PWMrefresh = 100000; 
-uint32_t DRAM_ATTR PWM_min = 20000;
+uint32_t DRAM_ATTR PWM_min = 6000;
 
 uint32_t DRAM_ATTR time1 = 2000;
 uint32_t DRAM_ATTR time2 = 2000; 
@@ -114,28 +114,32 @@ void ICACHE_RAM_ATTR writeDisplay() {       //https://circuits4you.com/2018/01/0
     portENTER_CRITICAL_ISR(&timerMux);
     noInterrupts();
   #endif
-
+  digitalWrite(PIN_OE, LOW); //OFF
   switch (state) {   //state machine...
-    case 0:
-      timer = time1;
-      shift(oldBitBuffer1);
-      shift(oldBitBuffer0);
-      state = 1;
-      break;
+    case 0:   //show old character
+      if (time1>=1000) {
+        timer = time1;
+        shift(oldBitBuffer1);
+        shift(oldBitBuffer0);
+        state = 1;
+        break;
+      }
     case 1:  //show new character
-      timer = time2;
-      shift(bitBuffer1);
-      shift(bitBuffer0);
-      if (offTime<500) state = 0;      
-      else state = 2;
-      break;
+      if (time2>=1000) {
+        timer = time2;
+        shift(bitBuffer1);
+        shift(bitBuffer0);
+        if (offTime<500) state = 0;      
+        else state = 2;
+        break;
+      }
     case 2:  //blank display
       timer = offTime;
       state = 3;
       break;
    }  //end switch
  
-  //if (timer<500) timer = 500;  //safety only...
+  if (timer<500) timer = 500;  //safety only...
   
   if ( (state==3) || (!radarON) || (brightness == 0) ) {  //OFF state, blank digit
     digitalWrite(PIN_OE, LOW); //OFF
@@ -215,17 +219,17 @@ if (animPtr>0) {
   
   for (int i = 0; i < maxDigits-1; i++) { //Set the extra decimal point dots
     if (digitDP[i] && digitPins[maxDigits][i]>0) {
-      if (digitPins[maxDigits][i] < 100) 
-        b0 |= (uint32_t)(1 << (digitPins[maxDigits][i]-1)); //chip0
-      else
-        b1 |= (uint32_t)(1 << (digitPins[maxDigits][i] - 101)); //chip1
+      if (digitPins[maxDigits][i] < 100) {
+        b0  |= (uint32_t)(1 << (digitPins[maxDigits][i]-1)); //chip0
+        ob0 |= (uint32_t)(1 << (digitPins[maxDigits][i]-1)); //chip0
+      }
+      else {
+        b1  |= (uint32_t)(1 << (digitPins[maxDigits][i] - 101)); //chip1
+        ob1 |= (uint32_t)(1 << (digitPins[maxDigits][i] - 101)); //chip1
+      }
     }
   }  //end for i
 
-  if (animPtr==0) {  //no animation #5
-    ob0 = b0;
-    ob1 = b1;
-  }
 
 
   brightness = displayON ?  prm.dayBright : prm.nightBright;
@@ -235,12 +239,16 @@ if (animPtr>0) {
     PWMtimeBrightness = max(PWM_min, (PWMrefresh*lx)/MAXIMUM_LUX);
   else
     PWMtimeBrightness = max(PWM_min, (PWMrefresh*brightness)/MAXBRIGHTNESS);
-  
-  if (animPtr ==0) animPtr = 10;   //to make equal timing
+   
+  if ((animPtr==0) || (PWMtimeBrightness<15000)) {  //no animation #5
+    ob0 = b0;
+    ob1 = b1;
+    animPtr = 10;  //to make equal timing
+  }
 
   time1 = PWMtimeBrightness * (20-animPtr)/20;
-  if (time1<1000) time1=1000;
-  if (time1 > (PWMtimeBrightness-1000)) time1 = PWMtimeBrightness-1000;
+  if (time1<1000) time1=0;
+  if (time1 > (PWMtimeBrightness-1000)) time1 = PWMtimeBrightness;
   time2 = PWMtimeBrightness - time1;
   offTime = PWMrefresh - time1 - time2;
   
@@ -248,13 +256,13 @@ if (animPtr>0) {
   bitBuffer1 = b1;
   oldBitBuffer0 = ob0;
   oldBitBuffer1 = ob1;
-/*
+
   DPRINT("Br:"); DPRINT(brightness);  DPRINT(" A:"); DPRINT(animPtr);  
   DPRINT(" PTB"); DPRINT(PWMtimeBrightness);
   DPRINT(" t1:"); DPRINT(time1); DPRINT(" t2:"); DPRINT(time2); DPRINT(" off:"); DPRINT(offTime);
   DPRINT(" "); DPRINT(b0,HEX); DPRINT(" ");   DPRINT(b1,HEX); DPRINT(" "); 
   DPRINT(ob0,HEX); DPRINT(" ");   DPRINTLN(ob1,HEX);   
-*/
+
 } 
 
 

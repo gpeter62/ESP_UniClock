@@ -2225,7 +2225,7 @@ void changeDigit() {
     return;
   #endif  
   anim = prm.animMode;
-  //anim = 0;
+  if (!displayON) anim = 0;   //At NIGHT switch off animation
   if (anim == 6) anim = 1 + rand() % 5;
 
   if (anim != 5) {
