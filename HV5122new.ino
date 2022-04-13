@@ -257,11 +257,11 @@ if (animPtr>0) {
   oldBitBuffer0 = ob0;
   oldBitBuffer1 = ob1;
 
-  DPRINT("Br:"); DPRINT(brightness);  DPRINT(" A:"); DPRINT(animPtr);  
-  DPRINT(" PTB"); DPRINT(PWMtimeBrightness);
-  DPRINT(" t1:"); DPRINT(time1); DPRINT(" t2:"); DPRINT(time2); DPRINT(" off:"); DPRINT(offTime);
-  DPRINT(" "); DPRINT(b0,HEX); DPRINT(" ");   DPRINT(b1,HEX); DPRINT(" "); 
-  DPRINT(ob0,HEX); DPRINT(" ");   DPRINTLN(ob1,HEX);   
+//  DPRINT("Br:"); DPRINT(brightness);  DPRINT(" A:"); DPRINT(animPtr);  
+//  DPRINT(" PTB"); DPRINT(PWMtimeBrightness);
+//  DPRINT(" t1:"); DPRINT(time1); DPRINT(" t2:"); DPRINT(time2); DPRINT(" off:"); DPRINT(offTime);
+//  DPRINT(" "); DPRINT(b0,HEX); DPRINT(" ");   DPRINT(b1,HEX); DPRINT(" "); 
+//  DPRINT(ob0,HEX); DPRINT(" ");   DPRINTLN(ob1,HEX);   
 
 } 
 
