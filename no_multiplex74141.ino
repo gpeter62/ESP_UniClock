@@ -10,8 +10,8 @@ char tubeDriver[] = "NO_MULTIPLEX74141";
 #endif
 
  //change it, if needed for the correct tube sequence
-byte tubes[] = {3,2,1,0};         //4 tubes,   old clock...     
-//byte tubes[] = {5,4,3,2,1,0};   //6 tubes, reverse order
+//byte tubes[] = {3,2,1,0};         //4 tubes,   old clock...   in clocks.h  
+//byte tubes[] = {5,4,3,2,1,0};   //6 tubes, reverse order      in clocks.h
 
 int maxDigits = sizeof(tubes);
 int PWMrefresh=12000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
@@ -19,9 +19,9 @@ int PWM_min = 1000;
 int PWM_max = 12000;
 //int PWMtiming[11] = {1000,1000,2000,3000,4000,5000,6000,7000,8000,10000,12000};
 
-#define dataPin  14  //D5
-#define latchPin 12  //D6
-#define clkPin   13  //D7
+//#define dataPin  14  //D5
+//#define latchPin 12  //D6
+//#define clkPin   13  //D7
 
 void writeDisplaySingle() { }   
 

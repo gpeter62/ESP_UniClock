@@ -10,7 +10,8 @@
 //#define CLOCK_3   //8266, PCB less clock, IV-18 VFD tube   https://www.thingiverse.com/thing:3417955
 //#define CLOCK_4   //8266, custom clock, 4x IV-11 VFD tubes
 //#define CLOCK_5   //8266, UNFI PCB clock IVL-2-5/7 tube with RTC
-//#define CLOCK_6   //8266, GP PCB clock, 4x IN-1 tubes and  4x74141  driver (NON-MULTIPLEX)
+//#define CLOCK_6   //8266,  GP PCB clock,   4x IN-1 tubes and  4x74141  driver (NON-MULTIPLEX)
+#define CLOCK_6A   //8266, UNFI PCB clock, 4x Z568 tubes and  4x74141  driver  (NON-MULTIPLEX)
 //#define CLOCK_7   //8266 UNFI PCB clock 6x Z574M/Z573M tubes, tube selection by PCF8574 chip
 //#define CLOCK_8   //8266 GP PCB v3 clock with 4x IV-16 Numitron tubes (plexi box)
 //#define CLOCK_9   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes (brown box)
@@ -34,7 +35,7 @@
 //#define CLOCK_33   //TOM025 ESP32, Pálfi S. board, 6 x Z573M Nixie tubes
 //#define CLOCK_34   //Mule V2 ESP32, board, 6 x SA40 LED Display
 //#define CLOCK_35   //ESP32, 6x Z566M and 3x74595 6x74141 (NON-MULTIPLEX)
-#define CLOCK_36   //ESP32, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
+//#define CLOCK_36   //ESP32, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
 //#define CLOCK_40  //V1  ESP32, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_41  //V2  ESP32, UNFI 6 x IV-11 VFD tubes clock (átkötés)
 //#define CLOCK_42  //V3  ESP32, UNFI 6 x IV-11 VFD tubes clock
@@ -196,6 +197,10 @@
   #define USE_NEOPIXEL
   byte tubePixels[] = {0,0,1,1,2,2,3,3,3,3,2,2,1,1,0,0,0};  //4 tubes, double row, 17 leds (GP)  
   #define NO_MULTIPLEX74141
+  byte tubes[] = {3,2,1,0};         //4 tubes,   old clock...   in clocks.h    
+  #define dataPin  14  //D5
+  #define latchPin 12  //D6
+  #define clkPin   13  //D7
   #define TEMP_DALLAS_PIN -1
   #define COLON_PIN   2        //Blinking Colon pin.  If not used, SET TO -1                 ( old IN-1-Clock: white:2 brown: SDA)
   #define AP_NAME "UNICLOCK"
@@ -205,6 +210,28 @@
   //#define DEFAULT_PSW ""
   //#define USE_WIFIMANAGER
   //#define DISABLE_NIGHT_ANIMATION   
+#endif
+
+#ifdef CLOCK_6A   //8266, UNFI PCB clock, 4x Z568 tubes and  4x74141  driver  (NON-MULTIPLEX)
+  #define DEBUG
+  #define FW "fw6a"  //firmware name
+  #define MAXBRIGHTNESS 100
+  #define USE_DALLAS_TEMP
+  #define TEMP_DALLAS_PIN 4
+  //#define USE_NEOPIXEL
+  //byte tubePixels[] = {0,0,1,1,2,2,3,3,3,3,2,2,1,1,0,0,0};  //4 tubes, double row, 17 leds (GP)  
+  byte tubes[] = {2,3,0,1};         //4 tubes,   old clock...  
+  #define NO_MULTIPLEX74141  
+  #define dataPin  14  //D5
+  #define latchPin 12  //D6
+  #define clkPin   13  //D7  
+  #define COLON_PIN   15        //Blinking Colon pin.  If not used, SET TO -1                 ( old IN-1-Clock: white:2 brown: SDA)
+  #define AP_NAME "UNICLOCK"
+  #define AP_PASSWORD ""
+  #define WEBNAME "Z568M Nixie Clock"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER   
 #endif
 
 
