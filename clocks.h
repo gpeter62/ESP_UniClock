@@ -34,7 +34,7 @@
 //#define CLOCK_33   //TOM025 ESP32, Pálfi S. board, 6 x Z573M Nixie tubes
 //#define CLOCK_34   //Mule V2 ESP32, board, 6 x SA40 LED Display
 //#define CLOCK_35   //ESP32, 6x Z566M and 3x74595 6x74141 (NON-MULTIPLEX)
-//#define CLOCK_36   //ESP32, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
+#define CLOCK_36   //ESP32, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
 //#define CLOCK_40  //V1  ESP32, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_41  //V2  ESP32, UNFI 6 x IV-11 VFD tubes clock (átkötés)
 //#define CLOCK_42  //V3  ESP32, UNFI 6 x IV-11 VFD tubes clock
@@ -46,7 +46,7 @@
 //#define CLOCK_48  //WROOM ESP32, UNFI  SN75518 6xIV-17 clock
 //#define CLOCK_49  //WROOM ESP32, UNFI  SN75518 6xIV-11 clock
 //--------------------------------------------------------------------------------------------------------------
-#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
+//#define CLOCK_50   //V1  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_51   //V2  ESP32, UNFI 2xHV5122 PCB version, 6xZ573 clock
 //#define CLOCK_52   //ESP32,    P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
 //#define CLOCK_53   //ESP8266,  UNFI 2xHV5122 PCB version, 6xZ573 clock   PROTOTYPE TESTING!!!
@@ -100,6 +100,7 @@
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
   //#define USE_WIFIMANAGER 
+  //#define DISABLE_NIGHT_ANIMATION
 #endif
 
 #ifdef CLOCK_3   //8266, PCB less clock, IV-18 VFD tube   https://www.thingiverse.com/thing:3417955
@@ -122,6 +123,7 @@
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
   //#define USE_WIFIMANAGER   
+  //#define DISABLE_NIGHT_ANIMATION
 #endif
 
 
@@ -151,7 +153,8 @@
   #define WEBNAME "IV-11 VFD Clock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER   
+  //#define USE_WIFIMANAGER 
+  //#define DISABLE_NIGHT_ANIMATION  
 #endif
 
 #ifdef CLOCK_5   //8266, UNFI PCB clock IVL-2-5/7 tube with RTC
@@ -180,7 +183,8 @@
   #define WEBNAME "IVL-2 VFD Clock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER   
+  //#define USE_WIFIMANAGER 
+  //#define DISABLE_NIGHT_ANIMATION  
 #endif
 
 #ifdef CLOCK_6   //8266, GP PCB clock, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
@@ -199,7 +203,8 @@
   #define WEBNAME "IN-1 Nixie Clock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER   
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION   
 #endif
 
 
@@ -224,7 +229,8 @@
   #define WEBNAME "Z574M Nixie Clock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER   
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION   
 #endif
 
 #ifdef CLOCK_8   //8266 GP PCB v3 clock with 4x IV-16 Numitron tubes (plexi box) //Flash size: 1MB (FS:160k, OTA:422k)
@@ -246,7 +252,8 @@
   #define WEBNAME "Numitron Clock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER   
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION   
 #endif
 
 #ifdef CLOCK_9   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes (brown box) //Flash size: 1MB (FS:160k, OTA:422k)
@@ -263,7 +270,8 @@
   #define WEBNAME "Numitron Clock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER   
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION   
 #endif
 
 #ifdef CLOCK_10   //8266 LED Clock with MAX7219 chip
@@ -276,7 +284,8 @@
   #define WEBNAME "LED UniClock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER   
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION   
 #endif
 
 #ifdef CLOCK_11   //8266 LED Clock with MM5450 chip
@@ -295,7 +304,8 @@
   #define WEBNAME "LED UniClock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER   
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION   
 #endif
 
 #ifdef CLOCK_12   //8266 VFD Clock with PT6355 chip
@@ -321,7 +331,8 @@
   #define WEBNAME "VFD UniClock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER   
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION   
 #endif
 
 #ifdef CLOCK_13   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes + GPS timesync (white box)
@@ -339,7 +350,8 @@
   #define WEBNAME "Numitron UniClock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER   
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION   
 #endif
 
 #ifdef CLOCK_14   //8266 6X LD8035 VFD-clock
@@ -362,6 +374,7 @@
   #define AP_NAME "UNFICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "LD 8035 VFD Clock"
+  //#define DISABLE_NIGHT_ANIMATION
 #endif
 
 #ifdef CLOCK_15   //8266 6X IV-6 VFD-clock RGB
@@ -390,6 +403,7 @@
   #define AP_NAME "UNFICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "IV-6 VFD Clock"
+  //#define DISABLE_NIGHT_ANIMATION
 #endif
 
 #ifdef CLOCK_16   //8266 4X IV-6, 1X LD8035
@@ -412,6 +426,7 @@
   #define AP_NAME "UNFICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "IV-6 VFD Clock"
+  //#define DISABLE_NIGHT_ANIMATION
 #endif
 
 #ifdef CLOCK_17  //8266 + PT6311 4X IV-22, russian clock
@@ -440,6 +455,7 @@
   #define AP_NAME "UNFICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "IV-22 VFD Clock"
+  //#define DISABLE_NIGHT_ANIMATION
 #endif
 
 #ifdef CLOCK_18   //8266 IV-18 VFD-clock RGB
@@ -471,6 +487,7 @@
   #define AP_NAME "UNFICLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "IV-18 VFD Clock"
+  //#define DISABLE_NIGHT_ANIMATION
 #endif
 
 //____________ P.S. clocks / thermometers ____________________________________________
@@ -498,6 +515,7 @@
   #define DEFAULT_SSID ""
   #define DEFAULT_PSW ""
   //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION
 #endif
 
 #ifdef CLOCK_21   //8266 D1-mini, P.S. PCB 3xIN14 1xIN-19A thermometer / humidity 
@@ -529,6 +547,7 @@
   #define DEFAULT_SSID ""
   #define DEFAULT_PSW ""
   //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION
 #endif
 
 #ifdef CLOCK_22   //8266 NODEMCU, P.S. PCB 3xIN14 1xIN-19A thermometer / humidity
@@ -560,21 +579,23 @@
   #define WEBNAME "Nixie Hőmérő"
   #define DEFAULT_SSID ""
   #define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER  
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION  
 #endif
 
 #ifdef CLOCK_23   //ESP32 D1 mini, P.S. PCB 3xIN14 1xIN-19A thermometer / humidity
   #define DEBUG
-  #define FW "fw23"  //firmware name 
-  #define MAXBRIGHTNESS 100    
-  #define USE_NEOPIXEL 
+  #define FW "fw23"  //firmware name
+  #define MAXBRIGHTNESS 100   
+  #define USE_NEOPIXEL
   #define NEOPIXEL_PIN 22
   byte tubePixels[] = {0,1,2,3};        //4 tubes, single leds
   #define USE_DHT_TEMP
   #define DHTTYPE DHT22
   #define TEMP_DHT_PIN  1
   #define MULTIPLEX74141_ESP32
-  byte digitEnablePins[] = {26,18,33,19};  
+  //byte digitEnablePins[] = {26,18,33,19};  //Old sw,old ESP32
+  byte digitEnablePins[] = {19,33,18,26};
   byte ABCDPins[4] =  {32,16,4,17};
   #define DP_PIN -1             // decimalPoint inside Nixie tube, set -1, if not used!
   #define ENABLE_CLOCK_DISPLAY false  //don't display date/time!!!
@@ -583,20 +604,30 @@
   #define PIN_SDA  25              // you can set the used SDA and SCL pins
   #define PIN_SCL  21              // if it is not default value
   #define TEMP_CHARCODE 5
-  #define GRAD_CHARCODE 10 
+  #define GRAD_CHARCODE 10
   #define PERCENT_CHARCODE 6
-  #define DECIMALPOINT_PIN  23  //Nixie decimal point between digits. If not used, SET TO -1 
+  #define DECIMALPOINT_PIN  23  //Nixie decimal point between digits. If not used, SET TO -1
   #define DATE_REPEAT_MIN 0       //show date only every xxx minute. If zero, datum is never displayed
   #define TEMP_START  01
-  #define TEMP_END    45 
-  #define HUMID_START 45 
-  #define HUMID_END   59 
-  #define AP_NAME "NixieHomero32"
+  #define TEMP_END    45
+  #define HUMID_START 45
+  #define HUMID_END   59
+  #define AP_NAME "Nixie-Homero"
   #define AP_PASSWORD ""
-  #define WEBNAME "Nixie Homero32"
-  #define DEFAULT_SSID ""
-  #define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER  
+  #define WEBNAME "Nixie Hőmérő"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  #define USE_WIFIMANAGER 
+  #define USE_MQTT
+  #define MQTT_PREFIX "Nixie_Homero"
+  #define USE_MASTER_CLOCK  //enable it, if you want to get any data from MASTER CLOCK. This will be the sensor#0
+  //#define USE_MASTER_TEMP   //enable it, if you want to get temperature from MASTER CLOCK
+  //#define USE_MASTER_HUMID  //enable it, if you want to get humidity from MASTER CLOCK
+  #define USE_MASTER_RADAR  //enable it, if you want to get radar from MASTER CLOCK
+  //#define MASTER_TEMPERATURE_TOPIC "homeassistant/sensor/10521c5e14c4/temperature/state"
+  //#define MASTER_HUMIDITY_TOPIC    "homeassistant/sensor/10521c5e14c4/humidity/state"
+  #define MASTER_RADAR_TOPIC         "Nixie_IN-18_Clock/sensor/3c6105172188/radar/state"
+  //#define DISABLE_NIGHT_ANIMATION
 #endif
 
 //______________________ESP-32 CLOCKS  (2x18pin ESP32 modul) ______________________________________________________
@@ -636,7 +667,8 @@
   #define WEBNAME "GP IV-11"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER  
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION  
 #endif
 
 #ifdef CLOCK_31   //ESP32, UNFI board, 6 x Z573M Nixie tubes
@@ -663,7 +695,8 @@
   #define WEBNAME "ESP32UniClock 3.0"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER  
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION  
 #endif
 
 
@@ -694,7 +727,8 @@
   #define WEBNAME "ESP32UniClock 3.0"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER  
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION  
 #endif
 
 #ifdef CLOCK_33   //TOM025 ESP32, Palfi S. board, 6 x Z573M Nixie tubes
@@ -721,7 +755,8 @@
   #define WEBNAME "ESP32UniClock 3.0"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER  
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION  
 #endif
 
 #ifdef CLOCK_34   //Mule V2 ESP32, board, 6 x SA40 LED Display
@@ -748,7 +783,8 @@
   #define WEBNAME "ESP32UniClock 3.0"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER  
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION  
 #endif
 
 #ifdef CLOCK_35   //ESP32, 6X Z566M and 3x 74595 6x74141  driver  (NON-MULTIPLEX)
@@ -759,6 +795,7 @@
   #define TEMP_DALLAS_PIN 32
   #define USE_NEOPIXEL
   #define NEOPIXEL_PIN 25
+  byte tubes[] = {5,4,3,2,1,0};   //6 tubes, reverse order 
   byte tubePixels[] = {5,4,3,2,1,0}; 
   #define dataPin  14  //D5
   #define latchPin 27  //D6
@@ -776,7 +813,8 @@
   #define WEBNAME "Z566M Nixie Clock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER   
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION   
 #endif  
 
 #ifdef CLOCK_36   //ESP32, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
@@ -786,6 +824,10 @@
   //#define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN -1
   #define USE_NEOPIXEL
+  #define dataPin  14  //D5
+  #define latchPin 27  //D6
+  #define clkPin   26  //D7  
+  byte tubes[] = {3,2,1,0};         //4 tubes,   old clock...     
   byte tubePixels[] = {0,0,1,1,2,2,3,3,3,3,2,2,1,1,0,0,0};  //4 tubes, double row, 17 leds (GP)  
   #define NO_MULTIPLEX_ESP32
   #define COLON_PIN   2        //Blinking Colon pin.  If not used, SET TO -1                 ( old IN-1-Clock: white:2 brown: SDA)
@@ -794,7 +836,8 @@
   #define WEBNAME "IN-1 Nixie Clock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER   
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION   
 #endif
 
 //______________________ESP-32 CLOCKS  (2x20pin ESP32 D1 mini modul) ______________________________________________________
@@ -829,7 +872,8 @@
   #define WEBNAME "ESP32 IV-11 VFD-Clock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER  
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION  
 #endif
 
 #ifdef CLOCK_41   //V2  ESP32, UNFI 6 x IV-11 VFD tubes clock (jumper wire)
@@ -863,7 +907,8 @@
   #define WEBNAME "ESP32 IV-11 VFD-Clock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER  
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION  
 #endif
 
 #ifdef CLOCK_42   //V3  ESP32, UNFI 6 x IV-11 VFD tubes clock
@@ -897,7 +942,8 @@
   #define WEBNAME "ESP32 IV-11 VFD-Clock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER  
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION  
 #endif
 
 
@@ -928,7 +974,8 @@
   #define WEBNAME "Z573M Nixie-Clock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER  
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION  
 #endif
 
 #ifdef CLOCK_44   //V2  ESP32, UNFI board, 6 x Z573M Nixie tubes (átkötéses)
@@ -958,7 +1005,8 @@
   #define WEBNAME "ESP32 Z573M Nixie-Clock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER  
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION  
 #endif
 
 #ifdef CLOCK_45   //V3  ESP32, UNFI board, 6 x Z573M Nixie tubes
@@ -988,7 +1036,8 @@
   #define WEBNAME "ESP32 Z573M Nixie-Clock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER  
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION  
 #endif
 
 #ifdef CLOCK_46   //ESP32, UNFI board, 6 x IV-9 Numitron tubes
@@ -1028,7 +1077,8 @@
   #define WEBNAME "ESP32 Numitron-Clock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER  
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION  
 #endif
 
 #ifdef CLOCK_47   //V3  ESP32, UNFI 10-LT-50G VFD tubes clock
@@ -1057,6 +1107,7 @@
   #define AP_NAME "UNFICLOCK32"
   #define AP_PASSWORD ""  
   #define WEBNAME "ESP32 10-LT-50G VFD-Clock"
+  //#define DISABLE_NIGHT_ANIMATION
 #endif
 
 #ifdef CLOCK_48   //WROOM ESP32, UNFI  SN75518 6xIV-17 clock
@@ -1103,6 +1154,7 @@
   //#define DEFAULT_PSW ""
   //#define USE_WIFIMANAGER  
   //#define DISABLE_BROWNOUT
+  //#define DISABLE_NIGHT_ANIMATION
 #endif
 
 #ifdef CLOCK_49   //WROOM ESP32, UNFI  SN75518 6xIV-11 clock
@@ -1143,6 +1195,7 @@
   //#define DEFAULT_PSW ""
   //#define USE_WIFIMANAGER  
   #define DISABLE_BROWNOUT
+  //#define DISABLE_NIGHT_ANIMATION
 #endif
 
 //---------------------ESP32   2X HV5122--------------------------------------------------
@@ -1205,7 +1258,8 @@
   #define WEBNAME "UNFI Nixie-Clock HV5122"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER  
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION  
 #endif
 
 #ifdef CLOCK_51   //V2  ESP32, UNFI 2xHV5122 PCB version, 6xZ573M clock   Example clock!!!
@@ -1273,7 +1327,8 @@
   #define WEBNAME "Nixie-Clock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER  
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION  
 #endif
 
 #ifdef CLOCK_52   //ESP32, P.S. 2xHV5122 PCB version, 6xIN18 clock   PROTOTYPE TESTING!!!
@@ -1342,7 +1397,8 @@
   #define WEBNAME "Nixie IN-18 Clock"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER  
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION  
 #endif
 
 #ifdef CLOCK_53   //ESP8266 Wemos D1 mini,UNFI 2xHV5122 PCB version, 6xIN18 clock  
@@ -1395,7 +1451,8 @@
   #define WEBNAME "UNFI Nixie Clock HV5122"
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
-  //#define USE_WIFIMANAGER  
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION  
 #endif
 
 #ifdef CLOCK_54   // D1 R32 ESP32 (Uno compatible), + NCS312 Nixie clock KIT!!!
@@ -1455,6 +1512,7 @@
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
   //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION
 #endif
 
 #ifdef CLOCK_55   //ESP8266 D1 Mini,UNFI 2xHV5122 PCB version, 6xZ573M clock
@@ -1514,6 +1572,7 @@
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
   //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION
 #endif
 
 #ifdef CLOCK_56   //WROOM ESP32, UNFI 2xHV5122 PCB version, 6xZ573M clock   Example clock!!!
@@ -1573,6 +1632,7 @@
   #define DEFAULT_SSID "Unferdorben_2"
   #define DEFAULT_PSW "4073404540734"
   #define USE_WIFIMANAGER  
+  #define DISABLE_NIGHT_ANIMATION   //in night mode, no animation allowed
 #endif
 
 #ifdef CLOCK_70   //1 tube esp8266 Nixie Clock by UNFI 
@@ -1584,6 +1644,7 @@
   #define AP_NAME "1TUBE_CLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "1TUBE Nixie Clock"
+  //#define DISABLE_NIGHT_ANIMATION
 #endif
 
 #ifdef CLOCK_71   //2x VQC10 clock by UNFI 
@@ -1608,6 +1669,7 @@
   //#define DEFAULT_SSID "xxx"   //factory reset default wifi ssid/psw
   //#define DEFAULT_PSW "yyy"
   //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION
 #endif
 
 #ifdef CLOCK_99   //Dummy clock, sensor box with MQTT connector

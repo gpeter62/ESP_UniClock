@@ -1268,6 +1268,7 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
     else if (key == "radarTimeout"){
       prm.radarTimeout = value.toInt();
       if (prm.radarTimeout>60) prm.radarTimeout = 60;
+      if (prm.radarTimeout<1) prm.radarTimeout = 1;
       radarLastOn = millis();
       radarON = true;
     }  
@@ -1428,7 +1429,8 @@ if (useTemp > 1)
   doc["humidEnd"] = prm.humidEnd; 
   doc["enableAutoDim"] = prm.enableAutoDim; 
   doc["enableRadar"] = prm.enableRadar;    
-  #if RADAR_PIN >= 0
+  #if (RADAR_PIN >= 0) || defined(USE_MQTT)
+    if (prm.radarTimeout<1) prm.radarTimeout = 1;
     doc["radarTimeout"] = prm.radarTimeout;   
   #else
     doc["radarTimeout"] = 0;
@@ -2225,7 +2227,9 @@ void changeDigit() {
     return;
   #endif  
   anim = prm.animMode;
-  if (!displayON) anim = 0;   //At NIGHT switch off animation
+  #ifdef DISABLE_NIGHT_ANIMATION
+    if (!displayON) anim = 0;   //At NIGHT switch off animation
+  #endif
   if (anim == 6) anim = 1 + rand() % 5;
 
   if (anim != 5) {
@@ -2568,7 +2572,7 @@ void printDigits(unsigned long timeout) {
   lastRun = millis();
   
   #ifdef DEBUG
-  DPRINT("\n   digit: ");  for (int i = maxDigits - 1; i >= 0; i--) {printChar(digit[i]);}
+  DPRINT("   digit: ");  for (int i = maxDigits - 1; i >= 0; i--) {printChar(digit[i]);}
   DPRINT(colonBlinkState ? " * " : "   ");
   //DPRINT("\noldDigit: ");  for (int i = maxDigits - 1; i >= 0; i--) {printChar(oldDigit[i]);}
   //DPRINT("\nnewDigit: ");  for (int i = maxDigits - 1; i >= 0; i--) {printChar(newDigit[i]);}

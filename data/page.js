@@ -94,6 +94,8 @@ var configuration = {
     "alarmEnable": false,
     "alarmTime": "6:30",
 	"alarmPeriod": 15,
+	"enableRadar": false,   
+	"radarTimeout": 5,    	
 	
 	//Tube display settings
     "utc_offset": 1,
@@ -121,8 +123,7 @@ var configuration = {
 	"dateRepeatMin": 3,            
 	"enableDoubleBlink": true,             
 	"enableAutoDim": false,  
-	"enableRadar": false,   
-	"radarTimeout": 5,         
+   
 
     //RGB settings	
     "rgbDir" : true,

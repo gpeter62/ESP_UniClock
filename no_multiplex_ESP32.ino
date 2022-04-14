@@ -10,8 +10,8 @@ char tubeDriver[] = "NO_MULTIPLEX_ESP32";
 #endif
 
  //change it, if needed for the correct tube sequence
-byte tubes[] = {3,2,1,0};         //4 tubes,   old clock...     
-//byte tubes[] = {5,4,3,2,1,0};   //6 tubes, reverse order
+//byte tubes[] = {3,2,1,0};         //4 tubes,   old clock...        use in clocks.h
+//byte tubes[] = {5,4,3,2,1,0};   //6 tubes, reverse order            use in clocks.h
 
 int maxDigits = sizeof(tubes);
 int DRAM_ATTR PWMrefresh=25000;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
