@@ -218,6 +218,8 @@
   #define MAXBRIGHTNESS 100
   #define USE_DALLAS_TEMP
   #define TEMP_DALLAS_PIN 4
+  #define GRAD_CHARCODE -1
+  #define TEMP_CHARCODE -1
   //#define USE_NEOPIXEL
   //byte tubePixels[] = {0,0,1,1,2,2,3,3,3,3,2,2,1,1,0,0,0};  //4 tubes, double row, 17 leds (GP)  
   byte tubes[] = {2,3,0,1};         //4 tubes,   old clock...  

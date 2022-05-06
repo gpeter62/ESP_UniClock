@@ -832,7 +832,7 @@ void doFirmwareUpdate(){
     #if defined(ESP32)|| defined(ESP8266_CORE_2xx)
       ret2 = ESPhttpUpdate.updateSpiffs(fname);    //ESP32 or old 8266 Core
     #else  
-      ret2 = ESPhttpUpdate.update(client,fname,true);   //new 8266 core
+      ret2 = ESPhttpUpdate.updateFS(client,fname);   //new 8266 core
     #endif  
             switch(ret2) {
                 case HTTP_UPDATE_FAILED:
@@ -1755,7 +1755,7 @@ void timeProgram() {
         showDate = false;
       }
     }
-
+//useTemp = 1; temperature[0] = 12.34; //for testing only
     showTemp0 = (useTemp > 0) && (second() >= prm.tempStart) && (second() < prm.tempEnd);
     showTemp1 = (useTemp > 1) && (second() >= prm.tempStart + (prm.tempEnd - prm.tempStart) / 2) && (second() < prm.tempEnd);
     showHumid0 = (useHumid > 0) && (second() >= prm.humidStart) && (second() < prm.humidEnd);
