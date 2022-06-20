@@ -79,14 +79,27 @@ while (true) {
 
 
 void editor() {
+  static unsigned long lastDisplay = 0;
   if (RTCexist) {  DS3231_get(&tim); }
   LastModify = 0;
   #if PIN_FLD_BUTTON >= 0 && PIN_SET_BUTTON >= 0   //Are buttons installed?
+    editorRunning = true;
     while (true) {
-      scanButFLD(100); if (fld == 0) break;
+      scanButFLD(100); 
+      if (fld == 0) {
+        editorRunning = false;
+        break;
+      }
       scanButSET(100);
       showValue();
-      writeDisplaySingle();
+      #if defined(WORDCLOCK)
+        if ((millis()-lastDisplay)>100) {
+          lastDisplay = millis();
+          writeDisplay2();
+        }
+      #else
+        writeDisplaySingle();
+      #endif
       printDigits(1000);
       Fdelay(100);
     }

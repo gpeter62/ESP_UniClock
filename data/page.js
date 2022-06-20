@@ -438,6 +438,7 @@ function Init(){
 	$('.temperature-holder2').toggleClass('hidden',configuration['temperature2'] == 255);
     $('.rgb-holder').toggleClass('hidden',configuration['rgbEffect'] == 255);
 	$('.tube-holder').toggleClass('hidden',configuration['tubeDriver'] == "DUMMY");
+	$('.wordclock-holder').toggleClass('hidden',configuration['tubeDriver'] == "WORDCLOCK");
 	$('.sensors-holder').toggleClass('hidden',configuration['temperature'] == 255);
     setPreviewColor();
 

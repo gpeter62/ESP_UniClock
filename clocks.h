@@ -11,7 +11,7 @@
 //#define CLOCK_4   //8266, custom clock, 4x IV-11 VFD tubes
 //#define CLOCK_5   //8266, UNFI PCB clock IVL-2-5/7 tube with RTC
 //#define CLOCK_6   //8266,  GP PCB clock,   4x IN-1 tubes and  4x74141  driver (NON-MULTIPLEX)
-#define CLOCK_6A   //8266, UNFI PCB clock, 4x Z568 tubes and  4x74141  driver  (NON-MULTIPLEX)
+//#define CLOCK_6A   //8266, UNFI PCB clock, 4x Z568 tubes and  4x74141  driver  (NON-MULTIPLEX)
 //#define CLOCK_7   //8266 UNFI PCB clock 6x Z574M/Z573M tubes, tube selection by PCF8574 chip
 //#define CLOCK_8   //8266 GP PCB v3 clock with 4x IV-16 Numitron tubes (plexi box)
 //#define CLOCK_9   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes (brown box)
@@ -28,7 +28,7 @@
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
 //#define CLOCK_23    ////ESP32 D1 mini, P.S. PCB 3xIN14 1xIN-19A thermometer / humidity
-
+//#define CLOCK_23A   //ESP32 WROOM, U.Z. PCB 4xZ566M 1xIN-19A thermometer / humidity
 //#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
 //#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
@@ -56,6 +56,9 @@
 //#define CLOCK_56   //WROOM ESP32, UNFI 2xHV5122 6xZ573 clock   /flat panel/
 //#define CLOCK_70   //1 tube esp8266 Nixie Clock by UNFI 
 //#define CLOCK_71   //2x VQC10 clock by UNFI 
+#define CLOCK_80   //word clock, english version
+//#define CLOCK_81   //word clock, german version
+//#define CLOCK_82   //word clock, hungarian version
 //#define CLOCK_99   //Dummy clock, sensor box with MQTT connector
 
 //______________________ESP8266 CLOCKS by UNFI and GP ______________________________________________________
@@ -659,6 +662,52 @@
   //#define DISABLE_NIGHT_ANIMATION
 #endif
 
+#ifdef CLOCK_23A   //ESP32 WROOM, U.Z. PCB 4xZ566M 1xIN-19A thermometer / humidity
+  #define DEBUG
+  #define FW "fw23A"  //firmware name
+  #define MAXBRIGHTNESS 100
+  byte tubePixels[] = {0,1,2,3};        //4 tubes, single leds
+  #define USE_DHT_TEMP
+  #define DHTTYPE DHT11
+  #define TEMP_DHT_PIN  19
+  #define MULTIPLEX74141_ESP32
+  byte digitEnablePins[] = {18,13,12,27,5};  //C/%-tizedfok-fok1-fok10-előjel:18
+  byte ABCDPins[4] =  {26,33,32,25};
+  #define COLON_PIN 14             // decimalPoint inside Nixie tube, set -1, if not used!
+  #define ENABLE_CLOCK_DISPLAY false  //don't display date/time!!!
+  #define SHIFT_TUBES_LEFT_BY_1 //shift left by 1 tube the display, if a thermometer is used with spec tube
+  #define USE_SHT21                //I2C Temperature + humidity
+  #define PIN_SDA  21              // you can set the used SDA and SCL pins
+  #define PIN_SCL  22              // if it is not default value
+  #define TEMP_CHARCODE 4
+  #define GRAD_CHARCODE 10
+  #define PERCENT_CHARCODE 7 
+  #define PLUS_CHARCODE 0
+  #define MINUS_CHARCODE 1 
+  #define DATE_REPEAT_MIN 0       //show date only every xxx minute. If zero, datum is never displayed
+  #define TEMP_START  01
+  #define TEMP_END    45
+  #define HUMID_START 45
+  #define HUMID_END   59
+  #define AP_NAME "Nixie-Homero"
+  #define AP_PASSWORD ""
+  #define WEBNAME "Nixie Hőmérő"
+  //#define DEFAULT_SSID ""
+  //#define DEFAULT_PSW ""
+  //#define USE_WIFIMANAGER 
+  //#define USE_MQTT
+  //#define MQTT_PREFIX "Nixie_Homero"
+  //#define USE_MASTER_CLOCK  //enable it, if you want to get any data from MASTER CLOCK. This will be the sensor#0
+  //#define USE_MASTER_TEMP   //enable it, if you want to get temperature from MASTER CLOCK
+  //#define USE_MASTER_HUMID  //enable it, if you want to get humidity from MASTER CLOCK
+  //#define USE_MASTER_RADAR  //enable it, if you want to get radar from MASTER CLOCK
+  //#define MASTER_TEMPERATURE_TOPIC "homeassistant/sensor/10521c5e14c4/temperature/state"
+  //#define MASTER_HUMIDITY_TOPIC    "homeassistant/sensor/10521c5e14c4/humidity/state"
+  //#define MASTER_RADAR_TOPIC         "Nixie_IN-18_Clock/sensor/3c6105172188/radar/state"
+  //#define DISABLE_NIGHT_ANIMATION
+#endif
+
+
 //______________________ESP-32 CLOCKS  (2x18pin ESP32 modul) ______________________________________________________
 #ifdef CLOCK_30   //ESP32, UNFI PCB clock, 6 x IV-11 VFD tubes
   #define DEBUG
@@ -1204,8 +1253,10 @@
   #define SN75518_ESP32
   //Segments:  abcdefgD  
   #define SEGMENT8 
-  byte segmentEnablePins[] =  {17,18,19,20,21,22,23,24};   //segment enable OUTbits of SN75518   (You MUST define  8 Pins!!!)
-  byte digitEnablePins[] =    {32,31,30,29,28,27};  //digit enable OUTbits of SN75518 (1,2,3,4,5,6)  (You may define any number)
+  byte segmentEnablePins[] =  {17,18,19,20,21,22,23,24};   //IV-11 segment enable OUTbits of SN75518   (You MUST define  8 Pins!!!)
+  byte digitEnablePins[] =    {27,28,29,30,31,32};         //IV-11 digit enable OUTbits of SN75518 (1,2,3,4,5,6)  (You may define any number)
+  //byte segmentEnablePins[] =  {17,18,19,20,21,22,23,24};   //IV-12 segment enable OUTbits of SN75518   (You MUST define  8 Pins!!!)
+  //byte digitEnablePins[] =    {27,28,29,30,31,32};        //IV-12 digit enable OUTbits of SN75518 (1,2,3,4,5,6)  (You may define any number)
   #define DOUBLE_BLINK  //both separator points are blinking 
   //SN75518 pins
     #define PIN_LE    13  // Shift Register Latch Enable
@@ -1223,7 +1274,7 @@
   //#define DEFAULT_SSID ""
   //#define DEFAULT_PSW ""
   //#define USE_WIFIMANAGER  
-  #define DISABLE_BROWNOUT
+  //#define DISABLE_BROWNOUT
   //#define DISABLE_NIGHT_ANIMATION
 #endif
 
@@ -1699,6 +1750,268 @@
   //#define DEFAULT_PSW "yyy"
   //#define USE_WIFIMANAGER
   //#define DISABLE_NIGHT_ANIMATION
+#endif
+
+#ifdef CLOCK_80   //word clock, english version
+  #define DEBUG 
+  #define NEOPIXEL_PIN 4
+  #define PIN_FLD_BUTTON   27     
+  #define PIN_SET_BUTTON   14
+  #define LED1_PIN 25
+  #define LED2_PIN 26 
+  #define LIGHT_SENSOR_PIN 35
+  //#define RADAR_PIN 16
+  #define RADAR_TIMEOUT 5  //min
+  //#define USE_GPS
+  #define PIN_SDA 21          // you can set the used SDA and SCL pins
+  #define PIN_SCL 22          // if it is not default value
+  #define USE_RTC             //RTC + push buttons are defined here
+  #define USE_BME280          //I2C Temperature + humidity + pressure
+  #define USE_AHTX0             //I2C Temperature + humidity
+  #define USE_SHT21             //I2C Temperature + humidity  
+  #define FW "fw80"           //firmware name
+  #define START_CORNER LEFTUP    //RIGHTUP, LEFTUP, RIGHTDOWN, LEFTDOWN  : starting corner of led stripe
+  #define MAXBRIGHTNESS 150   //maximum led brightness, 100..255
+  #define MAXIMUM_LUX 40
+  #define WORDCLOCK
+  #define AP_NAME "WORD_CLOCK"
+  #define AP_PASSWORD ""
+  #define WEBNAME "WORD Clock"
+  //#define DEFAULT_SSID "xxx"   //factory reset default wifi ssid/psw
+  //#define DEFAULT_PSW "yyy"
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION
+  //
+  //----- WORD CLOCK TEXT DEFINITIONS -----------------
+  #define WORD_LENGTH 15   //maximum length of any word
+  struct wordDef{
+    char txt[WORD_LENGTH+1];   //readable word
+    int startX;    //led X positions
+    int startY;    //led Y position
+    int len;       //number of characters
+  };  
+  #define XMAX 11  //Clock dimensions
+  #define YMAX 11
+  #define WEEKDAY_POSX  1      //start of weekdays
+  #define WEEKDAY_POSY  11      //start of weekdays
+  int extraDots[4] = {XMAX*YMAX+3,XMAX*YMAX+2,XMAX*YMAX+1,XMAX*YMAX};   //extra dots led numbers
+  #define WEEKDAY_POSX  1      //start of weekdays
+  #define WEEKDAY_POSY  11      //start of weekdays
+  #define SENSOR_POSX 8     //start position of extra dots
+  #define SENSOR_POSY 11    
+  
+  const char matrix[YMAX][XMAX+1] = {
+  {"itLisASwifi"},
+  {"quarterXset"},
+  {"twentyfiveX"},
+  {"halfBtenFto"},
+  {"pastERUNINE"},
+  {"ONESIXTHREE"},
+  {"FOURFIVETWO"},
+  {"EIGHTELEVEN"},
+  {"SEVENTWELVE"},
+  {"TENSEoclock"},
+  {"SMTWTFSCF%W"}
+  };
+
+  const char sequence[12][40] = {   //#1 = actual hour,  #2 = actual hour + 1
+  "it is #1 oclock",
+  "it is five past #1",
+  "it is ten past #1",
+  "it is quarter past #1",
+  "it is twenty past #1",
+  "it is twenty five past #1",
+  "it is half past #1",
+  "it is twenty five to #2",
+  "it is twenty to #2",
+  "it is quarter to #2",
+  "it is ten to #2",
+  "it is five to #2"
+  };
+
+  struct wordDef hours[] {
+    {"O"},{"ONE"},{"TWO"},{"THREE"},{"FOUR"},{"FIVE"},{"SIX"},{"SEVEN"},{"EIGHT"},{"NINE"},{"TEN"},{"ELEVEN"},{"TWELVE"},
+  };
+
+  struct wordDef words[] {
+    {"it"},{"is"},{"wifi"},{"ip"},{"twenty"},{"five"},{"ten"},{"quarter"},{"half"},{"to"},{"past"},{"oclock"},{"SMTWTFS"},{"CF%W"}
+  };  
+#endif
+
+#ifdef CLOCK_81   //word clock, german version
+  #define DEBUG 
+  #define NEOPIXEL_PIN 4
+  #define PIN_FLD_BUTTON   27     
+  #define PIN_SET_BUTTON   14
+  #define LED1_PIN 25
+  #define LED2_PIN 26 
+  //#define LIGHT_SENSOR_PIN 35
+  //#define RADAR_PIN 16
+  //#define RADAR_TIMEOUT 5  //min
+  //#define USE_GPS
+  #define PIN_SDA 21          // you can set the used SDA and SCL pins
+  #define PIN_SCL 22          // if it is not default value
+  #define USE_RTC             //RTC + push buttons are defined here
+  #define USE_BME280          //I2C Temperature + humidity + pressure
+  #define USE_AHTX0             //I2C Temperature + humidity
+  #define USE_SHT21             //I2C Temperature + humidity  
+  #define FW "fw81"  //firmware name
+  #define START_CORNER RIGHTUP    //RIGHTUP, LEFTUP, RIGHTDOWN, LEFTDOWN  : starting corner of led stripe
+  #define MAXBRIGHTNESS 150   //led maximum brightness 100...255
+  #define MAXIMUM_LUX 40
+  #define WORDCLOCK
+  #define AP_NAME "WORD_CLOCK"
+  #define AP_PASSWORD ""
+  #define WEBNAME "WORD Clock"
+  //#define DEFAULT_SSID "xxx"   //factory reset default wifi ssid/psw
+  //#define DEFAULT_PSW "yyy"
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION
+  //
+  //----- WORD CLOCK TEXT DEFINITIONS -----------------
+  #define WORD_LENGTH 15   //maximum length of any word
+  struct wordDef{
+    char txt[WORD_LENGTH+1];   //readable word
+    int startX;    //led X positions
+    int startY;    //led Y position
+    int len;       //number of characters
+  };  
+  
+  #define XMAX 11  //Clock dimensions
+  #define YMAX 11
+  #define WEEKDAY_POSX  1      //start of weekdays
+  #define WEEKDAY_POSY  11      //start of weekdays
+  #define EXTRADOTS_POSX 1     //start position of extra dots
+  #define EXTRADOTS_POSY 12  
+  #define WEEKDAY_POSX  1      //start of weekdays
+  #define WEEKDAY_POSY  11      //start of weekdays
+  #define SENSOR_POSX 8     //start position of extra dots
+  #define SENSOR_POSY 11    
+  
+  const char matrix[YMAX][XMAX+1] = {
+  {"esListAwifi"},
+  {"zehnzwanzig"},
+  {"dreiviertel"},
+  {"funfvornach"},
+  {"halbOELFUNF"},
+  {"EINSXAMZWEI"},
+  {"DREIAUJVIER"},
+  {"SECHSNLACHT"},
+  {"SIEBENZWOLF"},
+  {"ZEHNEUNKuhr"},
+  {"SMTWTFSCF%W"}
+  };
+
+  const char sequence[12][40] = {   //#1 = actual hour,  #2 = actual hour + 1
+  "es ist #1 uhr",
+  "es ist funf nach #1",
+  "es ist zehn nach #1",
+  "es ist viertel #2",
+  "es ist zehn vor halb #2",
+  "es ist funf vor halb #2",
+  "es ist halb #2",
+  "es ist funf nach halb #2",
+  "es ist zehn nach halb #2",
+  "es ist drei viertel #2",
+  "es ist zehn vor #2",
+  "es ist funf vor #2"
+  };
+
+  struct wordDef hours[] {
+    {"O"},{"EIN"},{"ZWEI"},{"DREI"},{"FIER"},{"FUNF"},{"SECHS"},{"SIEBEN"},{"ACHT"},{"NEUN"},{"ZEHN"},{"ELF"},{"ZWOLF"},
+  };
+
+  struct wordDef words[] {
+    {"es"},{"ist"},{"zwanzig"},{"funf"},{"zehn"},{"drei"},{"viertel"},{"halb"},{"vor"},{"nach"},{"uhr"},{"SMDMDFS"},{"CF%W"},{"wifi"}
+  };  
+#endif
+
+#ifdef CLOCK_82   //word clock, hungarian version
+  #define DEBUG 
+  #define NEOPIXEL_PIN 4
+  #define PIN_FLD_BUTTON   27     
+  #define PIN_SET_BUTTON   14
+  #define LED1_PIN 25
+  #define LED2_PIN 26 
+  #define LIGHT_SENSOR_PIN 35
+  //#define RADAR_PIN 16
+  //#define RADAR_TIMEOUT 5  //min
+  //#define USE_GPS
+  #define PIN_SDA 21          // you can set the used SDA and SCL pins
+  #define PIN_SCL 22          // if it is not default value
+  #define USE_RTC             //RTC + push buttons are defined here
+  #define USE_BME280          //I2C Temperature + humidity + pressure
+  #define USE_AHTX0             //I2C Temperature + humidity
+  #define USE_SHT21             //I2C Temperature + humidity  
+  #define FW "fw82"  //firmware name
+  #define START_CORNER RIGHTUP    //RIGHTUP, LEFTUP, RIGHTDOWN, LEFTDOWN  : starting corner of led stripe  
+  #define MAXBRIGHTNESS 150   //led max brightness 100...255
+  #define MAXIMUM_LUX 40
+  #define WORDCLOCK
+  #define AP_NAME "WORD_CLOCK"
+  #define AP_PASSWORD ""
+  #define WEBNAME "WORD Clock"
+  //#define DEFAULT_SSID "xxx"   //factory reset default wifi ssid/psw
+  //#define DEFAULT_PSW "yyy"
+  //#define USE_WIFIMANAGER
+  //#define DISABLE_NIGHT_ANIMATION
+  //
+  //----- WORD CLOCK TEXT DEFINITIONS -----------------
+  #define WORD_LENGTH 15   //maximum length of any word
+  struct wordDef{
+    char txt[WORD_LENGTH+1];   //readable word
+    int startX;    //led X positions
+    int startY;    //led Y position
+    int len;       //number of characters
+  };
+    
+  #define XMAX 11  //Clock dimensions
+  #define YMAX 11
+  #define WEEKDAY_POSX  1      //start of weekdays
+  #define WEEKDAY_POSY  11      //start of weekdays
+  #define EXTRADOTS_POSX 1     //start position of extra dots
+  #define EXTRADOTS_POSY 12  
+  #define WEEKDAY_POSX  1      //start of weekdays
+  #define WEEKDAY_POSY  11      //start of weekdays
+  #define SENSOR_POSX 8     //start position of extra dots
+  #define SENSOR_POSY 11    
+  
+  const char matrix[YMAX][XMAX+1] = {
+  {"otBtizJwifi"},
+  {"perccelEWip"},
+  {"multmulvaQZ"},
+  {"haromUXfelJ"},
+  {"negyedXHHAT"},
+  {"NEGYAHAROMS"},
+  {"NYOLCOTZHET"},
+  {"TIZENEGYEBC"},
+  {"TIZENKETTOA"},
+  {"KILENCFORAP"},
+  {"SMTWTFSCF%W"}
+  };
+
+  const char sequence[12][40] = {   //#1 = actual hour,  #2 = actual hour + 1
+  "#1 ora",
+  "#1 ora mult ot perccel",
+  "#1 ora mult tiz perccel",
+  "negyed #2",
+  "tiz perc mulva fel #2",
+  "ot perc mulva fel #2",
+  "fel #2",
+  "fel #2 mult ot perccel",
+  "fel #2 mult tiz perccel",
+  "harom negyed #2",
+  "tiz perc mulva #2",
+  "ot perc mulva #2"
+  };
+
+  struct wordDef hours[] {
+    {"0"},{"EGY"},{"KET"},{"HAROM"},{"NEGY"},{"OT"},{"HAT"},{"HET"},{"NYOLC"},{"KILENC"},{"TIZ"},{"TIZENEGY"},{"TIZENKETTO"},
+  };
+
+  struct wordDef words[] {
+    {"ora"},{"ot"},{"tiz"},{"harom"},{"negyed"},{"fel"},{"perc"},{"perccel"},{"mulva"},{"mult"},{"wifi"},{"ip"},{"VHKSCPS"}
+  };  
 #endif
 
 #ifdef CLOCK_99   //Dummy clock, sensor box with MQTT connector

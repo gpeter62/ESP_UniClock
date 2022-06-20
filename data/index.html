@@ -109,8 +109,8 @@
                     <span class="switcher-text right non-selectable" for="enableAutoDim">on</span>
                 </div>			
 			</div> 
-			<!-- Tube display settings -->	
-            <div page="tube" class="tube-holder">
+			<!-- display settings -->	
+            <div page="display" class="tube-holder">
 				<br>
                 <div class="control-holder">
                     <label>Manual Override</label>
@@ -120,7 +120,7 @@
                     <span class="switcher-text right non-selectable" for="manualOverride">NIGHT</span>
                 </div>
     
-                <div class="control-holder">
+                <div class="control-holder wordclock-holder">
                     <label>Display Mode</label>
                     <input id="set12_24" type="checkbox" class="switch two-side">
                     <span class="switcher-text left non-selectable" for="set12_24">12h</span>
@@ -128,7 +128,7 @@
                     <span class="switcher-text right non-selectable" for="set12_24">24h</span>
                 </div>
                 
-                <div class="control-holder">
+                <div class="control-holder wordclock-holder">
                     <label>Zero Handling</label>
                     <input id="showZero" type="checkbox" class="switch">
                     <span class="switcher-text left non-selectable" for="showZero">Hide</span>
@@ -136,14 +136,14 @@
                     <span class="switcher-text right non-selectable" for="showZero">Show</span>
                 </div>
                 
-                <div class="control-holder">
+                <div class="control-holder wordclock-holder">
                     <label>Blinking Dots</label>
                     <input id="enableBlink" type="checkbox" class="switch">
                     <span class="switcher-text left non-selectable" for="enableBlink">off</span>
                     <span class="switcher non-selectable" for="enableBlink"></span>
                     <span class="switcher-text right non-selectable" for="enableBlink">on</span>
                 </div>
-                <div class="control-holder">
+                <div class="control-holder wordclock-holder">
                     <label>Double Blink</label>
                     <input id="enableDoubleBlink" type="checkbox" class="switch">
                     <span class="switcher-text left non-selectable" for="enableDoubleBlink">off</span>
@@ -168,7 +168,7 @@
                     <select id="animMode" class="number-select" min="0" max="6" step="1" prefix="Animation_" suffix=""></select>
                 </div>
             
-                <div class="control-holder">
+                <div class="control-holder wordclock-holder">
                     <label for="interval">Cathode Protect</label>
                     <input type="range" min="0" max="60" class="slider" id="interval">
                 </div>
@@ -207,7 +207,7 @@
                         <select id="nightTimeMinutes" class="number-select two-digit" min="0" max="59" step="5"></select>
                     </div>
                 </div>
-                <div class="control-holder">
+                <div class="control-holder wordclock-holder">
                     <label>Display Time/Date</label>
                     <input id="enableTimeDisplay" type="checkbox" class="switch">
                     <span class="switcher-text left non-selectable" for="enableTimeDisplay">off</span>
@@ -222,7 +222,7 @@
                         <option value="2">yyyy/mm/dd</option>
                     </select>
                 </div>	
-                <div class="control-holder">
+                <div class="control-holder wordclock-holder">
                     <label>Date Repeat (min)</label>
                     <input type="range" min="0" max="60" class="slider" id="dateRepeatMin">
                 </div>			
@@ -233,7 +233,7 @@
                     <span class="switcher non-selectable" for="tempCF"></span>
                     <span class="switcher-text right non-selectable" for="tempCF">F</span>
                 </div>
-                <div class="control-holder">
+                <div class="control-holder wordclock-holder">
                     <label>Date seconds</label>
                     <div class="multiple-input">
                         <select id="dateStart" class="number-select two-digit" min="0" max="59"></select>
@@ -260,9 +260,9 @@
             </div>
 
             <!-- RGB settings -->
-            <div page="rgb" class="rgb-holder">
+            <div page="rgb" class="tube-holder">
 				<br>
-                <div class="control-holder">
+                <div class="control-holder rgb-holder">
                     <label for="rgbEffect">RGB Effect</label>
                     <select id="rgbEffect">
                         <option value="0">OFF</option>
@@ -278,7 +278,7 @@
                         <option value="10">Knight Rider's KITT</option>
                     </select>
                 </div>
-                <div class="control-holder">
+                <div class="control-holder rgb-holder">
                     <label>RGB Brightness</label>
                     <input type="range" min="8" max="255" class="slider" id="rgbBrightness">
                 </div>
@@ -294,7 +294,7 @@
                     </div>                    
                 </div>
             
-                <div class="control-holder">
+                <div class="control-holder rgb-holder">
                     <label>Direction</label>
                     <input id="rgbDir" type="checkbox" class="switch two-side">
                     <span class="switcher-text left non-selectable" for="rgbDir">left</span>
@@ -383,7 +383,7 @@
             </div>		
             <div page="settings" hidden="true">
 				<br>
-				<div class="control-holder">			
+				<div class="control-holder wordclock-holder">			
                     <label>CathodeProtect (minutes)</label>
                     <input type="range" min="1" max="60" step="1" class="slider" id="cathProtMin">
 					<button id="cath-prot-btn" onclick="areYouSure('cathodeProtect')">Cathode Protect</button>

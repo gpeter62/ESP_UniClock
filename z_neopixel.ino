@@ -110,10 +110,13 @@ void darkenNeopixels() {
 
 void rainbow() {
  static byte j=0;
- volatile int i;    
+ volatile int i;  
+ int index;  
   
   for(i=0; i<PixelCount; i++) {
-    if (tubePixels[i]<maxDigits) strip.SetPixelColor(i, Wheel((i+j) & 255));
+    index = (i+j) & 255;
+    if (index == WHITE_INDEX) index++;
+    if (tubePixels[i]<maxDigits) strip.SetPixelColor(i, Wheel(index));
     else strip.SetPixelColor(i,black);
   }
   if (prm.rgbDir) { j++; }
@@ -145,7 +148,7 @@ void rainbow2() {   //Rainbow Stepper
 
   //DPRINT(i); DPRINT("/"); DPRINTLN(j);    
 
-  setPixels(i, Wheel(j)); 
+  setPixels(i, Wheel((j==192) ? j+1 : j)); 
   
   if (prm.rgbDir)i++;
   else i--;

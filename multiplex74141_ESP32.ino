@@ -109,6 +109,12 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
     #if DP_PIN >=0
       digitalWrite(DP_PIN,LOW);
     #endif  
+    #if COLON_PIN >= 0
+      digitalWrite(COLON_PIN,LOW);      // Colon pin OFF
+    #endif    
+    #if DECIMALPOINT_PIN >=0 
+        digitalWrite(DECIMALPOINT_PIN,LOW);
+    #endif
     }
   else {
       for (int i=0;i<4;i++) {digitalWrite(ABCDPins[i],num  & 1<<i); }
@@ -117,18 +123,15 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
         if (LEFTDECIMAL) DPpos = min(maxDig-1,pos+1); else DPpos = pos;
         if (digitDP[DPpos]) digitalWrite(DP_PIN,HIGH); //switch ON decimal point, if needed
       #endif
+      #if COLON_PIN >= 0
+        digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
+      #endif
+      #if DECIMALPOINT_PIN >=0 
+        digitalWrite(DECIMALPOINT_PIN,decimalpointON); }
+      #endif
   }
     
-  #if COLON_PIN >= 0
-    if (num==10) digitalWrite(COLON_PIN,LOW);      // Colon pin OFF
-    else digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
-  #endif
   
-  #if DECIMALPOINT_PIN >=0 
-        if (num==10) {digitalWrite(DECIMALPOINT_PIN,LOW);}
-        else {digitalWrite(DECIMALPOINT_PIN,decimalpointON); }
-  #endif
-
   portEXIT_CRITICAL_ISR(&timerMux);
   //ESP32timer = timerBegin(0, PRESCALER, true);  //set prescaler, true = edge generated signal
   //timerAttachInterrupt(ESP32timer, &writeDisplay, true);   

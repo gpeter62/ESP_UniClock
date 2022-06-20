@@ -204,8 +204,8 @@ DNSServer dnsServer;
 #include <EEPROM.h>
 #include "ArduinoJson.h"
 
-#ifdef USE_NEOPIXEL
-#include <NeoPixelBrightnessBus.h>
+#if defined(USE_NEOPIXEL) || defined(WORDCLOCK)
+  #include <NeoPixelBrightnessBus.h>
 #endif
 
 extern void ICACHE_RAM_ATTR writeDisplay();
@@ -390,6 +390,8 @@ boolean showHumid1 = false;
 int lastCathodeProt = -1;
 boolean cathodeProtRunning = false;
 boolean ipShowRunning = false;
+boolean wifiConnectRunning = false;
+boolean editorRunning = false;
 
 #define MAX_PIN sizeof(ESPpinout)-1
 #define PIN_TXT_LEN 16
@@ -617,7 +619,7 @@ void wifiManager() {
   #endif
 }
 void startNewWifiMode() { // Start a Wi-Fi access point, and try to connect to some given access points. Then wait for either an AP or STA connection
- if (((millis()-lastWifiScan)<90000) && (bestRSSI > -90) && (WiFi.status() != WL_CONNECTED)) {
+ if (((millis()-lastWifiScan)<90000) && (bestRSSI > -95) && (WiFi.status() != WL_CONNECTED)) {
   DPRINTLN(F("_____________ Connecting WiFi ___________________"));
   if (strlen(prm.wifiSsid)==0) return;
   WiFi.disconnect();
@@ -1653,6 +1655,8 @@ void setup() {
   memset(newDigit,10,sizeof(newDigit));
   memset(oldDigit,10,sizeof(oldDigit));
   
+  wifiConnectRunning = true;
+  writeDisplay2();
   if (prm.wifiMode) {
     findBestWifi();
     startNewWifiMode();
@@ -1682,6 +1686,7 @@ void setup() {
   else {
     startStandaloneMode();
   }
+  wifiConnectRunning = false;
   showMyIp();
   Fdelay(500);
   startServer();
@@ -1704,23 +1709,23 @@ void calcTime() {
   boolean refreshed = false;
   boolean refreshed2 = false;
   
- 
-  refreshed = updateTimefromTimeserver();  //update time from wifi
-  if (refreshed) {
-    mySTD.offset = prm.utc_offset * 60;
-    myDST.offset = mySTD.offset;
-    if (prm.enableDST) {
-      myDST.offset += 60;
+  if (WiFi.status() == WL_CONNECTED) {        //check wifi connection
+    refreshed = updateTimefromTimeserver();  //update time from wifi
+    if (refreshed) {
+      mySTD.offset = prm.utc_offset * 60;
+      myDST.offset = mySTD.offset;
+      if (prm.enableDST) {
+        myDST.offset += 60;
+      }
+      myTZ = Timezone(myDST, mySTD);  
+      setTime(myTZ.toLocal(timeClient.getEpochTime()));
     }
-    myTZ = Timezone(myDST, mySTD);  
-    setTime(myTZ.toLocal(timeClient.getEpochTime()));
-  }
-      
+  }  
   if (GPSexist) { //update time from GPS, if exist
     refreshed2 = getGPS();
   }
   
-  if (RTCexist) {
+  if (RTCexist) {  //update time from RTC, if exist
     if (refreshed || refreshed2) 
       updateRTC();    //update RTC, if needed
     else 
@@ -1755,7 +1760,7 @@ void timeProgram() {
         showDate = false;
       }
     }
-//useTemp = 1; temperature[0] = 12.34; //for testing only
+//useTemp = 1; temperature[0] = -12.34; useHumid = 1; humid[0] = 26.7; //for test only
     showTemp0 = (useTemp > 0) && (second() >= prm.tempStart) && (second() < prm.tempEnd);
     showTemp1 = (useTemp > 1) && (second() >= prm.tempStart + (prm.tempEnd - prm.tempStart) / 2) && (second() < prm.tempEnd);
     showHumid0 = (useHumid > 0) && (second() >= prm.humidStart) && (second() < prm.humidEnd);
@@ -2038,13 +2043,18 @@ void displayTemp(byte ptr) {
     digitDP[i] = false;
     newDigit[i] = 10;
   }
-  
+  #if defined(PLUS_CHARCODE) || defined(MINUS_CHARCODE)   //leading sign 
+    if (t>=0) newDigit[digPtr] = PLUS_CHARCODE;
+    if (t<0) newDigit[digPtr] = MINUS_CHARCODE;
+    digPtr--;
+  #endif
+  t = abs(t);
   newDigit[digPtr] = t / 10;
   if (newDigit[digPtr] == 0) newDigit[digPtr] = 10; //BLANK!!!
   newDigit[--digPtr] = int(t) % 10;
   digitDP[digPtr] = true;
   newDigit[--digPtr] = int(t * 10) % 10;
-  if ((maxDigits > 4) && (GRAD_CHARCODE >= 0)) {
+  if ((maxDigits > 5) && (GRAD_CHARCODE >= 0)) {
     digPtr -=1;
     newDigit[digPtr] = GRAD_CHARCODE; //grad
   }
@@ -2067,12 +2077,15 @@ void displayHumid(byte ptr) {
   float h = humid[ptr];
   if (ptr==0) h += prm.corrH0;
   if (ptr==1) h += prm.corrH1;
+  #if defined(PLUS_CHARCODE) || defined(MINUS_CHARCODE)   //leading sign 
+    digPtr--;
+  #endif
   newDigit[digPtr] = int(h) / 10;
   if (newDigit[digPtr] == 0) newDigit[digPtr] = 10; //BLANK if zero!!!
   newDigit[--digPtr] = int(h) % 10;
   digitDP[digPtr] = true;
   newDigit[--digPtr] = int(h * 10) % 10;
-  if (maxDigits > 4) {
+  if (maxDigits > 5) {
     if (digitsOnly) {
       newDigit[--digPtr] = 10;   //empty character
       newDigit[--digPtr] = PERCENT_CHARCODE;  //  "%"
@@ -2222,13 +2235,16 @@ void changeDigit() {
   byte space = 4;
   byte anim;
   
-  #if defined(TUBE1CLOCK)
+  #if defined(TUBE1CLOCK)   //no tube animation possible
     writeDisplaySingle();
     return;
   #endif  
   anim = prm.animMode;
-  #ifdef DISABLE_NIGHT_ANIMATION
+  #if defined(DISABLE_NIGHT_ANIMATION)
     if (!displayON) anim = 0;   //At NIGHT switch off animation
+  #endif
+  #if defined(WORDCLOCK)
+    anim = 0;   
   #endif
   if (anim == 6) anim = 1 + rand() % 5;
 
@@ -2572,7 +2588,7 @@ void printDigits(unsigned long timeout) {
   lastRun = millis();
   
   #ifdef DEBUG
-  DPRINT("   digit: ");  for (int i = maxDigits - 1; i >= 0; i--) {printChar(digit[i]);}
+  DPRINT("   digit: [");  for (int i = maxDigits - 1; i >= 0; i--) {printChar(digit[i]);} DPRINT("]");
   DPRINT(colonBlinkState ? " * " : "   ");
   //DPRINT("\noldDigit: ");  for (int i = maxDigits - 1; i >= 0; i--) {printChar(oldDigit[i]);}
   //DPRINT("\nnewDigit: ");  for (int i = maxDigits - 1; i >= 0; i--) {printChar(newDigit[i]);}
@@ -2743,7 +2759,7 @@ void doReset(void) {
   ESP.restart();
 }
 
-#if defined(VQC10) || defined(TUBE1CLOCK)
+#if defined(VQC10) || defined(TUBE1CLOCK) || defined(WORDCLOCK)
 #else
   void writeDisplay2(void){}  //not interrupt driven display handler
 #endif
