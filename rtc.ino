@@ -1,8 +1,11 @@
 #ifdef USE_RTC
 //DS3231 realtime clock driver
 //with manual clock setup buttons
-#include <ds3231.h>    //https://github.com/rodan/ds3231
-  
+#include <RtcDS3231.h>   //Makuna/RTC
+RtcDS3231<TwoWire> Rtc(Wire);
+RtcDateTime rtcNow;
+RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
+#define EPOCH_OFFSET 946684800l   //offset from 1970->2000 epoch start
 //------ Mode Switch and Push Buttons ---------------------
 #ifndef PIN_MODE_SWITCH
   #define PIN_MODE_SWITCH  -1  
@@ -21,7 +24,6 @@
 
 #define MENU_UNSELECT_TIMEOUT 30000
 
-struct ts tim;
 int monthdays[13] = {0,31,29,31,30,31,30,31,31,30,31,30,31};
 
 struct Menu {
@@ -63,10 +65,26 @@ void setupRTC() {
   #endif    
   
   if (RTCexist) {
-    DS3231_init(DS3231_CONTROL_INTCN);
-    DS3231_get(&tim);
+    DPRINTLN("Connecting to RTC clock...");
+    Rtc.Begin();
+    if (!Rtc.IsDateTimeValid()) {
+        if (Rtc.LastError() != 0) {
+            DPRINT("RTC communications error = ");  DPRINTLN(Rtc.LastError());
+        }
+        else {
+            DPRINTLN("RTC lost confidence in the DateTime!");
+            Rtc.SetDateTime(compiled);  //Set RTC time to firmware compile time
+        }
+    }
+
+    if (!Rtc.GetIsRunning())  {
+        DPRINTLN("RTC was not actively running, starting now");
+        Rtc.SetIsRunning(true);
+    }
+
+    Rtc.Enable32kHzPin(false);
+    Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeNone);     
   }
-  
 /*  
 while (true) {
   DPRINT(digitalRead(PIN_MODE_SWITCH)); DPRINT(" / "); 
@@ -80,7 +98,7 @@ while (true) {
 
 void editor() {
   static unsigned long lastDisplay = 0;
-  if (RTCexist) {  DS3231_get(&tim); }
+  if (RTCexist) {rtcNow = Rtc.GetDateTime();}
   LastModify = 0;
   #if PIN_FLD_BUTTON >= 0 && PIN_SET_BUTTON >= 0   //Are buttons installed?
     editorRunning = true;
@@ -135,52 +153,50 @@ void updateRTC() {
   DPRINTLN("Update RTC?");
   if (!RTCexist) return;
   if (year()<2020) return;    //invalid system date??
-  DS3231_get(&tim);
-  if (abs(tim.sec - second())>2 || (tim.min != minute()) || (tim.hour != hour())  
-      || (tim.mday != day()) || (tim.mon != month()) || (tim.year != year()) )   {
+
+  rtcNow = Rtc.GetDateTime();
+  if (abs(rtcNow.Second() - second())>2 || (rtcNow.Minute() != minute()) || (rtcNow.Hour() != hour())  
+      || (rtcNow.Day() != day()) || (rtcNow.Month() != month()) || (rtcNow.Year() != year()) )   {
       DPRINTLN("Updating RTC from TimeServer...");
-      DPRINT("- DS3231  date:"); DPRINT(tim.year); DPRINT("/"); DPRINT(tim.mon); DPRINT("/"); DPRINT(tim.mday); 
-      DPRINT(" time:");  DPRINT(tim.hour); DPRINT(":"); DPRINT(tim.min); DPRINT(":"); DPRINTLN(tim.sec);    
+      DPRINT("- DS3231  date:"); DPRINT(rtcNow.Year()); DPRINT("/"); DPRINT(rtcNow.Month()); DPRINT("/"); DPRINT(rtcNow.Day()); 
+      DPRINT(" time:");  DPRINT(rtcNow.Hour()); DPRINT(":"); DPRINT(rtcNow.Minute()); DPRINT(":"); DPRINTLN(rtcNow.Second());    
       DPRINT("- Tserver date:"); DPRINT(year()); DPRINT("/"); DPRINT(month()); DPRINT("/"); DPRINT(day());      
       DPRINT(" time:");   DPRINT(hour()); DPRINT(":"); DPRINT(minute()); DPRINT(":"); DPRINTLN(second());  
-      tim.sec = second();
-      tim.min = minute();
-      tim.hour = hour();
-      tim.mday = day();
-      tim.mon = month();
-      tim.year = year(); 
-      DS3231_set(tim); 
+      Rtc.SetDateTime(now()-EPOCH_OFFSET);   //update RTC with UNIX epoch timestamp to 2000year epoch
       }  //endif
 }
 
 
 void getRTC() {
   if (RTCexist) {
-    DS3231_get(&tim);
-    setTime(tim.hour,tim.min,tim.sec,tim.mday,tim.mon,tim.year);  //set the time (hr,min,sec,day,mnth,yr)
-    mvar[1] = tim.year; mvar[2] = tim.mon; mvar[3] = tim.mday;
-    mvar[4] = tim.hour; mvar[5] = tim.min; 
+    if (!Rtc.IsDateTimeValid()) {
+        if (Rtc.LastError() != 0) {
+            DPRINT("RTC communications error = "); DPRINTLN(Rtc.LastError());
+        }
+        else {
+            DPRINTLN("RTC lost confidence in the DateTime!");
+        }
+    }
+    else {
+      rtcNow = Rtc.GetDateTime();
+      //DPRINT("\nGet DS3231 data&time: ");  DPRINT(rtcNow.Year()); DPRINT("/"); DPRINT(rtcNow.Month()); DPRINT("/"); DPRINT(rtcNow.Day()); 
+      //DPRINT(" ");  DPRINT(rtcNow.Hour()); DPRINT(":"); DPRINT(rtcNow.Minute()); DPRINT(":"); DPRINTLN(rtcNow.Second());  
+      setTime(rtcNow.Hour(),rtcNow.Minute(),rtcNow.Second(),rtcNow.Day(),rtcNow.Month(),rtcNow.Year());  //set the time (hr,min,sec,day,mnth,yr)
+    }
   }
-  else {
-    mvar[1] = year(); mvar[2] = month(); mvar[3] = day();
-    mvar[4] = hour(); mvar[5] = minute(); 
-  }
+  mvar[1] = year(); mvar[2] = month(); mvar[3] = day();
+  mvar[4] = hour(); mvar[5] = minute(); 
 }
 
 void saveRTC() {
-    tim.sec = 0;
-    tim.min = mvar[5];
-    tim.hour = mvar[4];
-    tim.mday = mvar[3];
-    tim.mon = mvar[2];
-    tim.year = mvar[1]; 
-    setTime(tim.hour,tim.min,tim.sec,tim.mday,tim.mon,tim.year);  //set the time (hr,min,sec,day,mnth,yr)
-    DPRINT("New Date & Time:"); DPRINT(tim.year); DPRINT("/"); DPRINT(tim.mon); DPRINT("/"); DPRINT(tim.mday); 
-    DPRINT(" time:");  DPRINT(tim.hour); DPRINT(":"); DPRINT(tim.min); DPRINT(":"); DPRINTLN(tim.sec);  
+  setTime(mvar[4],mvar[5],0,mvar[3],mvar[2],mvar[1]);  //set the time (hr,min,sec,day,mnth,yr)
+
     if (RTCexist) {
       DPRINTLN("Updating RTC from Manual settings...");
-      DS3231_set(tim); 
+      Rtc.SetDateTime(now()-EPOCH_OFFSET);
     }
+    DPRINT("New Date & Time:"); DPRINT(year()); DPRINT("/"); DPRINT(month()); DPRINT("/"); DPRINT(day()); 
+    DPRINT(" time:");  DPRINT(hour()); DPRINT(":"); DPRINT(minute()); DPRINT(":"); DPRINTLN(second());  
 }
 
 //-------------------------- check buttons  ------------------------------------------------

@@ -252,7 +252,7 @@ void getSHT21() {
 void getI2Csensors() {
   static unsigned long lastRun = 0;
 
-  if ((((millis()-lastRun)<2500) || (second()!=TEMP_START)) && (lastRun !=0)) return;
+  if (((millis()-lastRun)<30000) && (lastRun !=0)) return;  // || (second()!=TEMP_START)
   lastRun = millis();  
   if (BME280exist) getBME280();
   if (BMP280exist) getBMP280();

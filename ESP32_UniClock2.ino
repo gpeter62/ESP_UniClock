@@ -727,7 +727,6 @@ boolean updateTimefromTimeserver() {  //true, if successful
   static unsigned long lastTimeFailure = 0;
   boolean res = false;
   int count = 1;
-
   
   if (((millis()-lastTimeUpdate)<TIMESERVER_REFRESH) && (lastTimeUpdate!=0))
     return(res);
@@ -740,6 +739,12 @@ boolean updateTimefromTimeserver() {  //true, if successful
       enableDisplay(1000);
       res = timeClient.forceUpdate();
       if (res) {
+        mySTD.offset = prm.utc_offset * 60;
+        myDST.offset = mySTD.offset;
+        if (prm.enableDST) {
+          myDST.offset += 60;
+        }
+        myTZ = Timezone(myDST, mySTD);  
         setTime(myTZ.toLocal(timeClient.getEpochTime()));
         lastTimeUpdate = millis();
         DPRINT("Timeserver date:"); DPRINT(year()); DPRINT("/"); DPRINT(month()); DPRINT("/"); DPRINT(day());      
@@ -1331,24 +1336,24 @@ void handleSendConfig(AsyncWebServerRequest *request) {
   //useHumid = 2; humid[0] = 41; humid[1] = 42;
   
   if (useTemp > 0) {
-    doc["temperature"] = temperature[0] + prm.corrT0;  
+    doc["temperature"] = round1(temperature[0] + prm.corrT0);  
   }
   else
     doc["temperature"] = 255;
 
 if (useTemp > 1)
-    doc["temperature2"] = temperature[1] + prm.corrT1;
+    doc["temperature2"] = round1(temperature[1] + prm.corrT1);
   else
     doc["temperature2"] = 255;
 
   if (useHumid>0) {
-    doc["humidity"] = humid[0] + prm.corrH0;
+    doc["humidity"] = round1(humid[0] + prm.corrH0);
   }
   else
     doc["humidity"] = 255;
  
   if (useHumid>1)
-    doc["humidity2"] = humid[1] + prm.corrH1;
+    doc["humidity2"] = round1(humid[1] + prm.corrH1);
   else
     doc["humidity2"] = 255;
 
@@ -1711,15 +1716,6 @@ void calcTime() {
   
   if (WiFi.status() == WL_CONNECTED) {        //check wifi connection
     refreshed = updateTimefromTimeserver();  //update time from wifi
-    if (refreshed) {
-      mySTD.offset = prm.utc_offset * 60;
-      myDST.offset = mySTD.offset;
-      if (prm.enableDST) {
-        myDST.offset += 60;
-      }
-      myTZ = Timezone(myDST, mySTD);  
-      setTime(myTZ.toLocal(timeClient.getEpochTime()));
-    }
   }  
   if (GPSexist) { //update time from GPS, if exist
     refreshed2 = getGPS();

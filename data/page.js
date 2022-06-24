@@ -231,9 +231,9 @@ function setCurrentInfos(){
     $('#currentTime').html(getCurrentDate(configuration["currentDate"]) + " " + configuration["currentTime"]);
     $('#lux').html(configuration["lux"]);
 	$('#rssi').html(configuration["rssi"]);
-    $('#pressure').html(configuration["pressure"]);
-    $('#humidity').html(configuration["humidity"]);
-    $('#humidity2').html(configuration["humidity2"]);
+    $('#pressure').html(round(configuration["pressure"],1));
+    $('#humidity').html(round(configuration["humidity"],1));
+    $('#humidity2').html(round(configuration["humidity2"],1));
     $('#temperature').html(getTemperature(configuration["temperature"]));
     $('#temperature2').html(getTemperature(configuration["temperature2"]));
     $('#temperature, #temperature2').toggleClass('fahrenheit',configuration["tempCF"]);
