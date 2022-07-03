@@ -28,7 +28,7 @@
 //#define CLOCK_21  //8266 D1-mini, P.S. PCB 4xIN14 thermometer / humidity 
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
 //#define CLOCK_23    ////ESP32 D1 mini, P.S. PCB 3xIN14 1xIN-19A thermometer / humidity
-#define CLOCK_23A   //ESP32 WROOM, U.Z. PCB 4xZ566M 1xIN-19A thermometer / humidity
+//#define CLOCK_23A   //ESP32 WROOM, U.Z. PCB 4xZ566M 1xIN-19A thermometer / humidity
 //#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
 //#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
@@ -56,7 +56,7 @@
 //#define CLOCK_56   //WROOM ESP32, UNFI 2xHV5122 6xZ573 clock   /flat panel/
 //#define CLOCK_70   //1 tube esp8266 Nixie Clock by UNFI 
 //#define CLOCK_71   //2x VQC10 clock by UNFI 
-//#define CLOCK_80   //word clock, english version
+#define CLOCK_80   //word clock, english version
 //#define CLOCK_81   //word clock, german version
 //#define CLOCK_82   //word clock, hungarian version
 //#define CLOCK_99   //Dummy clock, sensor box with MQTT connector
@@ -1776,7 +1776,8 @@
   #define WORDCLOCK
   #define AP_NAME "WORD_CLOCK"
   #define AP_PASSWORD ""
-  #define WEBNAME "WORD Clock"
+  #define WEBNAME "WordClock"
+  #define MDNSNAME "wordclock"
   //#define DEFAULT_SSID "xxx"   //factory reset default wifi ssid/psw
   //#define DEFAULT_PSW "yyy"
   //#define USE_WIFIMANAGER
@@ -1862,7 +1863,7 @@
   #define WORDCLOCK
   #define AP_NAME "WORD_CLOCK"
   #define AP_PASSWORD ""
-  #define WEBNAME "WORD Clock"
+  #define WEBNAME "wordclock"
   //#define DEFAULT_SSID "xxx"   //factory reset default wifi ssid/psw
   //#define DEFAULT_PSW "yyy"
   //#define USE_WIFIMANAGER
@@ -1950,7 +1951,7 @@
   #define WORDCLOCK
   #define AP_NAME "WORD_CLOCK"
   #define AP_PASSWORD ""
-  #define WEBNAME "WORD Clock"
+  #define WEBNAME "wordclock"
   //#define DEFAULT_SSID "xxx"   //factory reset default wifi ssid/psw
   //#define DEFAULT_PSW "yyy"
   //#define USE_WIFIMANAGER

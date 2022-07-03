@@ -318,7 +318,7 @@ int I2C_ClearBus() {
 #if defined(TWCR) && defined(TWEN)
   TWCR &= ~(_BV(TWEN)); //Disable the Atmel 2-Wire interface so we can control the SDA and SCL pins directly
 #endif
-
+  DPRINTLN("I2C_ClearBus() started.");
   pinMode(PIN_SDA, INPUT_PULLUP); // Make SDA (data) and SCL (clock) pins Inputs with pullup.
   pinMode(PIN_SCL, INPUT_PULLUP);
 

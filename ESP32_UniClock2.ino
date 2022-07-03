@@ -156,7 +156,7 @@ String driverSetupStr;
   #include <ESP8266HTTPClient.h>
   #include <WiFiClient.h>
   #include <ESP8266httpUpdate.h>
-  //#include <ESP8266mDNS.h>
+  #include <ESP8266mDNS.h>
   #include "ESPAsyncTCP.h"
   #include "FS.h"
   
@@ -177,7 +177,7 @@ String driverSetupStr;
   #include <WiFiClient.h>
   #include <HTTPClient.h>
   #include <ESP32httpUpdate.h>
-  //#include <ESPmDNS.h>
+  #include <ESPmDNS.h>
   #include "AsyncTCP.h"
   #include "SPIFFS.h"
   #include "FS.h"  
@@ -548,6 +548,9 @@ boolean findBestWifi() {
   int newRssi;
   boolean found = false;
   
+  if (WiFi.status() == WL_CONNECTED) {  //save wifi settings to prm
+    WiFi.disconnect();
+  }
   WiFi.scanNetworks(false);
   n = WiFi.scanComplete();
   DPRINT(F("Scanning WiFi, found networks:")); DPRINTLN(n); 
@@ -618,6 +621,7 @@ void wifiManager() {
   }
   #endif
 }
+
 void startNewWifiMode() { // Start a Wi-Fi access point, and try to connect to some given access points. Then wait for either an AP or STA connection
  if (((millis()-lastWifiScan)<90000) && (bestRSSI > -95) && (WiFi.status() != WL_CONNECTED)) {
   DPRINTLN(F("_____________ Connecting WiFi ___________________"));
@@ -677,7 +681,7 @@ void startNewWifiMode() { // Start a Wi-Fi access point, and try to connect to s
   DPRINTLN("\r\n");
 }
 
-/*
+
 void startWifiMode() {
   disableDisplay();
   DPRINTLN("Starting Clock in WiFi Mode!");
@@ -687,8 +691,12 @@ void startWifiMode() {
     return;
   }
   WiFi.disconnect(true);
-  WiFi.mode(WIFI_OFF);
-  Fdelay(1000);
+  //WiFi.mode(WIFI_OFF);
+  delay(100);
+  WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
+  delay(100);
+  //Fdelay(1000);
   #if defined(ESP32)
     WiFi.setHostname(webName);
     WiFi.setSleep(false);
@@ -702,15 +710,16 @@ void startWifiMode() {
 
   DPRINT("\nConnecting to WiFi SSID:("); DPRINT(prm.wifiSsid); DPRINT(")  PSW:("); DPRINT(prm.wifiPsw); DPRINTLN(")");
   int counter = 0;
-  if (strlen(prm.wifiPsw)>0)
+  if (strlen(prm.wifiPsw)!=0)
     WiFi.begin(prm.wifiSsid, prm.wifiPsw);
   else  
     WiFi.begin(prm.wifiSsid);
   while (WiFi.status() != WL_CONNECTED) {
     DPRINT('.');
     //playTubes();
-    Fdelay(3000);
-    if (counter++>2) {
+    //Fdelay(3000);
+    delay(500);
+    if (counter++>100) {
       wifiManager();
       return;
     }
@@ -719,9 +728,8 @@ void startWifiMode() {
   ip = WiFi.localIP();
   WiFi.setAutoReconnect(true);
   enableDisplay(100);
-  showMyIp();
 }
-*/
+
 
 boolean updateTimefromTimeserver() {  //true, if successful
   static unsigned long lastTimeFailure = 0;
@@ -764,6 +772,25 @@ boolean updateTimefromTimeserver() {  //true, if successful
   return (res);
 }
 
+#ifndef MDNSNAME
+    #define MDNSNAME "uniclock"
+#endif
+void startMDNS() {
+  static boolean mdnsStarted = false;
+
+  if (mdnsStarted) return;   //running and not changed
+  
+  if (!MDNS.begin(MDNSNAME)) {   //mdns_free() switch off
+    DPRINTLN(F("Error setting up MDNS responder!"));
+    mdnsStarted = false;
+  }
+  else {
+    DPRINT(F("Started mDns service:")); DPRINTLN(MDNSNAME);
+    MDNS.addService("http", "tcp", 80);  
+    mdnsStarted = true;
+  }
+}
+
 void startStandaloneMode() {
   DPRINTLN("Starting Clock in Standalone Mode!");
   DPRINT("Clock's AP SSID:"); DPRINTLN(prm.ApSsid);
@@ -789,10 +816,7 @@ void startStandaloneMode() {
 
   dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
   dnsServer.start(53, "*", WiFi.softAPIP());
-  //if (!MDNS.begin("uniclock", WiFi.softAPIP())) {
-  //DPRINTLN(F("Error setting up MDNS responder!"));
-  //}
-  //MDNS.addService("http", "tcp", 80);
+
   enableDisplay(0);
 }
 
@@ -1663,8 +1687,8 @@ void setup() {
   wifiConnectRunning = true;
   writeDisplay2();
   if (prm.wifiMode) {
-    findBestWifi();
-    startNewWifiMode();
+    //findBestWifi();
+    startWifiMode();
 
    #ifdef USE_WIFIMANAGER
    int counter = 0;
@@ -1692,13 +1716,15 @@ void setup() {
     startStandaloneMode();
   }
   wifiConnectRunning = false;
-  showMyIp();
-  Fdelay(500);
+
+  startMDNS();
   startServer();
   #ifdef USE_MQTT
     setupMqtt();
   #endif
   
+  showMyIp();
+  Fdelay(500);
   clearDigits();
   Fdelay(200);
   enableDisplay(0);
@@ -1766,10 +1792,12 @@ void timeProgram() {
     else if (maxDigits == 6) displayTime6();
     else                     displayTime4();
     //   if (COLON_PIN>=0) digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
-    if ((LED_SWITCH_PIN >= 0) && displayON) //Switch on backlight LED only daytime
-      digitalWrite(LED_SWITCH_PIN, HIGH);
-    else
-      digitalWrite(LED_SWITCH_PIN, LOW);
+    #if LED_SWITCH_PIN >= 0
+      if (displayON) //Switch on backlight LED only daytime
+        digitalWrite(LED_SWITCH_PIN, HIGH);
+      else
+        digitalWrite(LED_SWITCH_PIN, LOW);
+    #endif
     changeDigit();
     printDigits(0);
     
@@ -2494,8 +2522,8 @@ void resetWiFi(void) {
   //#endif
   if (WiFi.status() == WL_CONNECTED) return;
   
-  findBestWifi();
-  startNewWifiMode();
+  //findBestWifi();
+  startWifiMode();
   return;
 
   counter++;
