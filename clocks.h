@@ -29,6 +29,7 @@
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
 //#define CLOCK_23    ////ESP32 D1 mini, P.S. PCB 3xIN14 1xIN-19A thermometer / humidity
 //#define CLOCK_23A   //ESP32 WROOM, U.Z. PCB 4xZ566M 1xIN-19A thermometer / humidity
+//#define CLOCK_26  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock, SHT21
 //#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
 //#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
@@ -708,7 +709,66 @@
 #endif
 
 
+#ifdef CLOCK_26   //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock, SHT21
+  #define DEBUG 
+  #define FW "fw26"  //firmware name 
+  #define MAXBRIGHTNESS 100 
+  #define USE_NEOPIXEL 
+  #define NEOPIXEL_PIN 22
+  byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds
+  #define USE_DALLAS_TEMP
+  #define TEMP_DALLAS_PIN 25    //Dallas temp sensor pin.  If not used, SET TO -1    
+  //#define USE_DHT_TEMP
+  //#define DHTTYPE DHT22
+  //#define TEMP_DHT_PIN 25    //DHT temp sensor pin.  If not used, SET TO -1     
+  #define USE_BME280            //I2C Temperature + humidity + pressure
+  #define USE_BMP280            //I2C Temperature + barometric  pressure
+  #define USE_AHTX0             //I2C Temperature + humidity
+  #define USE_SHT21             //I2C Temperature + humidity
+  #define PIN_SDA 26           // you can set the used SDA and SCL pins
+  #define PIN_SCL 27           // if it is not default value
+  //#define USE_MQTT
+  #define MAX6921_ESP32
+  byte segmentEnablePins[] =  {19,17,15,12,13,16,18,14};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
+  byte digitEnablePins[] = {9,8,7,2,1,0};  //digit enable OUTbits of MAX6921 (1,2,3,4,5,6)  (You may define any number)
+  #define DOUBLE_BLINK  //both separator points are blinking 
+  #define DATE_REPEAT_MIN 60       //show date only every xxx minute. If zero, datum is never displayed
+  #define DATE_START  07
+  #define DATE_END    12 
+  #define TEMP_START  25
+  #define TEMP_END    30 
+  #define HUMID_START 30 
+  #define HUMID_END   35 
+  //MAX6921 pins
+    #define PIN_LE    4  // Shift Register Latch Enable
+    #define PIN_CLK   17  // Shift Register Clock
+    #define PIN_DATA  16  // Shift Register Data
+    #define PIN_BL    32  // Shift Register Blank (1=display off     0=display on)
+  #define ALARMSPEAKER_PIN 2   //Alarm buzzer pin                                            
+  #define ALARMBUTTON_PIN 0    //Alarm switch off button pin 
+  #define ALARM_ON HIGH         //How to switch ON alarm buzzer
+  #define AP_NAME "VFD-Ora"
+  #define AP_PASSWORD ""  
+  #define WEBNAME "VFD-Óra"
+  #define DEFAULT_SSID "***NET***"
+  #define DEFAULT_PSW "Szentatya5"
+  //#define USE_WIFIMANAGER  
+   #define DISABLE_NIGHT_ANIMATION
+  //#define DISABLE_BROWNOUT
+   #define USE_MQTT
+  //#define MQTT_PREFIX "VFD-Clock"
+  #define USE_MASTER_CLOCK  //enable it, if you want to get any data from MASTER CLOCK. This will be the sensor#0
+  //#define USE_MASTER_TEMP   //enable it, if you want to get temperature from MASTER CLOCK
+  //#define USE_MASTER_HUMID  //enable it, if you want to get humidity from MASTER CLOCK
+  #define USE_MASTER_RADAR  //enable it, if you want to get radar from MASTER CLOCK
+  //#define MASTER_TEMPERATURE_TOPIC "homeassistant/sensor/10521c5e14c4/temperature/state"
+  //#define MASTER_HUMIDITY_TOPIC    "homeassistant/sensor/10521c5e14c4/humidity/state"
+  #define MASTER_RADAR_TOPIC         "Nixie_IN-18_Clock/sensor/10521c5e14c4/radar/state"
+  
+#endif
+
 //______________________ESP-32 CLOCKS  (2x18pin ESP32 modul) ______________________________________________________
+
 #ifdef CLOCK_30   //ESP32, UNFI PCB clock, 6 x IV-11 VFD tubes
   #define DEBUG
   #define FW "fw30"  //firmware name 
