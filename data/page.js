@@ -31,7 +31,7 @@ var controlInfos = {
     "dayBright": "Day brightness",
     "nightBright": "Night brightness",
 	"manualOverride": "Manual Day/Night change",
-    "animMode": "Tube animation mode: 0=OFF, 1-5: Animations 6: Random",
+    "animMode": "Tube animation mode: 0=OFF, 1-5: Animations 6-7: Random",
 	"dateMode": "0:dd/mm/yyyy 1:mm/dd/yyyy 2:yyyy/mm/dd",
 	"tempCF": "Celsius / Fahrenheit display",              
 	"enableTimeDisplay": "Enable time&date display (Use OFF for thermometers)" ,

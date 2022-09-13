@@ -43,7 +43,7 @@
 //#define CLOCK_43  //V1  ESP32, UNFI 6 x Z573M Nixie tubes
 //#define CLOCK_44  //V2  ESP32, UNFI 6 x Z573M Nixie tubes (átkötés)
 //#define CLOCK_45  //V3  ESP32, UNFI 6 x Z573M Nixie tubes
-//#define CLOCK_46  //V1  ESP32, UNFI 6 x IV-9 Numitron clock
+#define CLOCK_46  //V1  ESP32, UNFI 6 x IV-9 Numitron clock
 //#define CLOCK_47  //V3  ESP32, UNFI 10-LT-50G VFD tubes clock
 //#define CLOCK_48  //WROOM ESP32, UNFI  SN75518 6xIV-17 clock
 //#define CLOCK_49  //WROOM ESP32, UNFI  SN75518 6xIV-11 clock
@@ -57,7 +57,7 @@
 //#define CLOCK_56   //WROOM ESP32, UNFI 2xHV5122 6xZ573 clock   /flat panel/
 //#define CLOCK_70   //1 tube esp8266 Nixie Clock by UNFI 
 //#define CLOCK_71   //2x VQC10 clock by UNFI 
-#define CLOCK_80   //word clock, english version
+//#define CLOCK_80   //word clock, english version
 //#define CLOCK_81   //word clock, german version
 //#define CLOCK_82   //word clock, hungarian version
 //#define CLOCK_99   //Dummy clock, sensor box with MQTT connector
@@ -943,9 +943,14 @@
   #define ALARMSPEAKER_PIN 12   //Alarm buzzer pin                                            
   //#define ALARMBUTTON_PIN 36   //Alarm switch off button pin
   #define ALARM_ON HIGH
-  //#define LIGHT_SENSOR_PIN -1
-  #define RADAR_PIN 15
-  #define RADAR_TIMEOUT  5 //min
+  #define LIGHT_SENSOR_PIN 35
+  #define MAXIMUM_LUX 100
+  #define LUX_CALC_SCALAR   12518931 * 1.2   //Calibrate here 
+  //#define RADAR_PIN 15
+  //#define RADAR_TIMEOUT  5 //min
+  #define USE_RTC
+  #define PIN_SDA 21
+  #define PIN_SCL 22
   #define AP_NAME "UNFICLOCK32"
   #define AP_PASSWORD ""
   #define WEBNAME "Z566M Nixie Clock"
@@ -953,6 +958,7 @@
   //#define DEFAULT_PSW ""
   //#define USE_WIFIMANAGER
   //#define DISABLE_NIGHT_ANIMATION   
+  #define DISPLAYTEMP_ONLY_2DIGITS
 #endif  
 
 #ifdef CLOCK_36   //ESP32, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
@@ -1180,6 +1186,7 @@
 
 #ifdef CLOCK_46   //ESP32, UNFI board, 6 x IV-9 Numitron tubes
   #define DEBUG 
+  #define ANIMSPEED 70
   #define FW "fw46"  //firmware name
   #define MAXBRIGHTNESS 100    
   #define USE_NEOPIXEL 
@@ -1208,9 +1215,9 @@
   //#define TEMP_CHARCODE -1   //disable char => shift display right with 1 digit
   //#define GRAD_CHARCODE -1   //disable char => shift display right with 1 digit
   #define ALARMSPEAKER_PIN 2   //Alarm buzzer pin                                            
-  #define ALARMBUTTON_PIN 34    //Alarm switch off button pin 
+  //#define ALARMBUTTON_PIN 34    //Alarm switch off button pin 
   #define ALARM_ON HIGH
-  #define AP_NAME "UNFICLOCK32"
+  #define AP_NAME "NUMITRON6_CLOCK"
   #define AP_PASSWORD ""
   #define WEBNAME "ESP32 Numitron-Clock"
   //#define DEFAULT_SSID ""

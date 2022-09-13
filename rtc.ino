@@ -18,6 +18,9 @@ RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
   #define PIN_SET_BUTTON -1    
 #endif
 
+boolean pushedFldButtonValue = LOW;   //wich state means pushed button
+boolean pushedSetButtonValue = LOW;   //wich state means pushed button
+
 //------- I2C bus definition   Any pins are usable  Please, SET in clocks.h --------
 //#define PIN_SDA 4           //D2   original general setup for 8266
 //#define PIN_SCL 5           //D1
@@ -58,10 +61,14 @@ void setupRTC() {
   #if PIN_FLD_BUTTON>=0  
     pinMode(PIN_FLD_BUTTON,INPUT_PULLUP);    
     regPin(PIN_FLD_BUTTON,"PIN_FLD_BUTTON"); 
+    if (digitalRead(PIN_FLD_BUTTON) == LOW)  //inverted button?
+      pushedFldButtonValue = HIGH;
   #endif    
   #if PIN_SET_BUTTON>=0  
     pinMode(PIN_SET_BUTTON,INPUT_PULLUP);    
     regPin(PIN_SET_BUTTON,"PIN_SET_BUTTON"); 
+    if (digitalRead(PIN_SET_BUTTON) == LOW)  //inverted button?
+      pushedSetButtonValue = HIGH;
   #endif    
   
   if (RTCexist) {
@@ -212,6 +219,8 @@ byte sw;
   lastRun = millis(); 
 
   sw = digitalRead(PIN_FLD_BUTTON);
+  if (pushedFldButtonValue == HIGH) sw = !sw;   //inverted button logic
+  
   switch (butState) {
     case IS_OPEN:   
       if(sw == LOW) butState = IS_PUSHING;  
@@ -265,6 +274,8 @@ byte sw;
   lastRun = millis(); 
 
   sw = digitalRead(PIN_SET_BUTTON);
+  if (pushedSetButtonValue == HIGH) sw = !sw;   //inverted button logic  
+  
   switch (butState) {
     case IS_OPEN:   
       if(sw == LOW) butState = IS_PUSHING;  

@@ -718,8 +718,8 @@ void startWifiMode() {
     DPRINT('.');
     //playTubes();
     //Fdelay(3000);
-    delay(500);
-    if (counter++>100) {
+    delay(1000);
+    if (counter++>10) {
       wifiManager();
       return;
     }
@@ -2055,6 +2055,31 @@ inline void incMod10(byte &x) {
 };
 
 
+#ifdef DISPLAYTEMP_ONLY_2DIGITS
+void displayTemp(byte ptr) {   //special version, 2 digits only
+  float t = temperature[ptr];
+  if (ptr==0) t += prm.corrT0;
+  if (ptr==1) t += prm.corrT1;
+  if (prm.tempCF) {
+    t = round1((temperature[ptr] * 9/5)+32);
+  }
+  int digPtr = 3;   //tube number: first digit of minutes (hours:5,4  minutes:3,2   seconds: 1,0 )
+  for (int i = 0; i < maxDigits; i++) {   //clear display
+    digitDP[i] = false;
+    newDigit[i] = 10;
+  }
+
+  t = abs(t);
+  newDigit[digPtr] = t / 10;
+  if (newDigit[digPtr] == 0) newDigit[digPtr] = 10; //BLANK, if zero
+  newDigit[--digPtr] = int(t) % 10;
+
+  if (prm.animMode == 0)  memcpy(oldDigit, newDigit, sizeof(oldDigit)); //don't do animation
+  colonBlinkState = false;
+  decimalpointON = false;
+}
+
+#else
 void displayTemp(byte ptr) {
   float t = temperature[ptr];
   if (ptr==0) t += prm.corrT0;
@@ -2091,6 +2116,7 @@ void displayTemp(byte ptr) {
   colonBlinkState = true;
   decimalpointON = true;
 }
+#endif
 
 void displayHumid(byte ptr) {
   int digPtr = maxDigits-1;
@@ -2270,7 +2296,9 @@ void changeDigit() {
   #if defined(WORDCLOCK)
     anim = 0;   
   #endif
+  
   if (anim == 6) anim = 1 + rand() % 5;
+  else if (anim == 7) anim = 1 + rand() % 4;
 
   if (anim != 5) {
     for (int i = 0; i < maxDigits; i++)
