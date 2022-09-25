@@ -322,9 +322,10 @@ struct {
   char mqttBrokerPsw[20] = "mqtt";
   int mqttBrokerRefresh = 10;  //sec
   boolean mqttEnable = false;
-  char firmwareServer[80];
+  char firmwareServer[79];
 //Tube settings  ______________________________________________________________________________________
-  int utc_offset = 1;
+  byte tempRepeatMin = 1;             //temperature and humidity display repaeat (min)
+  int utc_offset = 1;              //time zone offset
   bool enableDST = true;           // Flag to enable DST (summer time...)
   bool set12_24 = true;            // Flag indicating 12 vs 24 hour time (false = 12, true = 24);
   bool showZero = true;            // Flag to indicate whether to show zero in the hour ten's place
@@ -1280,7 +1281,12 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
     }     
     else if (key == "dateRepeatMin") {
       prm.dateRepeatMin = value.toInt();
+      if (prm.dateRepeatMin>10) prm.dateRepeatMin = 10;
     } 
+    else if (key == "tempRepeatMin") {
+      prm.tempRepeatMin = value.toInt();
+      if (prm.tempRepeatMin>10) prm.tempRepeatMin = 10;
+    }     
     else if (key == "enableDoubleBlink")  {
       prm.enableDoubleBlink = (value == "true");
     }
@@ -1449,6 +1455,7 @@ if (useTemp > 1)
   #endif
   doc["dateMode"] = prm.dateMode; 
   doc["dateRepeatMin"] = prm.dateRepeatMin;   
+  doc["tempRepeatMin"] = prm.tempRepeatMin;  
   doc["tempCF"] = prm.tempCF;   
   doc["enableTimeDisplay"] = prm.enableTimeDisplay; 
   doc["enableDoubleBlink"] = prm.enableDoubleBlink;
@@ -1787,7 +1794,14 @@ void timeProgram() {
     showTemp1 = (useTemp > 1) && (second() >= prm.tempStart + (prm.tempEnd - prm.tempStart) / 2) && (second() < prm.tempEnd);
     showHumid0 = (useHumid > 0) && (second() >= prm.humidStart) && (second() < prm.humidEnd);
     showHumid1 = (useHumid >1) && (second() >= prm.humidStart + (prm.humidEnd-prm.humidStart)/2) && (second() < prm.humidEnd);
-    
+    if (prm.tempRepeatMin>1) {
+      if ((prm.tempRepeatMin==0) || (prm.tempRepeatMin>1) && ((minute() % prm.tempRepeatMin) != 0)) {
+        showTemp0 = false;
+        showTemp1 = false;
+        showHumid0 = false;
+        showHumid1 = false;
+      }
+    }
     if (maxDigits >= 8)      displayTime8();
     else if (maxDigits == 6) displayTime6();
     else                     displayTime4();
@@ -1893,6 +1907,7 @@ void factoryReset() {
   prm.humidStart = HUMID_START;                //Humidity% display start..end
   prm.humidEnd = HUMID_END;
   prm.dateRepeatMin = DATE_REPEAT_MIN;         //show date only every xxx minute. If zero, datum is never displayed!  
+  prm.tempRepeatMin = 1;
   #ifdef DOUBLE_BLINK
     prm.enableDoubleBlink = true;              //both separator points are blinking (6 or 8 tubes VFD clock)
   #else

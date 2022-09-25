@@ -41,7 +41,8 @@ var controlInfos = {
 	"tempEnd": "Temperature display end",  
 	"humidStart": "Humidity display time slice start",
 	"humidEnd": "Humidity display end",
-	"dateRepeatMin": "Date is shown in every xx minutes. 0 = Disable date display",            
+	"dateRepeatMin": "Date is shown in every xx minutes. 0 = Disable date display",     
+	"tempRepeatMin": "Temperature/humidity is shown in every xx minutes. 0 = Disable temp/humid display",  	
 	"enableDoubleBlink": "Enable both blinking dots",             
 	"enableAutoDim": "Enable auto brightness control (if sensor is installed)",  
 	"enableRadar": "Enable Radar/Pir tube switch (if sensor is installed)",   
@@ -120,11 +121,11 @@ var configuration = {
 	"tempEnd": 40,  
 	"humidStart": 40,                 
 	"humidEnd": 45,
-	"dateRepeatMin": 3,            
+	"dateRepeatMin": 3, 
+	"tempRepeatMin": 1,            	
 	"enableDoubleBlink": true,             
 	"enableAutoDim": false,  
-   
-
+ 
     //RGB settings	
     "rgbDir" : true,
     "rgbEffect": 1,
@@ -403,7 +404,7 @@ function Init(){
 				index == 'timeStart' || index == 'timeEnd' ||
 				index == 'tempStart' || index == 'tempEnd' ||
 				index == 'humidStart' || index == 'humidEnd' ||
-				index == 'mqttBrokerRefresh' ||
+				index == 'mqttBrokerRefresh' || index == 'tempRepeatMin' ||
 				index == 'wifiSsid' || index == 'wifiPsw' || 
 				index == 'ApSsid' || index == 'ApPsw' || 
 				index == 'mqttBrokerAddr' || index == 'NtpServer' ||
