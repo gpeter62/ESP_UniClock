@@ -1794,13 +1794,11 @@ void timeProgram() {
     showTemp1 = (useTemp > 1) && (second() >= prm.tempStart + (prm.tempEnd - prm.tempStart) / 2) && (second() < prm.tempEnd);
     showHumid0 = (useHumid > 0) && (second() >= prm.humidStart) && (second() < prm.humidEnd);
     showHumid1 = (useHumid >1) && (second() >= prm.humidStart + (prm.humidEnd-prm.humidStart)/2) && (second() < prm.humidEnd);
-    if (prm.tempRepeatMin>1) {
-      if ((prm.tempRepeatMin==0) || (prm.tempRepeatMin>1) && ((minute() % prm.tempRepeatMin) != 0)) {
+    if ((prm.tempRepeatMin==0) || (prm.tempRepeatMin>1) && ((minute() % prm.tempRepeatMin) != 0)) {
         showTemp0 = false;
         showTemp1 = false;
         showHumid0 = false;
         showHumid1 = false;
-      }
     }
     if (maxDigits >= 8)      displayTime8();
     else if (maxDigits == 6) displayTime6();
