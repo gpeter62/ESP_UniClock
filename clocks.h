@@ -43,7 +43,7 @@
 //#define CLOCK_43  //V1  ESP32, UNFI 6 x Z573M Nixie tubes
 //#define CLOCK_44  //V2  ESP32, UNFI 6 x Z573M Nixie tubes (átkötés)
 //#define CLOCK_45  //V3  ESP32, UNFI 6 x Z573M Nixie tubes
-#define CLOCK_46  //V1  ESP32, UNFI 6 x IV-9 Numitron clock
+//#define CLOCK_46  //V1  ESP32, UNFI 6 x IV-9 Numitron clock
 //#define CLOCK_47  //V3  ESP32, UNFI 10-LT-50G VFD tubes clock
 //#define CLOCK_48  //WROOM ESP32, UNFI  SN75518 6xIV-17 clock
 //#define CLOCK_49  //WROOM ESP32, UNFI  SN75518 6xIV-11 clock
@@ -57,7 +57,7 @@
 //#define CLOCK_56   //WROOM ESP32, UNFI 2xHV5122 6xZ573 clock   /flat panel/
 //#define CLOCK_70   //1 tube esp8266 Nixie Clock by UNFI 
 //#define CLOCK_71   //2x VQC10 clock by UNFI 
-//#define CLOCK_80   //word clock, english version
+#define CLOCK_80   //word clock, english version
 //#define CLOCK_81   //word clock, german version
 //#define CLOCK_82   //word clock, hungarian version
 //#define CLOCK_99   //Dummy clock, sensor box with MQTT connector
@@ -1821,6 +1821,7 @@
 
 #ifdef CLOCK_80   //word clock, english version
   #define DEBUG 
+  //#define SIMULATE_TEMPERATURE_SENSOR //for test only!!!
   #define NEOPIXEL_PIN 4
   #define PIN_FLD_BUTTON   27     
   #define PIN_SET_BUTTON   14
@@ -1838,7 +1839,7 @@
   #define USE_SHT21             //I2C Temperature + humidity  
   #define FW "fw80"           //firmware name
   #define START_CORNER LEFTUP    //RIGHTUP, LEFTUP, RIGHTDOWN, LEFTDOWN  : starting corner of led stripe
-  #define MAXBRIGHTNESS 150   //maximum led brightness, 100..255
+  #define MAXBRIGHTNESS 255   //maximum led brightness, 100..255
   #define MAXIMUM_LUX 40
   #define WORDCLOCK
   #define AP_NAME "WORD_CLOCK"
@@ -1925,7 +1926,7 @@
   #define USE_SHT21             //I2C Temperature + humidity  
   #define FW "fw81"  //firmware name
   #define START_CORNER RIGHTUP    //RIGHTUP, LEFTUP, RIGHTDOWN, LEFTDOWN  : starting corner of led stripe
-  #define MAXBRIGHTNESS 150   //led maximum brightness 100...255
+  #define MAXBRIGHTNESS 255   //led maximum brightness 100...255
   #define MAXIMUM_LUX 40
   #define WORDCLOCK
   #define AP_NAME "WORD_CLOCK"
@@ -2013,7 +2014,7 @@
   #define USE_SHT21             //I2C Temperature + humidity  
   #define FW "fw82"  //firmware name
   #define START_CORNER RIGHTUP    //RIGHTUP, LEFTUP, RIGHTDOWN, LEFTDOWN  : starting corner of led stripe  
-  #define MAXBRIGHTNESS 150   //led max brightness 100...255
+  #define MAXBRIGHTNESS 255   //led max brightness 100...255
   #define MAXIMUM_LUX 40
   #define WORDCLOCK
   #define AP_NAME "WORD_CLOCK"

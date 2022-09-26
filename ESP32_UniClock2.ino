@@ -1362,8 +1362,10 @@ void handleSendConfig(AsyncWebServerRequest *request) {
   sprintf(buf, "%02d:%02d", hour(), minute());
   doc["currentTime"] = buf;
 
-  //useTemp = 2;  temperature[0] = 20; temperature[1] = 22;  //test only
-  //useHumid = 2; humid[0] = 41; humid[1] = 42;
+  #ifdef SIMULATE_TEMPERATURE_SENSOR   //for test only
+    useTemp = 2;  temperature[0] = 20; temperature[1] = 22;  //test only
+    useHumid = 2; humid[0] = 41; humid[1] = 42;
+  #endif
   
   if (useTemp > 0) {
     doc["temperature"] = round1(temperature[0] + prm.corrT0);  
