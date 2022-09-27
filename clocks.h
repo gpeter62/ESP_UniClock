@@ -35,7 +35,7 @@
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
 //#define CLOCK_33   //TOM025 ESP32, Pálfi S. board, 6 x Z573M Nixie tubes
 //#define CLOCK_34   //Mule V2 ESP32, board, 6 x SA40 LED Display
-//#define CLOCK_35   //ESP32, 6x Z566M and 3x74595 6x74141 (NON-MULTIPLEX)
+#define CLOCK_35   //ESP32, 6x Z566M and 3x74595 6x74141 (NON-MULTIPLEX)
 //#define CLOCK_36   //ESP32, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
 //#define CLOCK_40  //V1  ESP32, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_41  //V2  ESP32, UNFI 6 x IV-11 VFD tubes clock (átkötés)
@@ -57,7 +57,7 @@
 //#define CLOCK_56   //WROOM ESP32, UNFI 2xHV5122 6xZ573 clock   /flat panel/
 //#define CLOCK_70   //1 tube esp8266 Nixie Clock by UNFI 
 //#define CLOCK_71   //2x VQC10 clock by UNFI 
-#define CLOCK_80   //word clock, english version
+//#define CLOCK_80   //word clock, english version
 //#define CLOCK_81   //word clock, german version
 //#define CLOCK_82   //word clock, hungarian version
 //#define CLOCK_99   //Dummy clock, sensor box with MQTT connector
@@ -927,6 +927,7 @@
 
 #ifdef CLOCK_35   //ESP32, 6X Z566M and 3x 74595 6x74141  driver  (NON-MULTIPLEX)
   #define DEBUG
+  //#define SIMULATE_TEMPERATURE_SENSOR
   #define FW "fw35"  //firmware name
   #define MAXBRIGHTNESS 100
   #define USE_DALLAS_TEMP
@@ -1093,6 +1094,7 @@
 
 #ifdef CLOCK_43   //V1  ESP32, UNFI board, 6 x Z573M Nixie tubes
   #define DEBUG 
+  //#define SIMULATE_TEMPERATURE_SENSOR
   #define FW "fw43"  //firmware name
   #define MAXBRIGHTNESS 100    
   #define USE_NEOPIXEL 

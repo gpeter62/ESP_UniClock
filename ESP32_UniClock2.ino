@@ -322,9 +322,9 @@ struct {
   char mqttBrokerPsw[20] = "mqtt";
   int mqttBrokerRefresh = 10;  //sec
   boolean mqttEnable = false;
-  char firmwareServer[79];
+  char firmwareServer[78];
 //Tube settings  ______________________________________________________________________________________
-  byte tempRepeatMin = 1;             //temperature and humidity display repaeat (min)
+  int tempRepeatMin = 1;             //temperature and humidity display repaeat (min)
   int utc_offset = 1;              //time zone offset
   bool enableDST = true;           // Flag to enable DST (summer time...)
   bool set12_24 = true;            // Flag indicating 12 vs 24 hour time (false = 12, true = 24);
@@ -1796,7 +1796,7 @@ void timeProgram() {
     showTemp1 = (useTemp > 1) && (second() >= prm.tempStart + (prm.tempEnd - prm.tempStart) / 2) && (second() < prm.tempEnd);
     showHumid0 = (useHumid > 0) && (second() >= prm.humidStart) && (second() < prm.humidEnd);
     showHumid1 = (useHumid >1) && (second() >= prm.humidStart + (prm.humidEnd-prm.humidStart)/2) && (second() < prm.humidEnd);
-    if ((prm.tempRepeatMin==0) || (prm.tempRepeatMin>1) && ((minute() % prm.tempRepeatMin) != 0)) {
+    if ((prm.tempRepeatMin==0) || ((minute() % prm.tempRepeatMin) != 0)) {
         showTemp0 = false;
         showTemp1 = false;
         showHumid0 = false;
