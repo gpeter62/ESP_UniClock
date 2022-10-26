@@ -127,6 +127,7 @@
   //#define DEFAULT_SSID ""       //factoryReset default value for WiFi
   //#define DEFAULT_PSW ""        //factoryReset default value  for WiFi password
 */
+//#define USE_MDNS
 #define TIMESERVER_REFRESH 7200000     //2h, Refresh time in millisec   86400000 = 24h
 unsigned long timeserverErrors = 0;        //timeserver refresh errors
 
@@ -155,10 +156,13 @@ String driverSetupStr;
   #include <ESP8266WiFi.h>
   #include <ESP8266HTTPClient.h>
   #include <WiFiClient.h>
-  #include <ESP8266httpUpdate.h>
-  #include <ESP8266mDNS.h>
   #include "ESPAsyncTCP.h"
   #include "FS.h"
+  #include <ESP8266httpUpdate.h>
+  #ifdef USE_MDNS
+    #include <ESP8266mDNS.h>
+  #endif  
+
   
   const char ESPpinout[] = {"OOOOOO      OOOOOI"};   //GPIO 0..5, 12..16, A0)  usable pins
 
@@ -177,12 +181,15 @@ String driverSetupStr;
   #include <WiFiClient.h>
   #include <HTTPClient.h>
   #include <ESP32httpUpdate.h>
-  #include <ESPmDNS.h>
+
   #include "AsyncTCP.h"
   #include "SPIFFS.h"
   #include "FS.h"  
   #include "soc/soc.h"
   #include "soc/rtc_cntl_reg.h"
+  #ifdef USE_MDNS
+    #include <ESPmDNS.h>
+  #endif
   hw_timer_t * ESP32timer = NULL;
   portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
   #define PRESCALER 15   //multiplex timer prescaler, about 80Hz for 6 tubes
@@ -247,6 +254,14 @@ volatile unsigned long lastDisable = 0;
 volatile boolean EEPROMsaving = false; //saving in progress - stop display refresh
 
 #define MAGIC_VALUE 304   //EEPROM version
+
+
+//#define THERMOMETER_CLOCK     //it means, first digit is +- sign, last digit is C/F, 4 digit is for numbers
+#ifdef THERMOMETER_CLOCK    //it means 6 tubes:  first digit is +- sign, last digit is C/F, and only 4 digit are for numbers
+  boolean thermometerClock = true;
+#else
+  boolean thermometerClock = false;
+#endif
 
 // 8266 internal pin registers
 // https://github.com/esp8266/esp8266-wiki/wiki/gpio-registers
@@ -776,20 +791,22 @@ boolean updateTimefromTimeserver() {  //true, if successful
 #ifndef MDNSNAME
     #define MDNSNAME "uniclock"
 #endif
+
 void startMDNS() {
   static boolean mdnsStarted = false;
 
   if (mdnsStarted) return;   //running and not changed
-  
-  if (!MDNS.begin(MDNSNAME)) {   //mdns_free() switch off
-    DPRINTLN(F("Error setting up MDNS responder!"));
-    mdnsStarted = false;
-  }
-  else {
-    DPRINT(F("Started mDns service:")); DPRINTLN(MDNSNAME);
-    MDNS.addService("http", "tcp", 80);  
-    mdnsStarted = true;
-  }
+  #ifdef USE_MDNS
+    if (!MDNS.begin(MDNSNAME)) {   //mdns_free() switch off
+      DPRINTLN(F("Error setting up MDNS responder!"));
+      mdnsStarted = false;
+    }
+    else {
+      DPRINT(F("Started mDns service:")); DPRINTLN(MDNSNAME);
+      MDNS.addService("http", "tcp", 80);  
+      mdnsStarted = true;
+    }
+  #endif  
 }
 
 void startStandaloneMode() {
@@ -2181,17 +2198,20 @@ void displayDate()  {
   };  
   
   int t = 0;
+  if (thermometerClock)  t = 1;
   for (int i=0;i<3;i++) {
     if (p[m][i] == 2) {
-      if (maxDigits>4) {
-        newDigit[t++] = year() % 10;
-        newDigit[t++] = (year() % 100) / 10;
-      }
-      if (maxDigits>6) {
-        newDigit[t++] = (year() % 1000) / 100;
-        newDigit[t++] = year() / 1000;
-      }      
-    }
+      if (!thermometerClock) {
+        if (maxDigits>4) {
+          newDigit[t++] = year() % 10;
+          newDigit[t++] = (year() % 100) / 10;
+        }
+        if (maxDigits>6) {
+          newDigit[t++] = (year() % 1000) / 100;
+          newDigit[t++] = year() / 1000;
+        }      
+      }  //!thermometerClock
+    }  
     if (p[m][i] == 1) {
       newDigit[t++] = month() % 10;
       newDigit[t++] = month() / 10;
@@ -2206,8 +2226,15 @@ void displayDate()  {
     digitDP[6] = true;
   }
   else {
-    digitDP[2] = true;
-    digitDP[4] = true;
+    if (thermometerClock) {
+      digitDP[3] = true;
+      newDigit[0] = 10;
+      newDigit[5] = 10;
+    }
+    else {
+      digitDP[2] = true;
+      digitDP[4] = true;
+    }
   }
   colonBlinkState = true;
   if (prm.animMode == 1)  memcpy(oldDigit, newDigit, sizeof(oldDigit)); //don't do animation
@@ -2245,19 +2272,31 @@ void displayTime6() {
   else if (showDate && prm.enableTimeDisplay)  displayDate();
   else if (prm.enableTimeDisplay) {
     showClock = true;
-    newDigit[5] = hour12_24 / 10;
-    if ((!prm.showZero)  && (newDigit[5] == 0)) newDigit[5] = 10;
-    newDigit[4] = hour12_24 % 10;
-    newDigit[3] = minute() / 10;
-    newDigit[2] = minute() % 10;
-    if (prm.enableBlink && (second() % 2 == 0)){
-      digitDP[2] = false;
-      if (prm.enableDoubleBlink) {
-        digitDP[4] = false;
-      }
+    if (thermometerClock) {
+      newDigit[4] = hour12_24 / 10;
+      if ((!prm.showZero)  && (newDigit[4] == 0)) newDigit[4] = 10;
+      newDigit[3] = hour12_24 % 10;
+      newDigit[2] = minute() / 10;
+      newDigit[1] = minute() % 10;
+      newDigit[0] = 10;
+      newDigit[5] = 10;
+      if (prm.enableBlink && (second() % 2 == 0)) digitDP[3] = false;
     }
-    newDigit[1] = second() / 10;
-    newDigit[0] = second() % 10;
+    else {  //normal clock
+      newDigit[5] = hour12_24 / 10;
+      if ((!prm.showZero)  && (newDigit[5] == 0)) newDigit[5] = 10;
+      newDigit[4] = hour12_24 % 10;
+      newDigit[3] = minute() / 10;
+      newDigit[2] = minute() % 10;
+      if (prm.enableBlink && (second() % 2 == 0)){
+        digitDP[2] = false;
+        if (prm.enableDoubleBlink) {
+          digitDP[4] = false;
+        }
+      }
+      newDigit[1] = second() / 10;
+      newDigit[0] = second() % 10;
+    }
   }
 }
 
@@ -2781,7 +2820,18 @@ static boolean oldMode = prm.wifiMode;
     }  
 }
 
+void checkPrm() {
+  static byte oldPrm[sizeof(prm)];
+  int tmp = memcmp(oldPrm,&prm,sizeof(prm));
+  if (tmp!=0){
+    DPRINT("Prm mismatch!"); DPRINTLN(tmp);
+    memcpy(oldPrm,&prm,sizeof(prm));
+  }
+}
+
+
 void loop(void) {
+  //checkPrm();
   writeDisplay2();
   if (WiFi.status() != WL_CONNECTED) 
     dnsServer.processNextRequest();

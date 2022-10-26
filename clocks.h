@@ -21,6 +21,7 @@
 //#define CLOCK_13   //8266 GP PCB v1 clock with 4x IV-16 Numitron tubes + GPS timesync (white box)
 //#define CLOCK_14  //8266 6X LD8035 VFD-clock
 //#define CLOCK_15  //8266 6X IV-6 VFD-clock RGB
+//#define CLOCK_15a  //8266 6X IV-6 VFD-clock RGB
 //#define CLOCK_16  //8266 4X IV-6, 1X LD8035
 //#define CLOCK_17  //8266 + PT6311 4X IV-22, russian clock
 //#define CLOCK_18  //8266 IV-18 VFD-clock RGB
@@ -29,13 +30,14 @@
 //#define CLOCK_22  //8266 NODEMCU, P.S. PCB 4xIN14 thermometer / humidity
 //#define CLOCK_23    ////ESP32 D1 mini, P.S. PCB 3xIN14 1xIN-19A thermometer / humidity
 //#define CLOCK_23A   //ESP32 WROOM, U.Z. PCB 4xZ566M 1xIN-19A thermometer / humidity
+#define CLOCK_23B   //ESP32 WROOM U.Z. PCB Z571M+4xZ566M+IN-19A clock/thermometer/humidity
 //#define CLOCK_26  //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock, SHT21
 //#define CLOCK_30  //ESP32 prototype, UNFI PCB clock, 6 x IV-11 VFD tubes
 //#define CLOCK_31  //ESP32 prototype, UNFI PCB board, 6 x Z573M Nixie tubes
 //#define CLOCK_32  //ESP32 prototype, UNFI 6 x IV-11 VFD tubes clock, DHT22 sensor
 //#define CLOCK_33   //TOM025 ESP32, Pálfi S. board, 6 x Z573M Nixie tubes
 //#define CLOCK_34   //Mule V2 ESP32, board, 6 x SA40 LED Display
-#define CLOCK_35   //ESP32, 6x Z566M and 3x74595 6x74141 (NON-MULTIPLEX)
+//#define CLOCK_35   //ESP32, 6x Z566M and 3x74595 6x74141 (NON-MULTIPLEX)
 //#define CLOCK_36   //ESP32, 4x IN-1 tubes and  4x74141  driver  (NON-MULTIPLEX)
 //#define CLOCK_40  //V1  ESP32, UNFI 6 x IV-11 VFD tubes clock
 //#define CLOCK_41  //V2  ESP32, UNFI 6 x IV-11 VFD tubes clock (átkötés)
@@ -439,6 +441,37 @@
   //#define DISABLE_NIGHT_ANIMATION
 #endif
 
+#ifdef CLOCK_15a   //8266 6X IV-6 VFD-clock RGB
+  #define DEBUG 
+  #define FW "fw15A"  //firmware name
+  #define MAXBRIGHTNESS 100
+  //#define USE_NEOPIXEL 
+  //#define NEOPIXEL_PIN 3
+  #define PIN_FLD_BUTTON 16
+  #define PIN_SET_BUTTON 13
+  #define USE_RTC
+  #define PIN_SDA 2
+  #define PIN_SCL 0
+  byte tubePixels[] = {0,1,2,3,4,5};    //6 tubes, single leds  
+  #define USE_DALLAS_TEMP
+  #define TEMP_DALLAS_PIN 5    //Dallas temp sensor pin.  If not used, SET TO -1
+  #define MAX6921
+  byte segmentEnablePins[] =  {10,11,16,15,14,13,12,17};   //segment enable OUTbits of MAX6921 (a,b,c,d,e,f,g,DP)  (You MUST define always 8 Pins!!!)
+  byte digitEnablePins[] = {6,7,8,9,19,18};   //digit enable OUTbits of MAX6921 (1,2,3,4,5,6,7,8)  (You may define any number)
+  //MAX6921 pins
+  #define PIN_LE    12  // D3 Shift Register Latch Enable
+  #define PIN_CLK   14  // D4 Shift Register Clock
+  #define PIN_DATA  15  // D1 Shift Register Data
+  #define PIN_BL    4  // D8 Shift Register Blank (1=display off     0=display on)
+  //#define LIGHT_SENSOR_PIN A0  //Only ADC pins are usable!  
+  //#define MAXIMUM_LUX 100    //Lux level for maximum tube brightness
+  //#define LUX_CALC_SCALAR   12518931 * 1.2
+  #define AP_NAME "UNFICLOCK"
+  #define AP_PASSWORD ""
+  #define WEBNAME "IV-6 VFD Clock"
+  //#define DISABLE_NIGHT_ANIMATION
+#endif
+
 #ifdef CLOCK_16   //8266 4X IV-6, 1X LD8035
   #define DEBUG 
   #define FW "fw16"  //firmware name
@@ -708,6 +741,36 @@
   //#define DISABLE_NIGHT_ANIMATION
 #endif
 
+#ifdef CLOCK_23B   //ESP32 WROOM U.Z. PCB Z571M+4xZ566M+IN-19A clock/thermometer/humidity
+  #define DEBUG
+  #define FW "fw23B"  //firmware name
+  #define THERMOMETER_CLOCK
+  #define MAXBRIGHTNESS 100  
+  #define USE_DHT_TEMP
+  #define DHTTYPE DHT11
+  #define TEMP_DHT_PIN 19
+  #define MULTIPLEX74141_ESP32
+  byte digitEnablePins[] = {13,17,12,27,5,18};  //előjel(18(-fok10-fok1-tizedfok-századfok-C/%(13)
+  byte ABCDPins[4] =  {26,33,32,25};
+  #define COLON_PIN 14             // decimalPoint inside Nixie tube, set -1, if not used!
+  #define ENABLE_CLOCK_DISPLAY  false  //don't display date/time!!!
+  #define SHIFT_TUBES_LEFT_BY_1 //shift left by 1 tube the display, if a thermometer is used with spec tube
+  #define USE_SHT21                //I2C Temperature + humidity
+  #define PIN_SDA  21              // you can set the used SDA and SCL pins
+  #define PIN_SCL  22              // if it is not default value
+  #define TEMP_CHARCODE 4  
+  #define PERCENT_CHARCODE 7 
+  #define PLUS_CHARCODE 0
+  #define MINUS_CHARCODE 1 
+  #define DATE_REPEAT_MIN_1       //show date only every xxx minute. If zero, datum is never displayed
+  #define TEMP_START  40
+  #define TEMP_END    45
+  #define HUMID_START 45
+  #define HUMID_END   50
+  #define AP_NAME "Nixie-Ora-Homero"
+  #define AP_PASSWORD ""
+  #define WEBNAME "Nixie Óra-Hőmérő-Páramérő" 
+#endif
 
 #ifdef CLOCK_26   //ESP32 D1 mini, UNFI 6 x IV-11 VFD tubes clock, SHT21
   #define DEBUG 
@@ -927,7 +990,7 @@
 
 #ifdef CLOCK_35   //ESP32, 6X Z566M and 3x 74595 6x74141  driver  (NON-MULTIPLEX)
   #define DEBUG
-  //#define SIMULATE_TEMPERATURE_SENSOR
+  #define SIMULATE_TEMPERATURE_SENSOR
   #define FW "fw35"  //firmware name
   #define MAXBRIGHTNESS 100
   #define USE_DALLAS_TEMP

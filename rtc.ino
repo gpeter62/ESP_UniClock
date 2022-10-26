@@ -145,6 +145,9 @@ void showValue() {
     digit[1] = mvar[fld] / 10;
     digit[0] = mvar[fld] % 10;
   }
+  #if defined(MAX6921) || defined(MAX6921_ESP32)
+    //character set not available yet
+  #else
   if (!digitsOnly && (maxDigits>4)) {
     if (maxDigits>=8) digit[7] = m1[fld].name[0];
     if (maxDigits>=8) digit[6] = m1[fld].name[1];
@@ -153,6 +156,7 @@ void showValue() {
     digit[4] = m1[fld].name[3];
     
   }
+  #endif
 }
 
 //------------------------------------- RTC Clock functions --------------------------------------------------------------------
