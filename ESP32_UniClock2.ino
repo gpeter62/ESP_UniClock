@@ -126,6 +126,7 @@
   //#define WEBNAME "LED UniClock"  //Clock's name on the web page
   //#define DEFAULT_SSID ""       //factoryReset default value for WiFi
   //#define DEFAULT_PSW ""        //factoryReset default value  for WiFi password
+  //#define FACTORYRESET_PIN -1   //if defined, make rest, if button is pushed     
 */
 //#define USE_MDNS
 #define TIMESERVER_REFRESH 7200000     //2h, Refresh time in millisec   86400000 = 24h
@@ -410,7 +411,7 @@ boolean wifiConnectRunning = false;
 boolean editorRunning = false;
 
 #define MAX_PIN sizeof(ESPpinout)-1
-#define PIN_TXT_LEN 16
+#define PIN_TXT_LEN 30
 char pinTxt[MAX_PIN][PIN_TXT_LEN+1];
 
 void regPin(byte p,const char * txt) {  //register used pins
@@ -432,7 +433,7 @@ void regPin(byte p,const char * txt) {  //register used pins
     strncpy(pinTxt[p],"Error:MULTI DEF",PIN_TXT_LEN);
   }
   else 
-    strncpy(pinTxt[p],txt,16);
+    strncpy(pinTxt[p],txt,sizeof(pinTxt[p]));
 }
 
 void listPins() {
@@ -710,7 +711,6 @@ void startWifiMode() {
   //WiFi.mode(WIFI_OFF);
   delay(100);
   WiFi.mode(WIFI_STA);
-  WiFi.setAutoReconnect(true);
   delay(100);
   //Fdelay(1000);
   #if defined(ESP32)
@@ -811,7 +811,8 @@ void startMDNS() {
 
 void startStandaloneMode() {
   DPRINTLN("Starting Clock in Standalone Mode!");
-  DPRINT("Clock's AP SSID:"); DPRINTLN(prm.ApSsid);
+  DPRINT("Clock's AP SSID:"); DPRINT(prm.ApSsid);
+  DPRINT("   PSW:"); DPRINTLN(prm.ApPsw);
   DPRINTLN("IP: 192.168.4.1");
   IPAddress local_ip(192, 168, 4, 1);
   IPAddress gateway(192, 168, 4, 1);
@@ -1378,12 +1379,7 @@ void handleSendConfig(AsyncWebServerRequest *request) {
   doc["currentDate"] = buf;
   sprintf(buf, "%02d:%02d", hour(), minute());
   doc["currentTime"] = buf;
-
-  #ifdef SIMULATE_TEMPERATURE_SENSOR   //for test only
-    useTemp = 2;  temperature[0] = 20; temperature[1] = 22;  //test only
-    useHumid = 2; humid[0] = 41; humid[1] = 42;
-  #endif
-  
+  //DPRINT("useTemp:"); DPRINT(useTemp); DPRINT("useHumid:"); DPRINT(useHumid);
   if (useTemp > 0) {
     doc["temperature"] = round1(temperature[0] + prm.corrT0);  
   }
@@ -1533,7 +1529,7 @@ void handleSendCurrentInfos(AsyncWebServerRequest *request) {
   doc["currentDate"] = buf;
   sprintf(buf, "%02d:%02d", hour(), minute());
   doc["currentTime"] = buf;
-
+  //DPRINT("useTemp:"); DPRINT(useTemp); DPRINT("useHumid:"); DPRINT(useHumid);
   if (useTemp > 0) {
     doc["temperature1"] = temperature[0] + prm.corrT0;
     doc["temperature"] = temperature[0] + prm.corrT0;  //for compatibility with the old web page
@@ -1676,9 +1672,16 @@ void setup() {
   decimalpointON = false;   
   DPRINT("Number of digits:"); DPRINTLN(maxDigits); 
 
+  #ifdef FACTORYRESET_PIN
+  if (FACTORYRESET_PIN>=0) {
+      DPRINTLN("FactoryReset button is pushed!");
+      pinMode(FACTORYRESET_PIN,INPUT_PULLUP);  regPin(FACTORYRESET_PIN,"FACTORYRESET_PIN");
+      if (digitalRead(FACTORYRESET_PIN)==LOW) factoryReset();
+  }
+  #endif
   loadEEPROM();
   if (prm.magic != MAGIC_VALUE) factoryReset();
-
+  
   setupNeopixel();
   listPins();
   writeAlarmPin(ALARM_ON); writeAlarmPin(!ALARM_ON);
@@ -1794,7 +1797,12 @@ void timeProgram() {
   }
   getDHTemp();
   getI2Csensors();             //check all existing I2C sensors
-
+  
+  #ifdef SIMULATE_TEMPERATURE_SENSOR   //for test only
+    useTemp = 2;  temperature[0] = 20.4; temperature[1] = 22.8;  //test only
+    useHumid = 2; humid[0] = 41.2; humid[1] = 42.7;
+  #endif
+  
   if (now() != prevTime) { // Update time every second
     prevTime = now();
     evalShutoffTime();     // Check whether display should be turned off (Auto shutoff mode)
@@ -2096,6 +2104,9 @@ void displayTemp(byte ptr) {   //special version, 2 digits only
     t = round1((temperature[ptr] * 9/5)+32);
   }
   int digPtr = 3;   //tube number: first digit of minutes (hours:5,4  minutes:3,2   seconds: 1,0 )
+  #ifdef TEMP_START_POSITION
+    digPtr = TEMP_START_POSITION;  
+  #endif  
   for (int i = 0; i < maxDigits; i++) {   //clear display
     digitDP[i] = false;
     newDigit[i] = 10;
@@ -2120,6 +2131,9 @@ void displayTemp(byte ptr) {
     t = round1((temperature[ptr] * 9/5)+32);
   }
   int digPtr = maxDigits-1;
+  #ifdef TEMP_START_POSITION
+    digPtr = TEMP_START_POSITION;  
+  #endif
   for (int i = 0; i < maxDigits; i++) {
     digitDP[i] = false;
     newDigit[i] = 10;
@@ -2150,8 +2164,36 @@ void displayTemp(byte ptr) {
 }
 #endif
 
+#ifdef DISPLAYHUMID_ONLY_2DIGITS
+void displayHumid(byte ptr) {   //special version, 2 digits only
+  float h = humid[ptr];
+  if (ptr==0) h = round(h + prm.corrH0);
+  if (ptr==1) h = round(h + prm.corrH1);
+
+  int digPtr = 3;   //tube number: first digit of minutes (hours:5,4  minutes:3,2   seconds: 1,0 )
+  #ifdef HUMID_START_POSITION
+    digPtr = HUMID_START_POSITION;  
+  #endif  
+  for (int i = 0; i < maxDigits; i++) {   //clear display
+    digitDP[i] = false;
+    newDigit[i] = 10;
+  }
+
+  newDigit[digPtr] = h / 10;
+  if (newDigit[digPtr] == 0) newDigit[digPtr] = 10; //BLANK, if zero
+  newDigit[--digPtr] = int(h) % 10;
+
+  if (prm.animMode == 0)  memcpy(oldDigit, newDigit, sizeof(oldDigit)); //don't do animation
+  colonBlinkState = false;
+  decimalpointON = false;
+}
+
+#else
 void displayHumid(byte ptr) {
   int digPtr = maxDigits-1;
+  #ifdef HUMID_START_POSITION
+    digPtr = HUMID_START_POSITION;  
+  #endif
   for (int i = 0; i < maxDigits; i++) {
     digitDP[i] = false;
     newDigit[i] = 10;
@@ -2186,6 +2228,7 @@ void displayHumid(byte ptr) {
   colonBlinkState = true;
   decimalpointON = true;
 }
+#endif
 
 void displayDate()  {
   byte m = prm.dateMode;

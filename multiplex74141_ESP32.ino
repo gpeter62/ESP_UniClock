@@ -122,6 +122,7 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
       #if DP_PIN >=0
         if (LEFTDECIMAL) DPpos = min(maxDig-1,pos+1); else DPpos = pos;
         if (digitDP[DPpos]) digitalWrite(DP_PIN,HIGH); //switch ON decimal point, if needed
+		else digitalWrite(DP_PIN,LOW); 
       #endif
       #if COLON_PIN >= 0
         digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
