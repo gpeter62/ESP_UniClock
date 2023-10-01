@@ -128,7 +128,7 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
         digitalWrite(COLON_PIN,colonBlinkState);  // Blink colon pin
       #endif
       #if DECIMALPOINT_PIN >=0 
-        digitalWrite(DECIMALPOINT_PIN,decimalpointON); }
+        digitalWrite(DECIMALPOINT_PIN,decimalpointON); 
       #endif
   }
     
