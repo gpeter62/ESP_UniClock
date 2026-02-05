@@ -39,7 +39,7 @@
 	- [ESP8266 Tool](https://randomnerdtutorials.com/install-esp8266-filesystem-uploader-arduino-ide)
 	- [ESP32 Tool](https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide)
 
-		
+Important! Tested only with Arduino IDE 1.8.19 and 2.0.17 ESP32 board versions.
 --------------------------------------------------------------------------------------------------------
 # More info & support:
 ## Before uploading to the ESP board don't forget to unzip the libary files to the Arduino IDE's \libraries folder and RENAME the main folder to ESP32_UniClock2!
