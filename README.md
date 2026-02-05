@@ -12,6 +12,7 @@
                 - Tube backlight using WS2812 LEDs, with different full-color animations 
                 - Alarm function with buzzer and LED light
                 - SN74141 (mpx or latch), MAX6921, MAX7219, MM5450, HV5122, PT6355, SN75512 drivers
+				- WordClock with ESP32+WS2812 LEDs, Hungarian, German and English language version
                 - Single file setup via /clocks.h
  
 ## Schematics and PCB designs in /schematics :
