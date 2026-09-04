@@ -1,4 +1,33 @@
 #ifdef SN75518_ESP32
+//=============================================================================================
+// Driver for VFD (Vacuum Fluorescent Display) tubes driven by the Texas Instruments SN75518
+// serial-in / high-voltage parallel-out VFD grid/segment driver IC (32 outputs).
+//
+// Wiring / protocol:
+//   - DATA/CLK: plain serial shift-register bit-banging, MSB first (bit 31 down to bit 0),
+//     see writeDisplay(). LE (Latch Enable) is pulsed high-then-low once per digit after all
+//     32 bits are shifted, to atomically transfer the shifted-in bits to the SN75518's
+//     high-voltage outputs (glitch-free - outputs don't change mid-shift).
+//   - STROBE is the chip's output-enable/blank pin (LOW=display on, HIGH=off, per the pin
+//     comment below) and is toggled per-digit to blank the display outside its multiplex slot.
+//   - SN75518 outputs are numbered 1..32 (not 0-based) in its datasheet, hence the "-1" applied
+//     to segmentEnablePins[]/digitEnablePins[] everywhere they're turned into bitmasks (see
+//     generateBitTable()) - unlike the SN75512 driver, which uses 0-based bit positions.
+//   - Two glyph-table variants, selected in clocks.h per clock config:
+//       * #define SEGMENT8: classic 7-segment+DP tubes (e.g. IV-11/IV-12), reuses the same
+//         8-bit a..g+DP charDefinition[] layout as the SN75512/MAX6921 drivers.
+//       * default (no SEGMENT8): 16-segment+DP alphanumeric tubes (e.g. IV-17), with a full
+//         ASCII (space..DEL) 17-bit charDefinition[] table and ASCIImode glyph lookup via
+//         asciiConvert[] (maps the digit[]-buffer glyph codes 0-20 to a printable ASCII char).
+//   - Brightness/dimming is done differently from SN75512: instead of a fixed multiplex period
+//     with a duty-cycle counter, writeDisplay() runs the ESP32 hardware timer in a genuine
+//     variable-period ON/OFF PWM scheme - see the state/timerON/timerOFF logic below.
+//   - Platform: ESP32 only (uses the ESP32 hw_timer_t API - timerAlarmWrite/Enable - and
+//     portENTER_CRITICAL_ISR/DRAM_ATTR/IRAM_ATTR).
+//
+// Used by CLOCK_48 (WROOM ESP32, UNFI, 6x IV-17, 16-segment mode) and CLOCK_49 (WROOM ESP32,
+// UNFI, 6x IV-11, SEGMENT8/7-segment mode) in clocks.h.
+//=============================================================================================
 char tubeDriver[] = "SN75518_ESP32";
 //int maxDigits = 6;
 int wt = 5;   //Serial timing
@@ -9,15 +38,21 @@ int wt = 5;   //Serial timing
 #define PIN_STROBE  14  // D1 Shift Register Strobe (1=display off     0=display on)
 
 //#define SEGMENT8   //please set in clocks.h
-//#define TESTMODE   //for testing the segments of a new type VFD modul
+//#define TESTMODE   //for testing the segments of a new type VFD module - cycles through output
+                      //Q1..Q32 one at a time (see "count" below) so each physical segment/grid
+                      //wire can be identified by eye when commissioning a new/unknown VFD module.
 int count = 15;  //output# to test
 unsigned long lastTest = 0;
 
 #ifdef SEGMENT8
+  //7-segment+DP tubes (e.g. IV-11): reuse the digit[]-buffer glyph-code convention directly
+  //(no ASCII remapping), so ASCIImode stays false and dispChar==digit[pos] in writeDisplay().
   boolean ASCIImode = false;
   #define DP_CHAR 12
   byte charDefinition[] = {
 //------------------abcdefgDP----------------   definition of different characters
+//Each byte is a 7-segment+DP mask, MSB=a ... LSB=DP. generateBitTable() expands these into
+//32-bit shift-register bitmaps (charTable[]) via segmentEnablePins[] (defined in clocks.h).
                    B11111100,   //0: abcdef
                    B01100000,   //1: bc 
                    B11011010,   //2: abdeg
@@ -45,10 +80,17 @@ unsigned long lastTest = 0;
 
 #else
   //16 segment + DP  ---------------------------------------------------------------------------------------------
+  //16-segment alphanumeric tubes (e.g. IV-17): full ASCII glyph set is needed (letters, symbols),
+  //so instead of the 21-entry digit[]-buffer glyph codes we index this table by ASCII character
+  //(space=0x20 .. DEL=0x7F, 96 entries), via the asciiConvert[]+dispChar-=32 lookup below.
   boolean ASCIImode = true;
   #define DP_CHAR 14
+  //Each entry is a 17-bit mask, one bit per segment, in the order given by the "Dutsrpnmkhgfedcba"
+  //comment below (bit0=a ... bit15=u, bit16=D/decimal point) - note this is the OPPOSITE bit
+  //order from the SEGMENT8/charDefinition[] table above (there MSB=a); generateBitTable() below
+  //reverses it (segmentEnableBits[MAXSEGMENTS-j-1]) to compensate when building charTable[].
   uint32_t charDefinition[96] = {
-//  Dutsrpnmkhgfedcba   
+//  Dutsrpnmkhgfedcba
   0b00000000000000000, /* (space) */ 
   0b10000000000001100, /* ! */   
   0b00000001000000100, /* " */   //   100000001
@@ -153,6 +195,12 @@ unsigned long lastTest = 0;
 
 #define MAXCHARS sizeof(charDefinition)/sizeof(charDefinition[0])
 #define MAXSEGMENTS sizeof(segmentEnablePins)
+//Maps the digit[]-buffer glyph codes (0-9=digits,10=blank,11=minus,12=dp,13-20=A,P,C,deg,%,
+//lower-circle,I,F - see index comments on the SEGMENT8 charDefinition[] table above) to a
+//printable ASCII character, so that in 16-segment/ASCIImode the same digit[]-buffer convention
+//used by the rest of the firmware still works: writeDisplay() does
+//asciiConvert[digit[pos]] then "-32" to turn that into a 0-based index into the 96-entry
+//charDefinition[]/charTable[] (which starts at ASCII space=0x20).
 char asciiConvert[] = "0123456789 -.APC~% IF";
 int maxDigits =  sizeof(digitEnablePins);
 int dispChar;
@@ -162,7 +210,7 @@ uint32_t DRAM_ATTR charTable[MAXCHARS];              //generated pin table from 
 uint32_t DRAM_ATTR segmentEnableBits[MAXSEGMENTS];   //bitmaps, generated from EnablePins tables
 uint32_t DRAM_ATTR digitEnableBits[10];
 
-int DRAM_ATTR PWMrefresh=5500;   ////msec, Multiplex time period. Greater value => slower multiplex frequency
+int DRAM_ATTR PWMrefresh=5500;   //Multiplex time period, in ESP32 hardware-timer ticks (not milliseconds, despite the variable name). Greater value => slower multiplex frequency
 int DRAM_ATTR PWM_min = 500;
 int DRAM_ATTR PWM_max = 5000;
 //int DRAM_ATTR PWMtiming[11] = {0,500,800,1200,2000,2500,3000,3500,4000,4500,5000};
@@ -174,8 +222,14 @@ int DRAM_ATTR PWM_max = 5000;
 //One tick is 1us / 80 = 0.0125us = 6.25ns on 160MHz
 // 1 NOP is 1 tick
 
+//POSSIBLE BUG / dead code: this function is never actually called (only referenced from
+//commented-out lines in writeDisplay(), e.g. "//delayMS(1);"). Also, despite its name and the
+//"int d" parameter (presumably intended as a millisecond count), the parameter is unused and
+//the body always executes exactly 3 NOPs (a few nanoseconds), not d milliseconds - so even if
+//re-enabled it would not delay by the requested amount. Left as-is since it is not on any live
+//code path.
 void inline delayMS(int d) {
-  asm volatile ("nop"); 
+  asm volatile ("nop");
   asm volatile ("nop");
   asm volatile ("nop");
 }
@@ -190,6 +244,8 @@ void setup_pins() {
   #ifdef TESTMODE
     DPRINT("Testing output Q#:"); DPRINTLN(count);
   #endif
+  //Build a human-readable summary of the active pin mapping for display on the config web page
+  //(see driverSetupStr usage in ESP32_UniClock2.ino) - purely diagnostic, no functional effect.
   driverSetupStr = "SN75518 segmentEnablePins:";
   for (int j=0;j<sizeof(segmentEnablePins);j++) {
     driverSetupStr += String(segmentEnablePins[j]) + ",";
@@ -200,11 +256,18 @@ void setup_pins() {
   }
   driverSetupStr += String("<br>");
   
-  generateBitTable();
+  generateBitTable();  //must run before the timer/ISR starts - writeDisplay() reads charTable[]/digitEnableBits[]/segmentEnableBits[]/animationMaskBits[]
   digitsOnly = false;
   startTimer();
-}  
+}
 
+//Timer-interrupt multiplex refresh handler. Unlike the fixed-period SN75512 driver (which uses
+//a constant multiplex tick and a duty-cycle counter for brightness), this driver re-arms the
+//ESP32 hardware timer with a DIFFERENT period every call, alternating between an "ON" phase
+//(digit lit, duration = PWMtimeBrightness, proportional to brightness) and an "OFF" phase
+//(digit blanked, duration = PWMrefresh - PWMtimeBrightness) via the `state` toggle - i.e. true
+//variable-mark-space PWM dimming rather than a fixed-frequency multiplex with sub-cycle gating.
+//The digit position (pos) only advances at the start of each "ON" phase.
 void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
   static DRAM_ATTR int timer = PWMrefresh;
   static DRAM_ATTR uint32_t val;
@@ -215,61 +278,103 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
 
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
       //digitalWrite(PIN_STROBE,HIGH);    //OFF
-    return;
+    return;   //NOTE: unlike SN75512's ISR, no timerAlarmWrite()/timerAlarmEnable() re-arm is
+              //needed here - this driver's ESP32 hw timer is configured with autoreload=true
+              //(see the timerAlarmWrite(...,true) calls below), so it keeps firing at its last
+              //configured period on its own; simply returning is enough to skip a refresh cycle
+              //while an EEPROM write is in progress. (Whatever was last shifted out stays lit,
+              //since STROBE is left as-is - the blanking line above is commented out.)
   }
+  //Example of how to force specific glyphs onto specific tube positions for bench testing:
   //digit[5] = 15;   digit[4] = 16;     digit[3] = 17;     digit[2] = 18;      digit[1] = 19;       digit[0] = 20;
   portENTER_CRITICAL_ISR(&timerMux);
-  noInterrupts();
+  noInterrupts();   //belt-and-braces alongside portENTER_CRITICAL_ISR - protects the whole
+                    //shift+latch sequence below from being interleaved with other interrupts/
+                    //the other core while the SN75518's serial frame is being clocked out.
   intCounter++;
 
   brightness = displayON ? prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHTNESS) brightness = MAXBRIGHTNESS;  //only for safety
-  
+
+  //At full manual brightness (auto-brightness off), force state permanently ON so the OFF/blank
+  //phase below is skipped entirely - i.e. 100% duty cycle / no blanking gap, for maximum
+  //perceived brightness and refresh rate when the user has explicitly asked for max brightness.
   if ((!autoBrightness) && (brightness==MAXBRIGHTNESS)) state = true;
-  
-  if (state) {  //ON state
+
+  if (state) {  //ON state: light up tube #pos for PWMtimeBrightness ticks, then go to OFF state
     pos++;  if (pos>maxDigits-1)  {   //go to the tube#0
-      pos = 0; 
+      pos = 0;
+      //Brightness (the ON-phase duration) is only recalculated once per full multiplex cycle,
+      //at tube#0, so all tubes share the same brightness within one cycle (avoids visible
+      //brightness differences between tubes if the ambient light level changes mid-cycle).
       if (autoBrightness && displayON) {   //change brightness only on the tube#0
         PWMtimeBrightness = max(PWM_min,PWM_max*lx/MAXIMUM_LUX);
         }
       else
         PWMtimeBrightness = max(PWM_min,PWM_max*brightness/MAXBRIGHTNESS);
-    }  
+    }
     dispChar = digit[pos];
     if (ASCIImode) {
-      if (dispChar<sizeof(asciiConvert)) dispChar = asciiConvert[dispChar];       
-      dispChar -= 32;                  
+      //16-segment tables are indexed by ASCII code (space=0x20 based), not by the digit[]-buffer
+      //glyph code directly, so translate glyph-code -> ASCII char via asciiConvert[] first.
+      //FIXED: previously "dispChar -= 32" ran unconditionally, even when the bounds check just
+      //below skipped the asciiConvert[] lookup (dispChar >= sizeof(asciiConvert), or dispChar
+      //landing on the string's NUL terminator) - that produced a negative index into charTable[]
+      //below (out-of-bounds read). Now the subtraction only happens together with a successful
+      //lookup; anything unmapped falls back to charTable[0], the blank/space glyph.
+      if (dispChar<sizeof(asciiConvert)-1) {  //-1 excludes the string's NUL terminator (see asciiConvert[] above)
+        dispChar = asciiConvert[dispChar] - 32;
+      } else {
+        dispChar = 0;  //unmapped/out-of-range code -> blank glyph (charTable[0])
+      }
     }
+    //NOTE: as with the SN75512 driver, dispChar indexes charTable[] (MAXCHARS entries) with no
+    //explicit bounds check against MAXCHARS itself - relies on upstream code only ever writing
+    //valid glyph codes into digit[].
     val = (digitEnableBits[pos] | charTable[dispChar]);  //the full bitmap to send to MAX chip
     if (digitDP[pos]) val = val | charTable[DP_CHAR];    //Decimal Point
     #ifdef TESTMODE
+      //Override the normal glyph lookup: light exactly one output (Q<count>) at a time so each
+      //physical pin can be identified on the tube; "count-1" because SN75518 outputs are
+      //numbered 1-based (Q1..Q32), same convention as segmentEnablePins/digitEnablePins.
       val = digitEnableBits[pos] | ((uint32_t)1<<(count-1));
       animMask[pos] = 0;
       if ((millis()-lastTest)>5000) {
         lastTest=millis();
         count++; if (count>32) count = 0;
       }
-    #endif       
+    #endif
     timer = PWMtimeBrightness;
     #ifdef CLOCK_xx  //example only
+      //Template/example only - "CLOCK_xx" is never actually #defined by any real CLOCK_NN in
+      //clocks.h, so this block is permanently dead code as shipped. It documents the intended
+      //pattern for compensating individual tubes that appear dimmer than others (e.g. due to
+      //VFD wear or grid-wiring differences): give a specific tube position a longer ON time
+      //(here 2x/3x) than PWMtimeBrightness would otherwise give it. To use it for a real clock,
+      //replace CLOCK_xx with that clock's actual CLOCK_NN macro.
       if (pos==2) timer = 2*timer;  //Weak  tube#2 brightness compensation, some hacking
       if (pos==4) timer = 3*timer;  //Weak  tube#4 brightness compensation, some hacking
-    #endif 
-    timerON = timer;
+    #endif
+    timerON = timer;    //debug/telemetry only (see intCounter/timerON/timerOFF in ESP32_UniClock2.ino)
     timerOFF = PWMrefresh-PWMtimeBrightness;
   }
-  else {  //OFF state
+  else {  //OFF state: blank for the remainder of the PWMrefresh period
     timer = PWMrefresh-PWMtimeBrightness;
   }
-  
-  if (timer<500) timer = 500;  //safety only...
+
+  if (timer<500) timer = 500;  //safety only... avoids an excessively short/zero hw-timer alarm period (very high ISR rate) from a pathological brightness/PWM combination
 
   if ( (brightness == 0) || (!state) || (!radarON)) {  //OFF state, blank digit
     digitalWrite(PIN_STROBE,HIGH);    //OFF
   }
   else {  //ON state
     if (animMask[pos]>0) val &= animationMaskBits[animMask[pos]-1];  //animationMode 6, mask characters from up to down and back
+    //Shift out all 32 bits, MSB first (Q32 down to Q1). Timing note: unlike the SN75512 driver
+    //(which uses raw WRITE_PERI_REG()+NOP padding for a tightly-controlled bit-bang), this uses
+    //plain digitalWrite() with no explicit delay between DATA and CLK edges - the delayMS(1)
+    //calls that would add a small pad are commented out. The function-call overhead of
+    //digitalWrite() itself appears to provide enough setup/hold margin for the SN75518 at the
+    //ESP32's clock speed, but that margin is implicit rather than guaranteed by an explicit delay.
     for (int i=0; i<32; i++)  {
       if (val & uint32_t(1 << (31 - i)))
         {digitalWrite(PIN_DATA, HIGH);   //asm volatile ("nop");
@@ -277,42 +382,60 @@ void IRAM_ATTR writeDisplay(){  //void IRAM_ATTR  writeDisplay(){
       else
         {digitalWrite(PIN_DATA, LOW);    //asm volatile ("nop");
         }
-      
+
       digitalWrite(PIN_CLK,HIGH);  //asm volatile ("nop");  //delayMS(1);
       digitalWrite(PIN_CLK,LOW);   //asm volatile ("nop"); //delayMS(1);
-      } //end for      
- 
+      } //end for
+
+    //Latch: pulse LE high then low to transfer the just-shifted 32 bits into the SN75518's
+    //output latch (glitch-free update), then re-enable STROBE (LOW=on) to actually light the tube.
     digitalWrite(PIN_LE,HIGH );  asm volatile ("nop");
     digitalWrite(PIN_LE,LOW);
     digitalWrite(PIN_STROBE,LOW );   //ON
   }  //end else
-  
-  portEXIT_CRITICAL_ISR(&timerMux);   
-  state = !state;  
+
+  portEXIT_CRITICAL_ISR(&timerMux);
+  state = !state;   //flip ON/OFF phase for the next timer interrupt
   //ESP32timer = timerBegin(0, PRESCALER, true);  //set prescaler, true = edge generated signal
-  //timerAttachInterrupt(ESP32timer, &writeDisplay, true);   
-  timerAlarmWrite(ESP32timer, timer, true);   
+  //timerAttachInterrupt(ESP32timer, &writeDisplay, true);
+  //Re-arm the hw timer with the period (ON or OFF duration) just computed above - this is what
+  //gives this driver its variable-frequency PWM dimming (as opposed to SN75512's fixed period).
+  timerAlarmWrite(ESP32timer, timer, true);
   timerAlarmEnable(ESP32timer);
   interrupts();
 }
 
+//One-time (setup) precomputation, mirroring SN75512's generateBitTable() but for the SN75518's
+//1-based (Q1..Q32) output numbering (note the "-1" on every segmentEnablePins[i]/
+//digitEnablePins[i] use below) and its extra animationMaskBits[] table used by the digit-change
+//"wipe" animation (mode 5/6 in changeDigit(), core .ino file).
 void generateBitTable() {
 uint32_t out;
 
   DPRINT("--- Generating segment pins bitmap:"); DPRINTLN(MAXSEGMENTS);
   for (int i=0;i<MAXSEGMENTS;i++) {
-    segmentEnableBits[i] = uint32_t(1)<<(segmentEnablePins[i]-1); 
+    segmentEnableBits[i] = uint32_t(1)<<(segmentEnablePins[i]-1);
     //DPRINT(i); DPRINT(": "); DPRINTLN(segmentEnableBits[i],BIN);
   }
 #ifdef SEGMENT8
+  //Progressive top-to-bottom segment groups for the 7-segment wipe animation: each mask ORs in
+  //one more "row" of segments (a -> +b/f -> +g -> +c/e -> +d), later inverted below so that
+  //ANDing a character's bitmap with animationMaskBits[N] blanks out the segments not yet
+  //reached by the wipe.
   animationMaskBits[0] = uint32_t(1<<segmentEnablePins[0]);  //a
   animationMaskBits[1] = animationMaskBits[0] | uint32_t(1)<<segmentEnablePins[1] | uint32_t(1<<segmentEnablePins[5]);  //bf
   animationMaskBits[2] = animationMaskBits[1] | uint32_t(1)<<segmentEnablePins[6];  //g
   animationMaskBits[3] = animationMaskBits[2] | uint32_t(1)<<segmentEnablePins[4] | uint32_t(1<<segmentEnablePins[2]);  //ec
   animationMaskBits[4] = animationMaskBits[3] | uint32_t(1)<<segmentEnablePins[3];  //d
-#else  
-  //Dutsrpnmkhgfedcba  
+#else
+  //Dutsrpnmkhgfedcba
   //DP=16,u=15,t=14,s=13,r=12,p=11,n=10,m=9,k=8,h=7,g=6,f=5,e=4,d=3,c=2,b=1,a=0}
+  //Same top-to-bottom progressive wipe idea, but for the 16-segment layout (grouped by the
+  //segments' approximate vertical position within the character cell rather than a..g letters).
+  //NOTE: unlike the segmentEnablePins[]/charTable[] bit-order handling elsewhere in this file,
+  //these use segmentEnablePins[N] directly (no "-1") - i.e. these masks are built with 0-based
+  //bit positions offset by one from the rest of the table (a latent inconsistency to be aware
+  //of if segmentEnablePins[] pin numbers are ever renumbered/changed).
   animationMaskBits[0] = uint32_t(1<<segmentEnablePins[0]) | uint32_t(1<<segmentEnablePins[1]);  //ab
   animationMaskBits[1] = animationMaskBits[0] | uint32_t(1<<segmentEnablePins[2]) | uint32_t(1<<segmentEnablePins[8]) |
       uint32_t(1<<segmentEnablePins[9]) | uint32_t(1<<segmentEnablePins[10]) | uint32_t(1<<segmentEnablePins[7]);  //hkmnc
@@ -320,10 +443,10 @@ uint32_t out;
   animationMaskBits[3] = animationMaskBits[2] | uint32_t(1<<segmentEnablePins[6]) | uint32_t(1<<segmentEnablePins[14]) |
       uint32_t(1<<segmentEnablePins[13]) |uint32_t(1<<segmentEnablePins[12]) |uint32_t(1<<segmentEnablePins[3]);  //gtsrd
   animationMaskBits[4] = animationMaskBits[3] | uint32_t(1<<segmentEnablePins[5]) | uint32_t(1<<segmentEnablePins[4]);  //fe
-#endif  
+#endif
   DPRINTLN("--- Generating animation mask bitmap:");
   for (int i=0;i<5;i++) {
-    animationMaskBits[i] = ~animationMaskBits[i]; //invert bits
+    animationMaskBits[i] = ~animationMaskBits[i]; //invert bits: AND-ing a char's bitmap with this clears (blanks) the "not yet revealed" segments, keeping everything else unaffected
     //DPRINTLN(animationMaskBits[i],BIN);
   }
   DPRINT("--- Generating digit pins bitmap:"); DPRINTLN(maxDigits);
@@ -337,13 +460,17 @@ uint32_t out;
     out = 0;
     //DPRINT(i); DPRINT(":  ");
     //DPRINT(charDefinition[i],BIN);  //DPRINT(" = ");
+    //Bit j of charDefinition[i] (0=a in the "Dutsrpnmkhgfedcba" order) maps to
+    //segmentEnableBits[MAXSEGMENTS-1-j] - i.e. REVERSED relative to segmentEnablePins[]'s own
+    //index order, because charDefinition[] here is written MSB-high-letter-first while
+    //segmentEnablePins[] is written a-first; see the file header/table comments above.
     for (int j=0;j<MAXSEGMENTS;j++)   //from a to g
       if ((uint32_t)(charDefinition[i] & (uint32_t)1<<j) != 0) {
-        out = out | segmentEnableBits[MAXSEGMENTS-j-1]; //DPRINT("1"); 
+        out = out | segmentEnableBits[MAXSEGMENTS-j-1]; //DPRINT("1");
         }
     //else        {DPRINT("0");}
-    //DPRINT("  >> ");  
-    
+    //DPRINT("  >> ");
+
     charTable[i] = out;
     //DPRINTLN(charTable[i],BIN);
   }  //end for

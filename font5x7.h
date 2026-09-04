@@ -1,3 +1,43 @@
+// =============================================================================
+// font5x7.h - 5x7 dot-matrix bitmap font table
+// =============================================================================
+//
+// WHAT THIS IS
+//   A 256-glyph bitmap font (derived from the classic Adafruit GLCD 5x7 font,
+//   "glcdfont.c") used to render single characters on 5-column x 7-row LED
+//   matrix / dot-matrix displays. Several glyphs have been hand-modified from
+//   the original Adafruit set (see "old:" comments below for the replaced
+//   values), and the upper half of the table (0x80-0xFF) has been customized
+//   with Hungarian/German accented letters (a, ä, ö, u, Ä, Ö, U), Greek
+//   letters, and math/misc symbols in place of the original CP437 glyphs.
+//
+// DATA LAYOUT
+//   _font[] is a flat byte array with exactly 5 bytes per character:
+//     _font[c*5 + col]   for col = 0..4  (NUMCOLS in wordclock.ino)
+//   Each byte is one COLUMN of the glyph (column-major, not row-major).
+//   Within a byte, bit 0 (LSB) is the TOP pixel of that column and bit 6 is
+//   the BOTTOM pixel (7 rows tall); bit 7 is unused/always 0. Columns are
+//   ordered left-to-right within each 5-byte block.
+//   The table holds 256 entries indexed 0x00-0xFF, i.e. it is indexed
+//   directly by (unsigned) character code - there is no separate character
+//   map or lookup table.
+//
+// WHO USES IT
+//   wordclock.ino is the only consumer: it does #include "font5x7.h" and
+//   reads the array in show(byte c) as
+//     loccol[i] = _font[c*NUMCOLS + i];
+//   then calls transposePattern() to convert the column-major glyph into the
+//   row-major bit pattern actually clocked out to the display hardware
+//   (honoring the _upsidedown orientation flag). No other .ino in this
+//   project references _font[] or includes this header.
+//
+// CHARACTER RANGE
+//   0x00-0x1F : custom symbols (smileys, suits, arrows, euro sign, etc.),
+//               not standard control characters.
+//   0x20-0x7E : standard printable ASCII (space through ~).
+//   0x7F-0xFF : custom/extended glyphs - accented Hungarian/German letters,
+//               Greek letters, and math symbols (see inline comments).
+// =============================================================================
 byte  _font[] = {
   0x00, 0x00, 0x00, 0x00, 0x00, // 0x00 empty
   0x3E, 0x5B, 0x4F, 0x5B, 0x3E, // 0x01 sad
@@ -243,7 +283,7 @@ byte  _font[] = {
   0xBC, 0x62, 0x5A, 0x46, 0x3D, // 0xED empty set
   0x3E, 0x49, 0x49, 0x49, 0x00, // 0xEE epsilon
   0x7E, 0x01, 0x01, 0x01, 0x7E, // 0xEF
-  0x2A, 0x2A, 0x2A, 0x2A, 0x2A, // 0xF0 eqivalence
+  0x2A, 0x2A, 0x2A, 0x2A, 0x2A, // 0xF0 equivalence
   0x44, 0x44, 0x5F, 0x44, 0x44, // 0xF1 plus minus
   0x40, 0x51, 0x4A, 0x44, 0x40, // 0xF2 greater or equal
   0x40, 0x44, 0x4A, 0x51, 0x40, // 0xF3 less or equal
@@ -258,6 +298,6 @@ byte  _font[] = {
   0x00, 0x1F, 0x01, 0x01, 0x1E, // 0xFC
   0x00, 0x19, 0x1D, 0x17, 0x12, // 0xFD power of two
   0x00, 0x3C, 0x3C, 0x3C, 0x3C, // 0xFE blob
-  //0x00, 0x00, 0x00, 0x60, 0x60, // // 0xFF: Decimal point: 4 points
-  0x00, 0x00, 0x00, 0x00, 0x40, // // 0xFF: Decimal point, only 1 point
+  //0x00, 0x00, 0x00, 0x60, 0x60, // 0xFF: Decimal point: 4 points
+  0x00, 0x00, 0x00, 0x00, 0x40, // 0xFF: Decimal point, only 1 point
 };

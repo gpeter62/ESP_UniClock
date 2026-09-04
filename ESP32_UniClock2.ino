@@ -1,6 +1,6 @@
 /*
       Universal Clock  v3.xx (Nixie, VFD, LED, Numitron) for ESP8266 or ESP32
-      with optional Dallas Thermometer and DS3231 RTC, Neopxels stripe, GPS and more...
+      with optional Dallas Thermometer and DS3231 RTC, Neopixel strip, GPS and more...
       03/04/2022
       Copyright (C) 2020  Peter Gautier
 
@@ -19,14 +19,36 @@
 
       //https://lastminuteengineers.com/esp32-arduino-ide-tutorial/
 
-      Web page files, wich are found in "dat" subfolder must upload to SPIFFS !
+      Web page files, which are found in the "dat" subfolder, must be uploaded to SPIFFS !
       ESP8266:  https://randomnerdtutorials.com/install-esp8266-filesystem-uploader-arduino-ide/
       ESP32: https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide/
 */
+//====================================================================================================
+// ESP32_UniClock2.ino - CORE file of the project. This is the ONE file shared by all ~65 physical
+// clock builds (see clocks.h) - it contains everything that is NOT specific to how a digit gets
+// written to the hardware: setup()/loop(), WiFi connection management + web admin server (REST-ish
+// /configChanged API + JSON status endpoints), EEPROM-persisted settings (`prm` struct), time-source
+// selection (NTP/GPS/RTC priority chain in calcTime()), the display/animation pipeline
+// (displayTimeN()->changeDigit()->writeDisplaySingle()), alarm buzzer, day/night brightness,
+// radar-based auto shutoff, light-sensor auto-dim, and cathode/element "protect" (anti burn-in) test
+// patterns. The Arduino build concatenates every .ino file in this sketch folder into one compilation
+// unit, and exactly one of the ~25 driver .ino files (e.g. MAX6921.ino, ZM1500.ino, wordclock.ino)
+// actually compiles in per build, selected by whichever driver macro the active CLOCK_NN block in
+// clocks.h defines - this core file calls that driver only through a small set of `extern` functions
+// (setup_pins/writeDisplay/writeDisplaySingle/clearTubes) and shared global buffers (digit[]/newDigit[]
+// /oldDigit[]/digitDP[]/animMask[]), so it never needs to know which physical driver is active.
+// See docs/DEVELOPER_GUIDE.md for the full architecture writeup (this file is section 4) and
+// docs/CODE_REVIEW.md for the list of known bugs/dead-code spots (also marked in-place below with
+// "// POSSIBLE BUG:" / "// NOTE:").
+//====================================================================================================
 #include <stddef.h>
 //#define byte uint8_t
-#include "clocks.h"  //DEFINE YOUR CLOCKS SETUP IN THIS FILE!!!
+#include "clocks.h"  //DEFINE YOUR CLOCKS SETUP IN THIS FILE!!! - clocks.h picks the single active CLOCK_NN block, which #defines the driver macro, pins and feature flags read throughout this file
 
+// Detect which generation of the ESP8266 Arduino core is in use: older cores (2.6.x/2.7.x) name the
+// RAM-resident-ISR attribute ICACHE_RAM_ATTR, while newer cores renamed it to IRAM_ATTR (shared with
+// ESP32) - the #define below normalizes ICACHE_RAM_ATTR to mean IRAM_ATTR on newer cores so driver
+// .ino files can use either name interchangeably regardless of installed core version.
 #if defined(ESP8266)
   #if defined(ARDUINO_ESP8266_RELEASE_2_6_0) || \
     defined(ARDUINO_ESP8266_RELEASE_2_6_1) || \
@@ -48,7 +70,7 @@
   //#define DEBUG  //Enable Serial Monitor, 115200baud (only, if TX pin is not used anywhere!!!)
   //---------------------------- CLOCK EXTRA OPTION PARAMETERS ---------------------------------
   //#define USE_DALLAS_TEMP //TEMP_DALLAS_PIN is used to connect DS18B20 temperature sensors
-  //#define USE_DHT_TEMP    //TEMP_DHT_PIN is sensor pin 
+  //#define USE_DHT_TEMP    //TEMP_DHT_PIN is the DHT sensor's data pin
   //#define USE_BME280      //I2C Temperature + humidity + pressure, SDA+SCL I2C pins are used!   
   //#define USE_BMP280      //I2C Temperature + barometric pressure, SDA+SCL I2C pins are used!   
   //#define USE_AHTX0       //I2C Temperature + humidity, SDA+SCL I2C pins are used!   
@@ -107,9 +129,9 @@
 
   //Display temperature and date in every minute between START..END seconds
   //#define ENABLE_CLOCK_DISPLAY true  //false, if no clock display is needed (for example: thermometer + humidity only)
-  //#define SHIFT_TUBES_LEFT_BY_1   //shift leftIP address by 1 tube the display, if a thermometer is used with spec tube
+  //#define SHIFT_TUBES_LEFT_BY_1   //shift the display left by 1 tube, if a thermometer is used with a special tube
   //#define LEFTDECIMAL false      //set true (Z574M), if decimal point is on the left side on the tube. Else set false (Z573M)!
-  //#define DATE_REPEAT_MIN   1    //show date only every xxx minute. If zero, datum is never displayed!  
+  //#define DATE_REPEAT_MIN   1    //show date only every xxx minute. If zero, the date is never displayed!
   //#define DOUBLE_BLINK          //both separator points are blinking (6 or 8 tubes VFD clock)
   //#define TEMP_START  35        //Temperature display start..end
   //#define TEMP_END    40
@@ -126,23 +148,27 @@
   //#define WEBNAME "LED UniClock"  //Clock's name on the web page
   //#define DEFAULT_SSID ""       //factoryReset default value for WiFi
   //#define DEFAULT_PSW ""        //factoryReset default value  for WiFi password
-  //#define FACTORYRESET_PIN -1   //if defined, make rest, if button is pushed     
+  //#define FACTORYRESET_PIN -1   //if defined, do a factory reset if the button is pushed
 */
 //#define USE_MDNS
 #define TIMESERVER_REFRESH 7200000     //2h, Refresh time in millisec   86400000 = 24h
 unsigned long timeserverErrors = 0;        //timeserver refresh errors
 
 int timerON=0;   //for debugging
-int timerOFF=0;      
+int timerOFF=0;
 unsigned long intCounter = 0;   //for testing only, interrupt counter
 
 byte c_MinBrightness = RGB_MIN_BRIGHTNESS;     //minimum LED brightness
 byte c_MaxBrightness = RGB_MAX_BRIGHTNESS;     //maximum LED brightness
 //--------------------------------------------------------------------------------------------------
-#define FIRMWARE_SERVER "http://c.landventure.hu/store"
-String usedPinsStr;
-String driverSetupStr;
+#define FIRMWARE_SERVER "http://c.landventure.hu/store"   //default OTA update server (see doFirmwareUpdate()); overridable per-clock via prm.firmwareServer / the web admin "firmware" field
+String usedPinsStr;      //human-readable list of registered GPIOs, built by listPins(), shown on the web admin "clock details" page
+String driverSetupStr;   //driver-specific extra setup info string (set by some drivers), also shown on the web admin page
 
+// Platform-specific setup: WiFi/HTTP/filesystem headers, board defaults (web page title / AP name),
+// DRAM_ATTR (only meaningful on ESP32, defined empty here so ESP8266 code using it still compiles),
+// and the ASCII-art `ESPpinout[]` string used by regPin() below to sanity-check GPIO usage per pin
+// (each character is one GPIO: 'O'=usable output/IO pin, 'I'=input-only pin, ' '=reserved/unusable).
 #if defined(ESP8266)
   #define DRAM_ATTR     //https://docs.espressif.com/projects/esp-idf/en/v4.3-beta2/esp32/api-reference/storage/spi_flash_concurrency.html
   #ifndef WEBNAME
@@ -191,8 +217,8 @@ String driverSetupStr;
   #ifdef USE_MDNS
     #include <ESPmDNS.h>
   #endif
-  hw_timer_t * ESP32timer = NULL;
-  portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+  hw_timer_t * ESP32timer = NULL;        //hardware timer handle, started by startTimer() below; drives the ISR-based multiplex drivers' writeDisplay()
+  portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;   //spinlock used by drivers to guard shared state accessed from both the ISR and the main loop
   #define PRESCALER 15   //multiplex timer prescaler, about 80Hz for 6 tubes
   
   const char ESPpinout[] = {"OOOOOO      OOOOOOOO OOO OOO    OOIII  I"};   //GPIO 0..5, 12..19, 21..23, 25..27, 32..33, Input:34..36, 39)  usable pins 
@@ -216,12 +242,17 @@ DNSServer dnsServer;
   #include <NeoPixelBrightnessBus.h>
 #endif
 
+// Driver-interface contract: every driver .ino file must implement these regardless of which chip it
+// targets (see docs/DEVELOPER_GUIDE.md section 3) - this is the entire surface the core code needs to
+// drive an arbitrary physical display. writeDisplay() is the ISR-based multiplex refresh (a no-op for
+// "smart" chip drivers that scan internally, e.g. PT6311/PT6355/VQC10); writeDisplaySingle() is a
+// blocking, non-ISR, one-shot render of the current digit[]/digitDP[] buffers.
 extern void ICACHE_RAM_ATTR writeDisplay();
 extern void writeDisplaySingle();
 extern void setup_pins();
 extern void clearTubes();
-extern int maxDigits;
-extern char tubeDriver[];
+extern int maxDigits;      //number of physical digit positions (tubes) on this clock build
+extern char tubeDriver[];  //human-readable driver name string, shown on the web admin page
 
 char webName[] = WEBNAME;
 AsyncWebServer server(80);
@@ -241,19 +272,25 @@ unsigned long lastWifiScan = 0;  //last wifi scan timestamp in CPU msec millis()
 boolean wifiOK = false;
 char myIp[20]="";
 
-//Display buffers
+//Display buffers - shared with every driver .ino file, indexed 0..maxDigits-1 (0 = rightmost/seconds digit).
+//Value encoding (see docs/DEVELOPER_GUIDE.md section 3): 0-9 = digit to show, 10 = BLANK, 11 = dash/minus,
+//12 = standalone decimal-point glyph (a few drivers only), 13+ = driver-specific extra characters
+//(letters, degree sign, %, circles, etc. - each driver's own charDefinition[]/charTable[] maps these).
 #define BUFSIZE 12
-byte DRAM_ATTR digit[BUFSIZE];
-byte DRAM_ATTR newDigit[BUFSIZE];
-byte DRAM_ATTR oldDigit[BUFSIZE];
+byte DRAM_ATTR digit[BUFSIZE];        //what is CURRENTLY on the physical display (what writeDisplay()/writeDisplaySingle() actually render)
+byte DRAM_ATTR newDigit[BUFSIZE];     //the target value for the next display update, filled in by displayTime4/6/8()/displayDate()/displayTemp()/displayHumid()
+byte DRAM_ATTR oldDigit[BUFSIZE];     //the value that was displayed before the current changeDigit() animation started - used to detect per-tube changes and drive the various animMode animations
 boolean DRAM_ATTR digitDP[BUFSIZE];   //actual value to put to display
 boolean digitsOnly = true;  //only 0..9 numbers are possible to display?
-byte DRAM_ATTR animMask[BUFSIZE];     //0 = no animation mask is used
+byte DRAM_ATTR animMask[BUFSIZE];     //0 = no animation mask is used; used by the "wipe" animation (animMode==5, see changeDigit()) - a driver-specific progress value per tube, drivers read this to fade/wipe segments in or out
 
-volatile boolean dState = false;
-volatile unsigned long lastDisable = 0;
 volatile boolean EEPROMsaving = false; //saving in progress - stop display refresh
 
+// EEPROM/prm struct format version. Bump this whenever the `prm` struct below changes shape (fields
+// added/removed/reordered/resized) - loadEEPROM() compares the stored value against this constant in
+// setup(), and a mismatch triggers an automatic factoryReset() (old EEPROM bytes would otherwise be
+// misinterpreted as the new struct layout, since EEPROM.get()/put() do a raw memcpy with no versioning
+// of their own).
 #define MAGIC_VALUE 304   //EEPROM version
 
 
@@ -269,6 +306,10 @@ volatile boolean EEPROMsaving = false; //saving in progress - stop display refre
 // example: https://github.com/mgo-tec/OLED_1351/blob/master/src/OLED_SSD1351.cpp
 
 
+// Debug print macros: compile to real Serial.print calls when DEBUG is defined in clocks.h for the
+// active CLOCK_NN, otherwise compile to nothing (zero code/RAM cost) - used everywhere in this file
+// and in every driver .ino instead of calling Serial.* directly, so a release build can drop all
+// debug logging just by commenting out one #define.
 #ifdef DEBUG    //Macros are usually in all capital letters.
 #define DPRINT(...)       Serial.print(__VA_ARGS__)     //DPRINT is a macro, debug print
 #define DPRINTLN(...)     Serial.println(__VA_ARGS__)   //DPRINT is a macro, debug print
@@ -307,15 +348,24 @@ byte usePress = 0;        //Total number of pressure sensors
 byte useHumid = 0;        //Total number of humidity sensors
 byte useLux = 0;
 float temperature[6] = {0,0,0,0,0,0};
-float humid[6] = {0,0,0,0,0,0};  
-float pressur[6] = {0,0,0,0,0,0};  
-int lx = 0;               //Enviroment LUX value, set by Light Sensor
+float humid[6] = {0,0,0,0,0,0};
+float pressur[6] = {0,0,0,0,0,0};
+int lx = 0;               //Environment LUX value, set by Light Sensor
 boolean autoBrightness = false; //Enable automatic brightness levels
 //----------------- EEPROM addresses -------------------------------------------------------------------
 const int EEPROM_addr = 0;
 
+// `prm` - the ONE struct holding every user-configurable, persistent setting (alarm, RGB effect, WiFi
+// credentials, MQTT broker, brightness/day-night schedule, date/temp/humidity display windows,
+// calibration offsets, etc). Saved/loaded as a single raw block via EEPROM.put()/EEPROM.get()
+// (saveEEPROM()/loadEEPROM() below) - NOT field-by-field, so struct layout changes require bumping
+// MAGIC_VALUE (see above) or old EEPROM contents get reinterpreted as garbage. The web admin's
+// POST /configChanged (handleConfigChanged()) is the single entry point that mutates these fields at
+// runtime; handleSendConfig() serializes (most of) this struct back out to the client as JSON.
+// In-struct default values (e.g. "= 7") are only the compiled-in fallback used until the first
+// factoryReset()/loadEEPROM() actually runs - factoryReset() re-assigns most fields explicitly.
 struct {
-//Main screen settings _____________________________________________________________________________________ 
+//Main screen settings _____________________________________________________________________________________
   boolean alarmEnable = false;     //Yes or No
   byte alarmHour = 7;              //Alarm time
   byte alarmMin = 0;
@@ -326,7 +376,7 @@ struct {
   unsigned int rgbFixColor = 150;  //0..255
   byte rgbSpeed = 50;              //0..255msec / step
   boolean rgbDir = false;          //false = right, true = left
-//Wifi / ip settings _______________________________________________________________________________________ 
+//WiFi / IP settings _______________________________________________________________________________________
   boolean wifiMode = true; 
   char wifiSsid[20];
   char wifiPsw[20];
@@ -340,7 +390,7 @@ struct {
   boolean mqttEnable = false;
   char firmwareServer[78];
 //Tube settings  ______________________________________________________________________________________
-  int tempRepeatMin = 1;             //temperature and humidity display repaeat (min)
+  int tempRepeatMin = 1;             //temperature and humidity display repeat (min)
   int utc_offset = 1;              //time zone offset
   bool enableDST = true;           // Flag to enable DST (summer time...)
   bool set12_24 = true;            // Flag indicating 12 vs 24 hour time (false = 12, true = 24);
@@ -364,7 +414,7 @@ struct {
   byte tempEnd;  
   byte humidStart;                 //Humidity% display start..end
   byte humidEnd;
-  byte dateRepeatMin;              //show date only every xxx minute. If zero, datum is never displayed!  
+  byte dateRepeatMin;              //show date only every xxx minute. If zero, the date is never displayed!
   boolean enableDoubleBlink;       //both separator points are blinking (6 or 8 tubes VFD clock)
   boolean enableAutoDim = false;   //Automatic dimming by luxmeter
   boolean enableRadar = false;     //Radar sensor
@@ -373,11 +423,11 @@ struct {
   float corrT1 = 0;
   float corrH0 = 0;
   float corrH1 = 0;
-//____________________________________________________________________________________________________  
-  int magic = MAGIC_VALUE;        //magic value, to check EEPROM version when starting the clock
+//____________________________________________________________________________________________________
+  int magic = MAGIC_VALUE;        //magic value, to check EEPROM version when starting the clock - see loadEEPROM()/factoryReset() and the MAGIC_VALUE comment above
 } prm;
 
-#define EEPROM_SIZE sizeof(prm)
+#define EEPROM_SIZE sizeof(prm)   //EEPROM.begin() is sized exactly to the struct - no extra reserved space for future growth, so any struct change is effectively a breaking EEPROM-layout change (mitigated only by the magic-number factory-reset above)
 
 //-------------------------------------------------------------------------------------------------------
 
@@ -386,37 +436,51 @@ NTPClient timeClient(ntpUDP, prm.NtpServer, 0, TIMESERVER_REFRESH); // Refresh t
 IPAddress ip;
 
 // Set timezone rules.  Offsets set to zero, since they will be loaded from EEPROM
+// DST rule is HARD-CODED to the EU convention (last Sunday of March -> first Sunday of November) -
+// prm.utc_offset/prm.enableDST only scale the offset (see updateTimefromTimeserver()), the actual
+// switchover DATES are not configurable from the web UI. myTZ is rebuilt with the current offsets
+// every time updateTimefromTimeserver() runs (WiFi/NTP path only - the GPS-only fallback in gps.ino
+// uses a simpler, always-on +1h DST rule, see CODE_REVIEW.md).
 TimeChangeRule myDST = {"DST", Last, Sun, Mar, 2, 0};
 TimeChangeRule mySTD = {"STD", First, Sun, Nov, 2, 0};
 Timezone myTZ(myDST, mySTD);
-time_t prevTime = 0;
-time_t protectTimer = 0;
-bool displayON = true;
-bool manualOverride = false;
+time_t prevTime = 0;      //last second() value that was actually rendered to the display - timeProgram() only redraws when now()!=prevTime, i.e. at most once per real second
+time_t protectTimer = 0;  //timestamp of the last cathode-protect animation, used by timeProgram()'s prm.interval-minute scheduler
+bool displayON = true;         //current day/night brightness state (true=day brightness) - set by evalShutoffTime(), or forced by manualOverride via the web UI
+bool manualOverride = false;    //user has manually forced displayON via the web "manualOverride" key, overriding the automatic day/night schedule until evalShutoffTime() sees the schedule naturally cross into the opposite state again
 bool initProtectionTimer = false;  // Set true at the top of the hour to synchronize protection timer with clock
 bool decimalpointON = false;
 bool alarmON = false;             //Alarm in progress
 unsigned long alarmStarted = 0;   //Start timestamp millis()
 
+// Which "screen" timeProgram() decided to render this second - set once per second, then read by
+// displayTime4/6/8() to pick between clock/date/temperature/humidity output. Mutually exclusive
+// (the display*() dispatch chain checks them in priority order: temp1 > temp0 > humid1 > humid0 > date > clock).
 boolean showClock = false;
 boolean showDate = false;
 boolean showTemp0 = false;
 boolean showTemp1 = false;
 boolean showHumid0 = false;
 boolean showHumid1 = false;
-int lastCathodeProt = -1;
-boolean cathodeProtRunning = false;
-boolean ipShowRunning = false;
-boolean wifiConnectRunning = false;
-boolean editorRunning = false;
+int lastCathodeProt = -1;          //minute() value when the cathode-protect animation last ran, informational only (not read elsewhere in this file)
+boolean cathodeProtRunning = false;  //true while any cathode-protect animation is active - other code (e.g. wordclock.ino) can check this to skip normal rendering
+boolean ipShowRunning = false;       //true while showMyIp() is running at boot (IP address shown digit-by-digit on the tubes)
+boolean wifiConnectRunning = false;  //true while setup() is attempting the initial WiFi connection
+boolean editorRunning = false;       //true while the RTC manual date/time editor (rtc.ino) is active - read by wordclock.ino to show an "editing" indicator
 
 #define MAX_PIN sizeof(ESPpinout)-1
 #define PIN_TXT_LEN 30
 char pinTxt[MAX_PIN][PIN_TXT_LEN+1];
 
+// Every driver/peripheral setup call is expected to call this once per GPIO it uses (label is a
+// human-readable name, e.g. "PIN_SDA"). Purpose is twofold: (1) sanity-check the pin against the
+// board's ESPpinout[] map (flags reserved/input-only/nonexistent pins) and (2) detect two features
+// accidentally configured onto the same physical pin (a common clocks.h copy-paste mistake) - both
+// classes of problem are only reported via DPRINT, not by refusing to continue, so a build with DEBUG
+// off will silently run with a bad pin assignment.
 void regPin(byte p,const char * txt) {  //register used pins
-  
-  DPRINT("- "); DPRINT(txt); DPRINT(": GPIO"); DPRINT(p); 
+
+  DPRINT("- "); DPRINT(txt); DPRINT(": GPIO"); DPRINT(p);
   if (p>MAX_PIN-1) {
     DPRINT("  ERROR: PIN# DOESN'T EXIST.");
   }
@@ -436,6 +500,9 @@ void regPin(byte p,const char * txt) {  //register used pins
     strncpy(pinTxt[p],txt,sizeof(pinTxt[p]));
 }
 
+// Builds usedPinsStr (the HTML fragment shown on the web admin "clock details" page, see
+// handleSendClockDetails()) from everything regPin() recorded, and also dumps the same list to the
+// debug console.
 void listPins() {
   DPRINTLN("_______________________");
   DPRINTLN("___ USED CLOCK PINS ___");
@@ -454,6 +521,11 @@ void listPins() {
   //DPRINT("MAX_PIN"); DPRINTLN(MAX_PIN);
 }
 
+// Starts the hardware-timer interrupt that periodically calls the active driver's writeDisplay() (the
+// ISR-based multiplex refresh). Called from most drivers' setup_pins() - drivers that scan their
+// display internally (PT6311/PT6355/VQC10/MAX7219/etc, see docs/DEVELOPER_GUIDE.md section 3) never
+// call this, since their writeDisplay() is an empty no-op and refresh instead happens cooperatively
+// in writeDisplay2()/writeDisplaySingle().
 void startTimer() {   //ESP_INTR_FLAG_IRAM
 #if defined(ESP8266)
   timer1_attachInterrupt(writeDisplay);
@@ -488,6 +560,8 @@ void configModeCallback (AsyncWiFiManager *myWiFiManager) {
 }
 #endif
 
+// Resets all three digit buffers to BLANK (10) and clears every decimal-point flag - a full display
+// clear, used at startup and around mode transitions (WiFi connect, IP display, etc).
 void clearDigits() {
   memset(oldDigit, 10, sizeof(oldDigit));
   memset(digit, 10, sizeof(digit));
@@ -495,13 +569,18 @@ void clearDigits() {
   memset(digitDP, 0, sizeof(digitDP));
 }
 
+// A cooperative-multitasking substitute for delay(d): the firmware has no delay()-based blocking
+// waits in loop() (see docs/DEVELOPER_GUIDE.md section 4.2), so any function that needs to "wait"
+// (animations, WiFi connect retries, cathode-protect, IP display, etc.) calls Fdelay() instead - it
+// busy-waits for `d` milliseconds but keeps servicing the DNS captive-portal server (AP mode only),
+// RGB/PWM background animations, the alarm buzzer, the light sensor and (if USE_GPS) the GPS serial
+// feed, so none of those subsystems stalls during a long animation/connect sequence.
 void Fdelay(unsigned long d) {
   unsigned long dStart = millis();
 
   doAnimationMakuna();
   while ((millis() - dStart) < d) {
     if (WiFi.getMode() == 2) dnsServer.processNextRequest();
-    enableDisplay(2000);
     writeDisplay2();
     getLightSensor();
     doAnimationMakuna();
@@ -509,57 +588,26 @@ void Fdelay(unsigned long d) {
     alarmSound();
     #ifdef USE_GPS
       smartDelay(1);  //feed GPS
-    #endif  
+    #endif
     yield();
   }
 }
 
 float round1(float in) {
-  return round(10.0 * in)/10.0; 
+  return round(10.0 * in)/10.0;
 }
 
 //--------------------------------------------------------------------------------------------------------------------
 
-void enableDisplay(unsigned long timeout) {
-  dState = true;
-  EEPROMsaving = false;
-  return;   //NOT USED ANYMORE
-  
-#if defined(ESP32) || defined(PCF_74141)  //safety mode for slow multiplex hardvare to avoid crash when write to flash memory
-  unsigned long seged2;
-  if (dState) return;
-  seged2 = lastDisable;
-  if (millis() < (seged2 + timeout)) return;
-
-  dState = true;
-  EEPROMsaving = false;
-  DPRINT("Enable tubes:"); DPRINTLN(timeout); //    DPRINT(millis()); DPRINT("/"); DPRINTLN(lastDisable);
-  //startTimer();
-#else
-  EEPROMsaving = false;
-#endif
-}
-
-void disableDisplay()  {
-  dState = true;  EEPROMsaving = false;
-  return;   //DO NOT USE ANYMORE!!!
-
-  EEPROMsaving = true;
-
-#if defined(ESP32) || defined(PCF_74141)  //safety mode for slow multiplex hardvare to avoid crash when write to flash memory
-  DPRINTLN("Disable tubes");
-  if (dState) {
-    clearTubes();
-    //stopTimer();
-    delay(20);
-    writeDisplay();
-  }
-#endif
-
-  dState = false;
-  lastDisable = millis();
-}
-
+// Scans for WiFi networks and, among all APs broadcasting the configured SSID (prm.wifiSsid),
+// remembers the one with the best RSSI (bestChn/bestBssid/bestRSSI) - useful when multiple APs/mesh
+// nodes share the same SSID, so the clock can explicitly target the strongest one via WiFi.begin(...,
+// bestChn, bestBssid, true) in startNewWifiMode() below.
+// NOTE: dead code in the current build - its only two call sites (in setup() and resetWiFi() further
+// down) are both commented out (`//findBestWifi();`), so this function, its result variables
+// (bestChn/bestBssid/bestRSSI/lastWifiScan) and its consumer startNewWifiMode()/checkWifiMode() are
+// effectively unused; the live WiFi-connect path is startWifiMode() (plain WiFi.begin(ssid,psw), no
+// BSSID targeting).
 boolean findBestWifi() {
   int n;
   int newRssi;
@@ -600,6 +648,12 @@ boolean findBestWifi() {
     return(found);
 }
 
+// Fallback when a direct WiFi.begin(prm.wifiSsid,...) connect fails (or no SSID is stored at all):
+// opens the ESPAsyncWiFiManager captive-configuration portal (its own temporary AP + web form) so the
+// user can pick/enter WiFi credentials from a phone/laptop. Retries autoConnect() up to 5 times before
+// forcing the portal open unconditionally. On success, persists the newly-chosen SSID/password into
+// prm and saves EEPROM. Compiled to an empty no-op when USE_WIFIMANAGER is not defined for this
+// CLOCK_NN (the #ifdef below spans the whole function body).
 void wifiManager() {
   #ifdef USE_WIFIMANAGER
   AsyncWiFiManager MyWifiManager(&server, &dnsServer);
@@ -633,12 +687,15 @@ void wifiManager() {
     p.toCharArray(prm.wifiPsw,sizeof(prm.wifiPsw));
     saveEEPROM();
     ip = WiFi.localIP();
-    WiFi.setAutoReconnect(true);
-    enableDisplay(100);
+    WiFi.setAutoReconnect(true); WiFi.persistent(true);
   }
   #endif
 }
 
+// Alternate STA-mode connect path that targets the specific BSSID/channel found by findBestWifi()
+// (WiFi.begin(ssid,psw,channel,bssid,true) instead of a plain SSID connect). See the findBestWifi()
+// NOTE above - this function is currently unreachable from setup()/loop() (only called from the
+// disabled checkWifiMode()), so it and its bestRSSI/lastWifiScan freshness gating are dead in practice.
 void startNewWifiMode() { // Start a Wi-Fi access point, and try to connect to some given access points. Then wait for either an AP or STA connection
  if (((millis()-lastWifiScan)<90000) && (bestRSSI > -95) && (WiFi.status() != WL_CONNECTED)) {
   DPRINTLN(F("_____________ Connecting WiFi ___________________"));
@@ -699,8 +756,11 @@ void startNewWifiMode() { // Start a Wi-Fi access point, and try to connect to s
 }
 
 
+// The LIVE Infrastructure(STA)-mode connect path, called from setup() when prm.wifiMode==true. Plain
+// WiFi.begin(ssid,psw) (no BSSID targeting, unlike startNewWifiMode() above), retries once a second
+// for up to ~10s, then falls back to wifiManager() (config portal) if still not connected - and
+// wifiManager() itself falls straight through here again if no SSID was stored at all.
 void startWifiMode() {
-  disableDisplay();
   DPRINTLN("Starting Clock in WiFi Mode!");
   if (strlen(prm.wifiSsid)==0) {
     DPRINTLN("WiFi SSID not defined!");
@@ -743,24 +803,29 @@ void startWifiMode() {
   DPRINTLN(" ");
   ip = WiFi.localIP();
   WiFi.setAutoReconnect(true);
-  enableDisplay(100);
 }
 
 
+// Primary time source (see calcTime()/docs/DEVELOPER_GUIDE.md 4.4): refreshes the system clock from
+// NTP over WiFi, at most once every TIMESERVER_REFRESH (2h) - or every 5 minutes if the previous
+// attempt failed (lastTimeFailure backoff), retrying the NTP request itself up to 5 times per call.
+// On success, rebuilds myTZ from the current prm.utc_offset/prm.enableDST (so a live timezone/DST
+// change from the web UI takes effect on the very next scheduled refresh) and calls setTime() with
+// the timezone-adjusted local time. Returns true only if this call actually refreshed the clock -
+// callers (calcTime()) use that to decide whether the RTC also needs updating this cycle.
 boolean updateTimefromTimeserver() {  //true, if successful
   static unsigned long lastTimeFailure = 0;
   boolean res = false;
   int count = 1;
-  
+
   if (((millis()-lastTimeUpdate)<TIMESERVER_REFRESH) && (lastTimeUpdate!=0))
     return(res);
-    
+
   if ((lastTimeFailure>0) && ((millis()-lastTimeFailure)<300000)) return(res);   //wait for 5min to retry, if no success
-  
+
   if (WiFi.status() == WL_CONNECTED) {
     while (true) {
       DPRINT("Connecting to timeserver: "); DPRINTLN(count);
-      enableDisplay(1000);
       res = timeClient.forceUpdate();
       if (res) {
         mySTD.offset = prm.utc_offset * 60;
@@ -792,6 +857,9 @@ boolean updateTimefromTimeserver() {  //true, if successful
     #define MDNSNAME "uniclock"
 #endif
 
+// Optional mDNS responder (only compiled/started if USE_MDNS is defined - commented out by default
+// near the top of this file) so the clock can be reached as e.g. "uniclock.local" instead of typing
+// its IP address. Guards against re-starting an already-running responder via the static flag.
 void startMDNS() {
   static boolean mdnsStarted = false;
 
@@ -809,6 +877,12 @@ void startMDNS() {
   #endif  
 }
 
+// The Standalone(AP)-mode path (prm.wifiMode==false, or a fallback from a fully-failed STA connect):
+// the clock hosts its own WiFi hotspot at the fixed address 192.168.4.1 (prm.ApSsid/prm.ApPsw) and
+// runs a DNS server that answers every query with its own IP (dnsServer.start(53,"*",...)) so most
+// phones/laptops auto-launch a captive-portal browser pointed at the admin page. In this mode there
+// is no internet, so calcTime() never gets a WiFi/NTP refresh - GPS (if fitted) or the RTC are the
+// only time sources.
 void startStandaloneMode() {
   DPRINTLN("Starting Clock in Standalone Mode!");
   DPRINT("Clock's AP SSID:"); DPRINT(prm.ApSsid);
@@ -836,9 +910,16 @@ void startStandaloneMode() {
   dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
   dnsServer.start(53, "*", WiFi.softAPIP());
 
-  enableDisplay(0);
 }
 
+// OTA firmware+filesystem update over plain HTTP. Triggered by the web admin's POST /firmwareupdate
+// (sets makeFirmwareUpdate, actually run from loop() so it doesn't block the request handler) or
+// automatically whenever the "firmware" server URL is changed via /configChanged ("for testing only",
+// per the comment there). Downloads and flashes two files in sequence from prm.firmwareServer:
+// "<FW>.bin" (the sketch binary) then "<FW>.spiffs.bin" (the SPIFFS web-page image) - FW is the
+// firmware ID string (see clocks.h). Stops the web server first (frees RAM/sockets for the update),
+// and only calls doReset() to actually reboot into the new firmware if BOTH updates reported success;
+// otherwise the (old) server is simply restarted so the clock keeps running on the current firmware.
 void doFirmwareUpdate(){
     if (WiFi.status() != WL_CONNECTED) {
       DPRINTLN("Wifi disconnected. FirmwareUpdate failed.");
@@ -848,7 +929,6 @@ void doFirmwareUpdate(){
     DPRINTLN("Webserver stopped...");
     server.reset();  //Stop server
     delay(2000);
-    disableDisplay();
     yield();
     String fname = String(prm.firmwareServer)+"/"+String(FW)+".bin";
     DPRINT("Update firmware: "); DPRINTLN(fname);
@@ -909,6 +989,12 @@ void doFirmwareUpdate(){
     startServer();  //restart webserver
 }
 
+// Simple "run all digits through 0-9" anti-cathode-poisoning/burn-in pattern, triggered by the web
+// admin's POST /cathodeProtect button (via makeCathodeProtect, executed from loop()) for
+// cathProtMin minutes at full brightness (temporarily forces MAXBRIGHTNESS and disables auto-dim,
+// restored at the end). Distinct from the automatic, scheduled newCathodeProtect() below (which runs
+// every prm.interval minutes via timeProgram() and has per-tube stop timing/direction) - this one is
+// the manual, user-triggered, uniform version.
 void doCathodeProtect() {
   unsigned long started = millis();
   byte num =0;
@@ -945,11 +1031,15 @@ void doCathodeProtect() {
   cathodeProtRunning = false;
 }
 
+// Sets up the ESPAsyncWebServer instance (port 80) that backs the web admin UI: static file routes
+// serve the SPA's HTML/CSS/JS straight out of SPIFFS (uploaded separately via the IDE's filesystem
+// uploader from the repo's data/ folder - see file header), plus a handful of action routes
+// (/reset, /factoryreset, /firmwareupdate, /cathodeProtect) and the JSON/form REST-ish API
+// (handleConfigChanged/handleSendConfig/handleSendCurrentInfos/handleSendClockDetails, defined below).
 void startServer() {
   DPRINTLN("Starting Async Webserver...");
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
-    disableDisplay();
     DPRINTLN("Webserver: /  -> index.html");
     if(SPIFFS.exists("/index.html")) {
       AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/index.html", "text/html"); 
@@ -962,7 +1052,6 @@ void startServer() {
   });
 
   server.on("/jquery_351.js", HTTP_GET, [](AsyncWebServerRequest * request) {
-    disableDisplay();
     DPRINTLN("Webserver: /jquery_351.js");
     if (SPIFFS.exists("/jquery_351.js")) {
       AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/jquery_351.js", "text/js");   
@@ -976,7 +1065,6 @@ void startServer() {
   });
 
   server.on("/jquery_360.js", HTTP_GET, [](AsyncWebServerRequest * request) {
-    disableDisplay();
     DPRINTLN("Webserver: /jquery_360.js");
     if (SPIFFS.exists("/jquery_360.js")) {
       AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/jquery_360.js", "text/js");   
@@ -991,7 +1079,6 @@ void startServer() {
 
   server.on("/page.js", HTTP_GET, [](AsyncWebServerRequest * request) {
 
-    disableDisplay();
     DPRINTLN("Webserver: /page.js");
     if (SPIFFS.exists("/page.js")) {
       AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/page.js", "text/js");   
@@ -1005,7 +1092,6 @@ void startServer() {
   });
 
   server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest * request) {
-    disableDisplay();
     DPRINTLN("Webserver: /favicon.ico");
     if (SPIFFS.exists("/favicon.ico")){
       AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/favicon.ico", "image/png");
@@ -1019,7 +1105,6 @@ void startServer() {
   });
 
   server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest * request) {
-    disableDisplay();
     DPRINTLN("Webserver: /generate_204");
     AsyncWebServerResponse *response = request->beginResponse(302); //
     response->addHeader("Location", String("http://") + WiFi.softAPIP().toString().c_str());
@@ -1039,7 +1124,6 @@ void startServer() {
 
 //____________________________________________________________________________
   server.on("/site.css", HTTP_GET, [](AsyncWebServerRequest * request) {
-    disableDisplay();
     DPRINTLN("Webserver: /site.css");
     if (SPIFFS.exists("/site.css")) {
       AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/site.css", "text/css");   
@@ -1089,6 +1173,9 @@ void startServer() {
 
 }  //end of procedure
 
+// Catch-all 404 handler (server.onNotFound) - also doubles as a debug request-dumper (prints every
+// request param, GET/POST, to the serial console when DEBUG is on) which is handy for reverse-
+// engineering what the SPA's JS is actually sending during development.
 void handleNotFound(AsyncWebServerRequest *request) {
   int params = request->params();
   for (int i = 0; i < params; i++) {
@@ -1121,6 +1208,14 @@ void handleNotFound(AsyncWebServerRequest *request) {
   request->send( 204, "text/html", "URL Not Found" );
 }
 
+// POST /saveSetting - the SINGLE entry point for every settings change made from the web admin UI.
+// Request carries two form fields, `key` (a string identifying which setting) and `value` (its new
+// value as a string) - handled as one long if/else-if chain matching `key`, converting `value` to the
+// right type and writing it into the matching prm.* field (or, for a few keys, a plain global like
+// c_MinBrightness/cathProtMin/autoBrightness). Any recognized key ends with saveEEPROM() so the
+// change survives a reboot; an unrecognized key returns HTTP 404 without touching EEPROM. Most
+// branches are simple 1:1 field assignments and aren't commented individually below - only branches
+// with side effects beyond "store this value" are called out.
 void handleConfigChanged(AsyncWebServerRequest *request) {
   if (request->hasParam("key", true) && request->hasParam("value", true)) {
 
@@ -1139,6 +1234,10 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
     boolean paramFound = true;
 
     if (key == "utc_offset")    {
+      // Changing the UTC offset immediately shifts the LIVE running clock (not just the stored
+      // preference) by the delta in hours, and pushes that change into the RTC right away via
+      // updateRTC() - so the displayed time updates instantly rather than waiting for the next NTP
+      // sync (which would otherwise take up to TIMESERVER_REFRESH to reflect the new zone).
       prm.utc_offset = value.toInt();
       if (old_utc_offset != prm.utc_offset) {   //Change time zone
         setTime(now()+(prm.utc_offset-old_utc_offset)*3600);
@@ -1159,6 +1258,10 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
       prm.enableBlink = (value == "true");
     }
     else if (key == "enableDST")  {
+      // Same immediate-effect pattern as utc_offset above: toggling DST support live-shifts the
+      // running clock by +-1h right away and re-syncs the RTC, instead of only taking effect on the
+      // next scheduled NTP refresh (myTZ itself is rebuilt from prm.enableDST inside
+      // updateTimefromTimeserver() on that next refresh).
       prm.enableDST = (value == "true");
       if (oldDST && !prm.enableDST) {   //Switching off DST
         setTime(now()-3600);
@@ -1198,6 +1301,10 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
       prm.animMode = value.toInt();
     }
     else if (key == "manualOverride") {
+      // Not a prm.* field - "manualOverride" is the web UI's day/night ON/OFF toggle: it flips the
+      // live displayON state directly and sets the manualOverride flag so evalShutoffTime() (called
+      // every second from timeProgram()) stops auto-driving displayON from the day/night schedule
+      // until the schedule naturally catches up to the state the user forced (see evalShutoffTime()).
       boolean v = value == "false";
       if (v != displayON) {
         manualOverride = true;
@@ -1246,6 +1353,10 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
       value.toCharArray(prm.wifiPsw,sizeof(prm.wifiPsw));
     }
     else if (key == "ApSsid") {
+      // Sanitizes the OLD prm.ApSsid in place (replacing any non-printable/non-ASCII byte with '_')
+      // BEFORE overwriting it with the new value from the web form - i.e. this cleans up a
+      // possibly-corrupted stored SSID from a prior session, not the incoming `value` itself (same
+      // repair loop also runs unconditionally in factoryReset(), see below).
       for (int i=0;i<(int)strlen(prm.ApSsid);i++) {  //repair bad chars in AP SSID
         if ((prm.ApSsid[i]<32) || (prm.ApSsid[i]>126)) prm.ApSsid[i]='_';
       }
@@ -1258,6 +1369,10 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
       value.toCharArray(prm.NtpServer,sizeof(prm.NtpServer));
     }
     else if (key == "firmware") {
+      // Side effect: merely changing the firmware-server URL setting also immediately kicks off an
+      // OTA update attempt (makeFirmwareUpdate, picked up by loop()->doFirmwareUpdate()) - per the
+      // "for testing only" comment this looks like a leftover dev convenience rather than intended
+      // production behavior (a user just correcting a typo in the URL would trigger a real update).
       value.toCharArray(prm.firmwareServer,sizeof(prm.firmwareServer));
       makeFirmwareUpdate = true; //for testing only
     }
@@ -1313,20 +1428,21 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
     }    
     else if (key == "enableAutoDim") {
       prm.enableAutoDim = (value == "true");
-      autoBrightness = prm.enableAutoDim;
+      autoBrightness = prm.enableAutoDim;   //mirrors the flag into the live `autoBrightness` global read by getLightSensor()/the display brightness logic, so the change takes effect immediately rather than only after the next getLightSensor() poll
     }
     else if (key == "enableRadar")  {
       prm.enableRadar = (value == "true");
-      radarLastOn = millis();
+      radarLastOn = millis();  //resets the radar "last motion seen" timestamp so toggling the feature on doesn't immediately look timed-out and shut the tubes off
       radarON = true;
     }
     else if (key == "radarTimeout"){
       prm.radarTimeout = value.toInt();
       if (prm.radarTimeout>60) prm.radarTimeout = 60;
       if (prm.radarTimeout<1) prm.radarTimeout = 1;
-      radarLastOn = millis();
+      radarLastOn = millis();   //same reasoning as enableRadar above - avoid an immediate false shutoff after changing the timeout value
       radarON = true;
-    }  
+    }
+
     else if (key == "tempCF") {
       prm.tempCF = (value == "true");
     }   
@@ -1361,6 +1477,13 @@ void handleConfigChanged(AsyncWebServerRequest *request) {
   }
 }
 
+// GET /getConfiguration - dumps (almost) the entire `prm` struct plus a handful of live/derived values
+// (current date/time, sensor readings, MAC, driver name...) as one JSON object. This is what the web
+// SPA fetches once on page load to populate every settings form field; a "255" sentinel value marks a
+// sensor reading/feature as "not installed" (the JS treats 255 specially rather than 0, since 0 is a
+// plausible real reading). Compare with handleSendCurrentInfos() below, which is the lightweight,
+// frequently-polled subset used to keep the live clock/sensor display refreshed without re-sending
+// the whole settings form each time.
 void handleSendConfig(AsyncWebServerRequest *request) {
   StaticJsonDocument<2048> doc;
   char buf[20];  //conversion buffer
@@ -1420,7 +1543,7 @@ if (useTemp > 1)
   doc["set12_24"] = prm.set12_24;           // Flag indicating 12 vs 24 hour time (false = 12, true = 24);
   doc["showZero"] = prm.showZero;           // Flag to indicate whether to show zero in the hour ten's place
   doc["enableBlink"] = prm.enableBlink;     // Flag to indicate whether center colon should blink
-  doc["interval"] = prm.interval;           // doc["interval in minutes, with 0 = off
+  doc["interval"] = prm.interval;           // interval in minutes, with 0 = off
 
   //Day/Night dimmer parameters
   doc["enableAutoShutoff"] = prm.enableAutoShutoff;  // Flag to enable/disable nighttime shut off
@@ -1498,6 +1621,10 @@ if (useTemp > 1)
   request->send(200, "application/json", json);
 }
 
+// GET /getClockDetails - returns a pre-formatted HTML fragment (not JSON, unlike the other two
+// handlers) with static/diagnostic info: firmware ID, driver name, MAC address, sensor counts, and
+// the full used-GPIO listing built by listPins()/regPin() (usedPinsStr) plus any driver-supplied
+// extra setup info (driverSetupStr). Shown on an "about/diagnostics" panel of the web admin UI.
 void handleSendClockDetails(AsyncWebServerRequest *request) {
   StaticJsonDocument<200> doc;
   //StaticJsonDocument<512> doc;
@@ -1518,6 +1645,11 @@ void handleSendClockDetails(AsyncWebServerRequest *request) {
   request->send(200, "text/html", dat);
 }
 
+// GET /getCurrentInfos - the lightweight, frequently AJAX-polled JSON endpoint (date/time,
+// temperature/humidity/pressure/lux, WiFi RSSI) used to keep the web admin page's live readouts
+// current without re-fetching the whole settings form (see handleSendConfig() above). Keeps both new
+// ("temperature1"/"humidity1") and legacy ("temperature"/"humidity") key names for backwards
+// compatibility with older versions of the web front-end.
 void handleSendCurrentInfos(AsyncWebServerRequest *request) {
   StaticJsonDocument<400> doc;
   //StaticJsonDocument<512> doc;
@@ -1571,10 +1703,18 @@ if (useTemp > 1)
   request->send(200, "application/json", json);
 }
 
+// Startup sequence (see docs/DEVELOPER_GUIDE.md section 4.1 for the full ordered summary):
+// brownout detector (optional) -> EEPROM init -> setup_pins() (driver-specific GPIO setup) ->
+// optional peripherals (alarm/colon/radar/tube-power/light-sensor/PWM LEDs) -> temperature/I2C/RTC/GPS
+// setup -> loadEEPROM() (factoryReset() if the magic number doesn't match) -> NeoPixel setup -> tube
+// test animation -> SPIFFS mount (web page files) -> WiFi connect (STA or AP mode) -> web server start
+// -> MQTT setup -> show IP address on the tubes -> initial time sync. Order matters here: pins must be
+// configured before any peripheral touches them, and EEPROM must be loaded before WiFi connects
+// (credentials live in prm).
 void setup() {
   #if defined(DISABLE_BROWNOUT) && defined(ESP32)
-    WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector 
-  #endif  
+    WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
+  #endif
   delay(1000);
   WiFi.mode(WIFI_OFF);
   EEPROM.begin(EEPROM_SIZE);
@@ -1680,20 +1820,22 @@ void setup() {
   }
   #endif
   loadEEPROM();
-  if (prm.magic != MAGIC_VALUE) factoryReset();
-  
+  if (prm.magic != MAGIC_VALUE) factoryReset();   //EEPROM struct version mismatch (see MAGIC_VALUE comment) - wipe to sane defaults
+
   setupNeopixel();
   listPins();
-  writeAlarmPin(ALARM_ON); writeAlarmPin(!ALARM_ON);
+  writeAlarmPin(ALARM_ON); writeAlarmPin(!ALARM_ON);   //quick blip of the alarm pin at boot (on then immediately off) - a self-test/audible "I'm alive" click, not a real alarm
   getDHTemp();  //get the first DHT temp+humid measure
-    
+
+  // Temporarily force animMode to 2 (all changed tubes spin together) for the power-on tube test
+  // below, regardless of the user's saved animation preference, then restore it afterwards - ensures
+  // testTubes() always animates visibly even if the stored prm.animMode is 0 (no animation).
   byte saveMode = prm.animMode;
   prm.animMode = 2;
   doAnimationPWM();
   testTubes(300);
 
   clearDigits();
-  disableDisplay();
   Fdelay(200);
   if (!SPIFFS.begin()) {
     DPRINTLN("An Error has occurred while mounting SPIFFS");
@@ -1717,7 +1859,7 @@ void setup() {
   writeDisplay2();
   if (prm.wifiMode) {
     //findBestWifi();
-    startWifiMode();
+    startWifiMode();   //note: startWifiMode() already falls back to wifiManager() internally on failure/empty SSID - the retry loop below is an extra layer only exercised when USE_WIFIMANAGER is enabled
 
    #ifdef USE_WIFIMANAGER
    int counter = 0;
@@ -1731,14 +1873,13 @@ void setup() {
     }
     DPRINTLN(" ");
    #endif
-    
-    if (WiFi.status() != WL_CONNECTED) { //failed to connect to wifi
+
+    if (WiFi.status() != WL_CONNECTED) { //failed to connect to wifi - give up on infrastructure mode entirely and fall back to hosting our own AP so the clock is at least reachable
       startStandaloneMode();
     }
     else {
       ip = WiFi.localIP();
       WiFi.setAutoReconnect(true);
-      enableDisplay(100);
     }
   }
   else {
@@ -1756,7 +1897,6 @@ void setup() {
   Fdelay(500);
   clearDigits();
   Fdelay(200);
-  enableDisplay(0);
   prm.animMode = saveMode;
   timeClient.begin();
   calcTime();
@@ -1765,29 +1905,41 @@ void setup() {
   //newCathodeProtect(5000,0);
 }
 
+// Time-source priority chain (docs/DEVELOPER_GUIDE.md section 4.4): NTP-over-WiFi is always tried
+// first when connected (updateTimefromTimeserver() self-throttles to once per TIMESERVER_REFRESH, so
+// this is cheap to call every cycle); GPS is tried next if fitted; the DS3231 RTC (if fitted) is the
+// LAST-RESORT fallback: if either of the above actually refreshed the system clock this cycle, the RTC
+// is instead WRITTEN (updateRTC(), to keep it in sync as a fallback for the next power-loss/no-network
+// boot) - otherwise the RTC is READ (getRTC()) to keep the clock ticking with no network/GPS at all.
+// A build with none of WiFi/GPS/RTC available simply free-runs on TimeLib's own millis()-derived clock
+// (set once at some point in the past) with no further correction.
 void calcTime() {
   boolean refreshed = false;
   boolean refreshed2 = false;
-  
+
   if (WiFi.status() == WL_CONNECTED) {        //check wifi connection
     refreshed = updateTimefromTimeserver();  //update time from wifi
-  }  
+  }
   if (GPSexist) { //update time from GPS, if exist
     refreshed2 = getGPS();
   }
-  
+
   if (RTCexist) {  //update time from RTC, if exist
-    if (refreshed || refreshed2) 
+    if (refreshed || refreshed2)
       updateRTC();    //update RTC, if needed
-    else 
+    else
       getRTC();
   }
 }
 
 
+// Main per-tick clock/sensor/display driver, called unconditionally every loop() iteration but
+// self-throttled to run at most every 200ms (calcTime()/sensor polling cadence) - the actual visible
+// digit refresh only happens on real second boundaries (`if (now() != prevTime)` below), so most 200ms
+// ticks only refresh sensor readings and return without touching the display buffers.
 void timeProgram() {
   static unsigned long lastRun = 0;
-  
+
   if ((millis() - lastRun) < 200) return;
   lastRun = millis();
   calcTime();
@@ -1808,7 +1960,13 @@ void timeProgram() {
     evalShutoffTime();     // Check whether display should be turned off (Auto shutoff mode)
     if (!displayON || !prm.enableBlink) colonBlinkState = false;
     else colonBlinkState = (bool)(second() % 2);
-    
+
+    // Decide which "screen" to show this second, in priority order: temperature > humidity > date >
+    // plain clock (see the showClock/showDate/showTemp*/showHumid* globals declared near the top of
+    // this file). Each window is an independent [xStart,xEnd) range of seconds-within-minute, so e.g.
+    // temperature and date windows can be configured to overlap or not from the web UI; whichever
+    // display*() function actually runs is decided later in displayTime4/6/8() by checking these
+    // flags in the same priority order.
     showClock = false;
     showDate = (prm.enableTimeDisplay && (prm.dateRepeatMin>0) && ((second() >= prm.dateStart) && (second() < prm.dateEnd)));
     if (showDate && (prm.dateRepeatMin>1)) {
@@ -1851,29 +2009,38 @@ void timeProgram() {
         // The current time can drift slightly relative to the protectTimer when NIST time is updated
         // Need to make a small adjustment to the timer to ensure it is triggered at the minute change
         protectTimer -= ((second() + 30) % 60 - 30);
-        if (displayON && (millis() > 50000)) newCathodeProtect(maxDigits*1500,random(3)-1);   //dont play in the first 50sec
+        // random(3)-1 picks the animation direction for this run: -1, 0 (random-order) or +1 - see
+        // newCathodeProtect()'s dir parameter and its POSSIBLE BUG note further down.
+        if (displayON && (millis() > 50000)) newCathodeProtect(maxDigits*1500,random(3)-1);   //don't play in the first 50 sec
       }
-    }    
+    }
   }
 }
 
+// Raw single-block read of the whole `prm` struct from EEPROM address 0 - does NOT itself check
+// prm.magic; the caller (setup()) is responsible for calling factoryReset() if the loaded magic value
+// doesn't match MAGIC_VALUE.
 void loadEEPROM() {
-  disableDisplay();
   DPRINT("Loading setting from EEPROM.  Size:");  DPRINT(EEPROM_SIZE);
-  
+
   EEPROM.get(EEPROM_addr, prm);
   DPRINT("  version:"); DPRINTLN(prm.magic);
-  enableDisplay(0);
 }
 
+// Raw single-block write of the whole `prm` struct back to EEPROM (address 0) - called after every
+// successful key/value change in handleConfigChanged(), so every settings tweak from the web UI does
+// a full-struct EEPROM commit (flash wear consideration: frequent single-field changes each cost a
+// full-struct flash write, not just the changed bytes).
 void saveEEPROM() {
-  disableDisplay();
-  EEPROM.put(EEPROM_addr, prm);    
+  EEPROM.put(EEPROM_addr, prm);
   EEPROM.commit();
   DPRINTLN("Settings saved to EEPROM!");
-  enableDisplay(0);
 }
 
+// Resets every prm.* field to its hard-coded default (falling back to clocks.h-provided compile-time
+// defaults like DEFAULT_SSID/AP_NAME/DATE_START/etc where available), then saves and re-syncs the
+// clock. Triggered by: EEPROM magic-number mismatch at boot (see setup()), the web admin's
+// POST /factoryreset, or (if wired) a held FACTORYRESET_PIN button at boot.
 void factoryReset() {
   DPRINTLN("Factory Reset!!!");
   prm.alarmEnable = false;
@@ -1931,7 +2098,7 @@ void factoryReset() {
   prm.tempEnd = TEMP_END;  
   prm.humidStart = HUMID_START;                //Humidity% display start..end
   prm.humidEnd = HUMID_END;
-  prm.dateRepeatMin = DATE_REPEAT_MIN;         //show date only every xxx minute. If zero, datum is never displayed!  
+  prm.dateRepeatMin = DATE_REPEAT_MIN;         //show date only every xxx minute. If zero, the date is never displayed!
   prm.tempRepeatMin = 1;
   #ifdef DOUBLE_BLINK
     prm.enableDoubleBlink = true;              //both separator points are blinking (6 or 8 tubes VFD clock)
@@ -1951,7 +2118,14 @@ void factoryReset() {
 }
 
 
-void newCathodeProtect(unsigned long t,int dir) {    //t = time in msec, dir = direction -1,0,1    (0=random) 
+// Scheduled/automatic anti-cathode-poisoning animation: every tube counts rapidly through 0-9, then
+// tubes stop one-by-one (in the order controlled by `dir`) once they reach their real target digit
+// value (`tmp[]`, the display content saved at entry). dir<0 stops digits left-to-right (index 0
+// first), dir>0 stops them right-to-left (highest index first), dir==0 is meant to stop them in random
+// order - see the POSSIBLE BUG note below. Called automatically every prm.interval minutes from
+// timeProgram(), and also reachable via the commented-out `newCathodeProtect(5000,0);` line at the end
+// of setup(). Distinct from the simpler, manually-triggered doCathodeProtect() above.
+void newCathodeProtect(unsigned long t,int dir) {    //t = time in msec, dir = direction -1,0,1    (0=random)
   byte tmp[10];
   boolean tmpDP[10];
   unsigned long started = millis();
@@ -1974,8 +2148,14 @@ void newCathodeProtect(unsigned long t,int dir) {    //t = time in msec, dir = d
       break;
     case 1:
       nextStoppedDigit = maxDigits-1;
-      break;            
+      break;
   }
+  // POSSIBLE BUG: this line unconditionally overwrites whatever the switch above just computed,
+  // including the `case 0` (dir==0, "random") result - so the FIRST digit to stop is never actually
+  // random, it's always index 0 (dir<=0) or maxDigits-1 (dir>0), identical to the dir<0/dir>0 cases.
+  // The random-order behavior only actually shows up LATER, in the `else if (sum<=maxDigits-2)` branch
+  // below that picks each SUBSEQUENT stop digit randomly - so dir==0 does look random from the second
+  // stopped digit onward, just not on the very first one, which is likely not what was intended.
   nextStoppedDigit = dir>0 ? 0 : maxDigits-1;
   while(true) {
     for (int i=0;i<maxDigits;i++) {
@@ -2032,6 +2212,9 @@ void newCathodeProtect(unsigned long t,int dir) {    //t = time in msec, dir = d
   cathodeProtRunning = false;
 }
 
+// NOTE: earlier/simpler cathode-protect implementation, superseded by newCathodeProtect() above
+// (kept for reference/comparison - "original version"). Not called from anywhere else in this file;
+// appears to be dead code left in place.
 void cathodeProtect() {   //original version
   int hour12_24 = prm.set12_24 ? (byte)hour() : (byte)hourFormat12();
   byte hourShow = (byte)hour12_24;
@@ -2095,6 +2278,13 @@ inline void incMod10(byte &x) {
 };
 
 
+// displayTemp()/displayHumid() render a sensor reading into newDigit[]/digitDP[] (right-aligned,
+// working backwards from digPtr), applying the per-sensor calibration offset (prm.corrT0/corrT1 or
+// corrH0/corrH1 - ptr selects which sensor slot, 0 or 1). Two build-time variants exist per function:
+// a compact DISPLAYTEMP_ONLY_2DIGITS/DISPLAYHUMID_ONLY_2DIGITS version for clocks with too few digit
+// positions to show units/sign, and the full version below (unit letter + degree/percent glyph +
+// optional leading sign). `ptr==0`/`ptr==1` only ever apply corrT0/corrH0 vs corrT1/corrH1 - a 3rd or
+// 4th simultaneous sensor slot (see I2Csensors.ino review notes) gets no calibration correction here.
 #ifdef DISPLAYTEMP_ONLY_2DIGITS
 void displayTemp(byte ptr) {   //special version, 2 digits only
   float t = temperature[ptr];
@@ -2219,9 +2409,16 @@ void displayHumid(byte ptr) {
       newDigit[--digPtr] = UPPER_CIRCLE_CHARCODE;   //upper circle = 16
       newDigit[--digPtr] = LOWER_CIRCLE_CHARCODE;  // lower circle = 18
     }
-  } //4 tubes only
-  else {
-    newDigit[--digPtr] = PERCENT_CHARCODE;  //  "%"
+  } 
+  else {  //4 tubes only
+	if (digitsOnly) {
+		newDigit[--digPtr] = PERCENT_CHARCODE;  //  "%"
+	}
+	else {
+		for (int i = 0; i < maxDigits; i++) {digitDP[i] = false;}   //clear any decimal point
+		newDigit[digPtr] = UPPER_CIRCLE_CHARCODE;   //upper circle = 16
+		newDigit[--digPtr] = LOWER_CIRCLE_CHARCODE;  // lower circle = 18		
+	}	
   }
      
   if (prm.animMode == 0)  memcpy(oldDigit, newDigit, sizeof(oldDigit)); //don't do animation
@@ -2230,6 +2427,10 @@ void displayHumid(byte ptr) {
 }
 #endif
 
+// Renders the current calendar date into newDigit[] according to prm.dateMode (0=dd/mm/yyyy,
+// 1=mm/dd/yyyy, 2=yyyy/mm/dd), truncating the year portion on clocks with fewer than 8 digit
+// positions (>6 digits shows a 2-digit year, <=6 shows none) - the `p[m][i]` lookup table encodes
+// which date component (0=day,1=month,2=year) goes in which position for each mode.
 void displayDate()  {
   byte m = prm.dateMode;
   if (m>2) m=2;
@@ -2283,6 +2484,12 @@ void displayDate()  {
   if (prm.animMode == 1)  memcpy(oldDigit, newDigit, sizeof(oldDigit)); //don't do animation
 }
 
+// displayTime4/6/8() are the top-level "what goes on the display this second" dispatchers, selected by
+// timeProgram() based on maxDigits. Each one first blanks digitDP[], sets the colon-separator DP
+// positions, then dispatches by priority to temperature/humidity/date, falling through to the normal
+// H:M(:S) clock rendering only if none of those "special screens" is currently active AND
+// prm.enableTimeDisplay is set (a thermometer-only build can disable the clock face entirely).
+// showZero controls whether a leading-zero hour (e.g. "07") shows the 0 or blanks it (digit value 10).
 void displayTime4() {
   for (int i = 0; i < maxDigits; i++) digitDP[i] = false;
   digitDP[4] = true;   digitDP[2] = true;
@@ -2304,6 +2511,9 @@ void displayTime4() {
 }
 
 
+// 6-digit variant of displayTime4() above - has an extra branch for `thermometerClock` builds (see
+// THERMOMETER_CLOCK in clocks.h: first digit reserved for +/- sign, last for C/F, middle 4 for HH:MM)
+// vs the normal 6-tube H:M:S layout.
 void displayTime6() {
   for (int i = 0; i < maxDigits; i++) digitDP[i] = false;
   digitDP[4] = true;   digitDP[2] = true;
@@ -2343,6 +2553,8 @@ void displayTime6() {
   }
 }
 
+// 8-digit variant of displayTime4() above - full H:M:S with dash separators (digit value 11, see the
+// BUFSIZE encoding comment near the digit[] declaration) instead of decimal points between the groups.
 void displayTime8() {
   for (int i = 0; i < maxDigits; i++) {
     digitDP[i] = false;
@@ -2376,24 +2588,40 @@ void displayTime8() {
 }
 
 
+// The driver-independent animation engine: compares newDigit[] (the target the current displayTimeN()/
+// displayDate()/displayTemp()/displayHumid() call just computed) against oldDigit[] (what was on
+// screen before) and, if anything changed, plays the animation selected by prm.animMode (0-7, see
+// docs/DEVELOPER_GUIDE.md section 4.5):
+//   0 = no animation, instant switch
+//   1 = each changed tube "rolls" through the digits from its old value up to its new one, one tube at a time
+//   2 = all changed tubes spin through 0-9 together, in lockstep
+//   3/4 = whole digit-row slides in from the right/left (with a "----" gap between old and new content)
+//   5 = "wipe" - drives animMask[] with a ramp value per changed tube; interpretation is driver-specific
+//       (some multiplex-family drivers get a finer 1..19 ramp, others a coarser 1..5-then-back-down ramp)
+//   6 = picks a random animation from 1-5 on every call
+//   7 = picks a random animation from 1-4 on every call (excludes the wipe animation)
+// Special characters (value >9, e.g. blank/dash/custom glyphs) are always applied immediately outside
+// the animation (never rolled through like a numeric digit change) since there's no sensible
+// "in-between" glyph to animate through. On clocks with >4 digits, the seconds tube (index 0) is
+// excluded from most animations (`j=1`) so a normal ticking seconds digit doesn't animate every second.
 void changeDigit() {
   int j = 0;
   byte tmp[50];
   byte space = 4;
   byte anim;
-  
+
   #if defined(TUBE1CLOCK)   //no tube animation possible
     writeDisplaySingle();
     return;
-  #endif  
+  #endif
   anim = prm.animMode;
   #if defined(DISABLE_NIGHT_ANIMATION)
     if (!displayON) anim = 0;   //At NIGHT switch off animation
   #endif
   #if defined(WORDCLOCK)
-    anim = 0;   
+    anim = 0;
   #endif
-  
+
   if (anim == 6) anim = 1 + rand() % 5;
   else if (anim == 7) anim = 1 + rand() % 4;
 
@@ -2403,7 +2631,7 @@ void changeDigit() {
         digit[i] = newDigit[i];    //show special characters ASAP or if special char changes to numbers
         oldDigit[i] = newDigit[i];
       }
-    if ((maxDigits > 4) && (newDigit[0] != 0)) j = 1; //if 6 or 8 tube clock, dont play with seconds
+    if ((maxDigits > 4) && (newDigit[0] != 0)) j = 1; //if 6 or 8 tube clock, don't play (animate) the seconds digit
   }
 
   if (memcmp(newDigit + j, oldDigit + j, maxDigits - j) != 0) {
@@ -2455,6 +2683,11 @@ void changeDigit() {
         } //end for i
         break;
       case 5:
+        // "Wipe" animation - two different ramp shapes depending on which driver is active, since
+        // different segment/multiplex hardware interprets the animMask[] progress value differently:
+        // the SN74141-family/VQC10/HV5122 drivers get a fine 1..19 monotonic ramp (their own
+        // writeDisplay*() decodes finer wipe steps), everything else gets a coarser 1..5-then-5..1
+        // "ramp up then back down" pattern, with digit[] snapped to newDigit[] partway through.
         memset(animMask, 0, sizeof(animMask));
 #if defined(MULTIPLEX74141) || defined(NO_MULTIPLEX74141) || defined(MULTIPLEX74141_ESP32) || defined(MULE_V2) || defined(PCF_74141) || defined(NO_MULTIPLEX_ESP32) || defined(VQC10) || defined(NEWHV5122)
         for (int i = 1; i < 20; i++) {
@@ -2491,6 +2724,8 @@ void changeDigit() {
   writeDisplaySingle();
 }
 
+// Drives ALARMSPEAKER_PIN, but only actually calls digitalWrite() when the requested state differs
+// from what's already set (oldState) - avoids redundant GPIO writes on every alarmSound() tick.
 void writeAlarmPin(boolean newState) {
   #if ALARMSPEAKER_PIN>=0
     static boolean oldState = !ALARM_ON; 
@@ -2502,6 +2737,12 @@ void writeAlarmPin(boolean newState) {
   #endif
 }
 
+// Called every loop() iteration. Non-blocking alarm-tone state machine: when the wall-clock time
+// matches prm.alarmHour:prm.alarmMin (checked once, in the first 3 seconds of that minute, to avoid
+// re-triggering all through the minute), it starts a beep pattern defined by the `t[]` timestamp table
+// below (an escalating series of short beeps, in milliseconds relative to alarmStarted) that repeats
+// beyond the table's end as plain 500ms on/off beeping, for prm.alarmPeriod seconds total. Can be
+// silenced early via ALARMBUTTON_PIN if wired.
 void alarmSound(void) {
   static const unsigned int t[] = {0, 3000, 6000, 6200, 9000, 9200, 9400, 12000, 12200, 12400, 15000, 15200, 15400};
   static int count = 0;
@@ -2562,6 +2803,14 @@ void alarmSound(void) {
 }
 
 
+// Called once per second from timeProgram(). Decides displayON (day/night brightness state) from the
+// prm.dayHour:dayMin / prm.nightHour:nightMin schedule, handling the case where the night window wraps
+// past midnight (mn_off > mn_on, e.g. night starts 22:00 and ends 07:00) vs. the (unusual) case where
+// it doesn't. manualOverride (set by the web UI's "manualOverride" key in handleConfigChanged()) lets
+// the user force displayON one way regardless of the schedule; that override is automatically cleared
+// again the moment the schedule's own computed state (prevShutoffState) naturally transitions to match
+// what the override had forced - i.e. a manual override lasts until the next scheduled day/night
+// boundary, not forever.
 void evalShutoffTime(void) {  // Determine whether  tubes should be turned to NIGHT mode
 
   if (!prm.enableAutoShutoff) return;
@@ -2583,6 +2832,10 @@ void evalShutoffTime(void) {  // Determine whether  tubes should be turned to NI
     prevShutoffState = true;
   }
   return;
+  // POSSIBLE BUG / NOTE: unconditional `return` above makes the debug DPRINT block below permanently
+  // unreachable dead code - harmless (it only ever fed DPRINT, a no-op without DEBUG), but the
+  // early-return means these diagnostics can never be re-enabled just by turning DEBUG on; the `return`
+  // itself would also need removing.
   DPRINT("mn="); DPRINT(mn);
   DPRINT("  mn_on="); DPRINT(mn_on);
   DPRINT("  mn_off="); DPRINT(mn_off);
@@ -2593,6 +2846,9 @@ void evalShutoffTime(void) {  // Determine whether  tubes should be turned to NI
 }
 
 
+// Renders a single IP-address octet (0-255) as a 3-digit number, optionally preceded by "IP" glyphs
+// on displays with an alphabetic character set and >=6 digit positions, and shows it once via
+// changeDigit(). Called 4 times in a row by showMyIp() below, once per octet.
 void writeIpTag(byte iptag) {
 
 #ifdef SHIFT_TUBES_LEFT_BY_1
@@ -2615,6 +2871,9 @@ void writeIpTag(byte iptag) {
   changeDigit();
 }
 
+// Called once at the end of setup(): displays the clock's IP address on the tubes, one octet at a
+// time (each shown for SPEED=1500ms via writeIpTag()), so the user knows what address to browse to
+// for the web admin UI without needing a router's client list or a phone app.
 void showMyIp(void) {   //at startup, show the web page internet address
   clearDigits();
   #define SPEED 1500
@@ -2627,30 +2886,39 @@ void showMyIp(void) {   //at startup, show the web page internet address
 }
 
 
+// NOTE: converts a "number of 15-minute steps since midnight" value into hours+minutes - not called
+// anywhere in this file or elsewhere in the project; dead/unused helper.
 void fifteenMinToHM(int &hours, int &minutes, int fifteenMin)
 {
   hours = fifteenMin / 4;
   minutes = (fifteenMin % 4) * 15;
 }
 
+// Called from loop() whenever prm.wifiMode is true but WiFi.status()!=WL_CONNECTED. Self-throttled to
+// try at most once every 10 minutes: first attempts a lightweight WiFi.disconnect()+WiFi.reconnect()
+// (reuses previously stored credentials), and only falls back to the heavier startWifiMode() (which
+// can itself open the wifiManager() config portal) if that quick reconnect didn't succeed.
 void resetWiFi(void) {
   static unsigned long lastTest = millis();
   static unsigned int counter = 0;
 
-  if ((millis() - lastTest) < 600000) return; //check in every 10 min  
+  if ((millis() - lastTest) < 600000) return; //check in every 10 min
   lastTest = millis();
   DPRINTLN("Lost WiFi. Reconnect.");
-  //disableDisplay();
-  //#if defined(ESP8266)  
+  //#if defined(ESP8266)
     WiFi.disconnect();
     WiFi.reconnect();
   //#endif
   if (WiFi.status() == WL_CONNECTED) return;
-  
+
   //findBestWifi();
   startWifiMode();
   return;
-
+  // POSSIBLE BUG / NOTE: unconditional `return` above makes everything below permanently unreachable -
+  // including a 3-hour "give up and force a full reboot" counter/message. As written, resetWiFi() will
+  // retry forever (every 10 minutes) without ever calling doReset(), no matter how long WiFi stays
+  // down. Likely intentional (a full reboot loop might have been judged riskier than an endless retry),
+  // but flagged as dead code worth reviewing - see docs/CODE_REVIEW.md.
   counter++;
   DPRINT("Wifi lost! Minutes to restart:"); DPRINTLN(180 - counter);
   if (counter < 180) return;  //3 hours passed
@@ -2660,12 +2928,15 @@ void resetWiFi(void) {
   doReset();
 }
 
+// NOTE: proper (always-non-negative) modulo helper - not called anywhere in this file or elsewhere in
+// the project; dead/unused helper.
 inline int mod(int a, int b) {
   int r = a % b;
   return r < 0 ? r + b : r;
 }
 
 
+// Power-on self-test animation: sweeps every tube through 0-9 in unison (called once from setup()).
 void testTubes(int dely) {
   Fdelay(dely);
   cathodeProtRunning = true;
@@ -2674,6 +2945,12 @@ void testTubes(int dely) {
     DPRINT(i); DPRINT(" ");
     for (int j = 0; j < maxDigits; j++) {
       newDigit[j] = i;
+      // POSSIBLE BUG: likely meant to be `digit[j] = i;` (j is the tube-index loop variable here; i is
+      // the 0..9 character being swept through). As written this indexes digit[] by the CHARACTER
+      // value i (0..9) instead of the tube position j, so it writes into at most the first 10 entries
+      // of digit[] regardless of which tube is being iterated - harmless in practice only because
+      // changeDigit() (called right below, every outer-loop iteration) immediately overwrites the
+      // whole digit[] buffer from newDigit[] anyway, so this line's result is never actually rendered.
       digit[i] = i;
       digitDP[j] = i % 2;
     }
@@ -2686,6 +2963,9 @@ void testTubes(int dely) {
   cathodeProtRunning = false;
 }
 
+// NOTE: cycles a rotating "walking digit" pattern across the tubes - not called from setup()/loop() or
+// anywhere else in this file; dead/unused (a leftover manual test helper, presumably invoked ad hoc
+// during development).
 void playTubes() {
   static byte tube = 0;
   memset(digitDP, 0, sizeof(digitDP));
@@ -2695,6 +2975,8 @@ void playTubes() {
   changeDigit();
 }
 
+// Debug helper: dumps all temperature/humidity sensor readings to the serial console, throttled to
+// once every 30s. Called from printDigits() below (itself a no-op unless DEBUG is defined).
 void printSensors(void) {
   static unsigned long lastRun = millis();
   
@@ -2716,6 +2998,11 @@ void printSensors(void) {
   }
 }
 
+// Debug helper: prints one digit[]/newDigit[] buffer value (see the BUFSIZE encoding comment near the
+// digit[] declaration near the top of this file) as its human-readable glyph to the serial console.
+// NOTE: only decodes a handful of the possible 13+ "special character" codes by hardcoded value/macro
+// (TEMP_CHARCODE, GRAD_CHARCODE, PERCENT_CHARCODE, plus literal 18/19/14) - any other special glyph
+// code prints as a generic '-', so this debug view doesn't fully reflect every driver's char set.
 void printChar(int i) {
   if (i < 10)      {DPRINT(i);}
     else if (i==10)  {DPRINT(" ");}
@@ -2730,6 +3017,9 @@ void printChar(int i) {
     if (digitDP[i]) {DPRINT(".");} else {DPRINT(" ");}
 }
 
+// Debug console status line: current digit[] content (rendered via printChar()), colon-blink state,
+// lux reading, WiFi status, plus periodic sensor dump (printSensors()) - entire body compiles to
+// nothing when DEBUG is not defined. `timeout` throttles how often it actually prints (0 = every call).
 void printDigits(unsigned long timeout) {
   static unsigned long lastRun = millis();
 
@@ -2766,16 +3056,23 @@ void printDigits(unsigned long timeout) {
 }
 
 
+// Called every loop() iteration (self-throttled to 500ms). Drives TUBE_POWER_PIN (filament/HV supply
+// on/off) based on radar-detected presence: motion resets a timeout (radarLastOn), and if no motion is
+// seen for prm.radarTimeout minutes the tubes' power supply is switched off entirely (a harder cutoff
+// than just dimming brightness). The radar signal can come from a LOCAL RADAR_PIN sensor (if wired -
+// takes priority) or from mqttRadarON (a remote/MQTT-published radar state, see mqtt.ino's master/
+// slave radar sharing). If prm.enableRadar is off, radarON is forced true (always powered) regardless
+// of any radar input.
 void checkTubePowerOnOff(void) {
     static unsigned long lastRun = 0;
-    
+
     if ((millis()-lastRun)<500) return;
     lastRun = millis();
-    
+
     boolean newP = mqttRadarON;
     if (RADAR_PIN >=0) {   //if local RADAR is defined, it has priority
       newP = digitalRead(RADAR_PIN);
-    } 
+    }
     if (!radarON && newP) {   //check, is switching ON?
       DPRINTLN("RADAR: Switching ON tubes.");
     }
@@ -2806,7 +3103,13 @@ void checkTubePowerOnOff(void) {
 //Calculation parameters are defined in clocks.h
 //https://www.pcboard.ca/ldr-light-dependent-resistor
  
-int luxMeter(void) {    
+// Converts a raw ADC reading from an LDR (light-dependent resistor) voltage divider into an
+// approximate lux value, using the LUX_CALC_SCALAR/LUX_CALC_EXPONENT calibration constants from
+// clocks.h (LDR characteristic curve) and a simple exponential smoothing filter (oldLux) to avoid
+// jumpy brightness changes from ADC noise. Returns 0 (a build with no LIGHT_SENSOR_PIN configured)
+// when there's no LDR wired at all - see getLightSensor() below for the BH1750 (digital lux sensor)
+// alternative, which takes priority over this analog LDR path when both are present.
+int luxMeter(void) {
 #if LIGHT_SENSOR_PIN >=0   
   static float oldLux = MAXIMUM_LUX;  
   float ADCdata = analogRead(LIGHT_SENSOR_PIN); //DPRINT("ADC:"); DPRINTLN(ADCdata);
@@ -2820,6 +3123,12 @@ int luxMeter(void) {
 #endif
 }
 
+// Called from loop()/Fdelay() (self-throttled to 500ms) to refresh the global `lx` (ambient lux) and
+// `autoBrightness` (whether auto-dim is actually active) values. Prefers a BH1750 digital sensor if
+// present, falls back to an analog LDR (luxMeter()) if not, and if neither exists forces a fixed
+// MAXIMUM_LUX reading with autoBrightness permanently off (i.e. "auto-dim" silently has no hardware to
+// act on). autoBrightness itself is only ever actually true when prm.enableAutoDim is also set by the
+// user - this function just gates it on hardware presence.
 void getLightSensor(void) {
   static unsigned long lastRun = 0;
   static int oldLx = 0;
@@ -2849,8 +3158,12 @@ void getLightSensor(void) {
   }
 }
 
-void checkWifiMode() {     
-static boolean oldMode = prm.wifiMode;  
+// NOTE: intended to let the web UI's "wifiMode" (STA vs AP) toggle switch the radio mode live, without
+// a reboot - would re-run startNewWifiMode()/startStandaloneMode() whenever prm.wifiMode changes. Its
+// only call site in loop() is commented out (`//checkWifiMode();`), so this is currently dead code;
+// changing prm.wifiMode from the web UI today only takes effect after the next reboot/doReset().
+void checkWifiMode() {
+static boolean oldMode = prm.wifiMode;
 
   if (oldMode != prm.wifiMode) {
     if (prm.wifiMode) {
@@ -2859,10 +3172,13 @@ static boolean oldMode = prm.wifiMode;
       else  {
         startStandaloneMode();
       }
-       oldMode = prm.wifiMode;  
-    }  
+       oldMode = prm.wifiMode;
+    }
 }
 
+// Debug helper: logs to serial whenever any byte of `prm` differs from the last time this was called -
+// a crude way to spot unexpected/unintended settings changes during development. Its only call site in
+// loop() is commented out (`//checkPrm();`), so it is currently dead code / not part of the live build.
 void checkPrm() {
   static byte oldPrm[sizeof(prm)];
   int tmp = memcmp(oldPrm,&prm,sizeof(prm));
@@ -2873,12 +3189,20 @@ void checkPrm() {
 }
 
 
+// Main loop. Deliberately delay()-free (see docs/DEVELOPER_GUIDE.md section 4.2 and the Fdelay()
+// comment above) - every subsystem gets serviced once per iteration: cooperative display refresh
+// (writeDisplay2(), only does anything for non-ISR/"smart chip" drivers), DNS captive-portal service
+// (AP mode only), the clock/sensor/display tick (timeProgram(), itself throttled to ~200ms), RGB/PWM
+// backlight animations, the alarm buzzer, radar-driven tube power, the light sensor, MQTT publish (STA
+// mode + WiFi connected) or WiFi reconnect attempts (STA mode + WiFi down), the RTC manual-editor
+// button scan, and finally any pending OTA-update/cathode-protect request queued by the web server
+// (makeFirmwareUpdate/makeCathodeProtect flags, set from server route handlers which must return
+// quickly and can't run these long operations inline).
 void loop(void) {
   //checkPrm();
   writeDisplay2();
-  if (WiFi.status() != WL_CONNECTED) 
+  if (WiFi.status() != WL_CONNECTED)
     dnsServer.processNextRequest();
-  enableDisplay(3000);
   timeProgram();
   //writeDisplaySingle();
   writeDisplay2();
@@ -2888,7 +3212,7 @@ void loop(void) {
   checkTubePowerOnOff();
   getLightSensor();
   //checkWifiMode();
-  if (prm.wifiMode) { //Wifi Clock Mode
+  if (prm.wifiMode) { //WiFi Clock Mode
     if (WiFi.status() == WL_CONNECTED) {
       if (prm.mqttEnable) mqttSend();
     }
@@ -2908,6 +3232,10 @@ void loop(void) {
   yield();
 }
 
+// Clean reboot: drops the WiFi radio (and, on ESP8266, its TX power) before calling ESP.restart(),
+// which avoids leaving the radio associated to the AP mid-reset. Called after a successful OTA update,
+// from the web admin's POST /reset and /factoryreset routes, and (dead-code path only, see the
+// resetWiFi() NOTE above) from the unreachable end of resetWiFi().
 void doReset(void) {
   DPRINTLN("Restart Clock...");
   #if defined(ESP8266)
@@ -2919,6 +3247,12 @@ void doReset(void) {
   ESP.restart();
 }
 
+// Default empty stand-in for writeDisplay2() - the cooperative (non-ISR) "give the display a chance to
+// refresh" hook called from loop()/Fdelay(). Only VQC10/TUBE1CLOCK/WORDCLOCK actually define a real
+// writeDisplay2() (in their own driver .ino files) because their hardware needs cooperative,
+// non-interrupt-safe timing (e.g. delayMicroseconds() during row scanning) that a hardware-timer ISR
+// can't safely provide; every other driver relies purely on the ISR-based writeDisplay(), so this
+// no-op keeps the call sites unconditional without needing per-driver #ifdef guards everywhere.
 #if defined(VQC10) || defined(TUBE1CLOCK) || defined(WORDCLOCK)
 #else
   void writeDisplay2(void){}  //not interrupt driven display handler

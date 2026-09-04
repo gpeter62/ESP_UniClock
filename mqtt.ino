@@ -1,5 +1,36 @@
 #ifdef USE_MQTT
-//Clock can receive data from a MASTER_CLOCK and send data to other clocks
+//=========================================================================================================================
+// mqtt.ino - Home Assistant / MQTT integration (compiled only if USE_MQTT is defined for the active CLOCK_NN in clocks.h)
+//
+// Library: ArduinoHA (https://github.com/dawidchyrzynski/arduino-home-assistant), which wraps PubSubClient
+//          (https://pubsubclient.knolleary.net/) and adds Home Assistant MQTT Discovery on top of it. Because ArduinoHA
+//          is used, this file never hand-builds HA discovery JSON payloads itself - HADevice/HAMqtt/HASensor below
+//          publish the discovery config topics automatically the first time mqtt.begin()/mqtt.loop() connects.
+//
+// MASTER / SLAVE sensor-sharing architecture (the distinctive part of this subsystem):
+//   Every clock that defines USE_MQTT connects to the same broker (prm.mqttBrokerAddr/User/Psw, set on the web UI) and
+//   PUBLISHES its own local sensors (temperature/humidity/pressure/lux/radar, whichever are physically present - see
+//   HASensor objects below) under a "<MQTT_PREFIX>/sensor/<mac>/..." style topic, discovered via HA MQTT Discovery.
+//   A clock that does NOT have its own sensor (or wants to reuse another clock's reading) can instead be built with
+//   USE_MASTER_CLOCK, and SUBSCRIBE to another clock's already-published topics:
+//     USE_MASTER_TEMP  + MASTER_TEMPERATURE_TOPIC  -> mirrors the master's temperature into local temperature[] array
+//     USE_MASTER_HUMID + MASTER_HUMIDITY_TOPIC     -> mirrors the master's humidity into local humid[] array
+//     USE_MASTER_RADAR + MASTER_RADAR_TOPIC        -> mirrors the master's PIR/radar presence state into mqttRadarON
+//   This lets one "master" clock's physical sensor (e.g. a dedicated sensor box, or a clock with a real radar/PIR
+//   sensor wired to RADAR_PIN) feed several "slave" clocks that have no sensor of their own, purely over MQTT.
+//   IMPORTANT: if a "slave" clock DOES also have its own local RADAR_PIN wired, the local pin always wins - the radar
+//   topic subscription is skipped entirely in onMqttConnected() (see RADAR_PIN>=0 check there), and the core loop's
+//   checkTubePowerOnOff() also prefers digitalRead(RADAR_PIN) over the MQTT-derived mqttRadarON when both exist.
+//   As of the current clocks.h: CLOCK_99 ("Dummy clock, sensor box with MQTT connector") is a pure MASTER/publisher
+//   (USE_MQTT on, USE_MASTER_CLOCK off, has its own RADAR_PIN). CLOCK_26 has USE_MQTT + USE_MASTER_CLOCK +
+//   USE_MASTER_RADAR all on, so it both publishes its own temperature/humidity sensors AND subscribes to another
+//   clock's radar topic. CLOCK_23/CLOCK_23A define the USE_MASTER_* macros too but currently have USE_MQTT commented
+//   out in clocks.h, so for those configs this whole file is compiled out and the master settings are presently inert.
+//
+// Call pattern from the core .ino: setupMqtt() is called once from setup() when USE_MQTT is defined; mqttSend() is
+// called every loop() iteration (but only while WiFi is connected and prm.mqttEnable is set) - it internally rate-limits
+// actual publishes to once every prm.mqttBrokerRefresh seconds, while still pumping mqtt.loop() (which also drives
+// PubSubClient's/ArduinoHA's own reconnect handling) on every call.
 //_______________________________________________________________________________________________________________________
 //To use MQTT services the following settings should be defined in clocks.h
 //#define USE_MQTT
@@ -12,6 +43,8 @@
 //#define MASTER_HUMIDITY_TOPIC    "homeassistant/sensor/10521c5e14c4/humidity/state"
 //#define MASTER_RADAR_TOPIC       "homeassistant/sensor/10521c5e14c4/radar/state"
 //_______________________________________________________________________________________________________________________
+// (the block above is documentation only, shown here as a template of what to copy into a CLOCK_NN section of clocks.h -
+//  none of these #define lines are active in this file; the real values come from clocks.h at compile time.)
 
 //To subscribe to my sensors: You can check it with Chrome browser + MQTTlens addon)  MAC_ADDRESS: for example: 3e090b3e090b
 // homeassistant/sensor/3e090b3e090b/temperature/value
@@ -20,58 +53,91 @@
 // homeassistant/sensor/3e090b3e090b/lux/value
 
 // old solution, now moved to prm.mqttBrokerAddr, available on clock's web page
-//#define BROKER_ADDR      IPAddress(192,168,1,241) 
+//#define BROKER_ADDR      IPAddress(192,168,1,241)
 //#define BROKER_USERNAME  ""        //moved to prm.mqttBrokerUser
 //#define BROKER_PASSWORD  ""        //moved to mqttBrokerPsw
 //_______________________________________________________________________________________________________________________
+// Credential handling: broker IP/user/password are NOT compile-time constants (see the commented-out BROKER_* macros
+// above, kept only as historical documentation) - they live in prm.mqttBrokerAddr/mqttBrokerUser/mqttBrokerPsw, which
+// are persisted settings editable from the clock's own web UI (and read here in setupMqtt()/mqttSend()). This lets a
+// user point any already-flashed clock at a different broker without recompiling.
+// SECURITY: factoryReset() in the core .ino seeds these with a hardcoded default
+// (strcpy(prm.mqttBrokerAddr,"10.10.0.202"); strcpy(prm.mqttBrokerUser,"mqtt"); strcpy(prm.mqttBrokerPsw,"mqtt")) -
+// i.e. a real broker IP and a trivial user/password baked into the firmware as the out-of-the-box default. Not this
+// file's code, but directly relevant here since it is exactly the credential pair mqttSend()/setupMqtt() use below.
 
 #include <ArduinoHA.h>   //https://github.com/dawidchyrzynski/arduino-home-assistant
 //https://pubsubclient.knolleary.net/     https://github.com/knolleary/pubsubclient
 
 #if !defined(MQTT_PREFIX)
-  #define MQTT_PREFIX "UniClock32"
+  #define MQTT_PREFIX "UniClock32"   //used both as the HA discovery prefix and as the first path segment of this device's own published topics
 #endif
 
-byte mac[6];
-char masterTemperatureTopic[80] = "";
-char masterHumidityTopic[80] = "";
-char masterRadarTopic[80] = "";
+byte mac[6];                          //this device's WiFi MAC, used as a per-device unique ID/topic segment (see setupMqtt())
+char masterTemperatureTopic[80] = ""; //resolved from MASTER_TEMPERATURE_TOPIC (clocks.h) if USE_MASTER_CLOCK/USE_MASTER_TEMP is used - topic this clock SUBSCRIBES to
+char masterHumidityTopic[80] = "";    //resolved from MASTER_HUMIDITY_TOPIC (clocks.h) if USE_MASTER_CLOCK/USE_MASTER_HUMID is used - topic this clock SUBSCRIBES to
+char masterRadarTopic[80] = "";       //resolved from MASTER_RADAR_TOPIC (clocks.h) if USE_MASTER_CLOCK/USE_MASTER_RADAR is used - topic this clock SUBSCRIBES to
 
+// Index into the shared temperature[]/humid[] arrays (declared in the core .ino, up to 6 slots) reserved for the
+// MASTER clock's mirrored reading, so the rest of the firmware (display rotation, web UI, etc.) can treat the
+// MQTT-sourced master reading exactly like one more local sensor. Assigned in setupMqtt() as "next free slot"
+// (useTemp/useHumid BEFORE incrementing) - despite the doc comment above saying "this will be the sensor#0", it is
+// only actually sensor#0 if this clock has no other local temperature/humidity sensor already counted.
 byte MASTERtempPtr=0;
 byte MASTERhumidPtr=0;
 
 WiFiClient client;
 HADevice device;
-HAMqtt mqtt(client, device);
-//Sensors of local clock, to send data:
+HAMqtt mqtt(client, device);   //ArduinoHA wrapper around PubSubClient; mqtt.loop() also drives PubSubClient's own reconnect/keepalive handling
+//Sensors of local clock, to send data (each one auto-publishes its HA MQTT Discovery config the first time it connects):
 HASensor mqttTemp("temperature");
 HASensor mqttHumid("humidity");
 HASensor mqttPress("pressure");
 HASensor mqttLux("lux");
 HASensor mqttRadar("radar");
 
+// This is the SLAVE side of the master/slave architecture: called by ArduinoHA/PubSubClient whenever a message
+// arrives on any topic this clock is subscribed to (see onMqttConnected() below for what gets subscribed - only
+// the MASTER_* topics selected via USE_MASTER_TEMP/USE_MASTER_HUMID/USE_MASTER_RADAR in clocks.h). The payload is
+// the raw value published by the MASTER clock's own mqttSend()/HASensor.setValue() (a plain ASCII number for
+// temperature/humidity, "0"/"1" for radar - matching HASensor's default text encoding).
 void onMqttMessage(const char* topic, const uint8_t* payload, uint16_t length) {
   float tempTMP,humidTMP;
   char tmp[100];
     // This callback is called when message from MQTT broker is received.
     // Please note that you should always verify if the message's topic is the one you expect.
     // For example: if (memcmp(topic, "myCustomTopic") == 0) { ... }
-    
+
     DPRINT("New message on topic: ");    DPRINT(topic);
 
+    // POSSIBLE BUG: `length` (the broker-reported payload size) is copied into the fixed 100-byte `tmp` buffer with
+    // no bounds check - a payload of 100 bytes or more (e.g. a misconfigured/malicious publisher on the same topic)
+    // overflows `tmp` on the stack. Also, memcpy() does NOT null-terminate `tmp`: it is used afterwards as a C string
+    // (DPRINTLN(tmp), atof(tmp), tmp[0]) with whatever byte happens to follow the copied data in memory, which is
+    // undefined behavior if that byte isn't already '\0'. A `if (length >= sizeof(tmp)) length = sizeof(tmp)-1;`
+    // guard plus `tmp[length] = '\0';` after the memcpy would fix both issues.
     memcpy(tmp,payload,length);
     DPRINT("  Data: ");    DPRINTLN(tmp);
+    // Topic match: compares up to sizeof(masterTemperatureTopic) (80, the fixed buffer size) bytes rather than the
+    // actual topic length. This still behaves like strcmp() in practice because strncmp() stops as soon as it hits
+    // the '\0' terminator on either side, but it is fragile - if MASTER_TEMPERATURE_TOPIC in clocks.h were ever 80
+    // characters or longer, strncpy() in setupMqtt() would not null-terminate masterTemperatureTopic, and this
+    // comparison could silently misbehave. Using strcmp(topic, masterTemperatureTopic) would be more robust.
     if ((strlen(masterTemperatureTopic)>0) && (strncmp(topic,masterTemperatureTopic,sizeof(masterTemperatureTopic)) ==0)) {
       tempTMP = atof(tmp);
-      temperature[MASTERtempPtr] = tempTMP;
+      temperature[MASTERtempPtr] = tempTMP;   //overwrite the reserved "master" slot in the shared temperature[] array (see MASTERtempPtr above)
       DPRINT("MASTER clock's temperature:"); DPRINTLN(tempTMP);
     }
     if ((strlen(masterHumidityTopic)>0) && (strncmp(topic,masterHumidityTopic,sizeof(masterHumidityTopic)) ==0)) {
       humidTMP = atof(tmp);
       DPRINT("MASTER clock's humidity:"); DPRINTLN(humidTMP);
-      humid[MASTERhumidPtr] = humidTMP;
+      humid[MASTERhumidPtr] = humidTMP;       //overwrite the reserved "master" slot in the shared humid[] array (see MASTERhumidPtr above)
     }
     if ((strlen(masterRadarTopic)>0) && (strncmp(topic,masterRadarTopic,sizeof(masterRadarTopic)) ==0)) {
+       // Master clock's radar/PIR presence state, mirrored into mqttRadarON (and radarON) so the rest of the
+       // firmware (night animation, tube power on/off, etc.) reacts to it exactly like a local sensor reading.
+       // We only ever get here if this clock did NOT subscribe to the radar topic due to having its own local
+       // RADAR_PIN (see the RADAR_PIN>=0 guard in onMqttConnected() below) - local hardware always wins.
        DPRINT("MASTER radar:"); DPRINTLN(tmp[0]);
        if (tmp[0] == '0')  {
          mqttRadarON = false;
@@ -83,11 +149,14 @@ void onMqttMessage(const char* topic, const uint8_t* payload, uint16_t length) {
          radarLastOn = millis();
        }
        DPRINT("mqttRadarON:"); DPRINTLN(mqttRadarON);
- 
+
     }
     //mqtt.publish("myPublishTopic", "hello");
 }
 
+// Called by ArduinoHA once the broker connection (re)establishes - this is where the SLAVE side actually subscribes
+// to the MASTER clock's topics. Runs again on every reconnect (not just the first connect), so subscriptions survive
+// broker restarts/WiFi drops without any extra logic needed in mqttSend().
 void onMqttConnected() {
     DPRINTLN("Connected to the broker!");
     // You can subscribe to custom topic if you need
@@ -112,8 +181,12 @@ void onMqttConnected() {
         }
       #endif
       #ifdef USE_MASTER_RADAR
+        // WHY: if this clock has its own physical radar/PIR sensor wired to RADAR_PIN, that local reading always
+        // takes priority (see checkTubePowerOnOff() in the core .ino, which prefers digitalRead(RADAR_PIN) over
+        // mqttRadarON when both exist). So there is no point subscribing to the master's radar topic at all in that
+        // case - onMqttMessage()'s radar branch would just be mirrored into a value nothing ever reads.
         if (RADAR_PIN>=0) {
-         DPRINTLN(F("Local radar enabled! MQTT MASTER radar disabled!"));  
+         DPRINTLN(F("Local radar enabled! MQTT MASTER radar disabled!"));
         }
         else {
           if (strlen(masterRadarTopic)==0) {
@@ -125,7 +198,7 @@ void onMqttConnected() {
           }
         }
       #endif
-    #endif  
+    #endif
 }
 
 void setupMqtt() {

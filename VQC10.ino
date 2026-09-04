@@ -1,3 +1,28 @@
+// ============================================================================
+// VQC10 driver
+// ----------------------------------------------------------------------------
+// Drives 8x VQC10 tubes/modules, each a 5x7 dot-matrix (LED or VFD-style)
+// character display (see Datasheets/VQC10_Funkamateur.pdf and
+// "VQC10 timing.jpeg" for the original hardware reference - VQC10 is an
+// Eastern-European 5x7 dot-matrix indicator tube, not a classic 7-segment
+// Nixie/VFD tube). Because each character cell is a dot matrix rather than
+// a fixed set of segments, this driver renders full ASCII text (via the
+// bitmap _font[] table below) instead of just digits.
+//
+// Wiring / protocol: the 8 character cells are driven through a chain of
+// 74HC595 serial-in/parallel-out shift registers (latchPin=RCK/STCP,
+// clockPin=SCK/SHCP, dataPin=DIN/SER - classic 3-wire SPI-like shift-out,
+// no MISO). Unlike most other drivers in this project (which multiplex
+// digit-by-digit), the VQC10 hardware is scanned ROW-by-ROW: for every one
+// of the NUMROWS=7 dot-rows, the column data for all NUMDIGITS=8 characters
+// is shifted out and latched digit-by-digit, then a single row-select line
+// is pulsed on for a PWM-timed on-period before moving to the next row.
+// Refresh timing is fully cooperative/blocking (see writeDisplay2() below)
+// rather than driven from the hardware timer ISR - see the note above
+// writeDisplay() for why.
+//
+// Used by clocks.h configuration(s): CLOCK_71 ("2x VQC10 clock by UNFI").
+// ============================================================================
 #ifdef VQC10
 char tubeDriver[] = "VQC10";
 #define NUMDIGITS 8
@@ -11,22 +36,31 @@ int maxDigits = NUMDIGITS;
 //#define D5pin  14
 
 
-#define NUMCOLS 5
-#define NUMROWS 7
+#define NUMCOLS 5   // font glyph width in dots (columns per character cell)
+#define NUMROWS 7   // font glyph height in dots (rows per character cell) - also the number of physical row-select lines scanned in writeDisplay2()
 
-boolean _upsidedown = false;
-byte row[NUMROWS];
+boolean _upsidedown = false;  // flips the dot-matrix rendering 180 degrees (for tubes mounted upside down); never set to true anywhere in this codebase - effectively dead/unused, kept for parity with wordclock.ino which shares this same font/transpose code
+byte row[NUMROWS];    // scratch buffer filled by show()/transposePattern(): one row-bitmap per dot-row for the character currently being rendered
 
+// Maps the shared digit[]/newDigit[] buffer codes (see core file: 0-9=digit, 10=BLANK,
+// 11=minus, 12=decimal point, 13+=driver-specific extra glyphs) to an index into the
+// ASCII-ordered _font[] table below, i.e. this converts the generic "digit code" alphabet
+// used by the core firmware into actual character codes this driver can render.
 char asciiConvert[] = "0123456789 -.APC~%oIF";
-char DPchar = 0xFF;  //decimal point
+char DPchar = 0xFF;  //decimal point - index of the dedicated 1-dot "decimal point" glyph appended at the very end of _font[] (see 0xFF entry below)
 
-char cDigit[NUMDIGITS+1] = "76543210";
-byte  dat[NUMDIGITS][NUMROWS];
-byte  oldDat[NUMDIGITS][NUMROWS];
-byte  newDat[NUMDIGITS][NUMROWS];
+char cDigit[NUMDIGITS+1] = "76543210";  // NOTE: declared/initialized but never referenced anywhere else in this file or the project - dead code (candidate for removal)
+byte  dat[NUMDIGITS][NUMROWS];     // final row-bitmaps actually shifted out to hardware (post-animation-blend result)
+byte  oldDat[NUMDIGITS][NUMROWS];  // row-bitmaps for the outgoing (old) character, built fresh each writeDisplaySingle() call
+byte  newDat[NUMDIGITS][NUMROWS];  // row-bitmaps for the incoming (new) character, built fresh each writeDisplaySingle() call
 
-// standard ascii 5x7 font incl. the IPM-PC extension:
+// standard ascii 5x7 font incl. the IBM-PC extension:
 // already defined in DotMatrx5x7.h
+// Format: NUMCOLS(5) bytes per glyph, indexed as glyph_code*NUMCOLS in show() above; each
+// byte is one column of the cell, with dot rows packed in its low NUMROWS(7) bits (bit0=row0
+// top .. bit6=row6 bottom in normal orientation). Glyph 0xFF at the very end of the table is
+// repurposed as a dedicated "decimal point" glyph (see DPchar above) rather than a real
+// character, so it only lights a single dot instead of a printable symbol.
 //#define aUML "\x84" // ä = 0x84
 //#define oUML "\x94" // ö = 0x94
 //#define uUML "\x81" // ü = 0x81
@@ -280,7 +314,7 @@ byte  _font[] = {
   0xBC, 0x62, 0x5A, 0x46, 0x3D, // 0xED empty set
   0x3E, 0x49, 0x49, 0x49, 0x00, // 0xEE epsilon
   0x7E, 0x01, 0x01, 0x01, 0x7E, // 0xEF
-  0x2A, 0x2A, 0x2A, 0x2A, 0x2A, // 0xF0 eqivalence
+  0x2A, 0x2A, 0x2A, 0x2A, 0x2A, // 0xF0 equivalence
   0x44, 0x44, 0x5F, 0x44, 0x44, // 0xF1 plus minus
   0x40, 0x51, 0x4A, 0x44, 0x40, // 0xF2 greater or equal
   0x40, 0x44, 0x4A, 0x51, 0x40, // 0xF3 less or equal
@@ -295,8 +329,8 @@ byte  _font[] = {
   0x00, 0x1F, 0x01, 0x01, 0x1E, // 0xFC
   0x00, 0x19, 0x1D, 0x17, 0x12, // 0xFD power of two
   0x00, 0x3C, 0x3C, 0x3C, 0x3C, // 0xFE blob
-  //0x00, 0x00, 0x00, 0x60, 0x60, // // 0xFF: Decimal point: 4 points
-  0x00, 0x00, 0x00, 0x00, 0x40, // // 0xFF: Decimal point, only 1 point
+  //0x00, 0x00, 0x00, 0x60, 0x60, // 0xFF: Decimal point: 4 points
+  0x00, 0x00, 0x00, 0x00, 0x40, // 0xFF: Decimal point, only 1 point
 };
 
 void setup_pins() {
@@ -304,13 +338,20 @@ void setup_pins() {
   pinMode(latchPin, OUTPUT);  regPin(latchPin,"latchPin");
   pinMode(dataPin,OUTPUT);    regPin(dataPin,"dataPin");
   pinMode(clockPin,OUTPUT);   regPin(clockPin,"clockPin");
-  pinMode(D5pin,INPUT);       regPin(D5pin,"D5pin");
-  digitsOnly = false;
-  asciiConvert[16] = 9;
+  pinMode(D5pin,INPUT);       regPin(D5pin,"D5pin");  // NOTE: configured and registered but never read anywhere in this driver or the core file - purpose (spare sensor/button input?) is undocumented, see open questions
+  digitsOnly = false;   // this driver can render full ASCII text (dot-matrix font), not just 0-9, so let the core firmware know
+  asciiConvert[16] = 9; // runtime override: digit-buffer code 16 (originally mapped to '~' above) is remapped to raw font index 9 ("small empty circle" glyph, see _font table) for a driver-specific extra symbol
+  // Deliberately does NOT call startTimer() here (unlike most other drivers): the hardware
+  // timer ISR (writeDisplay(), see below) is intentionally a no-op for VQC10, and indeed
+  // startTimer() is never invoked anywhere for this driver in the whole project. All actual
+  // refresh work happens cooperatively via writeDisplay2(), called repeatedly from loop()/
+  // Fdelay() in the core file - see the comment above writeDisplay() for why.
 }
 
 void inline shiftOutForward(byte myDataOut) {
   // This shifts 8 bits out MSB first, on the rising edge of the clock, clock idles low
+  // Used for the "digit select" (Z) and "row select" shift-register bytes, whose bit
+  // order must match how those select lines are physically wired to the 74HC595 outputs.
   for (int i=7; i>=0; i--)  {
     digitalWrite(clockPin, 0);
     digitalWrite(dataPin, myDataOut & (1<<i)); //register shifts bits on upstroke of clock pin
@@ -321,6 +362,10 @@ void inline shiftOutForward(byte myDataOut) {
 
 void inline shiftOutReverse(byte myDataOut) {
   // This shifts 8 bits out LSB first, on the rising edge of the clock, clock idles low
+  // Used for the pixel/column DATA byte only - the opposite bit order from
+  // shiftOutForward() is required here because the data byte travels through the same
+  // shift-register chain but ends up latched onto a different (mirrored) set of output
+  // pins than the select bytes; using the wrong helper here would mirror the glyph.
   for (int i=0; i<8; i++)  {
     digitalWrite(clockPin, 0);
     digitalWrite(dataPin, myDataOut & (1<<i)); //register shifts bits on upstroke of clock pin
@@ -331,14 +376,28 @@ void inline shiftOutReverse(byte myDataOut) {
 
 
 
-#define PWMrefresh 8000l
+#define PWMrefresh 8000l  // NOTE: defined but not referenced anywhere in this file - dead macro (leftover from an earlier PWM implementation?)
 
+// Required interface stub only: the hardware timer ISR that drives every other driver's
+// multiplex refresh is intentionally left EMPTY for VQC10. The real refresh (writeDisplay2()
+// below) needs delayMicroseconds() calls per row for PWM brightness dimming, which is far too
+// slow/blocking to run safely inside a timer ISR context. Instead, writeDisplay2() is called
+// cooperatively from the main loop() and from Fdelay() in the core file. Consistent with this,
+// setup_pins() above never calls startTimer(), so this ISR is in fact never even attached for
+// this driver - it exists purely to satisfy the common driver interface (extern declaration in
+// the core file, and the VQC10 special-case in changeDigit()'s animation code).
 void ICACHE_RAM_ATTR writeDisplay() {}
 
 
 int PWM_min = 0;
-int PWM_max = 800;
+int PWM_max = 800;  // row on-time ceiling in microseconds, at full brightness (see PWMtimeBrightness below)
 
+// Blocking, cooperative multiplex refresh for the whole 8x5x7 display - one full call
+// scans every row once. Called repeatedly from loop()/Fdelay() in the core file (NOT from
+// an ISR - see the note above writeDisplay()). Brightness is implemented as simple PWM: each
+// row is held "on" for PWMtimeBrightness microseconds out of a PWM_max budget, then forced
+// off for the remainder, so total per-row time is constant regardless of brightness (keeps
+// the row scan rate/refresh flicker frequency stable while only the mark/space ratio changes).
 void writeDisplay2() {
 static  int PWMtimeBrightness;
 //static uint32_t refresh = 0;
@@ -347,8 +406,8 @@ static  int PWMtimeBrightness;
 boolean offState;
 int brightness;
 int iRow,loopMax;
-  
-  
+
+
   //refresh = millis()-laststart;
   //laststart = millis();
   //runtim = laststart;
@@ -356,53 +415,84 @@ int iRow,loopMax;
   brightness = displayON ? prm.dayBright : prm.nightBright;
   if (brightness>MAXBRIGHTNESS) brightness = MAXBRIGHTNESS;  //only for safety
 
-  if (autoBrightness && displayON) {  
-    PWMtimeBrightness = max(PWM_min,PWM_max*lx/MAXIMUM_LUX);
+  if (autoBrightness && displayON) {
+    PWMtimeBrightness = max(PWM_min,PWM_max*lx/MAXIMUM_LUX);  // ambient-light-driven dimming: scale row on-time by measured lux vs. MAXIMUM_LUX
     }
   else
-    PWMtimeBrightness = max(PWM_min,PWM_max*brightness/MAXBRIGHTNESS);
-  
+    PWMtimeBrightness = max(PWM_min,PWM_max*brightness/MAXBRIGHTNESS);  // manual brightness: scale row on-time by configured day/night brightness level
+
   iRow = 0;
-  loopMax = maxDigits;
+  // FIXED (was "loopMax = maxDigits;", i.e. NUMDIGITS=8): this loop indexes dot-matrix ROWS, which
+  // only range 0..NUMROWS-1 (NUMROWS=7, i.e. dat[i] is sized [NUMROWS]=[7]), not digit columns. The
+  // old bound made the loop run iRow = 0..7 (8 iterations) instead of 0..6 (7 iterations), so on the
+  // last iteration (iRow==7) "dat[i][iRow]" below read one element past the end of each digit's
+  // 7-byte row array - for i<NUMDIGITS-1 this silently read dat[i+1][0] (the next digit's row-0
+  // data, due to row-major layout) instead of a real row-7 pattern, and for the last digit
+  // (i==NUMDIGITS-1) it read out of the whole `dat` array into whatever memory followed it
+  // (oldDat[0][0]). It also drove a nonexistent 8th row-select line via shiftOutForward(~(1<<iRow))
+  // below. Net effect was an extra, garbage 8th "row" scanned on every refresh - flicker/ghosting
+  // risk and a stolen slice of the row-time PWM budget.
+  loopMax = NUMROWS;
   do {
-  offState = ( (brightness == 0) || (!radarON) || (iRow == maxDigits));  
- 
+  // NOTE: the "iRow == maxDigits" term here can never be true (maxDigits==NUMDIGITS==8, but iRow now
+  // only ever reaches up to NUMROWS-1==6 before the loop exits via `while(iRow<loopMax)`) - it looks
+  // like it was meant to add an extra "sync/blank" row at the end of each sweep, but as written it's
+  // dead weight in the OR. Left as-is (not an out-of-bounds/indexing issue, just an inert condition).
+  offState = ( (brightness == 0) || (!radarON) || (iRow == maxDigits));
+
   for (int i=0;i<NUMDIGITS;i++) { //fill one line with dots
+      // Two-phase shift+latch per digit: first phase asserts this digit's select line
+      // together with its row data; the second phase re-latches the SAME data but with
+      // ALL digit-select lines forced back off (0xFF = all deselected, active-low select).
+      // This immediately blanks the just-lit digit again before the loop moves on to the
+      // next one, which prevents the still-settling row data from bleeding/ghosting onto
+      // the previously selected digit while the next digit's select+data is being shifted
+      // in (VFD/tube grids can retain enough charge to glow briefly if left selected while
+      // data changes underneath them).
       shiftOutForward(0xFF);     //deselect Z
       shiftOutForward(~(1<<i));  //select digit
       shiftOutReverse(offState ? 0 : dat[i][iRow]);  // set data line
       digitalWrite(latchPin, HIGH); //Write shift register to latch
-      digitalWrite(latchPin, LOW);   
+      digitalWrite(latchPin, LOW);
       asm volatile ("nop");
-      
+
       //Finish latching
       shiftOutForward(0xFF);   //deselect Z
       shiftOutForward(0xFF);  //All digit select lines are HIGH
       shiftOutReverse(offState ? 0 : dat[i][iRow]);  //keep data line
       digitalWrite(latchPin, HIGH); //Write shift register to latch
-      digitalWrite(latchPin, LOW); 
+      digitalWrite(latchPin, LOW);
       asm volatile ("nop");
   }
 
+  // All 8 digits now hold row iRow's column data latched into their driver ICs (but with
+  // digit-select left off from the blanking step above). Now pulse on the single row-select
+  // line for this row - this is what actually makes the row iRow of every digit light up
+  // simultaneously - for a PWM-timed on-period, implementing brightness control.
   shiftOutForward(~(1<<iRow)); //enable row
   shiftOutForward(0xFF);     //All digit select lines are HIGH
   shiftOutForward(0);        //anything
   digitalWrite(latchPin, HIGH); //Write shift register to latch
   digitalWrite(latchPin, LOW);
-  if (!offState) 
+  if (!offState)
     delayMicroseconds(PWMtimeBrightness);
   else
-    delayMicroseconds(PWM_max-PWMtimeBrightness);  
-  
+    delayMicroseconds(PWM_max-PWMtimeBrightness);
+
   iRow++;
   } while(iRow<loopMax);
-    
+
   //runtim = millis()-runtim;
-  //DPRINT(refresh); DPRINT("/"); DPRINTLN(runtim); 
-  yield();
+  //DPRINT(refresh); DPRINT("/"); DPRINTLN(runtim);
+  yield();  // hand control back to the RTOS/WiFi stack between refresh passes - important since this whole function runs blocking on the main loop, not in an ISR
 }
 
 
+// Looks up character c's glyph in the column-major _font[] table (5 bytes per glyph, one
+// byte per column, each byte's low 7 bits = one dot per row) and converts it into the
+// row-major representation (row[NUMROWS], one byte per row, one bit per column) that the
+// row-scanned hardware needs. c is a plain ASCII code (0x00-0xFF), already translated from
+// the core firmware's digit-buffer code via asciiConvert[] by the caller.
 void show(byte c){
   byte loccol[NUMCOLS];
   for (byte i=0; i < NUMCOLS; i++)
@@ -410,6 +500,15 @@ void show(byte c){
   transposePattern(loccol,row);
 }
 
+// Transposes a column-major 5x7 glyph (cols[NUMCOLS], one bit per row within each column
+// byte) into a row-major bitmap (rows[NUMROWS], one bit per column within each row byte).
+// Each output row byte ends up with its NUMCOLS=5 column bits packed into bits [2..6]
+// (via the final "<< (7-NUMCOLS)" shift), bit0/bit1/bit7 left as 0 - this alignment must
+// match how those bits are wired through the 74HC595 chain to the physical column drivers.
+// When _upsidedown is set, both the row scan direction (cmask shifted right instead of
+// left, starting from bit6 instead of bit0) and the column read order are reversed, giving
+// a full 180-degree flip for tubes mounted upside down (see _upsidedown declaration above -
+// currently unused/dead in this project, always false).
 void transposePattern(byte cols[], volatile byte rows[]){
   byte cmask;
   cmask = (_upsidedown ? 0x40 : 1);
@@ -425,6 +524,7 @@ void transposePattern(byte cols[], volatile byte rows[]){
   }
 }
 
+// Debug helper: prints one byte as 8 ASCII '0'/'1' characters (MSB first).
 void bPrint(byte in) {
   for (int i=7;i>=0;i--) {
     boolean b = in & (1<<i);
@@ -432,6 +532,9 @@ void bPrint(byte in) {
   }
 }
 
+// Debug helper: dumps the current dat[][] buffer (the exact bitmap about to be scanned out
+// by writeDisplay2()) to Serial as ASCII art, for bring-up/troubleshooting. Not called in
+// normal operation (see the commented-out call at the end of writeDisplaySingle() below).
 void printBitmap() {  //print bitmap for testing
   for (int j=0;j<NUMROWS;j++) {
     for (int i=0;i<NUMDIGITS;i++) {
@@ -443,55 +546,79 @@ void printBitmap() {  //print bitmap for testing
 }
 
 
+// No-op: unlike several other drivers, VQC10 has no dedicated "all outputs off" hardware
+// shortcut here - blanking a digit position is instead achieved through the normal buffer
+// path by writing digit-buffer code 10 (BLANK) into digit[]/newDigit[], which asciiConvert[]
+// maps to a space character (empty glyph). The core .ino no longer calls clearTubes() from
+// anywhere at all (its former caller, disableDisplay(), has been removed entirely as dead code),
+// so this stub is purely for interface compliance at this point.
 void clearTubes() {}
 
+// Blocking, one-shot render: rebuilds oldDat[]/newDat[] (bitmaps for the outgoing and
+// incoming character of every digit position) from the shared digit[]/newDigit[] buffers,
+// then blends them into dat[] according to each position's animMask[] wipe-animation
+// progress. dat[] is what writeDisplay2() actually scans out to the hardware - this
+// function does not touch the hardware itself.
 void writeDisplaySingle() {
   char dispChar;
-  byte tubeShift[] = {3,2,1,0,7,6,5,4}; 
+  // Physical-to-logical digit position remapping: the 8 cells are wired/driven as two
+  // groups of 4 in reverse order (3,2,1,0 then 7,6,5,4), consistent with two physical
+  // VQC10 modules (see CLOCK_71 "2x VQC10 clock") each internally mirrored/chained back to
+  // front relative to the logical left-to-right digit[]/newDigit[] buffer order.
+  byte tubeShift[] = {3,2,1,0,7,6,5,4};
   byte a;
-  for (int i=0;i<NUMDIGITS;i++) {   //generate new line
+  for (int i=0;i<NUMDIGITS;i++) {   //generate new line  -- NOTE: comment says "new" but this loop actually builds oldDat[] (the OUTGOING/current character) from digit[]; see the next loop for newDat[]/newDigit[]. Comment/variable naming appears swapped from actual old/new roles, though the logic itself is correct (oldDat<-digit[], newDat<-newDigit[] matches the core file's old/new buffer convention).
     dispChar = digit[tubeShift[i]];
-    if (dispChar<sizeof(asciiConvert)) dispChar = asciiConvert[(byte)dispChar]; 
-    show(dispChar); 
+    if (dispChar<sizeof(asciiConvert)) dispChar = asciiConvert[(byte)dispChar];  // translate digit-buffer code to ASCII via asciiConvert[]; note dispChar is signed char compared against unsigned sizeof() - harmless here since digit-buffer codes are always small non-negative values, but a latent signed/unsigned mismatch
+    show(dispChar);
     for (int k=0;k<NUMROWS;k++) {
       oldDat[i][k] = row[k];
     }
     if (digitDP[tubeShift[i]]) {
-      show(DPchar); 
+      show(DPchar);  // overlay the decimal-point/separator dot glyph
       for (int k=0;k<NUMROWS;k++) {
-        oldDat[i][k] |= row[k];
+        oldDat[i][k] |= row[k];  // OR the DP dot pattern onto the character pattern so both render together in the same cell
       }
     }
   }
-  for (int i=0;i<NUMDIGITS;i++) {  //generate old line
+  for (int i=0;i<NUMDIGITS;i++) {  //generate old line  -- NOTE: comment says "old" but this loop builds newDat[] (the INCOMING/target character) from newDigit[]; see note on the previous loop.
     dispChar = newDigit[tubeShift[i]];
-    if (dispChar<sizeof(asciiConvert)) dispChar = asciiConvert[(byte)dispChar]; 
-    show(dispChar); 
+    if (dispChar<sizeof(asciiConvert)) dispChar = asciiConvert[(byte)dispChar];
+    show(dispChar);
     for (int k=0;k<NUMROWS;k++) {
       newDat[i][k] = row[k];
     }
     if (digitDP[tubeShift[i]]) {
-      show(DPchar); 
+      show(DPchar);
       for (int k=0;k<NUMROWS;k++) {
         newDat[i][k] |= row[k];
       }
     }
   }
 
+  // Vertical wipe/scroll transition: blend oldDat[] and newDat[] into dat[] based on
+  // animMask[] (set by the core file's changeDigit() animation state machine, incrementing
+  // roughly 1..19 over the transition - see the VQC10 special-case in that function). a=0
+  // means no animation in progress yet (show old character unchanged); as a increases
+  // (halved and capped to NUMROWS-1=7 dot-rows) the display effectively scrolls the old
+  // character's rows upward out of view while the new character's rows scroll in from the
+  // bottom, row-by-row, producing a smooth vertical wipe rather than an instant character
+  // swap (this is the driver-specific animation timing referenced by the VQC10 special-case
+  // in the core file's changeDigit()).
   for (int i=0;i<NUMDIGITS;i++) {  //combine animation
     a = animMask[tubeShift[i]]/2;   if (a>7) a=7;
     for (int k=0;k<NUMROWS;k++) {
       if (a==0) dat[i][k] = oldDat[i][k];
       else {   //Animation!!!
-        if ((a+k)<NUMROWS) { 
-          dat[i][k] = oldDat[i][k+a];   
+        if ((a+k)<NUMROWS) {
+          dat[i][k] = oldDat[i][k+a];   // still within old character's remaining (not yet scrolled out) rows
         }
         else {
-          dat[i][k] = newDat[i][(k+a)-NUMROWS];
+          dat[i][k] = newDat[i][(k+a)-NUMROWS];  // wrapped past the bottom: pull in rows of the new character instead
         }
       }  //endif Animation!!
     } //end for i
-  } //end for 
+  } //end for
   //printBitmap();
 }
 

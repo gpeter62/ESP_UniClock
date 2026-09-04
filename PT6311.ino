@@ -1,18 +1,53 @@
 #ifdef PT6311
-//CLOCK_17 
+//===========================================================================================
+// Driver for the Princeton Technology PT6311 VFD controller/driver IC.
+//
+// Hardware / protocol:
+//   The PT6311 is a "smart" VFD grid/segment controller: unlike a dumb shift-register driver
+//   (e.g. MAX6921) it contains its own display RAM and internal multiplex/scan generator, so
+//   the MCU only has to push a full frame into it after something changes -- the chip itself
+//   keeps refreshing the tubes autonomously in the background. That is why writeDisplay()
+//   (the timer-ISR hook used by "dumb" drivers) is an empty stub here and setup_pins() never
+//   calls startTimer(): there is no ISR-driven multiplex loop for this driver, all display
+//   updates go through the blocking writeDisplaySingle().
+//   3-wire serial bus (similar to SPI, chip-specific framing):
+//     PIN_LOAD (STB/CS) - LOW while a command/data byte is being shifted in, HIGH between
+//                          bytes to latch/strobe it. Pulled LOW again for every single byte,
+//                          i.e. each byte shifted is individually framed by its own STB pulse
+//                          (see shift()/sendCommand()/writeDisplaySingle()).
+//     PIN_CLK            - one pulse per bit.
+//     PIN_DIN             - serial data, LSB-first per byte (see shift(): loop starts at
+//                          bit 0), which is the opposite bit order of the MAX6921 driver.
+//   Command bytes (C1..C4) select a mode: C1 sets 8-digit/20-segment display mode, C2 selects
+//   "write display data, auto-increment address", C3 sets the RAM write address, C4 sets
+//   brightness/on-off. Display RAM is addressed per digit in steps of 3 (see
+//   C3_ADDRESS_SETTING + i*3 in writeDisplaySingle()) because the chip reserves 3 bytes per
+//   digit position in its internal RAM regardless of how many of those bits are actually
+//   wired to segments on this PCB.
+//
+// Used by (see clocks.h, search for "#define PT6311"):
+//   CLOCK_17 - ESP8266 + PT6311, 4x IV-22 tubes, "russian clock"
+//===========================================================================================
 char tubeDriver[] = "PT6311";
-int maxDigits = sizeof(digitEnablePins);
+int maxDigits = sizeof(digitEnablePins);  //digitEnablePins is a byte[] (1 byte/element), so sizeof() == element count here
 int wt = 1;   //Serial timing
 
 //#define PIN_CLK  14   //  Clock
 //#define PIN_DIN  13   //  DataIN
-//#define PIN_LOAD 15   //  STB pin 
+//#define PIN_LOAD 15   //  STB pin
 
 #define SEGMENT8   //if not used, 17 segments or more
-//#define TESTMODE   //for testing the segments of a new type VFD modul
+//#define TESTMODE   //for testing the segments of a new type VFD module
 
 //PT6311 Commands
 
+// Display-control command per brightness step 0(OFF)..10. Bits 3-1 of the low nibble select
+// one of the chip's 8 pulse-width/duty codes (000..111); with 10 non-zero UI brightness
+// levels mapped onto only 8 hardware codes, two steps had to collapse onto the same code.
+// POSSIBLE BUG: index 5 and 6 (below) both encode 0B10001100, and index 8 and 9 both encode
+// 0B10001110 -- i.e. brightness levels 5/6 and 8/9 are indistinguishable on the hardware.
+// This may be intentional (skipping a step to line the mapping up some other way) or a
+// copy-paste slip when the table was typed out; worth confirming against the datasheet.
 byte DISPLAY_MODE[11] = {
 	0B00000000,	//OFF
 	0B10001000,	//1
@@ -20,10 +55,10 @@ byte DISPLAY_MODE[11] = {
 	0B10001010,	//3
 	0B10001011,	//4
 	0B10001100,	//5
-	0B10001100,	//6
+	0B10001100,	//6  // POSSIBLE BUG: identical to level 5 above -- see note above the array
 	0B10001101,	//7
 	0B10001110,	//8
-	0B10001110,	//9 
+	0B10001110,	//9  // POSSIBLE BUG: identical to level 8 above -- see note above the array
 	0B10001111,	//10
 };
 
@@ -31,11 +66,15 @@ byte DISPLAY_MODE[11] = {
 #define C2_DATA_SETTING             B01000000  //write data to display, addr increment
 #define C2_DATA_SETTING_TESTMODE    B01001000  //write data to display, addr increment
 #define C3_ADDRESS_SETTING          B11000000  //Address setting to 0
-#define C4_DISPLAY_CONTROL          B10001111  //max brightness, ON
+#define C4_DISPLAY_CONTROL          B10001111  //max brightness, ON  (kept for reference; actual brightness command is looked up from DISPLAY_MODE[] instead)
 
 #ifdef SEGMENT8
 //------------------abcdefgDP----------------   definition of different characters
-
+// 8-bit segment mask per glyph, MSB-first as a,b,c,d,e,f,g,DP (bit7=a .. bit0=DP).
+// Indices 0-9 = digits, 10 = blank, 11 = minus, 12 = decimal point, 13+ = extra glyphs
+// (A,P,C,deg,%%,lower-circle,I,F) -- this indexing matches the digit[]/newDigit[] encoding
+// used by the core firmware (see ESP32_UniClock2.ino), so digit[] values map 1:1 into this
+// table without any translation layer (unlike the ASCII/16-segment branch below).
 #define MAXSEGMENTS 8
 boolean ASCIImode = false;
 byte charDefinition[] = {
@@ -68,6 +107,10 @@ byte charDefinition[] = {
 #define C1_DISPLAY_MODE_SETTING    B00000000  //8 digit, 20 segments
 #define MAXSEGMENTS 17
 boolean ASCIImode = true;
+// Full 16-segment-star + DP font, indexed by ASCII code - 32 (i.e. index 0 = space/0x20).
+// Since digit[]/newDigit[] hold the compact 0-9/BLANK/minus/DP/glyph codes (not ASCII), the
+// ASCIImode path in writeDisplaySingle() first maps digit[i] through asciiConvert[] to get an
+// actual ASCII character, then subtracts 32 to index into this table.
 uint32_t charDefinition[96] = {
   0b00000000000000000, /* (space) */ 
   0b10000000000001100, /* ! */   
@@ -171,10 +214,18 @@ uint32_t charDefinition[96] = {
 #endif
 
 
+// Maps the special glyph codes (BLANK, minus, DP, A,P,C,deg,%,circle,I,F -- digit[] values
+// 10..20) onto printable ASCII characters, used only when ASCIImode is true (16-segment
+// branch) so the digit[i] index can be turned into an ASCII char before it is used to look up
+// charDefinition[]. Note this string is 1:1 positional with the 10..20 glyph codes, i.e.
+// asciiConvert[0] corresponds to digit value 0 ('0'), asciiConvert[10] (' ') to BLANK, etc.
 char asciiConvert[] = "0123456789 -.APC~%oIF";
 
 #define MAXCHARS sizeof(charDefinition)/sizeof(charDefinition[0])
 
+// Bit-bangs one byte out on PIN_DIN/PIN_CLK. NOTE: LSB-first (i starts at 0, tests bit 1<<i
+// from the low end) -- the PT6311 expects the least-significant bit of each command/data byte
+// first, which is the reverse of many other shift-register based drivers in this project.
 void inline shift(byte Data) {
   for (int i=0;i<8;i++) {
     digitalWrite(PIN_CLK,LOW);
@@ -188,6 +239,11 @@ void inline shift(byte Data) {
   }
 }
 
+// Sends a single command/address byte framed by its own STB (PIN_LOAD) pulse: LOW while
+// shifting, HIGH afterwards to latch it into the chip. Used for the C1/C3 setup commands;
+// writeDisplaySingle() below repeats this same LOW/shift/HIGH framing manually per-byte
+// instead of reusing this helper, since it needs to keep PIN_LOAD low across the multi-byte
+// per-digit data burst.
 void ICACHE_RAM_ATTR sendCommand(byte val){    //for commands C1..C3
   digitalWrite(PIN_LOAD,LOW);
   delayMicroseconds(2);
@@ -200,14 +256,18 @@ void ICACHE_RAM_ATTR sendCommand(byte val){    //for commands C1..C3
 
 void setup_pins() {
   DPRINTLN("PT6311 Clock - Setup pins...");
-  pinMode(PIN_LOAD,OUTPUT);   regPin(PIN_LOAD,"PIN_LOAD"); 
-  pinMode(PIN_DIN, OUTPUT);   regPin(PIN_DIN,"PIN_DIN"); 
-  pinMode(PIN_CLK, OUTPUT);   regPin(PIN_CLK,"PIN_CLK"); 
+  pinMode(PIN_LOAD,OUTPUT);   regPin(PIN_LOAD,"PIN_LOAD");
+  pinMode(PIN_DIN, OUTPUT);   regPin(PIN_DIN,"PIN_DIN");
+  pinMode(PIN_CLK, OUTPUT);   regPin(PIN_CLK,"PIN_CLK");
   digitalWrite(PIN_CLK, HIGH);
   digitalWrite(PIN_LOAD, HIGH);
+  // Hardcoded to match the SEGMENT8 charDefinition table currently active above (only digits
+  // + '%' are used by the core when digitsOnly==true, see ESP32_UniClock2.ino). If SEGMENT8
+  // is ever disabled to switch this driver to the 16-segment/ASCIImode table, this should
+  // probably become "digitsOnly = !ASCIImode;" instead of staying hardcoded true.
   digitsOnly = true;
   delay(10);
-  sendCommand(C1_DISPLAY_MODE_SETTING); 
+  sendCommand(C1_DISPLAY_MODE_SETTING);
 }
 
 #if defined(ESP32) 
@@ -216,36 +276,56 @@ void IRAM_ATTR writeDisplaySingle(){
 void ICACHE_RAM_ATTR writeDisplaySingle(){     
 #endif
 byte newBright = 0;
-uint32_t bitBuffer;  
+uint32_t bitBuffer;
 int dispChar;
 static int count = 15;
 
   newBright = displayON ?  prm.dayBright : prm.nightBright;
-  if (newBright>10) newBright = 10;
+  if (newBright>10) newBright = 10;  //clamp: DISPLAY_MODE[] only has 11 entries (indices 0..10)
 
   digitalWrite(PIN_LOAD, LOW);  //safety only
   delayMicroseconds(2);
 
-  sendCommand(C2_DATA_SETTING); 
+  // C2_DATA_SETTING switches the chip into "write display data / auto-increment address"
+  // mode; DISPLAY_MODE[newBright] is then a second command byte (not display data) setting
+  // brightness/on-off -- both are sent back-to-back inside the same PIN_LOAD-low window
+  // opened just above.
+  sendCommand(C2_DATA_SETTING);
   sendCommand(DISPLAY_MODE[newBright]);
-  
+
 for (int i=0;i<maxDigits;i++) {
     dispChar = digit[i];
     if (ASCIImode) {
-      if (dispChar<sizeof(asciiConvert)) dispChar = asciiConvert[dispChar];       
-      dispChar -= 32;                  
+      // FIXED: previously "dispChar -= 32" ran unconditionally, even when the bounds check just
+      // below skipped the asciiConvert[] lookup (dispChar >= sizeof(asciiConvert), or dispChar==21
+      // landing on the string's NUL terminator) - that produced a negative index into
+      // charDefinition[] a few lines down (out-of-bounds read). Now the subtraction only happens
+      // together with a successful lookup; anything unmapped falls back to charDefinition[0], the
+      // blank/space glyph, instead of indexing out of bounds.
+      if (dispChar<sizeof(asciiConvert)-1) {  //-1 excludes the string's NUL terminator (see asciiConvert[] above)
+        dispChar = asciiConvert[dispChar] - 32;
+      } else {
+        dispChar = 0;  //unmapped/out-of-range code -> blank glyph (charDefinition[0])
+      }
     }
     bitBuffer = 0;
     digitalWrite(PIN_LOAD,LOW);
     delayMicroseconds(2);
+    // Address increments by 3 per digit (not 1) -- the PT6311 reserves 3 RAM bytes per digit
+    // position internally (enough for up to 24 segment bits), even though this build only
+    // uses 1-2 of them (MAXSEGMENTS is 8 or 17, see charDefinition table above).
     shift(C3_ADDRESS_SETTING + i*3);  //set display address
-    for (int j=0;j<MAXSEGMENTS;j++)   
+    for (int j=0;j<MAXSEGMENTS;j++)
       if ((charDefinition[dispChar] & (uint32_t)1<<(MAXSEGMENTS-1-j)) != 0) {
-        bitBuffer |= (uint32_t)1<<segmentEnablePins[j]; 
+        bitBuffer |= (uint32_t)1<<segmentEnablePins[j];
         }
-    if (digitDP[i]) bitBuffer |= (uint32_t)1<<segmentEnablePins[7];   //Decimal Point  
+    if (digitDP[i]) bitBuffer |= (uint32_t)1<<segmentEnablePins[7];   //Decimal Point
     //DPRINT(charDefinition[dispChar],BIN); DPRINT(" / "); DPRINTLN(bitBuffer,BIN);
     if (newBright==0) bitBuffer = 0;  //switch OFF display
+    // Always shifts 2 (or 3) bytes per digit regardless of MAXSEGMENTS, even in 8-segment
+    // mode where only the low byte carries real segment bits -- the chip expects a fixed
+    // per-digit byte count matching the RAM stride set above (i*3), so the extra byte(s) of
+    // padding are required protocol filler, not wasted work.
     shift(bitBuffer & 0xFF);
     shift(bitBuffer >>8);
     if (MAXSEGMENTS>16) shift(bitBuffer >>16);
@@ -270,6 +350,12 @@ for (int i=0;i<maxDigits;i++) {
 
 /*********************** Send command without strobe/chip select******************************************/
 
+// No-op: this driver has no timer-ISR multiplex loop (see file header) -- the PT6311 refreshes
+// its own tubes internally, so there is nothing for the periodic writeDisplay() ISR hook to do.
 void writeDisplay() {}
+// clearTubes() is a required part of the common driver interface, but nothing in the core .ino
+// calls it any more (its only former caller, disableDisplay(), has been removed entirely as dead
+// code) - kept as a no-op stub purely for interface compliance. If a synchronous immediate-blank is
+// ever needed again, this would have to actively send an all-blank frame instead.
 void clearTubes() {}
 #endif

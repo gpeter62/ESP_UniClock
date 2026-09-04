@@ -1,3 +1,26 @@
+//============================================================================
+// HV5122 Nixie tube driver (LEGACY / ORIGINAL VERSION)
+//----------------------------------------------------------------------------
+// Chip:     Microchip/Supertex HV5122 - 32-channel high-voltage (up to ~170V)
+//           serial-in shift register / latch, used here to drive Nixie tube
+//           cathodes directly (no external cathode-driver transistors needed).
+// Wiring:   Two HV5122 chips are cascaded (bit-banged, SPI-like, 3-wire bus):
+//             PIN_DIN -> chip0 DIN, chip0 DOUT -> chip1 DIN (daisy-chained),
+//             PIN_CLK -> both chips' CLK (shared),
+//             PIN_OE  -> both chips' output-enable (shared, active HIGH here
+//                        i.e. energizes/blanks the tubes - see writeDisplay()).
+//           Together the two chips give 64 open-drain HV outputs, addressed
+//           via the digitPins[][] table (pin numbers 1-32 = chip0, 101-132 =
+//           chip1; see clocks.h for the actual per-clock wiring tables).
+// Status:   THIS IS THE OLDER/LEGACY DRIVER. As of the current clocks.h, no
+//           active CLOCK_NN config selects plain "HV5122" anymore - every
+//           HV5122-based config (CLOCK_50, 51, 52, 53, 54, 55, 56, 57, 57A)
+//           now defines NEWHV5122 and is compiled from HV5122new.ino instead.
+//           This file is effectively unused/orphaned code, kept for
+//           reference. It lacks the crossfade/wipe digit-change animation
+//           (animMask/newDigit/oldDigit) support that HV5122new.ino adds -
+//           see HV5122new.ino's header comment for details.
+//============================================================================
 #ifdef HV5122  //Nixie driver
 //P.S. 6x tubes PCB version
 
@@ -23,10 +46,10 @@ char tubeDriver[] = "HV5122";
 */
 
 #define SHIFT_LSB_FIRST false  //true= LSB first, false= MSB first
-int PWMrefresh = 10000; //Brightness PWM period. Greater value => slower brightness PWM frequency
+int PWMrefresh = 10000; //Brightness PWM period (microseconds-ish timer ticks). Greater value => slower brightness PWM frequency
 //int PWMtiming[11] = {0,500,800,1200,2000,2500,3000,4500,6000,8000,10000};
-int PWM_min = 500;
-int PWM_max = 10000;
+int PWM_min = 500;   //shortest allowed ON time (floor, avoids a 0-length timer alarm)
+int PWM_max = 10000; //longest ON time = full brightness (== PWMrefresh, i.e. tube stays on the whole period)
 
 void setup_pins() {
   DPRINTLN("Setup pins -  HV5122 Nixie driver...");
@@ -37,7 +60,7 @@ void setup_pins() {
   pinMode(PIN_DIN, OUTPUT);  regPin(PIN_DIN, "PIN_DIN");
   pinMode(PIN_OE, OUTPUT);   regPin(PIN_OE, "PIN_OE");
   digitalWrite(PIN_CLK, HIGH);
-  digitalWrite(PIN_OE, LOW);
+  digitalWrite(PIN_OE, LOW);  //keep outputs blanked until clearTubes() below has pushed a known (all-zero) pattern into the shift registers
   driverSetupStr = "<br>HV5122 pin settings:<br>";
   for (int i=0;i<maxDigits+1;i++) {
     driverSetupStr += String("{");
@@ -52,13 +75,21 @@ void setup_pins() {
 }
 
 
+// writeDisplay(): TIMER-ISR. Unlike most other drivers in this project, this
+// driver does NOT multiplex individual tube positions from here - the full
+// digit pattern for ALL tubes was already shifted out into the HV5122 latches
+// by writeDisplaySingle() (called from the main loop). This ISR only toggles
+// the shared PIN_OE line on/off to implement brightness as a simple
+// square-wave PWM (whole display blinks ON/OFF at a variable duty cycle -
+// there is no per-tube time-slicing here since HV5122 has a real static
+// latch per output, not a multiplexed matrix).
 #if defined(ESP32)
 void IRAM_ATTR writeDisplay() { //void IRAM_ATTR  writeDisplay(){
 #else
 void ICACHE_RAM_ATTR writeDisplay() {       //https://circuits4you.com/2018/01/02/esp8266-timer-ticker-example/
 #endif
   static volatile int timer = PWMrefresh;
-  static volatile boolean state=true;
+  static volatile boolean state=true;    //true = about to enter/currently in the ON phase of the PWM cycle
   static volatile int brightness;
   static int PWMtimeBrightness=PWM_min;
 
@@ -66,10 +97,10 @@ void ICACHE_RAM_ATTR writeDisplay() {       //https://circuits4you.com/2018/01/0
   if (EEPROMsaving) {  //stop refresh, while EEPROM write is in progress!
     #if defined(ESP8266)
       timer1_write(PWMrefresh);
-    #endif  
+    #endif
     return;
   }
-  
+
   #if defined(ESP32)
     portENTER_CRITICAL_ISR(&timerMux);
     noInterrupts();
@@ -79,33 +110,36 @@ void ICACHE_RAM_ATTR writeDisplay() {       //https://circuits4you.com/2018/01/0
   if (brightness>MAXBRIGHTNESS) brightness = MAXBRIGHTNESS;  //only for safety
 
   if (autoBrightness && displayON) {
-    PWMtimeBrightness = max(PWM_min,PWM_max*lx/MAXIMUM_LUX);
+    PWMtimeBrightness = max(PWM_min,PWM_max*lx/MAXIMUM_LUX);  //day mode + ALS: scale ON-time by measured lux instead of the stored brightness setting
   }
   else
     PWMtimeBrightness = max(PWM_min,PWM_max*brightness/MAXBRIGHTNESS);
-  
-  if ((!autoBrightness) && (brightness==MAXBRIGHTNESS))  
+
+  //At full brightness, force a steady ON state every call instead of letting the
+  //ON/OFF alternation run its course - avoids a needless (and here pointless,
+  //since ON-time==PWMrefresh anyway) OFF sliver caused by scheduling/rounding jitter.
+  if ((!autoBrightness) && (brightness==MAXBRIGHTNESS))
     state = true;
-  
+
   if (state) {  //ON state
     timer = PWMtimeBrightness;
     timerON = timer;
   }
   else {  //OFF state
     timer = PWMrefresh-PWMtimeBrightness;
-    timerOFF = timer;  
+    timerOFF = timer;
   }
-  if (timer<500) timer = 500;  //safety only...
-  
+  if (timer<500) timer = 500;  //safety only... (timerAlarmWrite/timer1_write with 0 or a very small value can hang/misfire)
+
   if ( (brightness == 0) || (!state) || (!radarON)) {  //OFF state, blank digit
-    digitalWrite(PIN_OE, LOW); //OFF
+    digitalWrite(PIN_OE, LOW); //OFF  -- NOTE: on this board OE is active-HIGH (HIGH=tubes lit), opposite of the active-low /OE found on many shift-register ICs
     }
   else {  //ON state
     digitalWrite(PIN_OE, HIGH);   //ON
   }
-  
-  state = !state; 
-   
+
+  state = !state;  //flip for next ISR call (alternate ON phase / OFF phase); irrelevant while the full-brightness override above forces true every time
+
 #if defined(ESP8266)
   timer1_write(timer);
 #elif defined(ESP32)
@@ -120,6 +154,12 @@ void ICACHE_RAM_ATTR writeDisplay() {       //https://circuits4you.com/2018/01/0
 
 
 
+// shift(): bit-bangs one 32-bit word into the HV5122 shift-register chain.
+// The ~20-NOP delays around each CLK/DIN edge are required because the
+// HV5122 is a high-voltage part (internal level-shifters to the ~170V rail)
+// and is much slower than a typical 5V logic shift register - driving it at
+// full CPU speed without these delays can corrupt shifted-in data.
+// Data is latched into the HV5122 on the falling edge of CLK.
 #if defined(ESP32)
 void IRAM_ATTR shift(uint32_t Data) {
 #else
@@ -148,6 +188,16 @@ void clearTubes() {
   shift(0);
 }
 
+// writeDisplaySingle(): builds the two 32-bit bit-buffers (one per cascaded
+// HV5122 chip) from the current digit[]/digitDP[] state and shifts them out.
+// Called repeatedly from the main loop (not from the ISR) and self-throttled
+// to run at most every 50ms, since the bit-bang shift() above is relatively
+// slow (32 bits x ~60 NOPs, twice) and re-shifting on every idle loop
+// iteration would be wasteful. NOTE: unlike HV5122new.ino, this version does
+// NOT check whether anything actually changed since the last call - it always
+// re-shifts full data every 50ms regardless, and it ignores newDigit[]/
+// oldDigit[]/animMask[] entirely, so it has no digit-change wipe/crossfade
+// animation support.
 void writeDisplaySingle() {
   static unsigned long lastRun = 0;
   uint32_t bitBuffer0 = 0;
@@ -156,17 +206,17 @@ void writeDisplaySingle() {
 
   if ((millis() - lastRun) < 50) return; //slow down!!!
   lastRun = millis();
- 
+
   bitBuffer0 = 0; bitBuffer1 = 0;
   for (int i = 0; i < maxDigits; i++) { //Set the clock digits
     num = digit[i];
-    if (num < 10) {
+    if (num < 10) {  //codes 10 (BLANK), 11 (dash), 12 (dp glyph) and 13+ (extra glyphs) have no cathode mapping on a Nixie tube -> leave bits cleared = tube blank
       if (digitPins[i][num] < 100) {
-        bitBuffer0 |= (uint32_t)(1 << (digitPins[i][num]-1)); 
+        bitBuffer0 |= (uint32_t)(1 << (digitPins[i][num]-1));
         //DPRINT(digitPins[i][num]); DPRINT(":");
         } //chip0
       else {
-        bitBuffer1 |= (uint32_t)(1 << (digitPins[i][num] - 101)); 
+        bitBuffer1 |= (uint32_t)(1 << (digitPins[i][num] - 101));
         //DPRINT(digitPins[i][num]);DPRINT(":");} //chip1
       }
     }
@@ -178,10 +228,10 @@ void writeDisplaySingle() {
       digitDP[3] = digitDP[4]; //right two dots
     }
   #endif
-  
+
   for (int i = 0; i < maxDigits-1; i++) { //Set the extra decimal point dots
     if (digitDP[i] && digitPins[maxDigits][i]>0) {
-      if (digitPins[maxDigits][i] < 100) 
+      if (digitPins[maxDigits][i] < 100)
         bitBuffer0 |= (uint32_t)(1 << (digitPins[maxDigits][i]-1)); //chip0
       else
         bitBuffer1 |= (uint32_t)(1 << (digitPins[maxDigits][i] - 101)); //chip1
@@ -189,6 +239,9 @@ void writeDisplaySingle() {
   }  //end for i
 
   //bitBuffer0 = 1<<cnt;  bitBuffer1 = 1<<cnt;  cnt++;  if (cnt>32) cnt = 0;  DPRINTLN(cnt);
+  //Shift chip1 (the far end of the DIN->DOUT daisy-chain) FIRST, then chip0 LAST:
+  //bits shifted in earliest travel furthest down the chain, so chip1's data must
+  //go in before chip0's, otherwise chip0's own data would get pushed on into chip1.
   shift(bitBuffer1);
   //delayMicroseconds(1);   //for testing on oscilloscope
   shift(bitBuffer0);
