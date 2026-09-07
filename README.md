@@ -1,6 +1,6 @@
 # ESP_UniClock v3.1
 
-**A universal Wi-Fi clock firmware for ESP8266 / ESP32 — one codebase, ~65 different physical builds.**
+**A universal Wi-Fi clock firmware for ESP8266 / ESP32 — one codebase, 60+ different physical builds.**
 
 Drive Nixie, VFD (vacuum fluorescent), Numitron, LED-segment, LED-matrix or NeoPixel "word clock"
 displays from a single Arduino sketch. Which physical hardware you're building is selected entirely
